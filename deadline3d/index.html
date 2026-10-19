@@ -2180,8 +2180,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   function queueSpawn() { const p = randomRoad(10); pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, mesh: makeWarn(p.x, p.y) }); }
   // stage 3: always 3 per wave, starting at the stage 2 speed
   // stage 2 opens at 2 per wave, stage 3 at 3
-  // stage 3: 3 oni a wave, 4 from 4:00, 5 from 6:00, 6 from 7:00, 7 (the most) from 9:00
-  const spawnBatch = () => stageN >= 3 ? (t >= 540 ? 7 : t >= 420 ? 6 : t >= 360 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
+  // stage 3: 3 oni a wave, then one more at 4, 5, 6 and 7 min, and again at 10, 11 and 12 min (10 at most)
+  const spawnBatch = () => stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   const enemySpeed = () => Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * STAGE_SPEEDUP);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
@@ -3217,7 +3217,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     ui.game.classList.remove('playing');
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : 'はてなき地獄'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分からは1分ごとに補給。偶数分はバリア+爆弾2個、奇数分は爆弾2個。\n・鬼を40体倒すごとに、3秒加速かランチャーのどちらかが1つ届く。\n・鬼が出る場所には先に「!」が出る。「!」を踏めばその鬼は出ない。\n・広場には落とし穴。ふたを踏んで離れると開き、追ってきた鬼を落とす。自分が落ちても確保。使うと45秒ふさがる。\n・一度に出る鬼は最大7体まで増える。\n・2分からは1分ごとに、逃走者より速い黒い鬼が1体まじる。ダッシュをうまく使って振り切れ。\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる。' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分からは1分ごとに補給。偶数分はバリア+爆弾2個、奇数分は爆弾2個。\n・鬼を40体倒すごとに、3秒加速かランチャーのどちらかが1つ届く。\n・鬼が出る場所には先に「!」が出る。「!」を踏めばその鬼は出ない。\n・広場には落とし穴。ふたを踏んで離れると開き、追ってきた鬼を落とす。自分が落ちても確保。使うと45秒ふさがる。\n・一度に出る鬼は最大10体まで増える。\n・2分からは1分ごとに、逃走者より速い黒い鬼が1体まじる。ダッシュをうまく使って振り切れ。\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる。' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
   }
   function endTouches() { input.stick = null; input.looks.clear(); ui.stick.hidden = ui.knob.hidden = true; padKnobDraw(); }
