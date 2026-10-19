@@ -1304,6 +1304,13 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       // once it stands on the spot it was cutting to (or cannot reach it), it goes for the runner instead
       // of circling round that spot
       if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) <= 1) amb = false;
+      // once it breaks out of the pack with the runner close and in plain view, it gives chase for a good
+      // while instead of drifting back to its cut-off spot
+      if (e.amb) {
+        e.lock = Math.max(0, (e.lock || 0) - dt);
+        if (Math.hypot(P.x - e.x, P.y - e.y) < 4.5 && clearLine(e.x, e.y, P.x, P.y)) e.lock = 1.5;
+        if (e.lock > 0) amb = false;
+      }
       // close by they grab at the runner. A few tiles off they follow the runner's footsteps,
       // a beat behind, so luring one into a corner and slipping out leaves it a step behind.
       // Further away they take the shortest way to the runner.
