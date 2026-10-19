@@ -806,8 +806,8 @@ h2.clear { color: #5dff9e; }
     for (const c of courts) {
       const { x, y, w, h } = c;
       if (c.t === 'lawn') {
-        m.fillStyle = '#3a3f4a'; m.fillRect(x + 0.08, y + 0.08, w - 0.16, h - 0.16);
-        for (let k = 0; k < 6; k++) { m.fillStyle = k % 2 ? '#24432d' : '#284a31'; m.fillRect(x + 0.16, y + 0.16 + k * (h - 0.32) / 6, w - 0.32, (h - 0.32) / 6 + 0.01); }
+        m.fillStyle = '#2e323c'; m.fillRect(x + 0.08, y + 0.08, w - 0.16, h - 0.16);
+        for (let k = 0; k < 6; k++) { m.fillStyle = k % 2 ? '#1a3122' : '#1d3525'; m.fillRect(x + 0.16, y + 0.16 + k * (h - 0.32) / 6, w - 0.32, (h - 0.32) / 6 + 0.01); }
       } else if (c.t === 'pitch') {
         const long = w > h, n = 10;
         for (let k = 0; k < n; k++) { m.fillStyle = k % 2 ? '#22412c' : '#26482f'; if (long) m.fillRect(x + k * w / n, y, w / n + 0.01, h); else m.fillRect(x, y + k * h / n, w, h / n + 0.01); }
@@ -819,24 +819,27 @@ h2.clear { color: #5dff9e; }
         if (long) { m.strokeRect(ix, cy - 0.75, 1, 1.5); m.strokeRect(ix + iw - 1, cy - 0.75, 1, 1.5); }
         else { m.strokeRect(cx - 0.75, iy, 1.5, 1); m.strokeRect(cx - 0.75, iy + ih - 1, 1.5, 1); }
       } else {
-        // outdoor basketball court
-        m.fillStyle = '#5a3a2c'; m.fillRect(x + 0.12, y + 0.12, w - 0.24, h - 0.24);
-        m.fillStyle = '#2f4a6a'; m.fillRect(x + 0.3, y + 0.3, w - 0.6, h - 0.6);
-        m.strokeStyle = 'rgba(240,240,235,0.6)'; m.lineWidth = 0.045;
+        // outdoor half court: one hoop at one end, the half-court circle at the other
+        m.fillStyle = '#3e2c26'; m.fillRect(x + 0.12, y + 0.12, w - 0.24, h - 0.24);
+        m.fillStyle = '#22344a'; m.fillRect(x + 0.3, y + 0.3, w - 0.6, h - 0.6);
+        m.strokeStyle = 'rgba(225,228,225,0.42)'; m.lineWidth = 0.045;
         const ix = x + 0.3, iy = y + 0.3, iw = w - 0.6, ih = h - 0.6, cx = x + w / 2, cy = y + h / 2;
         m.strokeRect(ix, iy, iw, ih);
-        m.beginPath(); if (c.hor) { m.moveTo(cx, iy); m.lineTo(cx, iy + ih); } else { m.moveTo(ix, cy); m.lineTo(ix + iw, cy); } m.stroke();
-        m.beginPath(); m.arc(cx, cy, 0.3, 0, 7); m.stroke();
-        m.fillStyle = 'rgba(160,60,40,0.55)';
-        if (c.hor) {
-          for (const kx of [ix, ix + iw - 0.6]) { m.fillRect(kx, cy - 0.3, 0.6, 0.6); m.strokeRect(kx, cy - 0.3, 0.6, 0.6); }
-          m.beginPath(); m.arc(ix, cy, 0.95, -1.3, 1.3); m.stroke(); m.beginPath(); m.arc(ix + iw, cy, 0.95, Math.PI - 1.3, Math.PI + 1.3); m.stroke();
-          m.fillStyle = '#e8e8e0'; m.fillRect(ix + 0.08, cy - 0.2, 0.05, 0.4); m.fillRect(ix + iw - 0.13, cy - 0.2, 0.05, 0.4);
-        } else {
-          for (const ky of [iy, iy + ih - 0.6]) { m.fillRect(cx - 0.3, ky, 0.6, 0.6); m.strokeRect(cx - 0.3, ky, 0.6, 0.6); }
-          m.beginPath(); m.arc(cx, iy, 0.95, 0.27, Math.PI - 0.27); m.stroke(); m.beginPath(); m.arc(cx, iy + ih, 0.95, Math.PI + 0.27, -0.27); m.stroke();
-          m.fillStyle = '#e8e8e0'; m.fillRect(cx - 0.2, iy + 0.08, 0.4, 0.05); m.fillRect(cx - 0.2, iy + ih - 0.13, 0.4, 0.05);
-        }
+        // the hoop end, as a direction from the middle: left/right on a sideways court, top/bottom otherwise
+        const far = ((c.x + c.y) / 4) % 2 ? 1 : -1, ux = c.hor ? far : 0, uy = c.hor ? 0 : far;
+        const bx = cx + ux * iw / 2, by = cy + uy * ih / 2;       // middle of the baseline
+        const ang = Math.atan2(-uy, -ux);                          // facing into the court
+        m.fillStyle = 'rgba(140,55,40,0.4)';
+        const kx = c.hor ? (far > 0 ? bx - 0.7 : bx) : cx - 0.3, ky = c.hor ? cy - 0.3 : (far > 0 ? by - 0.7 : by);
+        const kw = c.hor ? 0.7 : 0.6, kh = c.hor ? 0.6 : 0.7;
+        m.fillRect(kx, ky, kw, kh); m.strokeRect(kx, ky, kw, kh);
+        m.beginPath(); m.arc(bx, by, 1.15, ang - 1.25, ang + 1.25); m.stroke();
+        m.beginPath(); m.arc(cx - ux * iw / 2, cy - uy * ih / 2, 0.32, ang + Math.PI - Math.PI / 2, ang + Math.PI + Math.PI / 2); m.stroke();
+        // backboard and rim
+        m.fillStyle = '#d8d8d0';
+        if (c.hor) m.fillRect(bx - ux * 0.12 - 0.025, cy - 0.2, 0.05, 0.4); else m.fillRect(cx - 0.2, by - uy * 0.12 - 0.025, 0.4, 0.05);
+        m.strokeStyle = 'rgba(230,120,60,0.8)'; m.lineWidth = 0.035;
+        m.beginPath(); m.arc(bx - ux * 0.24, by - uy * 0.24, 0.08, 0, 7); m.stroke();
       }
     }
     // the goals: solid frames with a net, drawn exactly where they block
