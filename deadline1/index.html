@@ -1289,14 +1289,23 @@ h2.clear { color: #5dff9e; }
           }
         }
       }
-      const lp = e.amb && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : -1) >= 0
+      // after a spell of cutting ahead without getting near, the yellow oni charges in like a red one for a while
+      if (e.amb) e.charge = Math.max(0, (e.charge || 0) - dt);
+      const charging = e.amb && e.charge > 0;
+      const lp = e.amb && !charging && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : -1) >= 0
         && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : 0) <= (walk(tx, ty) ? dist[idx(tx, ty)] : 0) + 6 ? e.lpt : null;
-      let amb = !lp && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 2;
+      let amb = !lp && !charging && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 2;
       // once the yellow oni stands on the spot it was cutting to (or cannot reach it), it stops aiming there
       // and simply goes for the runner, instead of circling round that spot
       if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) <= 1) amb = false;
       // and it does not wander off: if the cut-off spot is well further away than the runner, it just chases
       if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) > (walk(tx, ty) ? dist[idx(tx, ty)] : 0) + 2) amb = false;
+      if (e.amb && !charging) {
+        // about ten re-reads (3.5 sec) of cutting ahead in a row, then 3 sec of a straight charge;
+        // hanging back far from the runner uses that patience up twice as fast
+        if (lp || amb) { e.ambRun = (e.ambRun || 0) + dt * (Math.hypot(P.x - e.x, P.y - e.y) > 6 ? 2 : 1); if (e.ambRun > 3.5) { e.charge = 3; e.ambRun = 0; } }
+        else e.ambRun = Math.max(0, (e.ambRun || 0) - dt * 2);
+      }
       // close by they grab at the runner. A few tiles off they follow the runner's footsteps,
       // a beat behind, so luring one into a corner and slipping out leaves it a step behind.
       // Further away they take the shortest way to the runner.
