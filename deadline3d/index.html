@@ -356,9 +356,11 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const BARRIER_AT = 120, EXIT_AT = 150, INV_TIME = 1.5, BOOST_TIME = 3, BOOST_MULT = 1.7;
   const ITEM_NAMES = { boost: '3秒加速', barrier: 'バリア', launcher: 'ランチャー' };
   const DASH_MULT = 2.0, DASH_TIME = 0.38, DASH_CD = 3.5;
-  const R_PLAYER = 0.16, R_ENEMY = 0.16, CATCH = 0.32, SEP = 0.36, SPAWN_WARN = 2.3;
+  // catching takes a slight overlap (bodies touch at 0.32), so a sidestep and a dash can squeeze past one in a corridor
+  const R_PLAYER = 0.16, R_ENEMY = 0.16, CATCH = 0.24, SEP = 0.36, SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
-  const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10;
+  // the runner here is a third as fast as in the 2D games, so a dropped item waits three times as long
+  const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 30;
   const CAM_DIST = 8.5, CAM_H = 1.5;
   const STICK_R = 44;
 
@@ -2452,7 +2454,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
         bfs2(e.fd, fq, nodeOf(T.f || 0, e.ax + 0.5, e.ay + 0.5));
       }
       const read = trail && !sight && e.fd;
-      const field = lp ? e.lfd : amb ? adist : read ? e.fd : dist, aimX = lp ? lp[0] + 0.5 : amb ? ambT[0] + 0.5 : sight ? T.x : read ? e.ax + 0.5 : P.x, aimY = lp ? lp[1] + 0.5 : amb ? ambT[1] + 0.5 : sight ? T.y : read ? e.ay + 0.5 : P.y;
+      // at grabbing range it lunges for where the runner was a quarter second ago: a sidestep opens a gap
+      const G = close ? trailAt(0.25) : P;
+      const field = lp ? e.lfd : amb ? adist : read ? e.fd : dist, aimX = lp ? lp[0] + 0.5 : amb ? ambT[0] + 0.5 : sight ? T.x : read ? e.ax + 0.5 : G.x, aimY = lp ? lp[1] + 0.5 : amb ? ambT[1] + 0.5 : sight ? T.y : read ? e.ay + 0.5 : G.y;
       const d = field[node];
       let gx = aimX, gy = aimY;
       if (d > 1 && !sight) {
