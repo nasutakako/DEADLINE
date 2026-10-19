@@ -567,7 +567,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     async function put() {
       const ref = db.doc('players/' + uid);
       try { await ref.set(me); }
-      catch (e) { if (!('title' in me)) throw e; const { title, ...rest } = me; await ref.set(rest); }
+      catch (e) { if (!('title' in me)) throw e; const { title, ...rest } = me; await ref.set(rest); me = rest; }
     }
     async function init() {
       try {
@@ -752,12 +752,14 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (!owned.has('t50') && TITLES[49][3](r, a, owned.size)) { owned.add('t50'); got.push('t50'); }
     records.titles = TITLES.map(x => x[0]).filter(id => owned.has(id));
     // the first title ever earned is put on straight away; after that the player picks
-    if (got.length && records.title == null) { records.title = got[got.length - 1]; Rank.sync(); }
+    if (got.length && !records.title) { records.title = got[got.length - 1]; Rank.sync(); }
     saveRecords(); paintTitle();
     return got;
   }
   const showTitles = (el, got) => { $(el).hidden = !got.length; $(el).textContent = got.length ? '称号獲得: ' + got.map(titleName).join('、') : ''; };
   function paintTitle() {
+    // titles owned but none ever chosen: wear the hardest one
+    if (!records.title && records.titles && records.titles.length) records.title = records.titles[records.titles.length - 1];
     const b = $('whoTitle'); if (!b) return;
     const n = titleName(records.title);
     b.textContent = n ? '《' + n + '》' : (records.titles && records.titles.length ? '称号を選ぶ' : '称号なし');
@@ -769,7 +771,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('titlesCount').textContent = `${owned.size} / ${TITLES.length} 獲得 ・ 獲得した称号から1つ選べる`;
     const add = (id, name, how, have) => {
       const li = document.createElement('li'), b = document.createElement('button');
-      b.type = 'button'; b.className = (have ? '' : 'locked') + ((records.title || '') === id ? ' sel' : '');
+      b.type = 'button'; b.className = (have ? '' : 'locked') + (records.title === id ? ' sel' : '');
       const n = document.createElement('span'); n.className = 'tn'; n.textContent = have ? name : '？？？';
       const c = document.createElement('span'); c.className = 'tc'; c.textContent = how;
       b.append(n, c);
@@ -777,7 +779,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       else b.disabled = true;
       li.append(b); list.append(li);
     };
-    add('', 'なし', '称号を表示しない', true);
+    add('none', 'なし', '称号を表示しない', true);  // 'none' = chosen to show nothing; empty = never chosen yet
     for (const [id, name, how] of TITLES) add(id, name, how, owned.has(id));
     ui.title.hidden = true; $('titlesScreen').hidden = false;
   }
