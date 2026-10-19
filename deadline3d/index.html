@@ -214,7 +214,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .who .records, .card .records { cursor: pointer; }
 .records h3::after { content: ' ›'; }
 .newtitles { margin: 0; color: var(--lamp); font-weight: 700; font-size: 13px; }
-.mono { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
+.mono { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
+#spMsg { font-size: 13px; line-height: 1.5; }
+/* short screens hide the cards' side notes, but the runner's words and newly earned titles stay */
+@media (max-height: 460px) { .card > p.mono:not(#_), .card > p.newtitles:not(#_) { display: block; } .card > p.newtitles[hidden], .card > p.mono[hidden] { display: none; } }
 </style>
 </head>
 <body>
@@ -3451,13 +3454,28 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       if (!ok) el.style.fontSize = '';
     }
   }
-  addEventListener('resize', () => { if (!$('briefScreen').hidden) fitRows($('briefScreen')); });
+  addEventListener('resize', () => { if (!$('briefScreen').hidden) fitBrief(); });
+  // the runner's words on a stand-by screen are set at the briefing's type size; if only a few characters
+  // would spill onto a row of their own, the size comes down a touch (never below 80%) so they close up
+  function fitMono(el, fs, also = []) {
+    const set = s => { for (const x of [el, ...also]) x.style.fontSize = s + 'px'; };
+    set(fs);
+    if (el.hidden) return;
+    const rows = () => Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
+    const n = rows(); if (n < 2) return;
+    for (let s = fs - 0.25; s >= fs * 0.8; s -= 0.25) { set(s); if (rows() < n) return; }
+    set(fs);
+  }
+  // item pick before stage 2 or 3: every briefing line on one row, the words at the same size
+  function fitStandby() { const msg = $('spMsg'); fitLines(msg); fitMono($('spMono'), parseFloat(getComputedStyle(msg).fontSize), [msg]); }
+  const fitBrief = () => { fitRows($('briefScreen')); fitMono($('briefMono'), parseFloat(getComputedStyle($('briefScreen').querySelector('.rules')).fontSize)); };
+
   function showBrief() {
     tap(); state = 'brief'; bgmStart(songFor(1));
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('briefScreen').hidden = false;
     mono('briefMono', 1, 'standby');
-    fitRows($('briefScreen'));
+    fitBrief();
   }
   // the runner's own words: before the stage, on escaping (stages 1 and 2), on being caught;
   // stage 3's hint at what this night really is.
@@ -3541,17 +3559,17 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
-    fitLines($('spMsg'));
+    fitStandby();
   }
   // shrink a list's type until each of its lines fits on one row (a few stray characters on a row of their own read badly)
   function fitLines(el, min = 10) {
     el.style.fontSize = '';
     let fs = parseFloat(getComputedStyle(el).fontSize);
     el.style.whiteSpace = 'pre';
-    while (el.scrollWidth > el.clientWidth - 4 && fs > min) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+    while (el.scrollWidth > el.clientWidth + 1 && fs > min) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
     el.style.whiteSpace = 'pre-line';
   }
-  addEventListener('resize', () => { if (!$('startPickScreen').hidden) fitLines($('spMsg')); });
+  addEventListener('resize', () => { if (!$('startPickScreen').hidden) fitStandby(); });
   function endTouches() { input.stick = null; input.looks.clear(); ui.stick.hidden = ui.knob.hidden = true; padKnobDraw(); }
   function setPause(on) {
     if (on && state === 'play') { state = 'pause'; ui.pause.hidden = false; endTouches(); }
