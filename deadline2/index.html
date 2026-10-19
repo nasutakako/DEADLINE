@@ -948,13 +948,40 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   }
   // ---------- the yellow ambush oni: aims a few tiles ahead of the runner along the street ----------
   let adist = null, aq = null;
+  const LOOP_KEEP = 20;
+  // A runner going round and round the same loop (a plaza, a block) shows it in the footsteps of the last
+  // LOOP_KEEP sec: loopLap finds where they were one lap ago, and the rest of that lap is their way ahead.
+  function loopLap() {
+    const L = P.loop; if (!L || L.length < 12) return null;
+    const now = L[L.length - 1];
+    let run = 0;
+    for (let i = L.length - 2; i >= 0; i--) {
+      const a = L[i], b = L[i + 1];
+      run += Math.hypot(b.x - a.x, b.y - a.y);
+      if (now.t - a.t < 3 || run < 8) continue;
+      if (a.f === now.f && Math.hypot(a.x - now.x, a.y - now.y) < 1.2) return { L, i };
+    }
+    return null;
+  }
+  // the first spot on the coming lap the yellow oni can reach before the runner gets there
+  function loopIntercept(e, v) {
+    const lap = loopLap(); if (!lap) return null;
+    const { L, i } = lap;
+    if (!e.lsd || e.lsd.length !== COLS * ROWS) e.lsd = new Int16Array(COLS * ROWS);
+    bfsTo(e.lsd, clamp(Math.floor(e.x), 0, COLS - 1), clamp(Math.floor(e.y), 0, ROWS - 1));
+    for (let k = i + 1; k < L.length; k++) {
+      const x = Math.floor(L[k].x), y = Math.floor(L[k].y), d = walk(x, y) ? e.lsd[idx(x, y)] : -1;
+      if (d >= 0 && d / v + 0.4 <= L[k].t - L[i].t) return [x, y];
+    }
+    return null;
+  }
   function ambushTarget() {
     const tx = Math.floor(P.x), ty = Math.floor(P.y);
     if (Math.hypot(P.vx, P.vy) < 0.5) return [tx, ty];
     let dx = 0, dy = 0;
     if (Math.abs(P.vx) >= Math.abs(P.vy)) dx = Math.sign(P.vx); else dy = Math.sign(P.vy);
     let x = tx, y = ty;
-    for (let k = 0; k < 3 && walk(x + dx, y + dy); k++) { x += dx; y += dy; }
+    for (let k = 0; k < 4 && walk(x + dx, y + dy); k++) { x += dx; y += dy; }
     return [x, y];
   }
   function ambushFlow(x, y) {
@@ -1213,6 +1240,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     // footsteps for the oni to follow
     P.hist = P.hist || [];
     if (!P.hist.length || t - P.hist[P.hist.length - 1].t >= 0.05) { P.hist.push({ x: P.x, y: P.y, f: P.f || 0, t }); while (P.hist.length && P.hist[0].t < t - 1.5) P.hist.shift(); }
+    P.loop = P.loop || []; if (!P.loop.length || t - P.loop[P.loop.length - 1].t >= 0.25) { P.loop.push({ x: P.x, y: P.y, f: P.f || 0, t }); while (P.loop[0].t < t - LOOP_KEEP) P.loop.shift(); }
     const mvx = (P.x - bx) / dt, mvy = (P.y - by) / dt;
     if (Math.hypot(mvx, mvy) > 0.5) { P.mx = mvx; P.my = mvy; }
     if (P.dashT > 0 || P.boostT > 0) P.trail.push({ x: P.x, y: P.y, a: 1, boost: P.boostT > 0 && P.dashT <= 0 });
@@ -1260,13 +1288,23 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       if (e.stun > 0) { e.stun -= dt; e.vx *= 0.9; e.vy *= 0.9; continue; }
       const tx = Math.floor(e.x), ty = Math.floor(e.y);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
-      const amb = ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
+      // a runner circling a loop: the yellow oni stops trailing and waits for them on the coming lap
+      if (e.amb) {
+        e.lthink = (e.lthink || 0) - dt;
+        if (e.lthink <= 0) {
+          e.lthink = 0.25;
+          e.lpt = loopIntercept(e, Math.min(es * e.var, runnerSpeed()));
+          if (e.lpt) { if (!e.lfd || e.lfd.length !== COLS * ROWS) e.lfd = new Int16Array(COLS * ROWS); bfsTo(e.lfd, e.lpt[0], e.lpt[1]); }
+        }
+      }
+      const lp = e.amb && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 ? e.lpt : null;
+      const amb = !lp && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
       // close by they grab at the runner. A few tiles off they follow the runner's footsteps,
       // a beat behind, so luring one into a corner and slipping out leaves it a step behind.
       // Further away they take the shortest way to the runner.
       const dRun = Math.hypot(P.x - e.x, P.y - e.y), close = dRun < 1.1;
       if (e.lag == null) e.lag = 0.3 + Math.random() * 0.18;
-      const trail = !amb && !close && dRun < 6;
+      const trail = !lp && !amb && !close && dRun < 6;
       const T = trail ? trailAt(e.lag) : null;
       const sight = trail && clearLine(e.x, e.y, T.x, T.y);
       e.think = (e.think || 0) - dt;
@@ -1277,7 +1315,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         bfsTo(e.fd, e.ax, e.ay);
       }
       const read = trail && !sight && e.fd;
-      const field = amb ? adist : read ? e.fd : dist, aimX = amb ? ambT[0] + 0.5 : sight ? T.x : read ? e.ax + 0.5 : P.x, aimY = amb ? ambT[1] + 0.5 : sight ? T.y : read ? e.ay + 0.5 : P.y;
+      const field = lp ? e.lfd : amb ? adist : read ? e.fd : dist, aimX = lp ? lp[0] + 0.5 : amb ? ambT[0] + 0.5 : sight ? T.x : read ? e.ax + 0.5 : P.x, aimY = lp ? lp[1] + 0.5 : amb ? ambT[1] + 0.5 : sight ? T.y : read ? e.ay + 0.5 : P.y;
       const d = walk(tx, ty) ? field[idx(tx, ty)] : -1;
       let gx = aimX, gy = aimY;
       if (d > 1 && !sight) {
