@@ -315,11 +315,11 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   <div class="overlay" id="titleScreen">
     <div class="card">
       <h1>DEAD<span>LINE</span><em>2</em></h1>
-      <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
+      <p>閉じ込められた隔離区画から鬼をかわして脱出しろ。ステージ1は隔離区画、ステージ2からはネオン街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
       <div class="records" id="records"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
-      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 はてなき地獄</button></div>
+      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 隔離区画から</button><button class="go alt" id="start2Btn" type="button">ステージ2 ネオン街から</button><button class="go alt" id="start3Btn" type="button">ステージ3 無限回路</button></div>
     </div>
   </div>
 
@@ -336,7 +336,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   <div class="overlay" id="rankScreen" hidden>
     <div class="card rankcard">
       <h2>世界ランキング</h2>
-      <span class="label">ステージ3 はてなき地獄 ・ 逃走時間 上位100</span>
+      <span class="label">ステージ3 無限回路 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -383,7 +383,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
 
   <div class="overlay" id="briefScreen" hidden>
     <div class="card">
-      <span class="kicker">STAGE 1 地下</span>
+      <span class="kicker">STAGE 1 隔離区画</span>
       <h2 class="clear">あそびかた</h2>
       <dl class="rules">
         <dt>移動</dt><dd>スマホ:左半分をドラッグ / PC:カーソルの方へ走る・矢印キー</dd>
@@ -516,7 +516,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     // one line per stage: just the high score
     const h = document.createElement('h3'); h.textContent = 'ハイスコア(逃走時間)'; box.append(h);
     const ol = document.createElement('ol');
-    for (const [n, label] of [[1, 'ステージ1 地下'], [2, 'ステージ2 地上'], [3, 'ステージ3 はてなき地獄']]) {
+    for (const [n, label] of [[1, 'ステージ1 隔離区画'], [2, 'ステージ2 ネオン街'], [3, 'ステージ3 無限回路']]) {
       const r = stageBest(n), li = document.createElement('li'); li.className = 'hs' + (r ? ' first' : '');
       const cells = [label, null, r ? `撃破${r.kills || 0}` : ''];
       for (const c of cells) { const s = document.createElement(c === null ? 'b' : 'span'); s.textContent = c === null ? (r ? fmtTime(r.time) : '--') : c; li.append(s); }
@@ -1447,8 +1447,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('cRank').textContent = rankText(stageN, crank);
     $('cNext').textContent = '×' + P.stock;
     if (!last) $('cMsg').textContent = stageN === 1
-      ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度地下に挑むか、タイトルに戻るかを選べる。'
-      : 'アイテムを選んでステージ3(はてなき地獄)へ進むか、もう一度挑むか、タイトルに戻るかを選べる。';
+      ? 'ネオン街に出た。アイテムを選んでステージ2へ進むか、もう一度隔離区画に挑むか、タイトルに戻るかを選べる。'
+      : 'アイテムを選んでステージ3(無限回路)へ進むか、もう一度挑むか、タイトルに戻るかを選べる。';
     ui.clear.hidden = false;
   }
   function nextStage(item) {
@@ -1786,7 +1786,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = stageN;
-    const SN = `ステージ${stageN} ${stageN === 1 ? '地下' : stageN === 2 ? '地上' : 'はてなき地獄'}`;
+    const SN = `ステージ${stageN} ${stageN === 1 ? '隔離区画' : stageN === 2 ? 'ネオン街' : '無限回路'}`;
     ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
@@ -2497,7 +2497,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     if (n < 2) { start(n); return; }
     pendingStart = n; state = 'startpick'; bgmStart(songFor(n));
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
-    $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : 'はてなき地獄'}`;
+    $('spKicker').textContent = `STAGE ${n} ${n === 2 ? 'ネオン街' : '無限回路'}`;
     $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体ごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     fitLines($('spMsg'));
