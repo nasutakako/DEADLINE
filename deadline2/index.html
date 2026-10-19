@@ -254,6 +254,7 @@ h2.clear { color: #5dff9e; }
 .who .records, .card .records { cursor: pointer; }
 .records h3::after { content: ' ›'; }
 .newtitles { margin: 0; color: var(--lamp); font-weight: 700; font-size: 13px; }
+.mono { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
 
 /* ===== DEADLINE2 skin: neon terminal. Same game, new chrome: square neon-edged buttons,
    scanlines, cyan / magenta accents, pixel display type ===== */
@@ -392,6 +393,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <div class="card">
       <span class="kicker">CAUGHT</span>
       <h2>確保</h2>
+      <p class="mono" id="rMono" hidden></p>
       <div class="score"><span class="label" id="rScoreLabel">逃走時間</span><b id="rScore">0:00.0</b><em id="rRank"></em></div>
       <div class="result">
         <div><span class="label">合計時間</span><b id="rTime">0.0秒</b></div>
@@ -409,6 +411,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <div class="card">
       <span class="kicker exitk" id="cKicker">STAGE 1 CLEAR</span>
       <h2 class="clear">脱出成功</h2>
+      <p class="mono" id="cMono" hidden></p>
       <div class="score"><span class="label" id="cScoreLabel">逃走時間</span><b id="cScore">0:00.0</b><em id="cRank"></em></div>
       <div class="result">
         <div><span class="label">このステージ</span><b id="cTime">0.0秒</b></div>
@@ -432,6 +435,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <div class="card">
       <span class="kicker">STAGE 1 隔離区画</span>
       <h2 class="clear">あそびかた</h2>
+      <p class="mono" id="briefMono" hidden></p>
       <dl class="rules">
         <dt>移動</dt><dd>スマホ:左半分をドラッグ / PC:カーソルの方へ走る・矢印キー</dd>
         <dt>ダッシュ</dt><dd>ボタン / Space で一瞬だけ速く走る(3.5秒ごとに使える)</dd>
@@ -448,6 +452,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <div class="card">
       <span class="kicker exitk" id="spKicker">STAGE 2</span>
       <h2 class="clear">アイテムを選ぶ</h2>
+      <p class="mono" id="spMono" hidden></p>
       <p id="spMsg" style="white-space: pre-line">補給アイテムを1つ選ぶとステージが始まる。</p>
       <div class="picks" id="startPicks">
         <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span>使うと3秒間、足が大きく速くなる</span></button>
@@ -1670,6 +1675,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('cTotal').textContent = total.toFixed(1) + '秒';
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
     const crank = addRecord(stageN, { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
+    mono('cMono', stageN, 'clear');
     showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
     $('cScoreLabel').textContent = `ステージ${stageN} 逃走時間`;
     $('cScore').textContent = fmtTime(t);
@@ -1775,6 +1781,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
       : `ステージ${stageN}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
+    mono('rMono', stageN, 'caught');
     showTitles('rTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit, true));
   }
 
@@ -2733,6 +2740,17 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('briefScreen').hidden = false;
   }
+  // the runner's own words on the story stages (1 and 2): before the stage, on escaping, on being caught
+  const MONO = {
+    1: { standby: '……隔離区画？ 目が覚めたら扉はすべてロックされていた。センサーの向こうで何かが動いている。脱出ルートを探さないと。',
+         clear: '区画の外に出た……！ ネオンがまぶしい。でも、追跡信号はまだ消えていない。',
+         caught: '捕捉された……。区画の構造は記録した。次は抜けられる。' },
+    2: { standby: 'ネオン街。人の気配はないのに、ヤツらだけはいる。逃げ切れば何かが変わるはずだ。走るしかない。',
+         clear: '振り切った……のか？ いや、街の信号はループしたままだ。ここは出口のない回路なのかもしれない。',
+         caught: 'あと一歩だったのに……。次は爆弾でルートをこじ開ける。' },
+  };
+  function mono(id, n, kind) { const el = $(id); if (!el) return; const s = MONO[n] && MONO[n][kind]; el.hidden = !s; el.textContent = s ? '「' + s + '」' : ''; }
+  mono('briefMono', 1, 'standby');
   function begin(n) {
     tap();
     if (n < 2) { start(n); return; }
@@ -2741,6 +2759,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? 'ネオン街' : '無限回路'}`;
     $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
+    mono('spMono', n, 'standby');
     fitLines($('spMsg'));
   }
   // shrink a list's type until each of its lines fits on one row (a few stray characters on a row of their own read badly)
