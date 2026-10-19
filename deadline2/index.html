@@ -1301,21 +1301,24 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
       // a runner circling a loop: the yellow oni stops trailing and waits for them on the coming lap
       if (e.amb) {
-        e.lthink = (e.lthink || 0) - dt;
-        if (e.lthink <= 0) {
+        e.lthink = (e.lthink || 0) - dt; e.lcool = (e.lcool || 0) - dt;
+        if (e.lthink <= 0 && e.lcool <= 0) {
           e.lthink = 0.25;
           const nt = loopIntercept(e, Math.min(es * e.var, runnerSpeed()));
           // keep making for the same spot unless the new one is well away from it, and only give up the
           // ambush after it has failed three looks in a row, so the oni does not dither
-          if (!nt) { e.lmiss = (e.lmiss || 0) + 1; if (e.lmiss >= 3) e.lpt = null; }
+          if (!nt) { e.lmiss = (e.lmiss || 0) + 1; if (e.lmiss >= 3 && e.lpt) { e.lpt = null; e.lcool = 2; } }
           else {
             e.lmiss = 0;
             if (!e.lpt || (nt[2] || 0) !== (e.lpt[2] || 0) || Math.hypot(nt[0] - e.lpt[0], nt[1] - e.lpt[1]) > 2.5) { e.lpt = nt; if (!e.lfd || e.lfd.length !== COLS * ROWS) e.lfd = new Int16Array(COLS * ROWS); bfsTo(e.lfd, e.lpt[0], e.lpt[1]); }
           }
         }
       }
-      const lp = e.amb && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 ? e.lpt : null;
-      const amb = !lp && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
+      const lp = e.amb && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : -1) >= 0 ? e.lpt : null;
+      let amb = !lp && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
+      // once the yellow oni stands on the spot it was cutting to (or cannot reach it), it stops aiming there
+      // and simply goes for the runner, instead of circling round that spot
+      if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) <= 1) amb = false;
       // close by they grab at the runner. A few tiles off they follow the runner's footsteps,
       // a beat behind, so luring one into a corner and slipping out leaves it a step behind.
       // Further away they take the shortest way to the runner.
@@ -1349,8 +1352,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
       const v = e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed());
       const turn = Math.min(1, dt * (lp ? 6 : 12));   // an ambushing yellow oni swings round more smoothly
-      e.vx += (dx / dl * v - e.vx) * turn;
-      e.vy += (dy / dl * v - e.vy) * turn;
+      // waiting on its ambush spot it slows to a stop rather than orbiting it
+      const vv = lp && gx === aimX && gy === aimY ? v * Math.min(1, dl / 0.6) : v;
+      e.vx += (dx / dl * vv - e.vx) * turn;
+      e.vy += (dy / dl * vv - e.vy) * turn;
       move(e, e.vx, e.vy, dt);
     }
     for (let i = 0; i < enemies.length; i++) for (let j = i + 1; j < enemies.length; j++) {
