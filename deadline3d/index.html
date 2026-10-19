@@ -2369,10 +2369,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       if (s.t <= 0) {
         removeObj(s.mesh);
         const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
-        // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1). At most one barrier oni
-        // per wave but no limit on the map; only one yellow oni at a time
+        // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1). Stage 2: one barrier oni
+        // at a time; stage 3: at most one per wave but no limit on the map. Only one yellow oni at a time
         const black = !!s.black;
-        let tough = !black && (!!s.tough || (stageN >= 2 && !toughWave && Math.random() < baseRate));
+        let tough = !black && (!!s.tough || (stageN >= 2 && (stageN >= 3 ? !toughWave : !enemies.some(o => o.tough)) && Math.random() < baseRate));
         let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : 1)));
         // stage 3 from 8:00: the plain red oni and the barrier oni swap rates, so most newcomers wear a barrier
         // (several at once), a plain red one turns up at the barrier oni's old rate; the yellow rate stays
