@@ -233,7 +233,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <div class="records" id="records"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
-      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 はてなき地獄</button></div>
+      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 終わらない夜</button></div>
       <span class="err" id="err" hidden>この端末では 3D 表示を始められませんでした。別のブラウザで開いてみてください。</span>
     </div>
   </div>
@@ -251,7 +251,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   <div class="overlay" id="rankScreen" hidden>
     <div class="card rankcard">
       <h2>世界ランキング</h2>
-      <span class="label">ステージ3 はてなき地獄 ・ 逃走時間 上位100</span>
+      <span class="label">ステージ3 終わらない夜 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -438,7 +438,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     // one line per stage: just the high score
     const h = document.createElement('h3'); h.textContent = 'ハイスコア(逃走時間)'; box.append(h);
     const ol = document.createElement('ol');
-    for (const [n, label] of [[1, 'ステージ1 地下'], [2, 'ステージ2 地上'], [3, 'ステージ3 はてなき地獄']]) {
+    for (const [n, label] of [[1, 'ステージ1 地下'], [2, 'ステージ2 地上'], [3, 'ステージ3 終わらない夜']]) {
       const r = stageBest(n), li = document.createElement('li'); li.className = 'hs' + (r ? ' first' : '');
       const cells = [label, null, r ? `撃破${r.kills || 0}` : ''];
       for (const c of cells) { const s = document.createElement(c === null ? 'b' : 'span'); s.textContent = c === null ? (r ? fmtTime(r.time) : '--') : c; li.append(s); }
@@ -2541,7 +2541,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('againBtn').textContent = `もう一度ステージ${stageN}`;
     $('cRank').textContent = rankText(stageN, crank);
     $('cNext').textContent = '×' + P.stock;
-    if (!last) $('cMsg').textContent = (stageN === 1 ? '地上に出た。' : '') + `アイテムを選んで次(${stageN === 2 ? 'はてなき地獄' : stageTheme(stageN + 1).name})へ進むか、もう一度挑むか、タイトルに戻るかを選べる。`;
+    if (!last) $('cMsg').textContent = (stageN === 1 ? '地上に出た。' : '') + `アイテムを選んで次(${stageN === 2 ? '終わらない夜' : stageTheme(stageN + 1).name})へ進むか、もう一度挑むか、タイトルに戻るかを選べる。`;
     ui.clear.hidden = false;
     ui.game.classList.remove('playing');
   }
@@ -2620,7 +2620,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度ステージ${stageN}`;
     $('rRank').textContent = rankText(stageN, rank);
-    $('rStage').textContent = `CAUGHT ・ ステージ${stageN} ${stageN >= 3 ? 'はてなき地獄' : curStage.name}`;
+    $('rStage').textContent = `CAUGHT ・ ステージ${stageN} ${stageN >= 3 ? '終わらない夜' : curStage.name}`;
     $('rTime').textContent = total.toFixed(1) + '秒';
     $('rKills').textContent = kills + '体';
     $('rCount').textContent = 'ステージ' + stageN;
@@ -2802,7 +2802,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (key === hudKey) return;
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
-    const SN = `ステージ${stageN} ${stageN === 1 ? '地下' : stageN === 2 ? '地上' : 'はてなき地獄'}`;
+    const SN = `ステージ${stageN} ${stageN === 1 ? '地下' : stageN === 2 ? '地上' : '終わらない夜'}`;
     if (P && (state === 'play' || state === 'pause')) {
       const toB = BARRIER_AT - t, toE = EXIT_AT - t;
       if (stageN >= 3) { ui.goal.textContent = `${SN} ・ 次の補給まで ${fmt(Math.max(0, (P.nextR ?? BARRIER_AT) - t)).slice(0, 5)}`; ui.goal.className = 'goal'; }
@@ -3235,7 +3235,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     pendingStart = n; state = 'startpick'; bgmStart(songFor(n)); endTouches();
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     ui.game.classList.remove('playing');
-    $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : 'はてなき地獄'}`;
+    $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
     $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体ごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     fitLines($('spMsg'));
