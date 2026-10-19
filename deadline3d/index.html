@@ -2798,11 +2798,13 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const fmt = s => { const m = Math.floor(s / 60), r = s - m * 60; return String(m).padStart(2, '0') + ':' + r.toFixed(1).padStart(4, '0'); };
   let hudKey = '';
   function hud() {
-    const key = [state, stageN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), P ? P.stock : 1, P ? P.cd.toFixed(2) : 0, P && P.f].join('|');
+    // on the item pick before stage 2 or 3, show the stage about to start
+    const sN = state === 'startpick' ? pendingStart : stageN;
+    const key = [state, sN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), P ? P.stock : 1, P ? P.cd.toFixed(2) : 0, P && P.f].join('|');
     if (key === hudKey) return;
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
-    const SN = `ステージ${stageN} ${stageN === 1 ? '地下' : stageN === 2 ? '地上' : '終わらない夜'}`;
+    const SN = `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
     if (P && (state === 'play' || state === 'pause')) {
       const toB = BARRIER_AT - t, toE = EXIT_AT - t;
       if (stageN >= 3) { ui.goal.textContent = `${SN} ・ 次の補給まで ${fmt(Math.max(0, (P.nextR ?? BARRIER_AT) - t)).slice(0, 5)}`; ui.goal.className = 'goal'; }

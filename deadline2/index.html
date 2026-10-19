@@ -1813,16 +1813,18 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const fmt = s => { const m = Math.floor(s / 60), r = s - m * 60; return String(m).padStart(2, '0') + ':' + r.toFixed(1).padStart(4, '0'); };
   let hudKey = '';
   function hud() {
+    // on the item pick before stage 2 or 3, show the stage about to start
+    const sN = state === 'startpick' ? pendingStart : stageN;
     const playing = state === 'play' || state === 'pause';
     // counts down to the moment the oni actually step out (after the ! warning), not to the warning
     const warnLeft = pending && pending.length ? Math.min(...pending.map(p => p.t)) : null;
     const left = playing ? Math.max(0, warnLeft != null ? warnLeft : nextSpawn - t + SPAWN_WARN) : 0;
-    const key = [JSON.stringify(stageBest(stageN)), state, stageN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), enemies ? enemies.length : 0, level || 1, kills || 0, best, playing ? left.toFixed(1) : '-', P ? P.stock : 1, P ? P.cd.toFixed(2) : 0].join('|');
+    const key = [JSON.stringify(stageBest(sN)), state, sN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), enemies ? enemies.length : 0, level || 1, kills || 0, best, playing ? left.toFixed(1) : '-', P ? P.stock : 1, P ? P.cd.toFixed(2) : 0].join('|');
     if (key === hudKey) return;
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
-    ui.stageNo.textContent = stageN;
-    const SN = `ステージ${stageN} ${stageN === 1 ? '隔離区画' : stageN === 2 ? 'ネオン街' : '無限回路'}`;
+    ui.stageNo.textContent = sN;
+    const SN = `ステージ${sN} ${sN === 1 ? '隔離区画' : sN === 2 ? 'ネオン街' : '無限回路'}`;
     ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
@@ -1837,7 +1839,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     ui.lv.textContent = 'Lv' + (level || 1);
     ui.kills.textContent = kills || 0;
     $('pKills').textContent = kills || 0; $('pCount').textContent = enemies ? enemies.length : 0;
-    { const b = stageBest(stageN); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
+    { const b = stageBest(sN); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
     if (playing) {
       ui.nextLabel.textContent = `次の鬼(${warnLeft != null ? pending.length : spawnBatch()}体)まで ${left.toFixed(1)}秒`;
       ui.meter.style.width = (100 * clamp(1 - left / spawnGap, 0, 1)) + '%';
