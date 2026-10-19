@@ -914,33 +914,6 @@ h2.clear { color: #5dff9e; }
   }
   // ---------- the yellow ambush oni: aims a few tiles ahead of the runner along the street ----------
   let adist = null, aq = null;
-  const LOOP_KEEP = 20;
-  // A runner going round and round the same loop (a plaza, a block) shows it in the footsteps of the last
-  // LOOP_KEEP sec: loopLap finds where they were one lap ago, and the rest of that lap is their way ahead.
-  function loopLap() {
-    const L = P.loop; if (!L || L.length < 12) return null;
-    const now = L[L.length - 1];
-    let run = 0;
-    for (let i = L.length - 2; i >= 0; i--) {
-      const a = L[i], b = L[i + 1];
-      run += Math.hypot(b.x - a.x, b.y - a.y);
-      if (now.t - a.t < 3 || run < 10) continue;
-      if (a.f === now.f && Math.hypot(a.x - now.x, a.y - now.y) < 1.2) return { L, i };
-    }
-    return null;
-  }
-  // the first spot on the coming lap the yellow oni can reach before the runner gets there
-  function loopIntercept(e, v) {
-    const lap = loopLap(); if (!lap) return null;
-    const { L, i } = lap;
-    if (!e.lsd || e.lsd.length !== COLS * ROWS) e.lsd = new Int16Array(COLS * ROWS);
-    bfsTo(e.lsd, clamp(Math.floor(e.x), 0, COLS - 1), clamp(Math.floor(e.y), 0, ROWS - 1));
-    for (let k = i + 1; k < L.length; k++) {
-      const x = Math.floor(L[k].x), y = Math.floor(L[k].y), d = walk(x, y) ? e.lsd[idx(x, y)] : -1;
-      if (d >= 0 && d / v + 0.9 <= L[k].t - L[i].t) return [x, y];
-    }
-    return null;
-  }
   function ambushTarget() {
     const tx = Math.floor(P.x), ty = Math.floor(P.y);
     const hx = P.vx, hy = P.vy;
@@ -948,7 +921,7 @@ h2.clear { color: #5dff9e; }
     let dx = 0, dy = 0;
     if (Math.abs(hx) >= Math.abs(hy)) dx = Math.sign(hx); else dy = Math.sign(hy);
     let x = tx, y = ty;
-    for (let k = 0; k < 2 && walk(x + dx, y + dy); k++) { x += dx; y += dy; }
+    for (let k = 0; k < 3 && walk(x + dx, y + dy); k++) { x += dx; y += dy; }
     // a runner who has just ducked off the way they were going (into a side street) is read as cutting
     // round: past the turn, the yellow oni carries on in the runner's longer-run direction. So a quick
     // feint into a side street sends it round the far side while the runner keeps to the main street.
@@ -1216,7 +1189,6 @@ h2.clear { color: #5dff9e; }
     // footsteps for the oni to follow
     P.hist = P.hist || [];
     if (!P.hist.length || t - P.hist[P.hist.length - 1].t >= 0.05) { P.hist.push({ x: P.x, y: P.y, f: P.f || 0, t }); while (P.hist.length && P.hist[0].t < t - 1.5) P.hist.shift(); }
-    P.loop = P.loop || []; if (!P.loop.length || t - P.loop[P.loop.length - 1].t >= 0.25) { P.loop.push({ x: P.x, y: P.y, f: P.f || 0, t }); while (P.loop[0].t < t - LOOP_KEEP) P.loop.shift(); }
     const mvx = (P.x - bx) / dt, mvy = (P.y - by) / dt;
     if (Math.hypot(mvx, mvy) > 0.5) { P.mx = mvx; P.my = mvy; }
     if (P.dashT > 0 || P.boostT > 0) P.trail.push({ x: P.x, y: P.y, a: 1, boost: P.boostT > 0 && P.dashT <= 0 });
@@ -1274,44 +1246,16 @@ h2.clear { color: #5dff9e; }
       if (e.stun > 0) { e.stun -= dt; e.vx *= 0.9; e.vy *= 0.9; continue; }
       const tx = Math.floor(e.x), ty = Math.floor(e.y);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
-      // a runner circling a loop: the yellow oni stops trailing and waits for them on the coming lap
-      if (e.amb) {
-        e.lthink = (e.lthink || 0) - dt; e.lcool = (e.lcool || 0) - dt;
-        if (e.lthink <= 0 && e.lcool <= 0) {
-          e.lthink = 0.25;
-          const nt = loopIntercept(e, Math.min(es * e.var, runnerSpeed()));
-          // keep making for the same spot unless the new one is well away from it, and only give up the
-          // ambush after it has failed three looks in a row, so the oni does not dither
-          if (!nt) { e.lmiss = (e.lmiss || 0) + 1; if (e.lmiss >= 3 && e.lpt) { e.lpt = null; e.lcool = 2; } }
-          else {
-            e.lmiss = 0;
-            if (!e.lpt || (nt[2] || 0) !== (e.lpt[2] || 0) || Math.hypot(nt[0] - e.lpt[0], nt[1] - e.lpt[1]) > 2.5) { e.lpt = nt; if (!e.lfd || e.lfd.length !== COLS * ROWS) e.lfd = new Int16Array(COLS * ROWS); bfsTo(e.lfd, e.lpt[0], e.lpt[1]); }
-          }
-        }
-      }
-      // after a spell of cutting ahead without getting near, the yellow oni charges in like a red one for a while
-      if (e.amb) e.charge = Math.max(0, (e.charge || 0) - dt);
-      const charging = e.amb && e.charge > 0;
-      const lp = e.amb && !charging && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : -1) >= 0
-        && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : 0) <= (walk(tx, ty) ? dist[idx(tx, ty)] : 0) + 6 ? e.lpt : null;
-      let amb = !lp && !charging && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 2;
-      // once the yellow oni stands on the spot it was cutting to (or cannot reach it), it stops aiming there
-      // and simply goes for the runner, instead of circling round that spot
+      let amb = ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
+      // once it stands on the spot it was cutting to (or cannot reach it), it goes for the runner instead
+      // of circling round that spot
       if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) <= 1) amb = false;
-      // and it does not wander off: if the cut-off spot is well further away than the runner, it just chases
-      if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) > (walk(tx, ty) ? dist[idx(tx, ty)] : 0) + 2) amb = false;
-      if (e.amb && !charging) {
-        // about ten re-reads (3.5 sec) of cutting ahead in a row, then 3 sec of a straight charge;
-        // hanging back far from the runner uses that patience up twice as fast
-        if (lp || amb) { e.ambRun = (e.ambRun || 0) + dt * (Math.hypot(P.x - e.x, P.y - e.y) > 6 ? 2 : 1); if (e.ambRun > 3.5) { e.charge = 3; e.ambRun = 0; } }
-        else e.ambRun = Math.max(0, (e.ambRun || 0) - dt * 2);
-      }
       // close by they grab at the runner. A few tiles off they follow the runner's footsteps,
       // a beat behind, so luring one into a corner and slipping out leaves it a step behind.
       // Further away they take the shortest way to the runner.
       const dRun = Math.hypot(P.x - e.x, P.y - e.y), close = dRun < 1.1;
       if (e.lag == null) e.lag = 0.3 + Math.random() * 0.18;
-      const trail = !lp && !amb && !close && dRun < 6;
+      const trail = !amb && !close && dRun < 6;
       const T = trail ? trailAt(e.lag) : null;
       const sight = trail && clearLine(e.x, e.y, T.x, T.y);
       e.think = (e.think || 0) - dt;
@@ -1322,7 +1266,7 @@ h2.clear { color: #5dff9e; }
         bfsTo(e.fd, e.ax, e.ay);
       }
       const read = trail && !sight && e.fd;
-      const field = lp ? e.lfd : amb ? adist : read ? e.fd : dist, aimX = lp ? lp[0] + 0.5 : amb ? ambT[0] + 0.5 : sight ? T.x : read ? e.ax + 0.5 : P.x, aimY = lp ? lp[1] + 0.5 : amb ? ambT[1] + 0.5 : sight ? T.y : read ? e.ay + 0.5 : P.y;
+      const field = amb ? adist : read ? e.fd : dist, aimX = amb ? ambT[0] + 0.5 : sight ? T.x : read ? e.ax + 0.5 : P.x, aimY = amb ? ambT[1] + 0.5 : sight ? T.y : read ? e.ay + 0.5 : P.y;
       const d = walk(tx, ty) ? field[idx(tx, ty)] : -1;
       let gx = aimX, gy = aimY;
       if (d > 1 && !sight) {
@@ -1338,11 +1282,8 @@ h2.clear { color: #5dff9e; }
       }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
       const v = e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed());
-      const turn = Math.min(1, dt * (lp ? 6 : 12));   // an ambushing yellow oni swings round more smoothly
-      // waiting on its ambush spot it slows to a stop rather than orbiting it
-      const vv = lp && gx === aimX && gy === aimY ? v * Math.min(1, dl / 0.6) : v;
-      e.vx += (dx / dl * vv - e.vx) * turn;
-      e.vy += (dy / dl * vv - e.vy) * turn;
+      e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
+      e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
       move(e, e.vx, e.vy, dt);
     }
     for (let i = 0; i < enemies.length; i++) for (let j = i + 1; j < enemies.length; j++) {
