@@ -229,7 +229,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   <div class="overlay" id="titleScreen">
     <div class="card">
       <h1>DEAD<span>LINE</span> 3D</h1>
-      <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上(夜の街 → 学校 → 戦場)。鬼は時間とともに増え、だんだん速くなる。</p>
+      <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。</p>
       <div class="records" id="records"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
@@ -360,7 +360,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const R_PLAYER = 0.16, R_ENEMY = 0.16, CATCH = 0.24, SEP = 0.36, SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   // the runner here is a third as fast as in the 2D games, so a dropped item waits three times as long
-  const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 30;
+  const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 20;
   const CAM_DIST = 8.5, CAM_H = 1.5;
   const STICK_R = 44;
 
@@ -2142,7 +2142,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   function clearDyn() { for (const c of [...dyn.children]) removeObj(c); }
 
   // stage 1 is underground; after that the surface: night city → school → battlefield, repeating
-  const stageTheme = n => n === 1 ? UNDER : STAGES[(n - 2) % STAGES.length];
+  // like DEADLINE1: stage 1 underground, stages 2 and 3 both in the night city
+  const stageTheme = n => n === 1 ? UNDER : STAGES[0];
+  const stageName = n => n === 1 ? '地下' : n === 2 ? '地上' : '終わらない夜';
   function newGame(n = 1, item) { stageN = n; total = 0; kills = 0; bag = item ? [item] : []; newStage(1); }
   function newStage(stock) {
     const st = stageTheme(stageN);
@@ -2545,7 +2547,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('againBtn').textContent = `もう一度ステージ${stageN}`;
     $('cRank').textContent = rankText(stageN, crank);
     $('cNext').textContent = '×' + P.stock;
-    if (!last) $('cMsg').textContent = (stageN === 1 ? '地上に出た。' : '') + `アイテムを選んで次(${stageN === 2 ? '終わらない夜' : stageTheme(stageN + 1).name})へ進むか、もう一度挑むか、タイトルに戻るかを選べる。`;
+    if (!last) $('cMsg').textContent = (stageN === 1 ? '地上に出た。' : '') + `アイテムを選んで次(${stageName(stageN + 1)})へ進むか、もう一度挑むか、タイトルに戻るかを選べる。`;
     ui.clear.hidden = false;
     ui.game.classList.remove('playing');
   }
@@ -2624,14 +2626,14 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度ステージ${stageN}`;
     $('rRank').textContent = rankText(stageN, rank);
-    $('rStage').textContent = `CAUGHT ・ ステージ${stageN} ${stageN >= 3 ? '終わらない夜' : curStage.name}`;
+    $('rStage').textContent = `CAUGHT ・ ステージ${stageN} ${stageName(stageN)}`;
     $('rTime').textContent = total.toFixed(1) + '秒';
     $('rKills').textContent = kills + '体';
     $('rCount').textContent = 'ステージ' + stageN;
     $('rBest').textContent = best.toFixed(1) + '秒';
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
-      ? `自己ベスト更新。ステージ${stageN}(${curStage.name})まで逃げ延びた。`
+      ? `自己ベスト更新。ステージ${stageN}(${stageName(stageN)})まで逃げ延びた。`
       : `ステージ${stageN}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
   }
 
