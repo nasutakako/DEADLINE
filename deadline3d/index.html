@@ -2290,14 +2290,13 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
     if (stageN >= 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
     // from 6:00 there is always at least one black and one yellow oni about, and at least two barrier oni:
-    // if a kind is short (counting the map and the oni already warned), the next wave is sure to bring one
-    // (never more than one per wave). Stomping its "!" still cancels it, and the wave after brings another.
+    // if a kind is short (counting the map and the oni already warned), the next wave makes up the shortfall
+    // (two barrier oni at once when there are none). Stomping a "!" still cancels it, and the wave after makes up again.
     if (stageN >= 3 && t >= 360 && pending.length) {
       const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
       for (const k of ['black', 'tough', 'amb']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
-        if (have >= (k === 'tough' ? 2 : 1)) continue;
-        const p = free.pop(); if (p) p[k] = true;
+        for (let n = (k === 'tough' ? 2 : 1) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
       }
     }
     }
