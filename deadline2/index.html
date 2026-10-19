@@ -983,6 +983,15 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     if (Math.abs(hx) >= Math.abs(hy)) dx = Math.sign(hx); else dy = Math.sign(hy);
     let x = tx, y = ty;
     for (let k = 0; k < 3 && walk(x + dx, y + dy); k++) { x += dx; y += dy; }
+    // a runner who has just ducked off the way they were going (into a side street) is read as cutting
+    // round: past the turn, the yellow oni carries on in the runner's longer-run direction. So a quick
+    // feint into a side street sends it round the far side while the runner keeps to the main street.
+    const back = trailAt(1.2), lx = P.x - back.x, ly = P.y - back.y;
+    if (Math.hypot(lx, ly) > 1.5) {
+      let ldx = 0, ldy = 0;
+      if (Math.abs(lx) >= Math.abs(ly)) ldx = Math.sign(lx); else ldy = Math.sign(ly);
+      if (ldx * dx + ldy * dy === 0) for (let k = 0; k < 3 && walk(x + ldx, y + ldy); k++) { x += ldx; y += ldy; }
+    }
     return [x, y];
   }
   function ambushFlow(x, y) {
@@ -1315,7 +1324,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         }
       }
       const lp = e.amb && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 && (walk(tx, ty) ? e.lfd[idx(tx, ty)] : -1) >= 0 ? e.lpt : null;
-      let amb = !lp && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
+      let amb = !lp && ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 1;
       // once the yellow oni stands on the spot it was cutting to (or cannot reach it), it stops aiming there
       // and simply goes for the runner, instead of circling round that spot
       if (amb && (walk(tx, ty) ? adist[idx(tx, ty)] : -1) <= 1) amb = false;
@@ -1361,7 +1370,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     for (let i = 0; i < enemies.length; i++) for (let j = i + 1; j < enemies.length; j++) {
       const p = enemies[i], q = enemies[j];
       const dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
-      if (d > 0 && d < 0.62 && !p.black && !q.black) { const k = (0.62 - d) / 2; p.x -= dx / d * k; p.y -= dy / d * k; q.x += dx / d * k; q.y += dy / d * k; collide(p); collide(q); }
+      if (d > 0 && d < 0.62 && !p.black && !q.black && !p.amb && !q.amb) { const k = (0.62 - d) / 2; p.x -= dx / d * k; p.y -= dy / d * k; q.x += dx / d * k; q.y += dy / d * k; collide(p); collide(q); }
     }
 
     updateRockets(dt);
