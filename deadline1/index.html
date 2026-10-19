@@ -374,6 +374,7 @@ h2.clear { color: #5dff9e; }
         <div><span class="label">持ち越す爆弾</span><b id="cNext">×1</b></div>
       </div>
       <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。爆弾とアイテムは持ち越し。</p>
+      <p class="newtitles" id="cTitles" hidden></p>
       <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button></div>
       <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
       <div class="picks" id="clearPicks">
@@ -709,11 +710,11 @@ h2.clear { color: #5dff9e; }
     init();
     return { sync, paint };
   })();
-  // ---------- titles: earned from how a stage 3 run went; one is worn over your name and in the world ranking ----------
+  // ---------- titles: earned from how a stage went (any stage); one is worn over your name and in the world ranking ----------
   // [id, name, how to earn, test(run, totals, owned count)]. Roughly easy to hard.
   const TITLES = [
-    ['t01', 'はじめての夜', 'ステージ3を1回遊ぶ', () => true],
-    ['t02', '瞬殺', '30秒以内に捕まる', r => r.time < 30],
+    ['t01', 'はじめての夜', 'ステージ3を1回遊ぶ', r => r.stage >= 3],
+    ['t02', '瞬殺', '30秒以内に捕まる', r => r.caught && r.time < 30],
     ['t03', '1分の壁', '1分逃げ切る', r => r.time >= 60],
     ['t04', '足元注意', '落とし穴に自分で落ちる', r => r.fell],
     ['t05', '鬼退治見習い', '1回で鬼を10体倒す', r => r.kills >= 10],
@@ -724,7 +725,7 @@ h2.clear { color: #5dff9e; }
     ['t10', '黒を討つ', '黒い鬼を倒す', r => r.black >= 1],
     ['t11', 'まとめて吹っ飛べ', '爆弾1発で鬼を3体倒す', r => r.maxBlast >= 3],
     ['t12', '一直線', 'ランチャー1発で鬼を3体倒す', r => r.maxRocket >= 3],
-    ['t13', '常連', 'ステージ3を10回遊ぶ', (r, a) => a.plays >= 10],
+    ['t13', '常連', '通算10回遊ぶ', (r, a) => a.plays >= 10],
     ['t14', '夜更かし', '3分逃げ切る', r => r.time >= 180],
     ['t15', '鬼退治人', '1回で鬼を30体倒す', r => r.kills >= 30],
     ['t16', '九死に一生', 'バリアで確保を防ぐ', r => r.saves >= 1],
@@ -737,7 +738,7 @@ h2.clear { color: #5dff9e; }
     ['t23', 'バリア破り', '1回でバリア鬼を10体倒す', r => r.tough >= 10],
     ['t24', '鬼だらけ', '鬼が同時に30体いる中を生き延びる', r => r.maxOni >= 30],
     ['t25', '鬼狩り', '1回で鬼を60体倒す', r => r.kills >= 60],
-    ['t26', '夜通し', 'ステージ3の逃走時間が累計30分', (r, a) => a.time >= 1800],
+    ['t26', '夜通し', '通算の逃走時間30分', (r, a) => a.time >= 1800],
     ['t27', '眠らない者', '6分逃げ切る', r => r.time >= 360],
     ['t28', '大爆発', '爆弾1発で鬼を5体倒す', r => r.maxBlast >= 5],
     ['t29', '落とし穴の主', '1回で落とし穴に鬼を10体落とす', r => r.pit >= 10],
@@ -745,26 +746,26 @@ h2.clear { color: #5dff9e; }
     ['t31', '影狩り', '1回で黒い鬼を5体倒す', r => r.black >= 5],
     ['t32', '補給いらず', 'アイテムを使わずに5分逃げ切る', r => r.items === 0 && r.time >= 300],
     ['t33', '闇を駆ける者', '7分逃げ切る', r => r.time >= 420],
-    ['t34', '夜の常連', 'ステージ3を50回遊ぶ', (r, a) => a.plays >= 50],
+    ['t34', '夜の常連', '通算50回遊ぶ', (r, a) => a.plays >= 50],
     ['t35', '不殺の逃亡者', '1体も倒さずに4分逃げ切る', r => r.kills === 0 && r.time >= 240],
     ['t36', '真夜中の逃亡者', '8分逃げ切る', r => r.time >= 480],
     ['t37', '百鬼斬り', '1回で鬼を100体倒す', r => r.kills >= 100],
-    ['t38', '鬼の天敵', 'ステージ3の撃破数が累計500体', (r, a) => a.kills >= 500],
+    ['t38', '鬼の天敵', '通算の撃破数500体', (r, a) => a.kills >= 500],
     ['t39', '丸腰の達人', '爆弾を使わずに6分逃げ切る', r => r.bombs === 0 && r.time >= 360],
     ['t40', '百鬼夜行', '鬼が同時に60体いる中を生き延びる', r => r.maxOni >= 60],
     ['t41', '夜明け前', '10分逃げ切る', r => r.time >= 600],
-    ['t42', '夜を生きる者', 'ステージ3の逃走時間が累計2時間', (r, a) => a.time >= 7200],
+    ['t42', '夜を生きる者', '通算の逃走時間2時間', (r, a) => a.time >= 7200],
     ['t43', '最大包囲', '12分逃げ切る', r => r.time >= 720],
     ['t44', '鬼神', '1回で鬼を200体倒す', r => r.kills >= 200],
-    ['t45', '終わらない挑戦', 'ステージ3を100回遊ぶ', (r, a) => a.plays >= 100],
-    ['t46', '鬼の災厄', 'ステージ3の撃破数が累計2000体', (r, a) => a.kills >= 2000],
+    ['t45', '終わらない挑戦', '通算100回遊ぶ', (r, a) => a.plays >= 100],
+    ['t46', '鬼の災厄', '通算の撃破数2000体', (r, a) => a.kills >= 2000],
     ['t47', '終わらない夜の覇者', '15分逃げ切る', r => r.time >= 900],
     ['t48', '伝説の逃亡者', '1回で15分逃げ切り、鬼を100体倒す', r => r.time >= 900 && r.kills >= 100],
     ['t49', '夜の王', '20分逃げ切る', r => r.time >= 1200],
     ['t50', '称号コレクター', '称号を40個集める', (r, a, n) => n >= 40],
   ];
   const titleName = id => { const x = TITLES.find(t => t[0] === id); return x ? x[1] : ''; };
-  // this stage 3 run's tallies (null outside stage 3)
+  // this stage's tallies (null outside a stage)
   let S3 = null;
   const newRun = () => ({ bombs: 0, dashes: 0, items: 0, stomps: 0, pit: 0, black: 0, amb: 0, tough: 0, saves: 0, maxBlast: 0, maxRocket: 0, maxOni: 0 });
   // an oni went down: how (pit, …) and what kind it was
@@ -775,10 +776,10 @@ h2.clear { color: #5dff9e; }
     if (e.amb) S3.amb++;
     if (e.armored) S3.tough++;
   }
-  // end of a stage 3 run: count it into the totals and hand out every title it earns; returns the new ones
-  function awardTitles(time, kills, fell) {
+  // end of a stage (caught or escaped): count it into the totals and hand out every title it earns; returns the new ones
+  function awardTitles(time, kills, fell, caught) {
     if (!S3) return [];
-    const r = Object.assign({}, S3, { time, kills, fell });
+    const r = Object.assign({}, S3, { time, kills, fell, caught, stage: stageN });
     S3 = null;
     const a = records.s3 = Object.assign({ plays: 0, time: 0, kills: 0 }, records.s3);
     a.plays++; a.time = +(a.time + time).toFixed(1); a.kills += kills;
@@ -786,9 +787,12 @@ h2.clear { color: #5dff9e; }
     for (const [id, , , ok] of TITLES) if (!owned.has(id) && id !== 't50' && ok(r, a, 0)) { owned.add(id); got.push(id); }
     if (!owned.has('t50') && TITLES[49][3](r, a, owned.size)) { owned.add('t50'); got.push('t50'); }
     records.titles = TITLES.map(x => x[0]).filter(id => owned.has(id));
+    // the first title ever earned is put on straight away; after that the player picks
+    if (got.length && records.title == null) { records.title = got[got.length - 1]; Rank.sync(); }
     saveRecords(); paintTitle();
     return got;
   }
+  const showTitles = (el, got) => { $(el).hidden = !got.length; $(el).textContent = got.length ? '称号獲得: ' + got.map(titleName).join('、') : ''; };
   function paintTitle() {
     const b = $('whoTitle'); if (!b) return;
     const n = titleName(records.title);
@@ -1372,7 +1376,7 @@ h2.clear { color: #5dff9e; }
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = [];
     t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
-    stageKillStart = kills; S3 = stageN >= 3 ? newRun() : null;
+    stageKillStart = kills; S3 = newRun();
     exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
@@ -1722,6 +1726,7 @@ h2.clear { color: #5dff9e; }
     $('cTotal').textContent = total.toFixed(1) + '秒';
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
     const crank = addRecord(stageN, { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
+    showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
     $('cScoreLabel').textContent = `ステージ${stageN} 逃走時間`;
     $('cScore').textContent = fmtTime(t);
     $('pickLabel').textContent = `ステージ${stageN + 1}へ進む:補給アイテムを1つ選ぶ`;
@@ -1826,10 +1831,7 @@ h2.clear { color: #5dff9e; }
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
       : `ステージ${stageN}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
-    const got = stageN >= 3 ? awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit) : [];
-    // the first title ever earned is put on straight away; after that the player picks
-    if (got.length && records.title == null) { records.title = got[got.length - 1]; saveRecords(); paintTitle(); Rank.sync(); }
-    $('rTitles').hidden = !got.length; $('rTitles').textContent = got.length ? '称号獲得: ' + got.map(titleName).join('、') : '';
+    showTitles('rTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit, true));
   }
 
   // ---------- render ----------
