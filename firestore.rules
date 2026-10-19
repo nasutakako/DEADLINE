@@ -7,17 +7,18 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function okGame(g) { return g in ['deadline1', 'deadline2', 'deadline3d']; }
 
-    // games/<game>/players/<uid>: { name, key, best, at }
+    // games/<game>/players/<uid>: { name, key, best, at, title }
     match /games/{game}/players/{uid} {
       allow read: if okGame(game);
       allow create, update: if okGame(game) && signedIn() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['name', 'key', 'best', 'at'])
+        && request.resource.data.keys().hasOnly(['name', 'key', 'best', 'at', 'title'])
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
         && request.resource.data.key is string && request.resource.data.key.size() <= 200
         && (!('best' in request.resource.data)
             || (request.resource.data.best is number && request.resource.data.best >= 0 && request.resource.data.best <= 86400))
         && (!('at' in request.resource.data) || request.resource.data.at is string)
+        && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 20))
         // the name on the record must be one this player owns
         && get(/databases/$(database)/documents/games/$(game)/names/$(request.resource.data.key)).data.owner == request.auth.uid;
       allow delete: if false;

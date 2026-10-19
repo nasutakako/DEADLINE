@@ -219,7 +219,7 @@ h2.clear { color: #5dff9e; }
 .card.rankcard { max-width: 520px; max-height: 100%; min-height: 0; margin: 0 auto; gap: 8px; }
 .rankcard h2 { font-size: clamp(26px, 6vw, 38px); color: var(--lamp); }
 .ranklist { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.25); }
-.ranklist li, .rankme { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; gap: 10px; align-items: baseline; padding: 6px 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.ranklist li, .rankme { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; padding: 6px 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .ranklist li:last-child { border-bottom: 0; }
 .ranklist .no, .rankme .no { font-family: var(--f-num); font-weight: 700; color: var(--muted); text-align: right; }
 .ranklist li:nth-child(-n+3) .no { color: var(--lamp); }
@@ -228,6 +228,32 @@ h2.clear { color: #5dff9e; }
 .ranklist li.me, .rankme { background: rgba(143,233,255,.12); color: var(--runner); }
 .rankme { border: 1px solid rgba(143,233,255,.45); border-radius: 8px; }
 .ranklist .msg { display: block; color: var(--muted); padding: 14px 10px; }
+.whotitle { text-align: left; border: 1px solid rgba(255,207,90,.35); background: rgba(255,207,90,.06); color: var(--lamp); border-radius: 6px; padding: 4px 9px; font-weight: 700; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.whotitle.none { color: var(--muted); border-color: var(--line); background: transparent; }
+.who.inline .whotitle { flex: 1 1 100%; }
+.ranklist .tt, .rankme .tt { font-size: 11px; color: var(--lamp); max-width: 9.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.titlelist, .reclists { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.25); }
+.titlelist button { display: grid; gap: 1px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid rgba(255,255,255,.05); border-radius: 0; padding: 7px 12px; color: var(--ink); font: inherit; }
+.titlelist li:last-child button { border-bottom: 0; }
+.titlelist .tn { font-weight: 700; font-size: 14px; }
+.titlelist .tc { font-size: 11px; color: var(--muted); }
+.titlelist button.locked { opacity: .55; }
+.titlelist button.sel { background: rgba(255,207,90,.14); }
+.titlelist button.sel .tn { color: var(--lamp); }
+.titlelist button.sel .tn::after { content: ' ✓'; }
+.reclists { padding: 8px 12px; display: grid; gap: 12px; align-content: start; }
+.reclists h3 { margin: 0 0 4px; font-size: 12px; letter-spacing: .1em; color: var(--lamp); }
+.reclists ol { margin: 0; padding: 0; list-style: none; display: grid; gap: 2px; }
+.reclists li { display: grid; grid-template-columns: 2.6em 4.6em 4.4em 2.6em 1fr; gap: 6px; font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.reclists li .no { color: var(--muted); text-align: right; }
+.reclists li:first-child .no, .reclists li:first-child .tm { color: var(--lamp); }
+.reclists .tm { font-family: var(--f-num); font-weight: 700; }
+.reclists .kl, .reclists .es, .reclists .dt { color: var(--muted); }
+.reclists .dt { text-align: right; }
+.reclists .empty { margin: 0; font-size: 12px; color: var(--muted); }
+.who .records, .card .records { cursor: pointer; }
+.records h3::after { content: ' ›'; }
+.newtitles { margin: 0; color: var(--lamp); font-weight: 700; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -252,6 +278,7 @@ h2.clear { color: #5dff9e; }
 <div class="pad" id="pad">
   <div class="who" id="who" hidden>
     <span class="label">PLAYER</span>
+    <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
     <button class="whoname unset" id="whoName" type="button">名前を登録</button>
     <button class="rankbtn" id="rankBtn" type="button">🏆 ランキング</button>
     <span class="whonote" id="whoNote" hidden></span>
@@ -273,7 +300,7 @@ h2.clear { color: #5dff9e; }
     <div class="card">
       <h1>DEAD<span>LINE</span>1</h1>
       <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
-      <div class="records" id="records"></div>
+      <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
       <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 終わらない夜</button></div>
@@ -287,6 +314,24 @@ h2.clear { color: #5dff9e; }
       <input class="namein" id="nameIn" type="text" maxlength="10" autocomplete="off" spellcheck="false" placeholder="10文字まで" aria-label="プレイヤー名">
       <span class="nameerr" id="nameErr" role="status"></span>
       <div class="row"><button class="go" id="nameOk" type="button">登録</button><button class="ghost" id="nameCancel" type="button" hidden>やめる</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="titlesScreen" hidden>
+    <div class="card rankcard">
+      <h2>称号</h2>
+      <span class="label" id="titlesCount"></span>
+      <ul class="titlelist" id="titlesList"></ul>
+      <div class="row"><button class="ghost" id="titlesClose" type="button">閉じる</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="recScreen" hidden>
+    <div class="card rankcard">
+      <h2>記録</h2>
+      <span class="label">各ステージの上位5位(逃走時間)</span>
+      <div class="reclists" id="recLists"></div>
+      <div class="row"><button class="ghost" id="recClose" type="button">閉じる</button></div>
     </div>
   </div>
 
@@ -312,6 +357,7 @@ h2.clear { color: #5dff9e; }
         <div><span class="label">ベスト</span><b id="rBest">0.0秒</b></div>
       </div>
       <p id="rMsg"></p>
+      <p class="newtitles" id="rTitles" hidden></p>
       <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
@@ -433,7 +479,7 @@ h2.clear { color: #5dff9e; }
   let records = { stages: {}, plays: 0, bestTime: 0, cleared: {} };
   try { const r = JSON.parse(localStorage.getItem(REC_KEY) || 'null'); if (r && r.stages) records = Object.assign(records, r); } catch (e) {}
   let recDoc = null, stageKillStart = 0;
-  const TOP_N = 3;
+  const TOP_N = 5;
   // escapes rank above captures; faster escapes first, then longer survivals
   // the score is the time you stayed free: longer is better, escaped or caught alike
   const better = (x, y) => y.time - x.time;
@@ -466,6 +512,7 @@ h2.clear { color: #5dff9e; }
     if (hint && hint.animate) hint.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 260 });
   }
   const stageBest = n => { const l = (records.stages[n] || []).filter(r => r.time != null).sort(better); return l.length ? l[0] : null; };
+  const STAGE_LABELS = [[1, 'ステージ1 地下'], [2, 'ステージ2 地上'], [3, 'ステージ3 終わらない夜']];
   function renderRecords() {
     updateLocks();
     const box = $('records'); if (!box) return;
@@ -473,7 +520,7 @@ h2.clear { color: #5dff9e; }
     // one line per stage: just the high score
     const h = document.createElement('h3'); h.textContent = 'ハイスコア(逃走時間)'; box.append(h);
     const ol = document.createElement('ol');
-    for (const [n, label] of [[1, 'ステージ1 地下'], [2, 'ステージ2 地上'], [3, 'ステージ3 終わらない夜']]) {
+    for (const [n, label] of STAGE_LABELS) {
       const r = stageBest(n), li = document.createElement('li'); li.className = 'hs' + (r ? ' first' : '');
       const cells = [label, null, r ? `撃破${r.kills || 0}` : ''];
       for (const c of cells) { const s = document.createElement(c === null ? 'b' : 'span'); s.textContent = c === null ? (r ? fmtTime(r.time) : '--') : c; li.append(s); }
@@ -483,7 +530,7 @@ h2.clear { color: #5dff9e; }
   }
   async function saveRecords() {
     try { localStorage.setItem(REC_KEY, JSON.stringify(records)); } catch (e) {}
-    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {} }); } catch (e) {} }
+    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 } }); } catch (e) {} }
   }
   // records this stage's result; returns its rank (1-3) within that stage, or 0
   function addRecord(n, rec) {
@@ -503,7 +550,10 @@ h2.clear { color: #5dff9e; }
       const snap = await recDoc.get();
       if (snap.exists) {
         const d = snap.data() || {};
-        records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared) };
+        records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
+          titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
+          s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+        paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       if (records.bestTime > best) best = records.bestTime;
       renderRecords(); Rank.sync();
@@ -518,7 +568,7 @@ h2.clear { color: #5dff9e; }
     else if (r.parentNode !== recHome.parent) recHome.parent.insertBefore(r, recHome.next);
   }
   function placeWho() {
-    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden);
+    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('recScreen').hidden);
     if (padMQ.matches) { w.className = 'who'; if (w.parentNode !== $('pad')) $('pad').prepend(w); }
     else if (wideMQ.matches) { w.className = 'who float'; w.style.left = w.style.top = '14px'; if (w.parentNode !== $('stage')) $('stage').appendChild(w); }
     else { w.className = 'who inline'; w.style.left = w.style.top = ''; const c = ui.title.querySelector('.card'); if (w.parentNode !== c) c.prepend(w); }
@@ -543,10 +593,16 @@ h2.clear { color: #5dff9e; }
     }
     async function sync() {
       if (!db || !me || !me.name || !canWrite) return;
-      const b = myBest();
-      if (b <= (me.best || 0)) return;
-      me = Object.assign({}, me, { best: b, at: new Date().toISOString() });
-      try { await db.doc('players/' + uid).set(me); } catch (e) {}
+      const b = myBest(), tt = titleName(records.title), up = b > (me.best || 0);
+      if (!up && tt === (me.title || '')) return;
+      me = Object.assign({}, me, up ? { best: b, at: new Date().toISOString() } : {}, { title: tt });
+      try { await put(); } catch (e) {}
+    }
+    // the title field needs the newer ranking rules; where they are not live yet, the record goes without it
+    async function put() {
+      const ref = db.doc('players/' + uid);
+      try { await ref.set(me); }
+      catch (e) { if (!('title' in me)) throw e; const { title, ...rest } = me; await ref.set(rest); }
     }
     async function init() {
       try {
@@ -592,7 +648,8 @@ h2.clear { color: #5dff9e; }
         const old = me && me.key;
         me = Object.assign({}, me, { name, key });
         const b = myBest(); if (b > (me.best || 0)) Object.assign(me, { best: b, at: new Date().toISOString() });
-        await db.doc('players/' + uid).set(me);
+        { const tt = titleName(records.title); if (tt || me.title) me.title = tt; }
+        await put();
         if (old && old !== key) { try { await db.doc('names/' + old).delete(); } catch (e) {} }
         paint(); closeName(); tap();
       } catch (e) {
@@ -603,7 +660,7 @@ h2.clear { color: #5dff9e; }
     const fmt = s => fmtTime(+s || 0);
     function row(no, p, mine) {
       const li = document.createElement('li'); if (mine) li.className = 'me';
-      for (const [c, v] of [['no', no + '位'], ['nm', p.name || '???'], ['tm', fmt(p.best)]]) { const s = document.createElement('span'); s.className = c; s.textContent = v; li.appendChild(s); }
+      for (const [c, v] of [['no', no + '位'], ['nm', p.name || '???'], ['tt', p.title || ''], ['tm', fmt(p.best)]]) { const s = document.createElement('span'); s.className = c; s.textContent = v; li.appendChild(s); }
       return li;
     }
     async function openRank() {
@@ -633,7 +690,7 @@ h2.clear { color: #5dff9e; }
           mine.textContent = ''; for (const c of [...li.childNodes]) mine.appendChild(c);
           mine.hidden = false;
         } else if (!inTop && me && me.name) {
-          mine.textContent = ''; for (const [c, v] of [['no', '--'], ['nm', me.name], ['tm', '記録なし']]) { const s = document.createElement('span'); s.className = c; s.textContent = v; mine.appendChild(s); }
+          mine.textContent = ''; for (const [c, v] of [['no', '--'], ['nm', me.name], ['tt', me.title || ''], ['tm', '記録なし']]) { const s = document.createElement('span'); s.className = c; s.textContent = v; mine.appendChild(s); }
           mine.hidden = false;
         }
       } catch (e) { msg('ランキングを読み込めませんでした。'); }
@@ -652,6 +709,136 @@ h2.clear { color: #5dff9e; }
     init();
     return { sync, paint };
   })();
+  // ---------- titles: earned from how a stage 3 run went; one is worn over your name and in the world ranking ----------
+  // [id, name, how to earn, test(run, totals, owned count)]. Roughly easy to hard.
+  const TITLES = [
+    ['t01', 'はじめての夜', 'ステージ3を1回遊ぶ', () => true],
+    ['t02', '瞬殺', '30秒以内に捕まる', r => r.time < 30],
+    ['t03', '1分の壁', '1分逃げ切る', r => r.time >= 60],
+    ['t04', '足元注意', '落とし穴に自分で落ちる', r => r.fell],
+    ['t05', '鬼退治見習い', '1回で鬼を10体倒す', r => r.kills >= 10],
+    ['t06', '罠師', '落とし穴で鬼を落とす', r => r.pit >= 1],
+    ['t07', '出現阻止', '1回で「!」を5回踏む', r => r.stomps >= 5],
+    ['t08', '2分の壁', '2分逃げ切る', r => r.time >= 120],
+    ['t09', '先回り封じ', '黄色い鬼を倒す', r => r.amb >= 1],
+    ['t10', '黒を討つ', '黒い鬼を倒す', r => r.black >= 1],
+    ['t11', 'まとめて吹っ飛べ', '爆弾1発で鬼を3体倒す', r => r.maxBlast >= 3],
+    ['t12', '一直線', 'ランチャー1発で鬼を3体倒す', r => r.maxRocket >= 3],
+    ['t13', '常連', 'ステージ3を10回遊ぶ', (r, a) => a.plays >= 10],
+    ['t14', '夜更かし', '3分逃げ切る', r => r.time >= 180],
+    ['t15', '鬼退治人', '1回で鬼を30体倒す', r => r.kills >= 30],
+    ['t16', '九死に一生', 'バリアで確保を防ぐ', r => r.saves >= 1],
+    ['t17', '平和主義者', '1体も倒さずに2分逃げ切る', r => r.kills === 0 && r.time >= 120],
+    ['t18', '深夜徘徊', '4分逃げ切る', r => r.time >= 240],
+    ['t19', '素手の逃亡者', '爆弾を使わずに3分逃げ切る', r => r.bombs === 0 && r.time >= 180],
+    ['t20', '爆弾魔', '1回で爆弾を20個使う', r => r.bombs >= 20],
+    ['t21', '韋駄天', '1回でダッシュを100回使う', r => r.dashes >= 100],
+    ['t22', '夜の住人', '5分逃げ切る', r => r.time >= 300],
+    ['t23', 'バリア破り', '1回でバリア鬼を10体倒す', r => r.tough >= 10],
+    ['t24', '鬼だらけ', '鬼が同時に30体いる中を生き延びる', r => r.maxOni >= 30],
+    ['t25', '鬼狩り', '1回で鬼を60体倒す', r => r.kills >= 60],
+    ['t26', '夜通し', 'ステージ3の逃走時間が累計30分', (r, a) => a.time >= 1800],
+    ['t27', '眠らない者', '6分逃げ切る', r => r.time >= 360],
+    ['t28', '大爆発', '爆弾1発で鬼を5体倒す', r => r.maxBlast >= 5],
+    ['t29', '落とし穴の主', '1回で落とし穴に鬼を10体落とす', r => r.pit >= 10],
+    ['t30', '鬼門番', '1回で「!」を30回踏む', r => r.stomps >= 30],
+    ['t31', '影狩り', '1回で黒い鬼を5体倒す', r => r.black >= 5],
+    ['t32', '補給いらず', 'アイテムを使わずに5分逃げ切る', r => r.items === 0 && r.time >= 300],
+    ['t33', '闇を駆ける者', '7分逃げ切る', r => r.time >= 420],
+    ['t34', '夜の常連', 'ステージ3を50回遊ぶ', (r, a) => a.plays >= 50],
+    ['t35', '不殺の逃亡者', '1体も倒さずに4分逃げ切る', r => r.kills === 0 && r.time >= 240],
+    ['t36', '真夜中の逃亡者', '8分逃げ切る', r => r.time >= 480],
+    ['t37', '百鬼斬り', '1回で鬼を100体倒す', r => r.kills >= 100],
+    ['t38', '鬼の天敵', 'ステージ3の撃破数が累計500体', (r, a) => a.kills >= 500],
+    ['t39', '丸腰の達人', '爆弾を使わずに6分逃げ切る', r => r.bombs === 0 && r.time >= 360],
+    ['t40', '百鬼夜行', '鬼が同時に60体いる中を生き延びる', r => r.maxOni >= 60],
+    ['t41', '夜明け前', '10分逃げ切る', r => r.time >= 600],
+    ['t42', '夜を生きる者', 'ステージ3の逃走時間が累計2時間', (r, a) => a.time >= 7200],
+    ['t43', '最大包囲', '12分逃げ切る', r => r.time >= 720],
+    ['t44', '鬼神', '1回で鬼を200体倒す', r => r.kills >= 200],
+    ['t45', '終わらない挑戦', 'ステージ3を100回遊ぶ', (r, a) => a.plays >= 100],
+    ['t46', '鬼の災厄', 'ステージ3の撃破数が累計2000体', (r, a) => a.kills >= 2000],
+    ['t47', '終わらない夜の覇者', '15分逃げ切る', r => r.time >= 900],
+    ['t48', '伝説の逃亡者', '1回で15分逃げ切り、鬼を100体倒す', r => r.time >= 900 && r.kills >= 100],
+    ['t49', '夜の王', '20分逃げ切る', r => r.time >= 1200],
+    ['t50', '称号コレクター', '称号を40個集める', (r, a, n) => n >= 40],
+  ];
+  const titleName = id => { const x = TITLES.find(t => t[0] === id); return x ? x[1] : ''; };
+  // this stage 3 run's tallies (null outside stage 3)
+  let S3 = null;
+  const newRun = () => ({ bombs: 0, dashes: 0, items: 0, stomps: 0, pit: 0, black: 0, amb: 0, tough: 0, saves: 0, maxBlast: 0, maxRocket: 0, maxOni: 0 });
+  // an oni went down: how (pit, …) and what kind it was
+  function tally(e, how) {
+    if (!S3) return;
+    if (how) S3[how]++;
+    if (e.black) S3.black++;
+    if (e.amb) S3.amb++;
+    if (e.armored) S3.tough++;
+  }
+  // end of a stage 3 run: count it into the totals and hand out every title it earns; returns the new ones
+  function awardTitles(time, kills, fell) {
+    if (!S3) return [];
+    const r = Object.assign({}, S3, { time, kills, fell });
+    S3 = null;
+    const a = records.s3 = Object.assign({ plays: 0, time: 0, kills: 0 }, records.s3);
+    a.plays++; a.time = +(a.time + time).toFixed(1); a.kills += kills;
+    const owned = new Set(records.titles || []), got = [];
+    for (const [id, , , ok] of TITLES) if (!owned.has(id) && id !== 't50' && ok(r, a, 0)) { owned.add(id); got.push(id); }
+    if (!owned.has('t50') && TITLES[49][3](r, a, owned.size)) { owned.add('t50'); got.push('t50'); }
+    records.titles = TITLES.map(x => x[0]).filter(id => owned.has(id));
+    saveRecords(); paintTitle();
+    return got;
+  }
+  function paintTitle() {
+    const b = $('whoTitle'); if (!b) return;
+    const n = titleName(records.title);
+    b.textContent = n ? '《' + n + '》' : (records.titles && records.titles.length ? '称号を選ぶ' : '称号なし');
+    b.classList.toggle('none', !n);
+  }
+  function openTitles() {
+    const list = $('titlesList'), owned = new Set(records.titles || []);
+    list.textContent = '';
+    $('titlesCount').textContent = `${owned.size} / ${TITLES.length} 獲得 ・ 獲得した称号から1つ選べる`;
+    const add = (id, name, how, have) => {
+      const li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button'; b.className = (have ? '' : 'locked') + ((records.title || '') === id ? ' sel' : '');
+      const n = document.createElement('span'); n.className = 'tn'; n.textContent = have ? name : '？？？';
+      const c = document.createElement('span'); c.className = 'tc'; c.textContent = how;
+      b.append(n, c);
+      if (have) b.addEventListener('click', () => { tap(); records.title = id; saveRecords(); paintTitle(); Rank.sync(); openTitles(); });
+      else b.disabled = true;
+      li.append(b); list.append(li);
+    };
+    add('', 'なし', '称号を表示しない', true);
+    for (const [id, name, how] of TITLES) add(id, name, how, owned.has(id));
+    ui.title.hidden = true; $('titlesScreen').hidden = false;
+  }
+  function openRecords() {
+    const box = $('recLists'); box.textContent = '';
+    for (const [n, label] of STAGE_LABELS) {
+      const sec = document.createElement('section'), h = document.createElement('h3'), ol = document.createElement('ol');
+      h.textContent = label; sec.append(h);
+      const l = (records.stages[n] || []).filter(r => r.time != null).sort(better).slice(0, 5);
+      if (!l.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'まだ記録がありません'; sec.append(p); }
+      l.forEach((r, i) => {
+        const li = document.createElement('li'), d = r.at ? new Date(r.at) : null;
+        for (const [c, v] of [['no', (i + 1) + '位'], ['tm', fmtTime(r.time)], ['kl', '撃破' + (r.kills || 0)], ['es', n === 3 ? '' : r.escaped ? '脱出' : '確保'], ['dt', d && !isNaN(d) ? `${d.getMonth() + 1}/${d.getDate()}` : '']]) {
+          const s = document.createElement('span'); s.className = c; s.textContent = v; li.append(s);
+        }
+        ol.append(li);
+      });
+      if (l.length) sec.append(ol);
+      box.append(sec);
+    }
+    ui.title.hidden = true; $('recScreen').hidden = false;
+  }
+  const closeOverlay = id => { tap(); $(id).hidden = true; ui.title.hidden = false; };
+  $('whoTitle').addEventListener('click', () => { tap(); openTitles(); });
+  $('titlesClose').addEventListener('click', () => closeOverlay('titlesScreen'));
+  $('recClose').addEventListener('click', () => closeOverlay('recScreen'));
+  $('records').addEventListener('click', () => { if (!ui.title.hidden) { tap(); openRecords(); } });
+  $('records').addEventListener('keydown', e => { if ((e.key === 'Enter' || e.key === ' ') && !ui.title.hidden) { e.preventDefault(); openRecords(); } });
+  paintTitle();
   placeWho();
 
 
@@ -1185,7 +1372,7 @@ h2.clear { color: #5dff9e; }
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = [];
     t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
-    stageKillStart = kills;
+    stageKillStart = kills; S3 = stageN >= 3 ? newRun() : null;
     exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
@@ -1357,6 +1544,7 @@ h2.clear { color: #5dff9e; }
       if (Math.hypot(s.x - P.x, s.y - P.y) >= 0.55) return true;   // the black oni's ! looks the same and goes too
       for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; sparks.push({ x: s.x, y: s.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: Math.random() < 0.5 ? '#ffffff' : '#ff6a5a' }); }
       flash = Math.max(flash, 0.12); tone(1568, 0.09, 'triangle', 0.05, 784);
+      if (S3) S3.stomps++;
       return false;
     });
     for (const s of pending) s.t -= dt;
@@ -1378,10 +1566,11 @@ h2.clear { color: #5dff9e; }
         tough = !amb && r >= baseRate;
       }
       if (tough) toughWave = true;
-      enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, amb, black, stun: 0 });
+      enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, stun: 0 });
       tone(140, 0.25, 'sawtooth', 0.05, 70);
     }
     pending = pending.filter(s => s.t > 0);
+    if (S3 && enemies.length > S3.maxOni) S3.maxOni = enemies.length;
 
     // enemies chase along the streets
     const es = enemySpeed();
@@ -1465,7 +1654,7 @@ h2.clear { color: #5dff9e; }
       h.left -= dt;
       for (const e of enemies) {
         if (e.dead || Math.hypot(e.x - h.x, e.y - h.y) > 0.4) continue;
-        e.dead = true; kills++;
+        e.dead = true; kills++; tally(e, 'pit');
         falls.push({ x: e.x, y: e.y, hx: h.x, hy: h.y, t: 0, tough: e.tough });
         tone(330, 0.5, 'triangle', 0.06, 60);
         if (!h.ate) { h.ate = true; h.left = Math.min(h.left, PIT_EAT); }
@@ -1513,8 +1702,8 @@ h2.clear { color: #5dff9e; }
     if (nearestD < CATCH && P.inv <= 0) {
       if (P.barrier) {
         // the barrier takes the hit and blows away every oni touching it
-        P.barrier = false; P.inv = INV_TIME;
-        for (const e of enemies) if (Math.hypot(e.x - P.x, e.y - P.y) < CATCH + 0.6) { e.dead = true; kills++; }
+        P.barrier = false; P.inv = INV_TIME; if (S3) S3.saves++;
+        for (const e of enemies) if (Math.hypot(e.x - P.x, e.y - P.y) < CATCH + 0.6) { e.dead = true; kills++; tally(e); }
         enemies = enemies.filter(e => !e.dead);
         booms.push({ x: P.x, y: P.y, t: 0, barrier: true });
         for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 6; sparks.push({ x: P.x, y: P.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#8fe9ff' : '#ffffff' }); }
@@ -1563,7 +1752,7 @@ h2.clear { color: #5dff9e; }
     if (state !== 'play' || !bag.length) return;
     const it = bag[0];
     if (it === 'barrier' && P.barrier) return;
-    bag.shift();
+    bag.shift(); if (S3) S3.items++;
     if (it === 'boost') { P.boostT = BOOST_TIME; tone(700, 0.25, 'sawtooth', 0.05, 1400); }
     else if (it === 'barrier') { P.barrier = true; tone(660, 0.12, 'triangle', 0.06, 1320); }
     else {
@@ -1575,7 +1764,7 @@ h2.clear { color: #5dff9e; }
   function placeMine() {
     if (state !== 'play' || P.stock <= 0) return;
     if (mines.some(m => Math.hypot(m.x - P.x, m.y - P.y) < 0.5)) return;
-    P.stock--;
+    P.stock--; if (S3) S3.bombs++;
     mines.push({ x: P.x, y: P.y, fuse: FUSE });
     tone(330, 0.07, 'square', 0.05);
   }
@@ -1588,17 +1777,19 @@ h2.clear { color: #5dff9e; }
       sparks.push({ x: m.x, y: m.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#ffcf5a' : '#ff6a3d' });
     }
     // every oni touching the circle goes, no cap
+    let blast = 0;
     for (const e of enemies) {
       if (e.dead) continue;
       const dx = e.x - m.x, dy = e.y - m.y, d = Math.hypot(dx, dy);
       if (d >= BLAST + e.r * 0.5) continue;
       e.hp--;
-      if (e.hp <= 0) { e.dead = true; kills++; continue; }
+      if (e.hp <= 0) { e.dead = true; kills++; tally(e); blast++; continue; }
       // a tough oni survives: loses its armour, gets blown back and dazed
       e.tough = false; e.stun = 0.9;
       const nx = d > 0.01 ? dx / d : 1, ny = d > 0.01 ? dy / d : 0;
       for (let k = 0; k < 8; k++) { e.x += nx * 0.12; e.y += ny * 0.12; collide(e); }
     }
+    if (S3) S3.maxBlast = Math.max(S3.maxBlast, blast);
     shake = reduceMotion ? 0 : Math.max(shake, 0.25); flash = Math.max(flash, 0.35);
     tone(90, 0.45, 'sawtooth', 0.12, 30); noise(0.35, 0.12);
     // chain reaction
@@ -1635,6 +1826,10 @@ h2.clear { color: #5dff9e; }
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
       : `ステージ${stageN}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
+    const got = stageN >= 3 ? awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit) : [];
+    // the first title ever earned is put on straight away; after that the player picks
+    if (got.length && records.title == null) { records.title = got[got.length - 1]; saveRecords(); paintTitle(); Rank.sync(); }
+    $('rTitles').hidden = !got.length; $('rTitles').textContent = got.length ? '称号獲得: ' + got.map(titleName).join('、') : '';
   }
 
   // ---------- render ----------
@@ -2264,11 +2459,11 @@ h2.clear { color: #5dff9e; }
       const step = Math.min(r.left, ROCKET_SPEED * dt);
       r.x += r.dx * step; r.y += r.dy * step; r.left -= step; r.t += dt;
       // everything it passes through goes, armoured or not
-      for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 0.62) { e.dead = true; kills++; rocketKills++; }
+      for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 0.62) { e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
       if (Math.random() < 0.7) sparks.push({ x: r.x - r.dx * 0.3, y: r.y - r.dy * 0.3, vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5, a: 0.6, c: Math.random() < 0.5 ? '#8a8f99' : '#ff9a3c' });
       if (r.left <= 1e-4) {
         r.done = true;
-        for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 1.0) { e.dead = true; kills++; rocketKills++; }
+        for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 1.0) { e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
         booms.push({ x: r.x, y: r.y, t: 0 });
         for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5; sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#ffcf5a' : '#ff6a3d' }); }
         shake = reduceMotion ? 0 : Math.max(shake, 0.22); tone(90, 0.4, 'sawtooth', 0.1, 30); noise(0.3, 0.1);
@@ -2291,7 +2486,7 @@ h2.clear { color: #5dff9e; }
   }
   function dash() {
     if (state !== 'play' || P.cd > 0) return;
-    P.dashT = DASH_TIME; P.cd = DASH_CD;
+    P.dashT = DASH_TIME; P.cd = DASH_CD; if (S3) S3.dashes++;
     tone(880, 0.12, 'triangle', 0.05, 1500);
   }
 
