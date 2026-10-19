@@ -700,11 +700,16 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
 
   // ---------- map ----------
   let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [];
+  // open-air plazas in the city: lone ones are basketball courts or lawns, two side by side make a football
+  // pitch whose goals are solid. goalT marks the tiles the goals stand on so the oni path round them
+  const PITCHES = false;
+  let courts = [], posts = [], goalT = new Uint8Array(0);
   let W = 0, H = 0, dpr = 1, T = 32, ox = 0, oy = 0;
   const SIZES = [13, 17, 21, 25, 29, 33, 37, 41];
   const nearest = v => SIZES.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
   const idx = (x, y) => y * COLS + x;
   const walk = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1;
+  const pwalk = (x, y) => walk(x, y) && !goalT[idx(x, y)];
 
   function pickDims() {
     const r = stage.getBoundingClientRect();
@@ -760,6 +765,32 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       }
       // two pits, in two random plazas
       for (const [bx, by] of plazas.sort(() => Math.random() - 0.5).slice(0, 2)) holes.push({ x: bx + 1.5, y: by + 1.5, i: idx(bx + 1, by + 1) });
+    }
+    courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS);
+    if (PITCHES && stageN >= 2) {
+      const isPl = (bx, by) => { if (bx + 3 > COLS || by + 3 > ROWS) return false; for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 2) return false; return true; };
+      const used = new Set();
+      for (let by = 1; by < ROWS - 2; by += 4) for (let bx = 1; bx < COLS - 2; bx += 4) {
+        if (!isPl(bx, by) || used.has(bx + ',' + by)) continue;
+        used.add(bx + ',' + by);
+        let c;
+        if (isPl(bx + 4, by) && !used.has((bx + 4) + ',' + by)) { used.add((bx + 4) + ',' + by); c = { t: 'pitch', x: bx, y: by, w: 7, h: 3 }; }
+        else if (isPl(bx, by + 4) && !used.has(bx + ',' + (by + 4))) { used.add(bx + ',' + (by + 4)); c = { t: 'pitch', x: bx, y: by, w: 3, h: 7 }; }
+        else c = { t: Math.random() < 0.5 ? 'court' : 'lawn', x: bx, y: by, w: 3, h: 3, hor: Math.random() < 0.5 };
+        courts.push(c);
+        if (c.t !== 'pitch') continue;
+        // a goal at each end, standing just inside the end line
+        const D = 0.2, G = 0.36;
+        if (c.w > c.h) {
+          const cy = by + 1.5;
+          posts.push([bx + 0.06, bx + 0.06 + D, cy - G, cy + G], [bx + 6.94 - D, bx + 6.94, cy - G, cy + G]);
+          goalT[idx(bx, by + 1)] = goalT[idx(bx + 6, by + 1)] = 1;
+        } else {
+          const cx = bx + 1.5;
+          posts.push([cx - G, cx + G, by + 0.06, by + 0.06 + D], [cx - G, cx + G, by + 6.94 - D, by + 6.94]);
+          goalT[idx(bx + 1, by)] = goalT[idx(bx + 1, by + 6)] = 1;
+        }
+      }
     }
     dist = new Int16Array(COLS * ROWS);
     windows = [];
@@ -911,10 +942,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     dist[key] = 0; queue[t++] = key;
     while (h < t) {
       const c = queue[h++], cx = c % COLS, cy = (c / COLS) | 0, d = dist[c] + 1;
-      if (walk(cx + 1, cy) && dist[c + 1] < 0) { dist[c + 1] = d; queue[t++] = c + 1; }
-      if (walk(cx - 1, cy) && dist[c - 1] < 0) { dist[c - 1] = d; queue[t++] = c - 1; }
-      if (walk(cx, cy + 1) && dist[c + COLS] < 0) { dist[c + COLS] = d; queue[t++] = c + COLS; }
-      if (walk(cx, cy - 1) && dist[c - COLS] < 0) { dist[c - COLS] = d; queue[t++] = c - COLS; }
+      if (pwalk(cx + 1, cy) && dist[c + 1] < 0) { dist[c + 1] = d; queue[t++] = c + 1; }
+      if (pwalk(cx - 1, cy) && dist[c - 1] < 0) { dist[c - 1] = d; queue[t++] = c - 1; }
+      if (pwalk(cx, cy + 1) && dist[c + COLS] < 0) { dist[c + COLS] = d; queue[t++] = c + COLS; }
+      if (pwalk(cx, cy - 1) && dist[c - COLS] < 0) { dist[c - COLS] = d; queue[t++] = c - COLS; }
     }
   }
   // ---------- reading the runner: where they are heading, a little ahead of them ----------
@@ -922,7 +953,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   // nothing solid on the straight line between two points?
   function clearLine(x0, y0, x1, y1) {
     const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 0.2);
-    for (let k = 1; k <= n; k++) { const x = x0 + (x1 - x0) * k / n, y = y0 + (y1 - y0) * k / n; if (!walk(Math.floor(x), Math.floor(y))) return false; }
+    for (let k = 1; k <= n; k++) { const x = x0 + (x1 - x0) * k / n, y = y0 + (y1 - y0) * k / n; if (!pwalk(Math.floor(x), Math.floor(y))) return false; }
     return true;
   }
   // the runner's footsteps over the last second and a half; oni close behind follow these
@@ -943,10 +974,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     out[key] = 0; fq[t++] = key;
     while (h < t) {
       const c = fq[h++], cx = c % COLS, cy = (c / COLS) | 0, d = out[c] + 1;
-      if (walk(cx + 1, cy) && out[c + 1] < 0) { out[c + 1] = d; fq[t++] = c + 1; }
-      if (walk(cx - 1, cy) && out[c - 1] < 0) { out[c - 1] = d; fq[t++] = c - 1; }
-      if (walk(cx, cy + 1) && out[c + COLS] < 0) { out[c + COLS] = d; fq[t++] = c + COLS; }
-      if (walk(cx, cy - 1) && out[c - COLS] < 0) { out[c - COLS] = d; fq[t++] = c - COLS; }
+      if (pwalk(cx + 1, cy) && out[c + 1] < 0) { out[c + 1] = d; fq[t++] = c + 1; }
+      if (pwalk(cx - 1, cy) && out[c - 1] < 0) { out[c - 1] = d; fq[t++] = c - 1; }
+      if (pwalk(cx, cy + 1) && out[c + COLS] < 0) { out[c + COLS] = d; fq[t++] = c + COLS; }
+      if (pwalk(cx, cy - 1) && out[c - COLS] < 0) { out[c - COLS] = d; fq[t++] = c - COLS; }
     }
   }
   // ---------- the yellow ambush oni: aims a few tiles ahead of the runner along the street ----------
@@ -978,10 +1009,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     adist[key] = 0; aq[t++] = key;
     while (h < t) {
       const c = aq[h++], cx = c % COLS, cy = (c / COLS) | 0, d = adist[c] + 1;
-      if (walk(cx + 1, cy) && adist[c + 1] < 0) { adist[c + 1] = d; aq[t++] = c + 1; }
-      if (walk(cx - 1, cy) && adist[c - 1] < 0) { adist[c - 1] = d; aq[t++] = c - 1; }
-      if (walk(cx, cy + 1) && adist[c + COLS] < 0) { adist[c + COLS] = d; aq[t++] = c + COLS; }
-      if (walk(cx, cy - 1) && adist[c - COLS] < 0) { adist[c - COLS] = d; aq[t++] = c - COLS; }
+      if (pwalk(cx + 1, cy) && adist[c + 1] < 0) { adist[c + 1] = d; aq[t++] = c + 1; }
+      if (pwalk(cx - 1, cy) && adist[c - 1] < 0) { adist[c - 1] = d; aq[t++] = c - 1; }
+      if (pwalk(cx, cy + 1) && adist[c + COLS] < 0) { adist[c + COLS] = d; aq[t++] = c + COLS; }
+      if (pwalk(cx, cy - 1) && adist[c - COLS] < 0) { adist[c - COLS] = d; aq[t++] = c - COLS; }
     }
   }
 
@@ -995,6 +1026,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       const cx = clamp(x, tx, tx + 1), cy = clamp(y, ty, ty + 1);
       if ((x - cx) ** 2 + (y - cy) ** 2 < r * r) return true;
     }
+    for (const [a, b, c, d] of posts) { const cx = clamp(x, a, b), cy = clamp(y, c, d); if ((x - cx) ** 2 + (y - cy) ** 2 < r * r) return true; }
     return false;
   }
   function collide(e) {
@@ -1005,6 +1037,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       const cx = clamp(e.x, tx, tx + 1), cy = clamp(e.y, ty, ty + 1);
       const dx = e.x - cx, dy = e.y - cy, d2 = dx * dx + dy * dy;
       if (d2 < r * r && d2 > 1e-9) { const d = Math.sqrt(d2); e.x += dx / d * (r - d); e.y += dy / d * (r - d); }
+    }
+    for (const [a, b, c, d] of posts) {
+      const cx = clamp(e.x, a, b), cy = clamp(e.y, c, d), dx = e.x - cx, dy = e.y - cy, d2 = dx * dx + dy * dy;
+      if (d2 < r * r && d2 > 1e-9) { const k = Math.sqrt(d2); e.x += dx / k * (r - k); e.y += dy / k * (r - k); }
     }
     e.x = clamp(e.x, r, COLS - r); e.y = clamp(e.y, r, ROWS - r);
   }
@@ -1105,7 +1141,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const need = Math.min(minDist, Math.floor(maxD * 0.6));
     const cand = [];
     const edge = i => { const x = i % COLS, y = (i / COLS) | 0; return x < 1 || y < 1 || x > COLS - 2 || y > ROWS - 2; };
-    for (let i = 0; i < dist.length; i++) if (dist[i] >= need && grid[i] !== 1 && !holes.some(h => h.i === i) && !(inner && edge(i))) cand.push(i);
+    for (let i = 0; i < dist.length; i++) if (dist[i] >= need && grid[i] !== 1 && !goalT[i] && !holes.some(h => h.i === i) && !(inner && edge(i))) cand.push(i);
     if (!cand.length) return randomRoad(minDist);
     const c = cand[Math.floor(Math.random() * cand.length)];
     return { x: c % COLS + 0.5, y: ((c / COLS) | 0) + 0.5 };
@@ -1338,7 +1374,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       if (d > 1 && !sight) {
         let bestD = d, bxx = tx, byy = ty, bestScore = 1e9;
         for (const [nx, ny] of [[tx + 1, ty], [tx - 1, ty], [tx, ty + 1], [tx, ty - 1]]) {
-          if (!walk(nx, ny)) continue;
+          if (!pwalk(nx, ny)) continue;
           const nd = field[idx(nx, ny)];
           if (nd < 0 || nd > bestD) continue;
           const score = nd * 10 + Math.hypot(nx + 0.5 - aimX, ny + 0.5 - aimY) * (0.5 + e.bias);
