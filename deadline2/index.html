@@ -110,7 +110,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .card p { margin: 0; line-height: 1.65; font-size: 14px; }
 .rules { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 13px; color: var(--muted); margin: 0; }
 .rules dt { color: var(--ink); font-weight: 700; }
-.rules dd { margin: 0; }
+.rules dd { margin: 0; line-height: 1.5; }
 .result { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
 .result div { border: 1px solid var(--line); border-radius: 6px; padding: 7px 9px; background: var(--panel); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .result b { font-family: var(--f-num); font-size: 17px; font-variant-numeric: tabular-nums; }
@@ -439,7 +439,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       <dl class="rules">
         <dt>移動</dt><dd>スマホ:左半分をドラッグ / PC:カーソルの方へ走る・矢印キー</dd>
         <dt>ダッシュ</dt><dd>ボタン / Space で一瞬だけ速く走る(3.5秒ごとに使える)</dd>
-        <dt>爆弾</dt><dd>黄色い箱を拾うと1個増える。ボタン / E でその場に置くと1秒後に爆発し、円の中の鬼を倒す</dd>
+        <dt>爆弾</dt><dd>黄色い箱で1個増える。ボタン / E で置くと1秒後に爆発、円内の鬼を倒す</dd>
         <dt>アイテム</dt><dd>3秒加速・バリア・ランチャー。ボタン / Q で使う</dd>
         <dt>鬼</dt><dd>赤い <b>!</b> のあとに出る。黄色は先回り、水色は爆発に1回耐える</dd>
         <dt>脱出</dt><dd>2分30秒で右端に出口が開く。鍵を拾って出口へ</dd>
@@ -2735,11 +2735,26 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const toTitle = () => { state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
+  // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
+  // (never below 80%) so it closes up; rows that genuinely need the extra line are left alone
+  function fitRows(box, minScale = 0.8) {
+    for (const el of box.querySelectorAll('dd')) {
+      el.style.fontSize = '';
+      const base = parseFloat(getComputedStyle(el).fontSize);
+      const rows = () => Math.round(el.getBoundingClientRect().height / (parseFloat(getComputedStyle(el).fontSize) * 1.5));
+      const n = rows(); if (n < 2) continue;
+      let fs = base, ok = false;
+      while (fs > base * minScale) { fs -= 0.25; el.style.fontSize = fs + 'px'; if (rows() < n) { ok = true; break; } }
+      if (!ok) el.style.fontSize = '';
+    }
+  }
+  addEventListener('resize', () => { if (!$('briefScreen').hidden) fitRows($('briefScreen')); });
   function showBrief() {
     tap(); state = 'brief'; bgmStart(songFor(1));
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('briefScreen').hidden = false;
     mono('briefMono', 1, 'standby');
+    fitRows($('briefScreen'));
   }
   // the runner's own words: before the stage, on escaping (stages 1 and 2), on being caught;
   // stage 3's hint at what this night really is.
