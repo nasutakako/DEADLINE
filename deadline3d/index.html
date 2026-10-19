@@ -55,7 +55,8 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .sys { position: absolute; top: calc(var(--in-t) + 10px); left: calc(var(--in-l) + 16px); display: flex; gap: 6px; }
 .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 7px 10px; font-weight: 700; font-size: 12px; white-space: nowrap; }
 #mini { position: absolute; top: calc(var(--in-t) + 10px); right: calc(var(--in-r) + 16px); width: min(24vw, 116px); height: min(24vw, 116px); border-radius: 8px; border: 1px solid var(--line); background: rgba(10,12,18,.75); }
-.acts { position: absolute; right: calc(var(--in-r) + 20px); bottom: calc(var(--in-b) + 20px); display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.acts { position: absolute; right: calc(var(--in-r) + 20px); bottom: calc(var(--in-b) + 20px); display: grid; grid-template-columns: repeat(2, 58px); gap: 12px; align-items: center; justify-items: center; }
+.acts .dash { grid-column: 1 / -1; justify-self: end; margin-right: -11px; }
 .act { position: relative; overflow: hidden; border-radius: 50%; width: 58px; height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; font-weight: 700; font-size: 14px; background: var(--panel); line-height: 1.1; }
 .act small { font-family: var(--f-num); font-size: 13px; }
 .mine { border: 2px solid var(--lamp); color: var(--lamp); }
@@ -160,7 +161,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .who.float { position: absolute; z-index: 6; width: 148px; left: calc(var(--in-l) + 16px); top: calc(var(--in-t) + 58px); }
 @media (min-aspect-ratio: 5/4) { #titleScreen { padding-left: calc(var(--in-l) + 184px); } }
 /* title card laid out like DEADLINE1/2: big logo, the blurb, then the stage buttons stacked */
-#titleScreen { background: rgba(8, 10, 15, .8); }
+#titleScreen { background: rgba(8, 10, 15, .55); }
+#titleScreen .card { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
 #titleScreen .card { max-width: 460px; }
 #titleScreen h1 { font-size: clamp(34px, 9vw, 60px); letter-spacing: .02em; }
 #titleScreen .card > p:not(.rotate) { display: block; }
@@ -3152,9 +3154,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     ui.game.classList.add('playing');
     resize();
   }
+  // the title card sits over the night city, slowly circling (the underground is too dark to show)
+  function titleWorld() { const n = stageN; stageN = 1; genMap(STAGES[0]); buildWorld(STAGES[0]); stageN = n; }
   function toTitle() {
     state = 'title'; endTouches();
     clearDyn(); P = null; enemies = []; falls = []; pending = []; items = []; mines = []; booms = []; t = 0;
+    titleWorld();
     ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false;
     ui.game.classList.remove('playing');
     showBest(); bgmStart();
@@ -3332,7 +3337,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   }
 
   showBest();
-  genMap(UNDER); buildWorld(UNDER);
+  titleWorld();
   resize();
   requestAnimationFrame(frame);
 })();
