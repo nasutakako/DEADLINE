@@ -306,9 +306,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <dl class="rules">
         <dt>移動</dt><dd>スマホ:左半分をドラッグ / PC:カーソルの方へ走る・WASD</dd>
         <dt>視点</dt><dd>スマホ:右半分をドラッグ / PC:ドラッグ・←→</dd>
-        <dt>ダッシュ</dt><dd>ボタン / Space</dd>
-        <dt>爆弾</dt><dd>黄色い箱を拾ってボタン / E。円の中の鬼を倒す</dd>
-        <dt>アイテム</dt><dd>ボタン / Q</dd>
+        <dt>ダッシュ</dt><dd>ボタン / Space で一瞬だけ速く走る(3.5秒ごとに使える)</dd>
+        <dt>爆弾</dt><dd>黄色い箱を拾うと1個増える。ボタン / E でその場に置くと1秒後に爆発し、円の中の鬼を倒す</dd>
+        <dt>アイテム</dt><dd>3秒加速・バリア・ランチャー。ボタン / Q で使う</dd>
         <dt>鬼</dt><dd>赤い <b>!</b> のあとに出る。フェイントが効く。黄色は先回り、水色は爆発に1回耐える</dd>
         <dt>建物</dt><dd>ドアから入れる。2階で爆弾を使うと窓が割れ、飛び降りて逃げられる</dd>
         <dt>脱出</dt><dd>2分30秒で東端(ミニマップ右端)に出口が開く。鍵を拾って出口へ</dd>
@@ -2167,17 +2167,20 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     placeCamera(1);
   }
 
-  function randomRoad(minDist) {
+  // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
+  function randomRoad(minDist, inner = false) {
     flow();
     let maxD = 0;
     for (let i = 0; i < N; i++) if (dist[i] > maxD) maxD = dist[i];
     const need = Math.min(minDist, Math.floor(maxD * 0.6));
     const cand = [];
-    for (let i = 0; i < N; i++) if (dist[i] >= need && grid[i] !== 1 && floorT[i] !== 3 && !ramp[i] && !holes.some(h => h.i === i)) cand.push(i);
+    const edge = i => { const x = i % COLS, y = (i / COLS) | 0; return x < 1 || y < 1 || x > COLS - 2 || y > ROWS - 2; };
+    for (let i = 0; i < N; i++) if (dist[i] >= need && grid[i] !== 1 && floorT[i] !== 3 && !ramp[i] && !holes.some(h => h.i === i) && !(inner && edge(i))) cand.push(i);
+    if (!cand.length) return randomRoad(minDist);
     const c = pick(cand);
     return { x: c % COLS + 0.5, y: ((c / COLS) | 0) + 0.5 };
   }
-  function queueSpawn() { const p = randomRoad(10); pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, mesh: makeWarn(p.x, p.y) }); }
+  function queueSpawn() { const p = randomRoad(10, true); pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, mesh: makeWarn(p.x, p.y) }); }
   // stage 3: always 3 per wave, starting at the stage 2 speed
   // stage 2 opens at 2 per wave, stage 3 at 3
   // stage 3: 3 oni a wave, then one more at 4, 5, 6 and 7 min, and again at 10, 11 and 12 min (10 at most)
@@ -3233,9 +3236,19 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     ui.game.classList.remove('playing');
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : 'はてなき地獄'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分からは1分ごとに補給。偶数分はバリア+爆弾2個、奇数分は爆弾2個。\n・鬼を40体倒すごとに、3秒加速かランチャーのどちらかが1つ届く。\n・鬼が出る場所には先に「!」が出る。「!」を踏めばその鬼は出ない。\n・広場には落とし穴。ふたを踏んで離れると開き、追ってきた鬼を落とす。自分が落ちても確保。使うと45秒ふさがる。\n・一度に出る鬼は最大10体まで増える。\n・2分からは1分ごとに、逃走者より速い黒い鬼が1体まじる。ダッシュをうまく使って振り切れ。\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる。' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体ごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
+    fitLines($('spMsg'));
   }
+  // shrink a list's type until each of its lines fits on one row (a few stray characters on a row of their own read badly)
+  function fitLines(el, min = 10) {
+    el.style.fontSize = '';
+    let fs = parseFloat(getComputedStyle(el).fontSize);
+    el.style.whiteSpace = 'pre';
+    while (el.scrollWidth > el.clientWidth - 4 && fs > min) { fs -= 0.5; el.style.fontSize = fs + 'px'; }
+    el.style.whiteSpace = 'pre-line';
+  }
+  addEventListener('resize', () => { if (!$('startPickScreen').hidden) fitLines($('spMsg')); });
   function endTouches() { input.stick = null; input.looks.clear(); ui.stick.hidden = ui.knob.hidden = true; padKnobDraw(); }
   function setPause(on) {
     if (on && state === 'play') { state = 'pause'; ui.pause.hidden = false; endTouches(); }
