@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>html, body { margin: 0; }</style>
+<script src="../fb.js" data-game="deadline1"></script>
 <title>DEADLINE1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -534,7 +535,7 @@ h2.clear { color: #5dff9e; }
       const n = $('whoName'), note = $('whoNote');
       n.textContent = me && me.name ? me.name : '名前を登録';
       n.classList.toggle('unset', !(me && me.name));
-      const off = ready && !db ? '世界ランキングは準備中です' : ready && !canWrite ? '閲覧のみ。ランキングへの登録はできません' : '';
+      const off = ready && !db ? 'ランキングに接続できません' : ready && !canWrite ? '閲覧のみ。ランキングへの登録はできません' : '';
       note.textContent = off; note.hidden = !off;
       n.disabled = ready && (!db || !canWrite);
     }
@@ -609,7 +610,7 @@ h2.clear { color: #5dff9e; }
       const msg = t => { list.textContent = ''; const s = document.createElement('span'); s.className = 'msg'; s.textContent = t; list.appendChild(s); };
       ui.title.hidden = true; $('rankScreen').hidden = false;
       if (!ready) { msg('読み込み中…'); while (!ready) await new Promise(r => setTimeout(r, 200)); }
-      if (!db) { msg('世界ランキングは準備中です。今はこの端末のハイスコアだけ記録されます。'); return; }
+      if (!db) { msg('ランキングに接続できませんでした。通信状態を確認してね。'); return; }
       msg('読み込み中…');
       try {
         await sync();

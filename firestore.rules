@@ -1,0 +1,45 @@
+rules_version = '2';
+// DEADLINE world ranking. Paste into Firebase console → Firestore Database → ルール, then 公開.
+// Everyone can read the ranking; each player (anonymous sign-in) writes only their own record,
+// and a name belongs to whoever claimed it first.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function okGame(g) { return g in ['deadline1', 'deadline2', 'deadline3d']; }
+
+    // games/<game>/players/<uid>: { name, key, best, at }
+    match /games/{game}/players/{uid} {
+      allow read: if okGame(game);
+      allow create, update: if okGame(game) && signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'key', 'best', 'at'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
+        && request.resource.data.key is string && request.resource.data.key.size() <= 200
+        && (!('best' in request.resource.data)
+            || (request.resource.data.best is number && request.resource.data.best >= 0 && request.resource.data.best <= 86400))
+        && (!('at' in request.resource.data) || request.resource.data.at is string)
+        // the name on the record must be one this player owns
+        && get(/databases/$(database)/documents/games/$(game)/names/$(request.resource.data.key)).data.owner == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // games/<game>/names/<key>: { owner, name } — one owner per name
+    match /games/{game}/names/{key} {
+      allow read: if okGame(game);
+      allow create: if okGame(game) && signedIn()
+        && request.resource.data.keys().hasOnly(['owner', 'name'])
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 20;
+      allow update: if okGame(game) && signedIn()
+        && resource.data.owner == request.auth.uid
+        && request.resource.data.keys().hasOnly(['owner', 'name'])
+        && request.resource.data.owner == request.auth.uid;
+      allow delete: if okGame(game) && signedIn() && resource.data.owner == request.auth.uid;
+    }
+
+    // games/<game>/data/users/<uid>/...: each player's own high scores, private
+    match /games/{game}/data/users/{uid}/{doc} {
+      allow read, write: if okGame(game) && signedIn() && request.auth.uid == uid;
+    }
+  }
+}
