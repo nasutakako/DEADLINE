@@ -2624,7 +2624,8 @@ h2.clear { color: #5dff9e; }
     $('briefScreen').hidden = false;
     mono('briefMono', 1, 'standby');
   }
-  // the runner's own words on the story stages (1 and 2): before the stage, on escaping, on being caught;
+  // the runner's own words: before the stage, on escaping (stages 1 and 2), on being caught;
+  // stage 3's hint at what this night really is.
   // five of each, one picked at random every time
   const MONO = {
     1: {
@@ -2671,6 +2672,22 @@ h2.clear { color: #5dff9e; }
         '挟み撃ちにされた……。広い道を選べば、逃げ道は残るはずだ。',
         '出口はすぐそこだったのに……。次は鍵の場所を先に確かめておこう。',
         '夜の街は甘くない……。でも、次は絶対に抜けてみせる。',
+      ],
+    },
+    3: {
+      standby: [
+        '何回目の夜だ……？ 同じ街、同じ交差点。俺は、前にもここを走った気がする。',
+        'あの鬼たち、どこか見覚えがある。……まさか、先に捕まった誰かなのか？',
+        'この夜に出口なんてない。わかってる。それでも走るのをやめたら、俺も“あっち側”になる。',
+        'どこかで、誰かが俺の逃げる時間を数えてる。世界中の“逃走者”と並べて。',
+        'この夜を始めたのは誰だ？ 終わらせる方法は——たぶん、逃げ続けた先にしかない。',
+      ],
+      caught: [
+        '……また、最初からか。捕まるたびに、少しずつ何かを思い出してる気がする。',
+        '鬼の手が触れた瞬間、見えた。あいつらも、昔は逃げる側だったんだ。',
+        '記録だけが残る。俺が走った時間だけが、この夜を壊す鍵になるのかもしれない。',
+        '意識が遠のく……。次に目を覚ますのは、また地下か。それとも、この夜の続きか。',
+        '怖いのは捕まることじゃない。この夜が終わらないことに、慣れてしまうことだ。',
       ],
     },
   };

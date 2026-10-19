@@ -2741,7 +2741,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('briefScreen').hidden = false;
     mono('briefMono', 1, 'standby');
   }
-  // the runner's own words on the story stages (1 and 2): before the stage, on escaping, on being caught;
+  // the runner's own words: before the stage, on escaping (stages 1 and 2), on being caught;
+  // stage 3's hint at what this night really is.
   // five of each, one picked at random every time
   const MONO = {
     1: {
@@ -2788,6 +2789,22 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         '挟み撃ちにされた……。広い通路を選べば、逃げ道は残るはずだ。',
         'ゲートは目の前だったのに……。次はキーの位置を先に確かめておこう。',
         'この街は甘くない……。でも、次は絶対に抜けてみせる。',
+      ],
+    },
+    3: {
+      standby: [
+        '何回目のループだ……？ 同じ座標、同じネオン。ログには、俺の足跡が何千も重なってる。',
+        'ヤツらの動き、どこか人間くさい。……まさか、先に捕捉された誰かのデータなのか？',
+        'この回路に出口はない。わかってる。それでも止まったら、俺もヤツらの一部に書き換えられる。',
+        'どこかで、誰かが俺の逃走時間を計測している。世界中の“被験者”と並べて。',
+        'このシステムを起動したのは誰だ？ 停止コードは——たぶん、逃げ続けた先にしかない。',
+      ],
+      caught: [
+        '……リセットか。捕捉されるたびに、消されたはずの記憶が少しずつ戻ってくる。',
+        '接触した瞬間、ノイズの中に見えた。ヤツらも、かつては逃げる側だった。',
+        '記録だけが残る。俺の逃走ログが、この回路を壊すバグになるのかもしれない。',
+        '意識が遠のく……。次に起動するのは、また隔離区画か。それとも、このループの続きか。',
+        '怖いのは捕まることじゃない。このループに、慣れてしまうことだ。',
       ],
     },
   };
