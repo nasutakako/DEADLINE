@@ -656,7 +656,7 @@ h2.clear { color: #5dff9e; }
   // ---------- map ----------
   let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [];
   let W = 0, H = 0, dpr = 1, T = 32, ox = 0, oy = 0;
-  const SIZES = [13, 17, 21, 25, 29];
+  const SIZES = [13, 17, 21, 25, 29, 33, 37, 41];
   const nearest = v => SIZES.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
   const idx = (x, y) => y * COLS + x;
   const walk = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1;
@@ -664,8 +664,9 @@ h2.clear { color: #5dff9e; }
   function pickDims() {
     const r = stage.getBoundingClientRect();
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
-    if (a >= 1) { ROWS = r.height < 440 ? 13 : 17; COLS = nearest(ROWS * a); }
-    else { COLS = r.width < 440 ? 13 : 17; ROWS = nearest(COLS / a); }
+    // one size finer than before: smaller blocks and streets, more buildings on screen
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a); }
+    else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
   function genMap() {

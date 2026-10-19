@@ -466,9 +466,9 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   let best = 0;
-  try { best = parseFloat(localStorage.getItem('onigokko-best')) || 0; } catch (e) {}
-  const saveBest = () => { try { localStorage.setItem('onigokko-best', String(best)); } catch (e) {} };
-  const REC_KEY = 'deadline2d-records';
+  try { best = parseFloat(localStorage.getItem('deadline2-best')) || 0; } catch (e) {}
+  const saveBest = () => { try { localStorage.setItem('deadline2-best', String(best)); } catch (e) {} };
+  const REC_KEY = 'deadline2-records';
   // ---------- records: each stage's escape is scored and ranked on its own (top 3 per stage), kept in this
   // page's private per-person store on claude.ai so it survives closing the app; browser storage is only a fallback ----------
   let records = { stages: {}, plays: 0, bestTime: 0, cleared: {} };
@@ -699,7 +699,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   // ---------- map ----------
   let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [];
   let W = 0, H = 0, dpr = 1, T = 32, ox = 0, oy = 0;
-  const SIZES = [13, 17, 21, 25, 29];
+  const SIZES = [13, 17, 21, 25, 29, 33, 37, 41];
   const nearest = v => SIZES.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
   const idx = (x, y) => y * COLS + x;
   const walk = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1;
@@ -707,8 +707,9 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   function pickDims() {
     const r = stage.getBoundingClientRect();
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
-    if (a >= 1) { ROWS = r.height < 440 ? 13 : 17; COLS = nearest(ROWS * a); }
-    else { COLS = r.width < 440 ? 13 : 17; ROWS = nearest(COLS / a); }
+    // one size finer than before: smaller blocks and streets, more buildings on screen
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a); }
+    else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
   function genMap() {
