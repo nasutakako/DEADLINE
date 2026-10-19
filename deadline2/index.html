@@ -1230,12 +1230,12 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
     if (stageN >= 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
-    // from 6:00 there is always at least one black and one yellow oni about, and at least two barrier oni:
+    // from 4:00 there are always at least two barrier oni about, and from 6:00 at least one black and one yellow:
     // if a kind is short (counting the map and the oni already warned), the next wave makes up the shortfall
     // (two barrier oni at once when there are none). Stomping a "!" still cancels it, and the wave after makes up again.
-    if (stageN >= 3 && t >= 360 && pending.length) {
+    if (stageN >= 3 && t >= 240 && pending.length) {
       const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
-      for (const k of ['black', 'tough', 'amb']) {
+      for (const k of t >= 360 ? ['black', 'tough', 'amb'] : ['tough']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
         for (let n = (k === 'tough' ? 2 : 1) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
       }
@@ -2540,7 +2540,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     pendingStart = n; state = 'startpick'; bgmStart(songFor(n));
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? 'ネオン街' : '無限回路'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・6分からは黒と黄色の鬼が必ずいて、バリア鬼は2体以上いる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     fitLines($('spMsg'));
   }
