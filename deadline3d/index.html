@@ -2289,13 +2289,14 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       for (let i = 0, n = spawnBatch(); i < n; i++) queueSpawn(); nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
     if (stageN >= 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
-    // from 6:00 there is always at least one black, one barrier and one yellow oni about: if a kind is
-    // missing (not on the map, not already warned), the next wave is sure to bring one. Stomping its
-    // "!" still cancels it, and the wave after brings another.
+    // from 6:00 there is always at least one black and one yellow oni about, and at least two barrier oni:
+    // if a kind is short (counting the map and the oni already warned), the next wave is sure to bring one
+    // (never more than one per wave). Stomping its "!" still cancels it, and the wave after brings another.
     if (stageN >= 3 && t >= 360 && pending.length) {
       const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
       for (const k of ['black', 'tough', 'amb']) {
-        if (enemies.some(e => e[k]) || pending.some(p => p[k])) continue;
+        const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
+        if (have >= (k === 'tough' ? 2 : 1)) continue;
         const p = free.pop(); if (p) p[k] = true;
       }
     }
@@ -2361,14 +2362,17 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       removeObj(s.mesh); flash = Math.max(flash, 0.12); tone(1568, 0.09, 'triangle', 0.05, 784);
       return false;
     });
+    // a wave steps out together, in one frame; an oni the 6:00 rule marked as barrier counts from the start
+    let toughWave = pending.some(s => s.t - dt <= 0 && s.tough);
     for (const s of pending) {
       s.t -= dt;
       if (s.t <= 0) {
         removeObj(s.mesh);
         const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
-        // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1), one of each at a time
+        // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1). At most one barrier oni
+        // per wave but no limit on the map; only one yellow oni at a time
         const black = !!s.black;
-        let tough = !black && (!!s.tough || (stageN >= 2 && !enemies.some(o => o.tough) && Math.random() < baseRate));
+        let tough = !black && (!!s.tough || (stageN >= 2 && !toughWave && Math.random() < baseRate));
         let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : 1)));
         // stage 3 from 8:00: the plain red oni and the barrier oni swap rates, so most newcomers wear a barrier
         // (several at once), a plain red one turns up at the barrier oni's old rate; the yellow rate stays
@@ -2377,6 +2381,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
           amb = !enemies.some(o => o.amb) && r >= baseRate && r < baseRate + (1 - baseRate) * baseRate;
           tough = !amb && r >= baseRate;
         }
+        if (tough) toughWave = true;
         const mesh = makePerson(black ? BLK : amb ? AMB : ONI, true); mesh.position.set(s.x * S, 0, s.y * S); dyn.add(mesh);
         // from stage 2 a few oni wear a barrier and survive one explosion
         let armor = null;
@@ -3238,7 +3243,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     ui.game.classList.remove('playing');
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・6分からは黒と黄色の鬼が必ずいて、バリア鬼は2体以上いる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     fitLines($('spMsg'));
   }
