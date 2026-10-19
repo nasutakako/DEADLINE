@@ -441,7 +441,9 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const LV_EVERY = 20;
   const DASH_MULT = 2.0, DASH_TIME = 0.38, DASH_CD = 3.5;
   const R_PLAYER = 0.3, R_ENEMY = 0.3, CATCH = 0.55;
-  const BLACK_MULT = 1.08;   // the black oni (stage 3): 8% faster than the runner; only steady dashing (about +11% on average) stays ahead
+  // dashing the moment the cooldown is up, a runner a tile and a half ahead is run down around the
+  // 4th dash (about 10.5 sec); worked out by stepping the chase through dash, cooldown and catch distance
+  const BLACK_MULT = 1.13;   // the black oni (stage 3)
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
@@ -1110,8 +1112,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   // oni per wave: 1 at first, +1 every 40 sec, up to 3 at once
   // stage 3: always 3 per wave
   // stage 2 opens at 2 per wave, stage 3 at 3
-  // stage 3: 3 oni a wave, 4 from 4:00, 5 (the most) from 6:00
-  const spawnBatch = () => stageN >= 3 ? (t >= 360 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
+  // stage 3: 3 oni a wave, 4 from 4:00, 5 from 6:00, 6 from 7:00, 7 (the most) from 9:00
+  const spawnBatch = () => stageN >= 3 ? (t >= 540 ? 7 : t >= 420 ? 6 : t >= 360 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   // stage 3 starts at the stage 2 speed
   const enemySpeed = () => Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
@@ -1187,8 +1189,18 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       const batch = spawnBatch();
       for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
-    // stage 3: from 2:00, once a minute, the next wave always brings one black oni (faster than you)
-    if (stageN >= 3 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
+    // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
+    if (stageN >= 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
+    // from 6:00 there is always at least one black, one barrier and one yellow oni about: if a kind is
+    // missing (not on the map, not already warned), the next wave is sure to bring one. Stomping its
+    // "!" still cancels it, and the wave after brings another.
+    if (stageN >= 3 && t >= 360 && pending.length) {
+      const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
+      for (const k of ['black', 'tough', 'amb']) {
+        if (enemies.some(e => e[k]) || pending.some(p => p[k])) continue;
+        const p = free.pop(); if (p) p[k] = true;
+      }
+    }
     }
 
     // items: mines lying in the street
@@ -1256,8 +1268,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
       // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1), one of each at a time
       const black = !!s.black;
-      const tough = !black && stageN >= 2 && !enemies.some(o => o.tough) && Math.random() < baseRate;
-      const amb = !black && !tough && !enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : 1);
+      const tough = !black && (!!s.tough || (stageN >= 2 && !enemies.some(o => o.tough) && Math.random() < baseRate));
+      const amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : 1)));
       enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, amb, black, stun: 0 });
       fx.spawn();
     }
@@ -2467,7 +2479,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     pendingStart = n; state = 'startpick'; bgmStart(songFor(n));
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : 'はてなき地獄'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分からは1分ごとに補給。偶数分はバリア+爆弾2個、奇数分は爆弾2個。\n・鬼を40体倒すごとに、3秒加速かランチャーのどちらかが1つ届く。\n・鬼が出る場所には先に「!」が出る。「!」を踏めばその鬼は出ない。\n・広場には落とし穴。ふたを踏んで離れると開き、追ってきた鬼を落とす。自分が落ちても確保。使うと45秒ふさがる。\n・一度に出る鬼は最大5体まで増える。\n・2分からは1分ごとに、逃走者より速い黒い鬼が1体まじる。ダッシュをうまく使って振り切れ。' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分からは1分ごとに補給。偶数分はバリア+爆弾2個、奇数分は爆弾2個。\n・鬼を40体倒すごとに、3秒加速かランチャーのどちらかが1つ届く。\n・鬼が出る場所には先に「!」が出る。「!」を踏めばその鬼は出ない。\n・広場には落とし穴。ふたを踏んで離れると開き、追ってきた鬼を落とす。自分が落ちても確保。使うと45秒ふさがる。\n・一度に出る鬼は最大7体まで増える。\n・2分からは1分ごとに、逃走者より速い黒い鬼が1体まじる。ダッシュをうまく使って振り切れ。\n・6分からは黒・黄色・バリアの鬼が必ずどこかにいる。' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
   }
   $('startBtn').addEventListener('click', showBrief);
