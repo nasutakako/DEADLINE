@@ -2448,8 +2448,12 @@ h2.clear { color: #5dff9e; }
   for (const b of document.querySelectorAll('#startPicks .pick')) b.addEventListener('click', () => { if (state === 'startpick') tap(), start(pendingStart, b.dataset.item); });
   ui.item.addEventListener('pointerdown', e => { e.preventDefault(); useItem(); });
   ui.item.addEventListener('click', e => { if (e.detail === 0) useItem(); });
-  $('resumeBtn').addEventListener('click', () => setPause(false));
-  ui.pauseBtn.addEventListener('click', () => setPause(state === 'play'));
+  $('resumeBtn').addEventListener('click', () => { if (state === 'pause') tap(); setPause(false); });
+  // the stop button answers on touch-down, so it works with a thumb still on the stick
+  // (a second finger's tap never becomes a click on phones)
+  const pauseTap = () => { if (state !== 'play' && state !== 'pause') return; tap(); setPause(state === 'play'); };
+  ui.pauseBtn.addEventListener('pointerdown', e => { e.preventDefault(); pauseTap(); });
+  ui.pauseBtn.addEventListener('click', e => { if (e.detail === 0) pauseTap(); });
   for (const [btn, fn] of [[ui.dash, dash], [ui.mine, placeMine]]) {
     btn.addEventListener('pointerdown', e => { e.preventDefault(); fn(); });
     btn.addEventListener('click', e => { if (e.detail === 0) fn(); });

@@ -3382,8 +3382,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   updateLocks();
   $('menuBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('quitBtn').addEventListener('click', () => { tap(); toTitle(); });
-  $('resumeBtn').addEventListener('click', () => setPause(false));
-  ui.pauseBtn.addEventListener('click', () => setPause(state === 'play'));
+  $('resumeBtn').addEventListener('click', () => { if (state === 'pause') tap(); setPause(false); });
+  // the stop button answers on touch-down, so it works with a thumb still on the stick
+  // (a second finger's tap never becomes a click on phones)
+  const pauseTap = () => { if (state !== 'play' && state !== 'pause') return; tap(); setPause(state === 'play'); };
+  ui.pauseBtn.addEventListener('pointerdown', e => { e.preventDefault(); pauseTap(); });
+  ui.pauseBtn.addEventListener('click', e => { if (e.detail === 0) pauseTap(); });
   $('startBtn').addEventListener('click', showBrief);
   $('briefGoBtn').addEventListener('click', () => { tap(); start(1); });
   $('briefBackBtn').addEventListener('click', () => { tap(); toTitle(); });
