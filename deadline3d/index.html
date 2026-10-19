@@ -978,9 +978,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   }
   function ambushTarget() {
     const tx = Math.floor(P.x), ty = Math.floor(P.y);
-    if (Math.hypot(P.vx, P.vy) < 0.5) return [tx, ty, P.f];
+    const hx = P.vx, hy = P.vy;
+    if (Math.hypot(hx, hy) < 0.5) return [tx, ty, P.f];
     let dx = 0, dy = 0;
-    if (Math.abs(P.vx) >= Math.abs(P.vy)) dx = Math.sign(P.vx); else dy = Math.sign(P.vy);
+    if (Math.abs(hx) >= Math.abs(hy)) dx = Math.sign(hx); else dy = Math.sign(hy);
     let x = tx, y = ty;
     for (let k = 0; k < 3 && stepOK(P.f, x, y, dx, dy, false); k++) { x += dx; y += dy; }
     return [x, y, P.f];
@@ -2387,8 +2388,18 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     pending = pending.filter(s => s.t > 0);
 
     const es = enemySpeed();
-    const ambT = enemies.some(e => e.amb) ? ambushTarget() : null;
-    if (ambT) ambushFlow(ambT[0], ambT[1], ambT[2]);
+    // the yellow oni takes the bait: when the runner turns it swings round at once and then holds that
+    // line for 0.7 sec, so a quick feint sends it the wrong way while the runner doubles back.
+    // Otherwise it re-reads the runner's heading every 0.3 sec.
+    P.ambClock = (P.ambClock || 0) - dt;
+    const hd = Math.hypot(P.vx, P.vy) < 0.5 ? 0 : Math.abs(P.vx) >= Math.abs(P.vy) ? (P.vx > 0 ? 1 : 2) : (P.vy > 0 ? 3 : 4);
+    if (!enemies.some(e => e.amb)) P.ambT = null;
+    else if (P.ambClock <= 0 || !P.ambT) {
+      const turned = P.ambT && hd && hd !== P.ambHd;
+      P.ambClock = turned ? 0.7 : 0.3; P.ambHd = hd || P.ambHd;
+      P.ambT = ambushTarget(); ambushFlow(P.ambT[0], P.ambT[1], P.ambT[2]);
+    }
+    const ambT = P.ambT;
     for (const e of enemies) {
       if (e.stun > 0) { e.stun -= dt; e.vx *= 0.9; e.vy *= 0.9; continue; }
       const tx = clamp(Math.floor(e.x), 0, COLS - 1), ty = clamp(Math.floor(e.y), 0, ROWS - 1), node = nodeOf(e.f, e.x, e.y);
@@ -2398,8 +2409,14 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
         e.lthink = (e.lthink || 0) - dt;
         if (e.lthink <= 0) {
           e.lthink = 0.25;
-          e.lpt = loopIntercept(e, Math.min(es * e.var, runnerSpeed()));
-          if (e.lpt) { if (!e.lfd) e.lfd = new Int16Array(2 * N); bfs2(e.lfd, fq, nodeOf(e.lpt[2], e.lpt[0] + 0.5, e.lpt[1] + 0.5)); }
+          const nt = loopIntercept(e, Math.min(es * e.var, runnerSpeed()));
+          // keep making for the same spot unless the new one is well away from it, and only give up the
+          // ambush after it has failed three looks in a row, so the oni does not dither
+          if (!nt) { e.lmiss = (e.lmiss || 0) + 1; if (e.lmiss >= 3) e.lpt = null; }
+          else {
+            e.lmiss = 0;
+            if (!e.lpt || (nt[2] || 0) !== (e.lpt[2] || 0) || Math.hypot(nt[0] - e.lpt[0], nt[1] - e.lpt[1]) > 2.5) { e.lpt = nt; if (!e.lfd) e.lfd = new Int16Array(2 * N); bfs2(e.lfd, fq, nodeOf(e.lpt[2], e.lpt[0] + 0.5, e.lpt[1] + 0.5)); }
+          }
         }
       }
       const lp = e.amb && e.lpt && Math.hypot(P.x - e.x, P.y - e.y) > 1.1 ? e.lpt : null;
@@ -2436,8 +2453,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
         gx = bxx + 0.5; gy = byy + 0.5;
       }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1, v = e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed());
-      e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
-      e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
+      const turn = Math.min(1, dt * (lp ? 6 : 12));   // an ambushing yellow oni swings round more smoothly
+      e.vx += (dx / dl * v - e.vx) * turn;
+      e.vy += (dy / dl * v - e.vy) * turn;
       move(e, e.vx, e.vy, dt);
       e.h = heightAt(e.f, e.x, e.y);
     }
