@@ -316,7 +316,7 @@ h2.clear { color: #5dff9e; }
 .who.float { max-height: calc(100% - 28px); }
 
 /* the daily challenge sits under the ranking button in the name column */
-.dailybtn { border: 1px solid rgba(143,233,255,.55); background: rgba(143,233,255,.08); color: var(--runner); border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; line-height: 1.3; text-align: center; }
+.dailybtn { border: 1px solid rgba(143,233,255,.55); background: rgba(143,233,255,.08); color: var(--runner); border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; line-height: 1.3; text-align: center; white-space: nowrap; }
 .dailybtn.locked { opacity: .5; }
 </style>
 </head>
@@ -345,7 +345,7 @@ h2.clear { color: #5dff9e; }
     <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
     <button class="whoname unset" id="whoName" type="button">名前を登録</button>
     <button class="rankbtn" id="rankBtn" type="button">🏆 ランキング</button>
-    <button class="dailybtn" id="start4Btn" type="button">📅 日替わり</button>
+    <button class="dailybtn" id="start4Btn" type="button">日替わり</button>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
   <div class="padinfo" id="padInfo">
@@ -566,7 +566,7 @@ h2.clear { color: #5dff9e; }
   // ---------- daily challenge: stage 4 in the code. One of three nights, in turn by the date (Japan time);
   // opens once stage 2 has been escaped. Played on the stage 3 map and rules, with every oni of one kind ----------
   const DAILY = [
-    { key: 'd1', board: 'daily1', name: '黒鬼の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼は1体から。2分と4分で1体ずつ増える' },
+    { key: 'd1', board: 'daily1', name: '疾風の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼は1体から。2分と4分で1体ずつ増える' },
     { key: 'd2', board: 'daily2', name: '先回りの夜', rule: '・出てくる鬼はすべて、先回りしてくる黄色い鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
     { key: 'd3', board: 'daily3', name: '鉄壁の夜', rule: '・出てくる鬼はすべて、爆発に1回耐えるバリア鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
   ];
@@ -581,7 +581,7 @@ h2.clear { color: #5dff9e; }
     const locked = [];
     for (const n of [2, 3, 4]) {
       const b = $('start' + n + 'Btn'); if (!b) continue;
-      if (n === 4) b.dataset.label = '📅 日替わり ' + DAILY[dailyToday()].name;
+      if (n === 4) b.dataset.label = '日替わり ' + DAILY[dailyToday()].name;
       if (!b.dataset.label) b.dataset.label = b.textContent;
       const ok = unlocked(n);
       b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
