@@ -345,7 +345,7 @@ h2.clear { color: #5dff9e; }
     <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
     <button class="whoname unset" id="whoName" type="button">名前を登録</button>
     <button class="rankbtn" id="rankBtn" type="button">🏆 ランキング</button>
-    <button class="dailybtn" id="start4Btn" type="button">今日の試練</button>
+    <button class="dailybtn" id="start4Btn" type="button">生存課題</button>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
   <div class="padinfo" id="padInfo">
@@ -573,20 +573,20 @@ h2.clear { color: #5dff9e; }
   const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
   let daily = null;   // the night being played on stage 4
   const recKey = n => n === 4 && daily ? daily.key : n;
-  const stageLabel = n => n === 4 && daily ? '今日の試練 ' + daily.name : 'ステージ' + n;
-  const DAILY_LABELS = DAILY.map(d => [d.key, '今日の試練 ' + d.name]);
+  const stageLabel = n => n === 4 && daily ? '生存課題 ' + daily.name : 'ステージ' + n;
+  const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
   // the daily nights open with stage 3, once stage 2 has been escaped
   const unlocked = n => n <= 1 || isCleared(Math.min(n, 3) - 1);
   function updateLocks() {
     const locked = [];
     for (const n of [2, 3, 4]) {
       const b = $('start' + n + 'Btn'); if (!b) continue;
-      if (n === 4) b.dataset.label = '今日の試練\n' + DAILY[dailyToday()].name;
+      if (n === 4) b.dataset.label = '生存課題\n' + DAILY[dailyToday()].name;
       if (!b.dataset.label) b.dataset.label = b.textContent;
       const ok = unlocked(n);
       b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
       b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
-      if (!ok) locked.push(`${n === 4 ? '今日の試練' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
+      if (!ok) locked.push(`${n === 4 ? '生存課題' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
     }
     const hint = $('lockHint');
     if (hint) { hint.hidden = !locked.length; hint.textContent = '🔒 ' + locked.join('、'); }
@@ -766,7 +766,7 @@ h2.clear { color: #5dff9e; }
       return li;
     }
     // stage 3 and the three daily nights, one tab each
-    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '今日の試練 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -877,11 +877,11 @@ h2.clear { color: #5dff9e; }
     ['t48', '伝説の逃亡者', '1回で15分逃げ切り、鬼を100体倒す', r => r.time >= 900 && r.kills >= 100],
     ['t49', '夜の王', '20分逃げ切る', r => r.time >= 1200],
     ['t50', '称号コレクター', '称号を40個集める', (r, a, n) => n >= 40],
-    // 今日の試練: r.daily is the night played ('' on a stage); a.d holds the days played and each night's totals
-    ['t51', '試練の門', '今日の試練を1回遊ぶ', r => !!r.daily],
-    ['t52', '二夜目', '2日、今日の試練を遊ぶ', (r, a) => a.d.days >= 2],
-    ['t53', '三夜巡り', '3種類の今日の試練をすべて遊ぶ', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).plays)],
-    ['t54', '三日坊主卒業', '3日連続で今日の試練を遊ぶ', (r, a) => a.d.top >= 3],
+    // 生存課題: r.daily is the night played ('' on a stage); a.d holds the days played and each night's totals
+    ['t51', '試練の門', '生存課題を1回遊ぶ', r => !!r.daily],
+    ['t52', '二夜目', '2日、生存課題を遊ぶ', (r, a) => a.d.days >= 2],
+    ['t53', '三夜巡り', '3種類の生存課題をすべて遊ぶ', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).plays)],
+    ['t54', '三日坊主卒業', '3日連続で生存課題を遊ぶ', (r, a) => a.d.top >= 3],
     ['t55', '疾風に挑む', '疾風の夜を遊ぶ', r => r.daily === 'd1'],
     ['t56', '読み合い', '先回りの夜を遊ぶ', r => r.daily === 'd2'],
     ['t57', '鉄壁に挑む', '鉄壁の夜を遊ぶ', r => r.daily === 'd3'],
@@ -897,14 +897,14 @@ h2.clear { color: #5dff9e; }
     ['t67', '風の素手', '疾風の夜で爆弾を使わずに1分逃げ切る', r => r.daily === 'd1' && r.bombs === 0 && r.time >= 60],
     ['t68', '罠の読み手', '先回りの夜で落とし穴に鬼を5体落とす', r => r.daily === 'd2' && r.pit >= 5],
     ['t69', '鉄を穿つ', '鉄壁の夜で爆弾1発で鬼を3体倒す', r => r.daily === 'd3' && r.maxBlast >= 3],
-    ['t70', '一週間の試練', '7日、今日の試練を遊ぶ', (r, a) => a.d.days >= 7],
+    ['t70', '一週間の試練', '7日、生存課題を遊ぶ', (r, a) => a.d.days >= 7],
     ['t71', '向かい風', '疾風の夜で3分逃げ切る', r => r.daily === 'd1' && r.time >= 180],
     ['t72', '二手先', '先回りの夜で3分逃げ切る', r => r.daily === 'd2' && r.time >= 180],
     ['t73', '城壁越え', '鉄壁の夜で3分逃げ切る', r => r.daily === 'd3' && r.time >= 180],
     ['t74', '読ませない足', '先回りの夜でダッシュを50回使う', r => r.daily === 'd2' && r.dashes >= 50],
     ['t75', '破城槌', '鉄壁の夜でランチャー1発で鬼を3体倒す', r => r.daily === 'd3' && r.maxRocket >= 3],
-    ['t76', '七夜連続', '7日連続で今日の試練を遊ぶ', (r, a) => a.d.top >= 7],
-    ['t77', '試練の常連', '今日の試練を通算30回遊ぶ', (r, a) => dsum(a, 'plays') >= 30],
+    ['t76', '七夜連続', '7日連続で生存課題を遊ぶ', (r, a) => a.d.top >= 7],
+    ['t77', '試練の常連', '生存課題を通算30回遊ぶ', (r, a) => dsum(a, 'plays') >= 30],
     ['t78', '風を追い越す', '疾風の夜で5分逃げ切る', r => r.daily === 'd1' && r.time >= 300],
     ['t79', '読み勝ち', '先回りの夜で5分逃げ切る', r => r.daily === 'd2' && r.time >= 300],
     ['t80', '鉄壁崩し', '鉄壁の夜で5分逃げ切る', r => r.daily === 'd3' && r.time >= 300],
@@ -917,16 +917,16 @@ h2.clear { color: #5dff9e; }
     ['t87', '疾風迅雷', '疾風の夜で7分逃げ切る', r => r.daily === 'd1' && r.time >= 420],
     ['t88', '千里眼', '先回りの夜で8分逃げ切る', r => r.daily === 'd2' && r.time >= 480],
     ['t89', '金剛不壊', '鉄壁の夜で8分逃げ切る', r => r.daily === 'd3' && r.time >= 480],
-    ['t90', '一月の夜', '30日、今日の試練を遊ぶ', (r, a) => a.d.days >= 30],
-    ['t91', '三夜の覇者', '3種類の今日の試練すべてで5分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 300)],
+    ['t90', '一月の夜', '30日、生存課題を遊ぶ', (r, a) => a.d.days >= 30],
+    ['t91', '三夜の覇者', '3種類の生存課題すべてで5分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 300)],
     ['t92', '嵐を鎮める者', '疾風の夜の通算撃破数200体', (r, a) => dn(a, 'd1').kills >= 200],
-    ['t93', '試練の刻', '今日の試練の通算逃走時間1時間', (r, a) => dsum(a, 'time') >= 3600],
+    ['t93', '試練の刻', '生存課題の通算逃走時間1時間', (r, a) => dsum(a, 'time') >= 3600],
     ['t94', '風神', '疾風の夜で10分逃げ切る', r => r.daily === 'd1' && r.time >= 600],
     ['t95', '未来視', '先回りの夜で12分逃げ切る', r => r.daily === 'd2' && r.time >= 720],
     ['t96', '難攻不落', '鉄壁の夜で12分逃げ切る', r => r.daily === 'd3' && r.time >= 720],
-    ['t97', '三十夜連続', '30日連続で今日の試練を遊ぶ', (r, a) => a.d.top >= 30],
-    ['t98', '試練の鬼狩り', '今日の試練の通算撃破数1000体', (r, a) => dsum(a, 'kills') >= 1000],
-    ['t99', '三夜の王', '3種類の今日の試練すべてで10分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 600)],
+    ['t97', '三十夜連続', '30日連続で生存課題を遊ぶ', (r, a) => a.d.top >= 30],
+    ['t98', '試練の鬼狩り', '生存課題の通算撃破数1000体', (r, a) => dsum(a, 'kills') >= 1000],
+    ['t99', '三夜の王', '3種類の生存課題すべてで10分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 600)],
     ['t100', '称号マスター', '称号を80個集める', (r, a, n) => n >= 80],
   ];
   // the daily nights' tallies: days played, the current and longest run of days, and each night's plays, time, kills and best
@@ -2063,7 +2063,7 @@ h2.clear { color: #5dff9e; }
     $('rRank').textContent = rankText(stageN, rank);
     $('rTime').textContent = total.toFixed(1) + '秒';
     $('rKills').textContent = kills + '体';
-    $('rCount').textContent = stageN === 4 ? '今日の試練' : 'ステージ' + stageN;
+    $('rCount').textContent = stageN === 4 ? '生存課題' : 'ステージ' + stageN;
     $('rBest').textContent = best.toFixed(1) + '秒';
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
@@ -2322,7 +2322,7 @@ h2.clear { color: #5dff9e; }
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
-    const SN = sN === 4 && daily ? '今日の試練 ' + daily.name : `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
+    const SN = sN === 4 && daily ? '生存課題 ' + daily.name : `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
     ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
@@ -3011,8 +3011,8 @@ h2.clear { color: #5dff9e; }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
-      $('spKicker').textContent = `今日の試練 ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける今日の試練。\n・3種類の夜が毎日順番に入れ替わる(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
+      $('spKicker').textContent = `生存課題 ${daily.name}`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
       $('startPickScreen').hidden = false;
       mono('spMono', 4, 'standby');
       fitStandby();
