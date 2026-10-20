@@ -1223,7 +1223,7 @@ h2.clear { color: #5dff9e; }
     // street lights: one on every other stretch of road, a warm pool under each
     const lamp = (x, y) => {
       const gr = m.createRadialGradient(x, y, 0, x, y, 1.5);
-      gr.addColorStop(0, 'rgba(255,196,110,0.30)'); gr.addColorStop(0.6, 'rgba(255,196,110,0.08)'); gr.addColorStop(1, 'rgba(255,196,110,0)');
+      gr.addColorStop(0, 'rgba(255,182,84,0.33)'); gr.addColorStop(0.6, 'rgba(255,182,84,0.09)'); gr.addColorStop(1, 'rgba(255,182,84,0)');
       m.fillStyle = gr; m.fillRect(x - 1.5, y - 1.5, 3, 3);
     };
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) lamp(x + 0.5, y + 0.12);
@@ -1235,7 +1235,7 @@ h2.clear { color: #5dff9e; }
     m.clip();
     const road = (x, y) => {
       const gr = m.createRadialGradient(x, y, 0, x, y, 1.6);
-      gr.addColorStop(0, 'rgba(255,200,120,0.2)'); gr.addColorStop(0.55, 'rgba(255,200,120,0.08)'); gr.addColorStop(1, 'rgba(255,200,120,0)');
+      gr.addColorStop(0, 'rgba(255,186,90,0.22)'); gr.addColorStop(0.55, 'rgba(255,186,90,0.09)'); gr.addColorStop(1, 'rgba(255,186,90,0)');
       m.fillStyle = gr; m.fillRect(x - 1.6, y - 1.6, 3.2, 3.2);
     };
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) road(x + 0.5, y + 0.12);
