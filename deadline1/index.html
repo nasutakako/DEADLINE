@@ -1100,7 +1100,7 @@ h2.clear { color: #5dff9e; }
     // the dark: the streets and buildings sit deeper in it than the plazas, crossings and street lights
     m.fillStyle = 'rgba(2,4,14,0.56)'; m.fillRect(0, 0, COLS, ROWS);
     // the road surface itself a shade lighter than the dark around it
-    m.fillStyle = 'rgba(150,160,185,0.06)';
+    m.fillStyle = 'rgba(150,160,185,0.11)';
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 0 && !onPitch(x, y)) m.fillRect(x, y, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 2) { m.fillStyle = '#1f2a24'; m.fillRect(x, y, 1, 1); }
     for (const c of courts) {
@@ -1155,7 +1155,7 @@ h2.clear { color: #5dff9e; }
     m.fillStyle = 'rgba(2,4,14,0.38)';
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 2 || onPitch(x, y)) m.fillRect(x, y, 1, 1);
     // zebra crossings
-    m.fillStyle = 'rgba(143,143,140,0.22)';
+    m.fillStyle = 'rgba(196,196,190,0.32)';
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x += 4) {
       if (!walk(x, y) || onPitch(x, y)) continue;
       for (let k = 0; k < 4; k++) { if (walk(x + 1, y)) m.fillRect(x + 1.04, y + 0.16 + k * 0.19, 0.12, 0.1); if (walk(x, y + 1)) m.fillRect(x + 0.16 + k * 0.19, y + 1.04, 0.1, 0.12); }
