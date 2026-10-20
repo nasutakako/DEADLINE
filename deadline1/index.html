@@ -1691,7 +1691,7 @@ h2.clear { color: #5dff9e; }
       // stage 3: even minutes bring a barrier and 2 bombs, odd minutes (from 3:00) 2 bombs only
       const minute = Math.round((P.nextR - 60) / 60), bombsOnly = stageN >= 3 && minute % 2 === 1;
       if (!bombsOnly) P.gotBarrier = P.barrier = true;
-      P.stock = Math.min(MINE_MAX, P.stock + Math.min(2, stageN)); /* +1 bomb on stage 1, +2 after */ flash = Math.max(flash, 0.25);
+      P.stock = Math.min(MINE_MAX, P.stock + (stageN >= 3 ? 2 : 1)); /* +1 bomb on stages 1 and 2, +2 on stage 3 */ flash = Math.max(flash, 0.25);
       tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120);
     }
     if (t >= EXIT_AT && !exitOpen && stageN < 3) {  // stage 3 has no way out
@@ -3021,7 +3021,7 @@ h2.clear { color: #5dff9e; }
     }
     daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。\n・2分30秒で出口が開くと、鬼が一度に7体出て、15秒ごとに1体ずつ増える\n補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと、鬼が一度に7体出て、15秒ごとに1体ずつ増える\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
     fitStandby();
