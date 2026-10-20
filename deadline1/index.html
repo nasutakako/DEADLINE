@@ -345,7 +345,7 @@ h2.clear { color: #5dff9e; }
     <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
     <button class="whoname unset" id="whoName" type="button">名前を登録</button>
     <button class="rankbtn" id="rankBtn" type="button">🏆 ランキング</button>
-    <button class="dailybtn" id="start4Btn" type="button">日替わり</button>
+    <button class="dailybtn" id="start4Btn" type="button">DAILY</button>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
   <div class="padinfo" id="padInfo">
@@ -573,20 +573,20 @@ h2.clear { color: #5dff9e; }
   const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
   let daily = null;   // the night being played on stage 4
   const recKey = n => n === 4 && daily ? daily.key : n;
-  const stageLabel = n => n === 4 && daily ? '日替わり ' + daily.name : 'ステージ' + n;
-  const DAILY_LABELS = DAILY.map(d => [d.key, '日替わり ' + d.name]);
+  const stageLabel = n => n === 4 && daily ? 'DAILY ' + daily.name : 'ステージ' + n;
+  const DAILY_LABELS = DAILY.map(d => [d.key, 'DAILY ' + d.name]);
   // the daily nights open with stage 3, once stage 2 has been escaped
   const unlocked = n => n <= 1 || isCleared(Math.min(n, 3) - 1);
   function updateLocks() {
     const locked = [];
     for (const n of [2, 3, 4]) {
       const b = $('start' + n + 'Btn'); if (!b) continue;
-      if (n === 4) b.dataset.label = '日替わり\n' + DAILY[dailyToday()].name;
+      if (n === 4) b.dataset.label = 'DAILY\n' + DAILY[dailyToday()].name;
       if (!b.dataset.label) b.dataset.label = b.textContent;
       const ok = unlocked(n);
       b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
       b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
-      if (!ok) locked.push(`${n === 4 ? '日替わり' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
+      if (!ok) locked.push(`${n === 4 ? 'DAILY' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
     }
     const hint = $('lockHint');
     if (hint) { hint.hidden = !locked.length; hint.textContent = '🔒 ' + locked.join('、'); }
@@ -766,7 +766,7 @@ h2.clear { color: #5dff9e; }
       return li;
     }
     // stage 3 and the three daily nights, one tab each
-    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '日替わり ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, 'DAILY ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -1996,7 +1996,7 @@ h2.clear { color: #5dff9e; }
     $('rRank').textContent = rankText(stageN, rank);
     $('rTime').textContent = total.toFixed(1) + '秒';
     $('rKills').textContent = kills + '体';
-    $('rCount').textContent = stageN === 4 ? '日替わり' : 'ステージ' + stageN;
+    $('rCount').textContent = stageN === 4 ? 'DAILY' : 'ステージ' + stageN;
     $('rBest').textContent = best.toFixed(1) + '秒';
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
@@ -2255,7 +2255,7 @@ h2.clear { color: #5dff9e; }
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
-    const SN = sN === 4 && daily ? '日替わり ' + daily.name : `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
+    const SN = sN === 4 && daily ? 'DAILY ' + daily.name : `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
     ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
@@ -2883,10 +2883,58 @@ h2.clear { color: #5dff9e; }
         '怖いのは捕まることじゃない。この夜が終わらないことに、慣れてしまうことだ。',
       ],
     },
+    d1: {
+      standby: [
+        '今夜の鬼は、全部黒い。足の速さじゃ勝てない。曲がり角で振り切るしかない。',
+        '最初は1体だけ。……でも、あいつ1体で十分すぎるほど速い。',
+        '風が強い夜だ。黒い影が、風より速く路地を抜けていく。',
+        '直線は捨てろ。速い相手には、角と爆弾で勝負する。',
+        '2分、4分——黒い鬼が増えるたびに、夜が少しずつ狭くなる。',
+      ],
+      caught: [
+        'まっすぐ逃げたのが間違いだった……。黒い鬼は、直線なら必ず追いつく。',
+        '速すぎる……。振り向いた時には、もう肩をつかまれてた。',
+        '爆弾を温存しすぎた。速い相手には、迷ってる時間なんてない。',
+        '角を曲がって、また角を曲がる。次はそれだけを考えて走る。',
+        '風みたいな鬼だった。……次こそ、あの速さの裏をかいてやる。',
+      ],
+    },
+    d2: {
+      standby: [
+        '今夜は黄色い鬼しかいない。あいつら、俺の行き先を読んでくる。',
+        '逃げる先に、もう鬼が立ってる。……考えるより先に、読まれてる。',
+        'まっすぐ行くと見せかけて、曲がる。この夜は、だまし合いだ。',
+        '黄色い鬼は後ろからは来ない。前を見ろ。道の先を見ろ。',
+        '読まれるなら、読まれない動きをすればいい。……簡単に言ってくれる。',
+      ],
+      caught: [
+        '逃げた先で待ち伏せされた……。行き先を決めるのが早すぎた。',
+        '前からも横からも黄色。……全部、俺の動きを先回りしてた。',
+        '同じ道を2回通ったのが失敗だった。あいつら、癖を覚えてる。',
+        '引き返すのも作戦のうちだ。次は、わざと遠回りしてみる。',
+        '読み合いで負けた……。でも、あいつらの読みにも穴はあるはずだ。',
+      ],
+    },
+    d3: {
+      standby: [
+        '今夜の鬼は、全部バリアをまとってる。爆弾1発じゃ止まらない。',
+        '1発目でバリアを割って、2発目で仕留める。爆弾の数が命綱だ。',
+        '光る膜をまとった鬼が、ゆっくり近づいてくる。……硬い夜になりそうだ。',
+        '倒しきれないなら、落とし穴に誘い込む。使えるものは何でも使う。',
+        '鉄壁の鬼たち。壊せないなら、壊さずに逃げ切るだけだ。',
+      ],
+      caught: [
+        '爆弾が当たったのに、止まらなかった……。バリアのこと、忘れてた。',
+        '1発で安心したのが甘かった。2発目を投げる前に、捕まった。',
+        '爆弾が尽きた瞬間に囲まれた……。次は補給の時間まで温存する。',
+        'バリアの割れた鬼を見落としてた。弱ってる奴から先に片付けるべきだった。',
+        '硬い夜だった……。でも、壊せない壁なんてない。もう一回だ。',
+      ],
+    },
   };
   function mono(id, n, kind) {
     const el = $(id); if (!el) return;
-    const l = MONO[Math.min(3, n)] && MONO[Math.min(3, n)][kind], s = l && l[Math.floor(Math.random() * l.length)];
+    const m = MONO[n === 4 && daily ? daily.key : Math.min(3, n)], l = m && m[kind], s = l && l[Math.floor(Math.random() * l.length)];
     el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
   }
   function begin(n) {
@@ -2896,10 +2944,10 @@ h2.clear { color: #5dff9e; }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
-      $('spKicker').textContent = `DAILY 日替わり ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける日替わりステージ。\n・3種類の夜が毎日順番に入れ替わる(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
+      $('spKicker').textContent = `DAILY ${daily.name}`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続けるDAILYステージ。\n・3種類の夜が毎日順番に入れ替わる(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
       $('startPickScreen').hidden = false;
-      mono('spMono', 3, 'standby');
+      mono('spMono', 4, 'standby');
       fitStandby();
       return;
     }

@@ -390,7 +390,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
     <button class="whoname unset" id="whoName" type="button">名前を登録</button>
     <button class="rankbtn" id="rankBtn" type="button">🏆 ランキング</button>
-    <button class="dailybtn" id="start4Btn" type="button">日替わり</button>
+    <button class="dailybtn" id="start4Btn" type="button">DAILY</button>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
   <div class="padinfo" id="padInfo">
@@ -629,20 +629,20 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
   let daily = null;   // the night being played on stage 4
   const recKey = n => n === 4 && daily ? daily.key : n;
-  const stageLabel = n => n === 4 && daily ? '日替わり ' + daily.name : 'ステージ' + n;
-  const DAILY_LABELS = DAILY.map(d => [d.key, '日替わり ' + d.name]);
+  const stageLabel = n => n === 4 && daily ? 'DAILY ' + daily.name : 'ステージ' + n;
+  const DAILY_LABELS = DAILY.map(d => [d.key, 'DAILY ' + d.name]);
   // the daily nights open with stage 3, once stage 2 has been escaped
   const unlocked = n => n <= 1 || isCleared(Math.min(n, 3) - 1);
   function updateLocks() {
     const locked = [];
     for (const n of [2, 3, 4]) {
       const b = $('start' + n + 'Btn'); if (!b) continue;
-      if (n === 4) b.dataset.label = '日替わり\n' + DAILY[dailyToday()].name;
+      if (n === 4) b.dataset.label = 'DAILY\n' + DAILY[dailyToday()].name;
       if (!b.dataset.label) b.dataset.label = b.textContent;
       const ok = unlocked(n);
       b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
       b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
-      if (!ok) locked.push(`${n === 4 ? '日替わり' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
+      if (!ok) locked.push(`${n === 4 ? 'DAILY' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
     }
     const hint = $('lockHint');
     if (hint) { hint.hidden = !locked.length; hint.textContent = '🔒 ' + locked.join('、'); }
@@ -826,7 +826,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       return li;
     }
     // stage 3 and the three daily nights, one tab each
-    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '日替わり ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, 'DAILY ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -1925,7 +1925,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('rRank').textContent = rankText(stageN, rank);
     $('rTime').textContent = total.toFixed(1) + '秒';
     $('rKills').textContent = kills + '体';
-    $('rCount').textContent = stageN === 4 ? '日替わり' : 'ステージ' + stageN;
+    $('rCount').textContent = stageN === 4 ? 'DAILY' : 'ステージ' + stageN;
     $('rBest').textContent = best.toFixed(1) + '秒';
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
@@ -2184,7 +2184,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
-    const SN = sN === 4 && daily ? '日替わり ' + daily.name : `ステージ${sN} ${sN === 1 ? '隔離区画' : sN === 2 ? 'ネオン街' : '無限回路'}`;
+    const SN = sN === 4 && daily ? 'DAILY ' + daily.name : `ステージ${sN} ${sN === 1 ? '隔離区画' : sN === 2 ? 'ネオン街' : '無限回路'}`;
     ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
@@ -2987,10 +2987,58 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         '怖いのは捕まることじゃない。このループに、慣れてしまうことだ。',
       ],
     },
+    d1: {
+      standby: [
+        '高速型の黒い個体のみ——今夜のログにはそう表示されている。脚力じゃ勝てない。',
+        '最初は1体。……でも、あの駆動音はほかの個体とは別物だ。',
+        '直線は危険。速い相手には、角と爆薬で対抗する。',
+        '2分、4分で個体が追加される。それまでに逃走ルートを固めておく。',
+        '黒い残像が、ネオンの光より速く路地を横切った。',
+      ],
+      caught: [
+        '直線で追いつかれた……。黒い個体相手に、まっすぐ逃げるのは自殺行為だ。',
+        '速すぎる……。センサーに映った時には、もう捕捉されていた。',
+        '爆薬を温存しすぎた。高速型の前で、判断の遅れは命取りだ。',
+        '角を曲がり続ける。次はそれだけを徹底する。',
+        '処理速度で負けた……。でも、あの速さにもパターンはあるはずだ。',
+      ],
+    },
+    d2: {
+      standby: [
+        '予測型の黄色い個体のみ。ヤツらは俺の移動先を計算してくる。',
+        '逃走ルートの先に、もう反応がある。……計算で負けてるのか。',
+        'フェイントを入れて、予測を外す。今夜はアルゴリズムとの読み合いだ。',
+        'ヤツらは背後からは来ない。見るべきは、進路の先だ。',
+        '予測されるなら、予測できない動きをすればいい。……理屈ではな。',
+      ],
+      caught: [
+        '移動先で待ち伏せされた……。進路を確定させるのが早すぎた。',
+        '前方にも側面にも黄色の反応。……全部、先回りされていた。',
+        '同じルートを2回通ったのが失敗だ。ヤツらは行動パターンを学習してる。',
+        '後退も選択肢のひとつだ。次は、あえて遠回りのルートを取る。',
+        '読み合いで負けた……。でも、どんな予測にも誤差はあるはずだ。',
+      ],
+    },
+    d3: {
+      standby: [
+        'シールド持ちの個体のみ。爆薬1発じゃ止まらない。',
+        '1発目でシールドを剥がして、2発目で仕留める。爆薬の数が生命線だ。',
+        '青白い膜をまとった個体が、じわじわ距離を詰めてくる。……長い夜になる。',
+        '倒しきれないなら、落とし穴に誘導する。使えるものは全部使う。',
+        '鉄壁の個体群。破壊できないなら、破壊せずに逃げ切るだけだ。',
+      ],
+      caught: [
+        '爆薬が命中したのに止まらなかった……。シールドの存在を忘れていた。',
+        '1発で安心したのが甘かった。2発目を投げる前に、捕捉された。',
+        '爆薬が尽きた瞬間に包囲された……。次は補給のタイミングまで温存する。',
+        'シールドの剥がれた個体を見落としていた。弱った個体から先に処理すべきだった。',
+        '硬い夜だった……。でも、破れない防壁なんてない。リトライだ。',
+      ],
+    },
   };
   function mono(id, n, kind) {
     const el = $(id); if (!el) return;
-    const l = MONO[Math.min(3, n)] && MONO[Math.min(3, n)][kind], s = l && l[Math.floor(Math.random() * l.length)];
+    const m = MONO[n === 4 && daily ? daily.key : Math.min(3, n)], l = m && m[kind], s = l && l[Math.floor(Math.random() * l.length)];
     el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
   }
   function begin(n) {
@@ -3000,10 +3048,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
-      $('spKicker').textContent = `DAILY 日替わり ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける日替わりステージ。\n・3種類の夜が毎日順番に入れ替わる(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
+      $('spKicker').textContent = `DAILY ${daily.name}`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続けるDAILYステージ。\n・3種類の夜が毎日順番に入れ替わる(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
       $('startPickScreen').hidden = false;
-      mono('spMono', 3, 'standby');
+      mono('spMono', 4, 'standby');
       fitStandby();
       return;
     }
