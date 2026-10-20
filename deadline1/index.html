@@ -305,6 +305,15 @@ h2.clear { color: #5dff9e; }
 
 .award { --aw-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff3c6'/%3E%3Cstop offset='0.3' stop-color='%23e3b04a'/%3E%3Cstop offset='0.52' stop-color='%238d621a'/%3E%3Cstop offset='0.7' stop-color='%23f1cd76'/%3E%3Cstop offset='1' stop-color='%236b4a10'/%3E%3C/linearGradient%3E%3ClinearGradient id='p' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231e2535'/%3E%3Cstop offset='1' stop-color='%230b0e16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M9 1H51L59 9V51L51 59H9L1 51V9Z' fill='url%28%23p%29' stroke='url%28%23m%29' stroke-width='2.2'/%3E%3Cpath d='M11.10 5H48.90L55 11.10V48.90L48.90 55H11.10L5 48.90V11.10Z' fill='none' stroke='rgba%28240%2C200%2C110%2C.6%29' stroke-width='.9'/%3E%3Cg fill='%23ffe39a'%3E%3Cpath d='M5.1 3.1999999999999997L7.0 5.1L5.1 7.0L3.1999999999999997 5.1Z'/%3E%3Cpath d='M54.9 3.1999999999999997L56.8 5.1L54.9 7.0L53.0 5.1Z'/%3E%3Cpath d='M5.1 53.0L7.0 54.9L5.1 56.8L3.1999999999999997 54.9Z'/%3E%3Cpath d='M54.9 53.0L56.8 54.9L54.9 56.8L53.0 54.9Z'/%3E%3C/g%3E%3C/svg%3E"); --aw-ink1: #fff8de; --aw-ink2: #f3cd6d; --aw-ink3: #c18a27; --aw-how: #b9a77d; --aw-tag1: #fff0bd; --aw-tag2: #d9a542; --aw-tagink: #2a1b04; --aw-glow: rgba(240,190,80,.28); --aw-head: #f3cd6d; --aw-shine: rgba(255,248,220,.6); --aw-gem: #ffe39a; --aw-chipbg: #151a26; }
 .mono { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
+
+.ranktabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ranktabs button { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 6px 11px; font-weight: 700; font-size: 12px; white-space: nowrap; }
+.ranktabs button[aria-selected="true"] { color: var(--lamp); border-color: rgba(255,207,90,.6); background: rgba(255,207,90,.1); }
+
+/* the high scores scroll inside the name column when they outgrow it */
+.who .records { min-height: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.pad .who { flex: 0 1 auto; min-height: 0; }
+.who.float { max-height: calc(100% - 28px); }
 </style>
 </head>
 <body>
@@ -354,7 +363,7 @@ h2.clear { color: #5dff9e; }
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
-      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 終わらない夜</button></div>
+      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 終わらない夜</button><button class="go alt" id="start4Btn" type="button">日替わり</button></div>
     </div>
   </div>
 
@@ -389,7 +398,8 @@ h2.clear { color: #5dff9e; }
   <div class="overlay" id="rankScreen" hidden>
     <div class="card rankcard">
       <h2>世界ランキング</h2>
-      <span class="label">ステージ3 終わらない夜 ・ 逃走時間 上位100</span>
+      <div class="ranktabs" id="rankTabs" role="tablist"></div>
+      <span class="label" id="rankLabel">ステージ3 終わらない夜 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -548,16 +558,30 @@ h2.clear { color: #5dff9e; }
   const mergeStages = (a, b) => { const out = {}; for (const k of new Set([...Object.keys(a || {}), ...Object.keys(b || {})])) out[k] = mergeTop(a && a[k], b && b[k]); return out; };
   // stage 2 opens once stage 1 has been cleared, stage 3 once stage 2 has; older saves count their escapes
   const isCleared = n => !!(records.cleared && records.cleared[n]) || (records.stages[n] || []).some(r => r.escaped);
-  const unlocked = n => n <= 1 || isCleared(n - 1);
+  // ---------- daily challenge: stage 4 in the code. One of three nights, in turn by the date (Japan time);
+  // opens once stage 2 has been escaped. Played on the stage 3 map and rules, with every oni of one kind ----------
+  const DAILY = [
+    { key: 'd1', board: 'daily1', name: '黒鬼の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼は1体から。2分と4分で1体ずつ増える' },
+    { key: 'd2', board: 'daily2', name: '先回りの夜', rule: '・出てくる鬼はすべて、先回りしてくる黄色い鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
+    { key: 'd3', board: 'daily3', name: '鉄壁の夜', rule: '・出てくる鬼はすべて、爆発に1回耐えるバリア鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
+  ];
+  const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
+  let daily = null;   // the night being played on stage 4
+  const recKey = n => n === 4 && daily ? daily.key : n;
+  const stageLabel = n => n === 4 && daily ? '日替わり ' + daily.name : 'ステージ' + n;
+  const DAILY_LABELS = DAILY.map(d => [d.key, '日替わり ' + d.name]);
+  // the daily nights open with stage 3, once stage 2 has been escaped
+  const unlocked = n => n <= 1 || isCleared(Math.min(n, 3) - 1);
   function updateLocks() {
     const locked = [];
-    for (const n of [2, 3]) {
+    for (const n of [2, 3, 4]) {
       const b = $('start' + n + 'Btn'); if (!b) continue;
+      if (n === 4) b.dataset.label = '日替わり ' + DAILY[dailyToday()].name;
       if (!b.dataset.label) b.dataset.label = b.textContent;
       const ok = unlocked(n);
       b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
       b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
-      if (!ok) locked.push(`ステージ${n}はステージ${n - 1}をクリアすると解放`);
+      if (!ok) locked.push(`${n === 4 ? '日替わり' : 'ステージ' + n}はステージ${Math.min(n, 3) - 1}をクリアすると解放`);
     }
     const hint = $('lockHint');
     if (hint) { hint.hidden = !locked.length; hint.textContent = '🔒 ' + locked.join('、'); }
@@ -576,7 +600,7 @@ h2.clear { color: #5dff9e; }
     // one line per stage: just the high score
     const h = document.createElement('h3'); h.textContent = 'ハイスコア(逃走時間)'; box.append(h);
     const ol = document.createElement('ol');
-    for (const [n, label] of STAGE_LABELS) {
+    for (const [n, label] of [...STAGE_LABELS, DAILY_LABELS[dailyToday()]]) {
       const r = stageBest(n), li = document.createElement('li'); li.className = 'hs' + (r ? ' first' : '');
       const cells = [label, null, r ? `撃破${r.kills || 0}` : ''];
       for (const c of cells) { const s = document.createElement(c === null ? 'b' : 'span'); s.textContent = c === null ? (r ? fmtTime(r.time) : '--') : c; li.append(s); }
@@ -595,7 +619,7 @@ h2.clear { color: #5dff9e; }
     saveRecords(); renderRecords();
     return records.stages[n].indexOf(rec) + 1;
   }
-  const rankText = (n, rank) => rank === 1 ? `ステージ${n} ベスト更新!` : rank ? `ステージ${n} ${rank}位` : '';
+  const rankText = (n, rank) => rank === 1 ? `${stageLabel(n)} ベスト更新!` : rank ? `${stageLabel(n)} ${rank}位` : '';
   (async () => {
     try {
       if (!window.claude || !window.claude.use) return;
@@ -647,8 +671,25 @@ h2.clear { color: #5dff9e; }
       note.textContent = off; note.hidden = !off;
       n.disabled = ready && (!db || !canWrite);
     }
+    // the daily nights: one ranking each, the same record shape as stage 3's
+    const boardDocs = {};
+    const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
+    async function syncDaily() {
+      if (!db || !me || !me.name || !canWrite) return;
+      for (const d of DAILY) {
+        const b = bestOf(d.key); if (!(b > 0)) continue;
+        let cur = boardDocs[d.board];
+        if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
+        const tt = titleName(records.title), up = !cur || b > (cur.best || 0);
+        if (!up && cur.name === me.name && (cur.title || '') === tt) continue;
+        const doc = { name: me.name, key: me.key, best: up ? b : cur.best, at: up || !cur.at ? new Date().toISOString() : cur.at, title: tt };
+        try { await db.doc(d.board + '/' + uid).set(doc); boardDocs[d.board] = doc; }
+        catch (e) { try { const { title, ...rest } = doc; await db.doc(d.board + '/' + uid).set(rest); boardDocs[d.board] = rest; } catch (e2) {} }
+      }
+    }
     async function sync() {
       if (!db || !me || !me.name || !canWrite) return;
+      syncDaily();
       const b = myBest(), tt = titleName(records.title), up = b > (me.best || 0);
       if (!up && tt === (me.title || '')) return;
       me = Object.assign({}, me, up ? { best: b, at: new Date().toISOString() } : {}, { title: tt });
@@ -707,7 +748,7 @@ h2.clear { color: #5dff9e; }
         { const tt = titleName(records.title); if (tt || me.title) me.title = tt; }
         await put();
         if (old && old !== key) { try { await db.doc('names/' + old).delete(); } catch (e) {} }
-        paint(); closeName(); tap();
+        syncDaily(); paint(); closeName(); tap();
       } catch (e) {
         if (e && e.code === 'invalid_argument') { canWrite = false; paint(); closeName(); }
         else err.textContent = 'うまく登録できませんでした。もう一度試してね';
@@ -719,8 +760,19 @@ h2.clear { color: #5dff9e; }
       for (const [c, v] of [['no', no + '位'], ['nm', p.name || '???'], ['tt', p.title || ''], ['tm', fmt(p.best)]]) { const s = document.createElement('span'); s.className = c; s.textContent = v; li.appendChild(s); }
       return li;
     }
-    async function openRank() {
-      const list = $('rankList'), mine = $('rankMe');
+    // stage 3 and the three daily nights, one tab each
+    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '日替わり ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    function paintTabs(cur) {
+      const box = $('rankTabs'); box.textContent = '';
+      for (const [id, , short] of boards()) {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = short; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', id === cur ? 'true' : 'false');
+        b.addEventListener('click', () => { if (id !== cur) { tap(); openRank(id); } });
+        box.append(b);
+      }
+    }
+    async function openRank(board = 'players') {
+      const list = $('rankList'), mine = $('rankMe'), info = boards().find(x => x[0] === board) || boards()[0];
+      paintTabs(board); $('rankLabel').textContent = `${info[1]} ・ 逃走時間 上位100`;
       list.textContent = ''; mine.hidden = true;
       const msg = t => { list.textContent = ''; const s = document.createElement('span'); s.className = 'msg'; s.textContent = t; list.appendChild(s); };
       ui.title.hidden = true; $('rankScreen').hidden = false;
@@ -729,9 +781,10 @@ h2.clear { color: #5dff9e; }
       msg('読み込み中…');
       try {
         await sync();
-        const q = await db.collection('players').where('best', '>', 0).orderBy('best', 'desc').limit(100).get();
+        const q = await db.collection(board).where('best', '>', 0).orderBy('best', 'desc').limit(100).get();
+        if ($('rankLabel').textContent.indexOf(info[1]) !== 0) return;   // another tab was opened meanwhile
         list.textContent = '';
-        if (q.empty) { msg('まだ記録がありません。ステージ3で最初の記録を残そう。'); }
+        if (q.empty) { msg(`まだ記録がありません。${board === 'players' ? 'ステージ3' : info[1]}で最初の記録を残そう。`); }
         let no = 0, prev = null, inTop = false;
         q.docs.forEach((d, i) => {
           const p = d.data() || {};
@@ -740,9 +793,10 @@ h2.clear { color: #5dff9e; }
           list.appendChild(row(no, p, isMe));
         });
         const meRow = list.querySelector('li.me'); if (meRow) meRow.scrollIntoView({ block: 'nearest' });
-        if (!inTop && me && me.best > 0) {
-          const a = await db.collection('players').where('best', '>', me.best).limit(1000).get();
-          const li = row(a.size >= 1000 ? '1000+' : a.size + 1, me, true);
+        const mineDoc = board === 'players' ? me : boardDocs[board];
+        if (!inTop && mineDoc && mineDoc.best > 0) {
+          const a = await db.collection(board).where('best', '>', mineDoc.best).limit(1000).get();
+          const li = row(a.size >= 1000 ? '1000+' : a.size + 1, mineDoc, true);
           mine.textContent = ''; for (const c of [...li.childNodes]) mine.appendChild(c);
           mine.hidden = false;
         } else if (!inTop && me && me.name) {
@@ -752,7 +806,7 @@ h2.clear { color: #5dff9e; }
       } catch (e) { msg('ランキングを読み込めませんでした。'); }
     }
     $('whoName').addEventListener('click', () => { tap(); openName(false); });
-    $('rankBtn').addEventListener('click', () => { tap(); openRank(); });
+    $('rankBtn').addEventListener('click', () => { tap(); openRank('players'); });
     $('rankClose').addEventListener('click', () => { tap(); $('rankScreen').hidden = true; ui.title.hidden = false; });
     $('nameOk').addEventListener('click', claim);
     $('nameCancel').addEventListener('click', () => { tap(); closeName(); });
@@ -898,14 +952,14 @@ h2.clear { color: #5dff9e; }
   }
   function openRecords() {
     const box = $('recLists'); box.textContent = '';
-    for (const [n, label] of STAGE_LABELS) {
+    for (const [n, label] of [...STAGE_LABELS, ...DAILY_LABELS]) {
       const sec = document.createElement('section'), h = document.createElement('h3'), ol = document.createElement('ol');
       h.textContent = label; sec.append(h);
       const l = (records.stages[n] || []).filter(r => r.time != null).sort(better).slice(0, 5);
       if (!l.length) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'まだ記録がありません'; sec.append(p); }
       l.forEach((r, i) => {
         const li = document.createElement('li'), d = r.at ? new Date(r.at) : null;
-        for (const [c, v] of [['no', (i + 1) + '位'], ['tm', fmtTime(r.time)], ['kl', '撃破' + (r.kills || 0)], ['es', n === 3 ? '' : r.escaped ? '脱出' : '確保'], ['dt', d && !isNaN(d) ? `${d.getMonth() + 1}/${d.getDate()}` : '']]) {
+        for (const [c, v] of [['no', (i + 1) + '位'], ['tm', fmtTime(r.time)], ['kl', '撃破' + (r.kills || 0)], ['es', n === 3 || String(n)[0] === 'd' ? '' : r.escaped ? '脱出' : '確保'], ['dt', d && !isNaN(d) ? `${d.getMonth() + 1}/${d.getDate()}` : '']]) {
           const s = document.createElement('span'); s.className = c; s.textContent = v; li.append(s);
         }
         ol.append(li);
@@ -1473,7 +1527,7 @@ h2.clear { color: #5dff9e; }
   const input = { keys: new Set(), stick: null, hover: null };
 
   function newGame(n = 1, item) {
-    stageN = n; total = 0; kills = 0; bag = item ? [item] : [];
+    stageN = n; if (n !== 4) daily = null; total = 0; kills = 0; bag = item ? [item] : [];
     newStage(1);
   }
   // a fresh map for each stage; mines in hand and the kill count carry over
@@ -1488,7 +1542,7 @@ h2.clear { color: #5dff9e; }
     stageKillStart = kills; S3 = newRun();
     exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0;
     flow(Math.floor(P.x), Math.floor(P.y));
-    for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
+    for (let i = 0; i < (daily && daily.key === 'd1' ? 1 : Math.min(3, stageN)); i++) queueSpawn();  // stage 3 opens with 3 oni
   }
 
   // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
@@ -1510,7 +1564,7 @@ h2.clear { color: #5dff9e; }
   // stage 3: always 3 per wave
   // stage 2 opens at 2 per wave, stage 3 at 3
   // stage 3: 3 oni a wave, then one more at 4, 5, 6 and 7 min, and again at 10, 11 and 12 min (10 at most)
-  const spawnBatch = () => stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
+  const spawnBatch = () => daily && daily.key === 'd1' ? (t >= 240 ? 3 : t >= 120 ? 2 : 1) : stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   // stage 3 starts at the stage 2 speed
   const enemySpeed = () => Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
@@ -1587,11 +1641,11 @@ h2.clear { color: #5dff9e; }
       for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
-    if (stageN >= 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
+    if (stageN === 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
     // from 4:00 there are always at least two barrier oni about, and from 6:00 at least one black and one yellow:
     // if a kind is short (counting the map and the oni already warned), the next wave makes up the shortfall
     // (two barrier oni at once when there are none). Stomping a "!" still cancels it, and the wave after makes up again.
-    if (stageN >= 3 && t >= 240 && pending.length) {
+    if (stageN === 3 && t >= 240 && pending.length) {
       const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
       for (const k of t >= 360 ? ['black', 'tough', 'amb'] : ['tough']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
@@ -1668,16 +1722,18 @@ h2.clear { color: #5dff9e; }
       const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
       // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1). Stage 2: one barrier oni
       // at a time; stage 3: at most one per wave but no limit on the map. Only one yellow oni at a time
-      const black = !!s.black;
+      let black = !!s.black;
       let tough = !black && (!!s.tough || (stageN >= 2 && (stageN >= 3 ? !toughWave : !enemies.some(o => o.tough)) && Math.random() < baseRate));
       let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : 1)));
       // stage 3 from 8:00: the plain red oni and the barrier oni swap rates, so most newcomers wear a barrier
       // (several at once), a plain red one turns up at the barrier oni's old rate; the yellow rate stays
-      if (stageN >= 3 && t >= 480 && !black && !s.tough && !s.amb) {
+      if (stageN === 3 && t >= 480 && !black && !s.tough && !s.amb) {
         const r = Math.random();
         amb = !enemies.some(o => o.amb) && r >= baseRate && r < baseRate + (1 - baseRate) * baseRate;
         tough = !amb && r >= baseRate;
       }
+      // a daily night: every oni of its one kind
+      if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       if (tough) toughWave = true;
       enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, stun: 0 });
       tone(140, 0.25, 'sawtooth', 0.05, 70);
@@ -1916,7 +1972,7 @@ h2.clear { color: #5dff9e; }
     P.x = h.x; P.y = h.y; P.pit = true; P.barrier = false;
     caught();
     document.querySelector('#overScreen h2').textContent = '転落';
-    $('rMsg').textContent = `ステージ${stageN}で落とし穴に落ちた。`;
+    $('rMsg').textContent = `${stageLabel(stageN)}で落とし穴に落ちた。`;
   }
   function caught() {
     bgmStop();
@@ -1927,20 +1983,20 @@ h2.clear { color: #5dff9e; }
     const isNew = total > best;
     if (isNew) { best = total; saveBest(); }
     records.plays++;
-    const rank = addRecord(stageN, { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
-    if (stageN === 3) Rank.sync();
-    $('rScoreLabel').textContent = `ステージ${stageN} 逃走時間`;
+    const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
+    if (stageN >= 3) Rank.sync();
+    $('rScoreLabel').textContent = `${stageLabel(stageN)} 逃走時間`;
     $('rScore').textContent = fmtTime(t);
-    $('retryBtn').textContent = `もう一度ステージ${stageN}`;
+    $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
     $('rRank').textContent = rankText(stageN, rank);
     $('rTime').textContent = total.toFixed(1) + '秒';
     $('rKills').textContent = kills + '体';
-    $('rCount').textContent = 'ステージ' + stageN;
+    $('rCount').textContent = stageN === 4 ? '日替わり' : 'ステージ' + stageN;
     $('rBest').textContent = best.toFixed(1) + '秒';
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
-      : `ステージ${stageN}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
+      : `${stageLabel(stageN)}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
     mono('rMono', stageN, 'caught');
     showTitles('rTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit, true));
   }
@@ -2189,12 +2245,12 @@ h2.clear { color: #5dff9e; }
     // counts down to the moment the oni actually step out (after the ! warning), not to the warning
     const warnLeft = pending && pending.length ? Math.min(...pending.map(p => p.t)) : null;
     const left = playing ? Math.max(0, warnLeft != null ? warnLeft : nextSpawn - t + SPAWN_WARN) : 0;
-    const key = [JSON.stringify(stageBest(sN)), state, sN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), enemies ? enemies.length : 0, level || 1, kills || 0, best, playing ? left.toFixed(1) : '-', P ? P.stock : 1, P ? P.cd.toFixed(2) : 0].join('|');
+    const key = [JSON.stringify(stageBest(recKey(sN))), state, sN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), enemies ? enemies.length : 0, level || 1, kills || 0, best, playing ? left.toFixed(1) : '-', P ? P.stock : 1, P ? P.cd.toFixed(2) : 0].join('|');
     if (key === hudKey) return;
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
-    const SN = `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
+    const SN = sN === 4 && daily ? '日替わり ' + daily.name : `ステージ${sN} ${sN === 1 ? '地下' : sN === 2 ? '地上' : '終わらない夜'}`;
     ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
@@ -2209,7 +2265,7 @@ h2.clear { color: #5dff9e; }
     ui.lv.textContent = 'Lv' + (level || 1);
     ui.kills.textContent = kills || 0;
     $('pKills').textContent = kills || 0; $('pCount').textContent = enemies ? enemies.length : 0;
-    { const b = stageBest(sN); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
+    { const b = stageBest(recKey(sN)); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
     if (playing) {
       ui.nextLabel.textContent = `次の鬼(${warnLeft != null ? pending.length : spawnBatch()}体)まで ${left.toFixed(1)}秒`;
       ui.meter.style.width = (100 * clamp(1 - left / spawnGap, 0, 1)) + '%';
@@ -2825,14 +2881,24 @@ h2.clear { color: #5dff9e; }
   };
   function mono(id, n, kind) {
     const el = $(id); if (!el) return;
-    const l = MONO[n] && MONO[n][kind], s = l && l[Math.floor(Math.random() * l.length)];
+    const l = MONO[Math.min(3, n)] && MONO[Math.min(3, n)][kind], s = l && l[Math.floor(Math.random() * l.length)];
     el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
   }
   function begin(n) {
-    tap();
+    tap(); daily = null;
     if (n < 2) { start(n); return; }
     pendingStart = n; state = 'startpick'; bgmStart(songFor(n));
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
+    if (n === 4) {
+      daily = DAILY[dailyToday()];
+      $('spKicker').textContent = `DAILY 日替わり ${daily.name}`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける日替わりステージ。\n・3種類の夜が毎日順番に入れ替わる(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
+      $('startPickScreen').hidden = false;
+      mono('spMono', 3, 'standby');
+      fitStandby();
+      return;
+    }
+    daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
     $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
@@ -2853,6 +2919,7 @@ h2.clear { color: #5dff9e; }
   $('briefBackBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('start2Btn').addEventListener('click', () => unlocked(2) ? begin(2) : lockedTap(2));
   $('start3Btn').addEventListener('click', () => unlocked(3) ? begin(3) : lockedTap(3));
+  $('start4Btn').addEventListener('click', () => unlocked(4) ? begin(4) : lockedTap(4));
   updateLocks();
   $('retryBtn').addEventListener('click', () => begin(stageN));
   $('menuBtn').addEventListener('click', () => { tap(); toTitle(); });
