@@ -430,7 +430,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
         <dt>アイテム</dt><dd>3秒加速・バリア・ランチャー。ボタン / Q で使う</dd>
         <dt>鬼</dt><dd>赤い <b>!</b> のあとに出る。黄色は先回り、水色は爆発に1回耐える</dd>
         <dt>建物</dt><dd>ドアから入れる。階段で2階に上がれる</dd>
-        <dt>脱出</dt><dd>2分30秒で東端(ミニマップ右端)に出口が開く。鍵を拾って出口へ</dd>
+        <dt>脱出</dt><dd>2分30秒で東端(ミニマップ右端)に出口が開く。鍵を拾って出口へ。開くと鬼が一度に5体出て、30秒ごとに1体ずつ増える</dd>
       </dl>
       <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -2585,7 +2585,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   // stage 3: always 3 per wave, starting at the stage 2 speed
   // stage 2 opens at 2 per wave, stage 3 at 3
   // stage 3: 3 oni a wave, then one more at 4, 5, 6 and 7 min, and again at 10, 11 and 12 min (10 at most)
-  const spawnBatch = () => daily && daily.key === 'd1' ? (t >= 240 ? 3 : t >= 120 ? 2 : 1) : stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
+  // stages 1 and 2, once the exit is open: 5 a wave (+1 every 30 s) on stage 1, 7 a wave (+1 every 15 s) on stage 2
+  const spawnBatch = () => stageN < 3 && exitOpen ? (stageN === 1 ? 5 + Math.floor((t - alarmAt) / 30) : 7 + Math.floor((t - alarmAt) / 15)) : daily && daily.key === 'd1' ? (t >= 240 ? 3 : t >= 120 ? 2 : 1) : stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   const enemySpeed = () => Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * STAGE_SPEEDUP);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
@@ -3814,7 +3815,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     }
     daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾2個。\n・2分30秒で出口が開くと、鬼が一度に7体出て、15秒ごとに1体ずつ増える\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
     fitStandby();
