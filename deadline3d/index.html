@@ -281,6 +281,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 /* the daily challenge sits under the ranking button in the name column */
 .dailybtn { border: 1px solid rgba(143,233,255,.55); background: rgba(143,233,255,.08); color: var(--runner); border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; line-height: 1.3; text-align: center; white-space: pre-line; }
 .dailybtn.locked { opacity: .5; }
+a.ghost.share { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: inherit; text-decoration: none; }
+/* a short landscape screen: the three result buttons sit on one line */
+@media (max-height: 460px) { #overScreen .row > *, #clearScreen .row > * { padding-left: 14px; padding-right: 14px; } }
 </style>
 </head>
 <body>
@@ -389,6 +392,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <div class="row">
         <button class="go" id="retryBtn" type="button">もう一度逃げる</button>
         <button class="ghost" id="menuBtn" type="button">タイトルへ</button>
+        <a class="ghost share" id="rShare" href="https://x.com/" target="_blank" rel="noopener">Xでシェア</a>
       </div>
     </div>
   </div>
@@ -407,7 +411,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       </div>
       <p id="cMsg"></p>
       <div class="award" id="cTitles" hidden></div>
-      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button></div>
+      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><a class="ghost share" id="cShare" href="https://x.com/" target="_blank" rel="noopener">Xでシェア</a></div>
       <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
       <div class="picks" id="clearPicks">
         <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span>使うと3秒間、足が大きく速くなる</span></button>
@@ -963,6 +967,17 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (!$(el) || $(el).hidden) return;
     setTimeout(() => { tone(1319, 0.12, 'triangle', 0.045); setTimeout(() => tone(1760, 0.12, 'triangle', 0.04), 90); setTimeout(() => tone(2637, 0.3, 'triangle', 0.035), 180); }, 380);
   }
+  // share a result on X: the run in one line, the title worn and the game's public page
+  const SHARE_URL = 'https://nasutakako.github.io/DEADLINE/deadline3d/';
+  function shareText(kind) {
+    const sc = $(kind === 'clear' ? 'cScore' : 'rScore').textContent, tn = titleName(records.title);
+    const where = stageN === 4 ? stageLabel(4) : (STAGE_LABELS.find(x => x[0] === stageN) || [0, stageLabel(stageN)])[1];
+    const what = kind === 'clear' ? `${where}を ${sc} で脱出!`
+      : stageN >= 3 ? `${where}で ${sc} 生き残った! 撃破${$('rKills').textContent}` : `${where}で ${sc} 逃げたけど確保された…`;
+    return `${document.title} ${what}${tn ? ' 《' + tn + '》' : ''}\n#DEADLINE鬼ごっこ`;
+  }
+  for (const [id, kind] of [['rShare', 'over'], ['cShare', 'clear']])
+    $(id).addEventListener('click', e => { tap(); e.currentTarget.href = 'https://x.com/intent/post?text=' + encodeURIComponent(shareText(kind)) + (SHARE_URL ? '&url=' + encodeURIComponent(SHARE_URL) : ''); });
   function paintTitle() {
     // titles owned but none ever chosen: wear the hardest one
     if (!records.title && records.titles && records.titles.length) records.title = records.titles[records.titles.length - 1];
