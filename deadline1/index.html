@@ -1158,7 +1158,9 @@ h2.clear { color: #5dff9e; }
     m.fillStyle = 'rgba(196,196,190,0.32)';
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x += 4) {
       if (!walk(x, y) || onPitch(x, y)) continue;
-      for (let k = 0; k < 4; k++) { if (walk(x + 1, y)) m.fillRect(x + 1.04, y + 0.16 + k * 0.19, 0.12, 0.1); if (walk(x, y + 1)) m.fillRect(x + 0.16 + k * 0.19, y + 1.04, 0.1, 0.12); }
+      // only some crossings are painted, picked at random
+      const hz = walk(x + 1, y) && rnd() < 0.55, vt = walk(x, y + 1) && rnd() < 0.55;
+      for (let k = 0; k < 4; k++) { if (hz) m.fillRect(x + 1.04, y + 0.16 + k * 0.19, 0.12, 0.1); if (vt) m.fillRect(x + 0.16 + k * 0.19, y + 1.04, 0.1, 0.12); }
     }
     // street lights fall on the open ground only
     m.save(); m.beginPath();
@@ -1184,6 +1186,16 @@ h2.clear { color: #5dff9e; }
     };
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) road(x + 0.5, y + 0.12);
     for (let x = 0; x < COLS; x += 4) for (let y = 0; y < ROWS; y++) if (walk(x, y) && y % 8 === ((x / 4) % 2 ? 2 : 6)) road(x + 0.88, y + 0.5);
+    // neon: small pink, cyan and violet signs scattered along the streets, each a third the size of a street light
+    const NEON = ['255,60,170', '60,220,255', '170,90,255'];
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (grid[idx(x, y)] !== 0 || onPitch(x, y) || rnd() > 0.1) continue;
+      const c = NEON[Math.floor(rnd() * 3)], nx = x + 0.2 + rnd() * 0.6, ny = y + 0.2 + rnd() * 0.6;
+      const gr = m.createRadialGradient(nx, ny, 0, nx, ny, 0.5);
+      gr.addColorStop(0, `rgba(${c},0.75)`); gr.addColorStop(0.5, `rgba(${c},0.26)`); gr.addColorStop(1, `rgba(${c},0)`);
+      m.fillStyle = gr; m.fillRect(nx - 0.5, ny - 0.5, 1, 1);
+      m.fillStyle = `rgba(${c},0.95)`; m.beginPath(); m.arc(nx, ny, 0.045, 0, Math.PI * 2); m.fill();
+    }
     m.restore();
   }
 
