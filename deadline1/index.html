@@ -1186,15 +1186,18 @@ h2.clear { color: #5dff9e; }
     };
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) road(x + 0.5, y + 0.12);
     for (let x = 0; x < COLS; x += 4) for (let y = 0; y < ROWS; y++) if (walk(x, y) && y % 8 === ((x / 4) % 2 ? 2 : 6)) road(x + 0.88, y + 0.5);
-    // neon: small pink, cyan and violet signs scattered along the streets, each a third the size of a street light
+    // neon: pink, cyan and violet light thrown onto the street from the building walls, a third the size of a street light
     const NEON = ['255,60,170', '60,220,255', '170,90,255'];
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-      if (grid[idx(x, y)] !== 0 || onPitch(x, y) || rnd() > 0.1) continue;
-      const c = NEON[Math.floor(rnd() * 3)], nx = x + 0.2 + rnd() * 0.6, ny = y + 0.2 + rnd() * 0.6;
-      const gr = m.createRadialGradient(nx, ny, 0, nx, ny, 0.5);
-      gr.addColorStop(0, `rgba(${c},0.75)`); gr.addColorStop(0.5, `rgba(${c},0.26)`); gr.addColorStop(1, `rgba(${c},0)`);
-      m.fillStyle = gr; m.fillRect(nx - 0.5, ny - 0.5, 1, 1);
-      m.fillStyle = `rgba(${c},0.95)`; m.beginPath(); m.arc(nx, ny, 0.045, 0, Math.PI * 2); m.fill();
+      if (grid[idx(x, y)] !== 0 || onPitch(x, y)) continue;
+      const sides = [[0, -1], [0, 1], [-1, 0], [1, 0]].filter(([dx, dy]) => x + dx >= 0 && y + dy >= 0 && x + dx < COLS && y + dy < ROWS && grid[idx(x + dx, y + dy)] === 1);
+      if (!sides.length || rnd() > 0.12) continue;
+      const [dx, dy] = sides[Math.floor(rnd() * sides.length)], c = NEON[Math.floor(rnd() * 3)], along = 0.2 + rnd() * 0.6;
+      // the light starts at the wall's foot and spreads out over the road
+      const nx = dx ? x + (dx > 0 ? 1 : 0) : x + along, ny = dy ? y + (dy > 0 ? 1 : 0) : y + along;
+      const gr = m.createRadialGradient(nx, ny, 0, nx, ny, 0.8);
+      gr.addColorStop(0, `rgba(${c},0.6)`); gr.addColorStop(0.45, `rgba(${c},0.22)`); gr.addColorStop(1, `rgba(${c},0)`);
+      m.fillStyle = gr; m.fillRect(nx - 0.8, ny - 0.8, 1.6, 1.6);
     }
     m.restore();
   }
