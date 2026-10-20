@@ -1170,6 +1170,18 @@ h2.clear { color: #5dff9e; }
     for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) lamp(x + 0.5, y + 0.12);
     for (let x = 0; x < COLS; x += 4) for (let y = 0; y < ROWS; y++) if (walk(x, y) && y % 8 === ((x / 4) % 2 ? 2 : 6)) lamp(x + 0.88, y + 0.5);
     m.restore();
+    // the asphalt under each street light a touch brighter again (roads only: plazas and pitches keep their light)
+    m.save(); m.beginPath();
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 0 && !onPitch(x, y)) m.rect(x, y, 1, 1);
+    m.clip();
+    const road = (x, y) => {
+      const gr = m.createRadialGradient(x, y, 0, x, y, 1.6);
+      gr.addColorStop(0, 'rgba(255,200,120,0.2)'); gr.addColorStop(0.55, 'rgba(255,200,120,0.08)'); gr.addColorStop(1, 'rgba(255,200,120,0)');
+      m.fillStyle = gr; m.fillRect(x - 1.6, y - 1.6, 3.2, 3.2);
+    };
+    for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) road(x + 0.5, y + 0.12);
+    for (let x = 0; x < COLS; x += 4) for (let y = 0; y < ROWS; y++) if (walk(x, y) && y % 8 === ((x / 4) % 2 ? 2 : 6)) road(x + 0.88, y + 0.5);
+    m.restore();
   }
 
   // stage 1 is underground: bare concrete, pipes along the walls, caged lamps, puddles, grating floors
