@@ -1099,6 +1099,9 @@ h2.clear { color: #5dff9e; }
     }
     // the dark: the streets and buildings sit deeper in it than the plazas, crossings and street lights
     m.fillStyle = 'rgba(2,4,14,0.56)'; m.fillRect(0, 0, COLS, ROWS);
+    // the road surface itself a shade lighter than the dark around it
+    m.fillStyle = 'rgba(150,160,185,0.06)';
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 0 && !onPitch(x, y)) m.fillRect(x, y, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 2) { m.fillStyle = '#1f2a24'; m.fillRect(x, y, 1, 1); }
     for (const c of courts) {
       const { x, y, w, h } = c;
