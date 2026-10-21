@@ -93,6 +93,17 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,59,48,.85); animation: cdpop .9s ease-out both; }
 @keyframes cdpop { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .countdown { animation: none; } }
+/* ---- first-time tutorial ---- */
+.tutbar { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(94%, 680px); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 10px; background: rgba(8,10,16,.9); border: 1.5px solid var(--lamp); box-shadow: 0 6px 24px rgba(0,0,0,.5); color: var(--ink); }
+.tutbar[hidden] { display: none; }
+.tutbar .tstep { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--lamp); }
+.tutbar p { margin: 0; font-size: clamp(13px, 1.9vw, 16px); font-weight: 700; line-height: 1.45; text-wrap: balance; }
+.tutbar.ok { border-color: #5ce08a; }
+.tutbar.ok p { color: #5ce08a; }
+.tutbar .trow { flex: none; display: flex; gap: 6px; }
+.tutbar button { font: inherit; font-size: 12px; font-weight: 800; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); cursor: pointer; touch-action: manipulation; }
+.tutbar button.go { background: var(--lamp); border-color: var(--lamp); color: #111; }
+.tutbar button[hidden] { display: none; }
 .alarmfx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,30,30,0) 42%, rgba(255,30,30,.35) 75%, rgba(200,0,0,.75) 100%); }
 .stage { grid-area: stage; position: relative; min-height: 0; min-width: 0; border-radius: 8px; overflow: hidden; background: var(--night); touch-action: none; }
 #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -435,6 +446,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
+  <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
 
   <div class="overlay" id="titleScreen">
     <div class="card">
@@ -554,7 +566,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
         <dt>爆弾</dt><dd>黄色い箱を拾うと増える。ボタンで足元に置く</dd>
         <dt aria-hidden="true"></dt><dd>置いて1秒後に爆発し、円の中の鬼を倒す</dd>
         <dt>アイテム</dt><dd>3秒加速・バリア・ランチャーのどれか。ボタンで使う</dd>
-        <dt>鬼</dt><dd>赤い <b>!</b> が出た場所から現れる</dd>
+        <dt>鬼</dt><dd>赤い <b>!</b> が出た場所から現れる。先に踏めばその鬼は出ない</dd>
         <dt aria-hidden="true"></dt><dd>黄色い鬼は先回りする。水色の鬼は爆発に1回耐える</dd>
         <dt>脱出</dt><dd>2分30秒で右端に出口が開く。鍵を拾って出口へ</dd>
         <dt aria-hidden="true"></dt><dd>開くと鬼が一度に5体出て、30秒ごとに1体増える</dd>
@@ -2013,6 +2025,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 
   function update(dt) {
     t += dt; total += dt;
+    if (tut) tutTick(dt);
     // every oni taken down, however it went down, pushes the next oni back by 0.4 s
     if (P.killSeen == null) { P.killSeen = kills; P.rocketSeen = rocketKills; }
     if (kills > P.killSeen) {
@@ -2021,8 +2034,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       // oni already flagged with a ! are held back; otherwise the next wave is pushed back
       if (pending.length) for (const p of pending) p.t += delay; else nextSpawn += delay;
       P.killSeen = kills; P.rocketSeen = rocketKills;
-      // stage 3: every 40 oni taken down earns a 3-sec boost or a launcher, at random
-      if (stageN >= 3) {
+      // from stage 2: every 40 oni taken down earns a 3-sec boost or a launcher, at random
+      if (stageN >= 2) {
         if (P.killPrize == null) P.killPrize = 40;
         while (kills - stageKillStart >= P.killPrize) {
           bag.push(Math.random() < 0.5 ? 'boost' : 'launcher'); P.killPrize += 40; flash = Math.max(flash, 0.2);
@@ -2032,7 +2045,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     }
     level = 1 + Math.floor(t / LV_EVERY);
     // the title music joins the stage's, a little quieter: 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
-    if (!bgmLayer && t >= (stageN >= 3 ? 360 : 120)) bgmLayerStart(SONGS.title);
+    if (!bgmLayer && !tut && t >= (stageN >= 3 ? 360 : 120)) bgmLayerStart(SONGS.title);
     // barrier + bomb at 2:00; in the endless stage 3 again every minute after that
     if (t >= (P.nextR ?? BARRIER_AT) && (stageN >= 3 || !P.gotBarrier)) {
       P.nextR = (P.nextR ?? BARRIER_AT) + 60;
@@ -2043,7 +2056,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       P.stock = Math.min(MINE_MAX, P.stock + (stageN >= 3 ? 2 : 1)); /* +1 bomb on stages 1 and 2, +2 on stage 3 */ flash = Math.max(flash, 0.25);
       tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120);
     }
-    if (t >= EXIT_AT && !exitOpen && stageN < 3) {  // stage 3 has no way out
+    if (t >= EXIT_AT && !exitOpen && stageN < 3 && !tut) {  // stage 3 has no way out
       // the exit opens on the right edge, on one of the streets that reach it
       const rows = []; for (let y = 4; y < ROWS - 1; y += 4) rows.push(y);
       exitY = rows[Math.floor(Math.random() * rows.length)];
@@ -2105,7 +2118,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
         if (h.cool > 0) h.armed = false;  // locked lid
         else if (d < 0.46) h.armed = true;
         else if (h.armed && d > 0.46 + P.r) { h.armed = false; h.open = true; h.left = PIT_OPEN; h.ate = false; tone(180, 0.25, 'square', 0.05, 90); }
-      } else if (d < 0.46 - 0.06) { fallIn(h); return; }  // the barrier does not help here
+      } else if (d < 0.46 - 0.06) { if (tut) { P.x = bx; P.y = by; P.vx = P.vy = 0; continue; } fallIn(h); return; }  // the barrier does not help here (the tutorial's pit is a wall)
     }
     // remember actual travel direction for buffered turns
     // footsteps for the oni to follow
@@ -2130,15 +2143,15 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 
     flow(Math.floor(P.x), Math.floor(P.y));
 
-    // stage 3: stepping on a ! warning stamps that oni out before it can appear
-    if (stageN >= 3) pending = pending.filter(s => {
+    // every stage: stepping on a ! warning stamps that oni out before it can appear
+    pending = pending.filter(s => {
       if (Math.hypot(s.x - P.x, s.y - P.y) >= 0.55) return true;   // the black oni's ! looks the same and goes too
       for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; sparks.push({ x: s.x, y: s.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: Math.random() < 0.5 ? '#ffffff' : '#ff6a5a' }); }
       flash = Math.max(flash, 0.12); tone(1568, 0.09, 'triangle', 0.05, 784);
       if (S3) S3.stomps++;
       return false;
     });
-    for (const s of pending) s.t -= dt;
+    for (const s of pending) if (!s.hold) s.t -= dt;
     // a wave steps out together, in one frame; an oni the 6:00 rule marked as barrier counts from the start
     let toughWave = pending.some(s => s.t <= 0 && s.tough);
     for (const s of pending.filter(s => s.t <= 0)) {
@@ -2158,8 +2171,11 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       }
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
+      // a practice oni is exactly the kind the tutorial asked for
+      if (s.tut) { black = !!s.black; tough = !!s.tough; amb = false; }
       if (tough) toughWave = true;
       enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, stun: 0 });
+      if (s.tut && tut) { enemies[enemies.length - 1].tut = true; tut.oni.push(enemies[enemies.length - 1]); }
       tone(140, 0.25, 'sawtooth', 0.05, 70);
     }
     pending = pending.filter(s => s.t > 0);
@@ -2228,7 +2244,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       }
       if (e.lureT > 0) { e.lureT -= dt; gx = e.lureX; gy = e.lureY; }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
-      const v = e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed());
+      const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
       move(e, e.vx, e.vy, dt);
@@ -2295,7 +2311,9 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       }
     }
     danger = clamp(1 - (nearestD - 0.6) / 3.4, 0, 1);
-    if (nearestD < CATCH && P.inv <= 0) {
+    // the tutorial: an oni that reaches the runner only reels back for a moment
+    if (tut) { for (const e of enemies) if (!(e.stun > 0) && Math.hypot(e.x - P.x, e.y - P.y) < CATCH) e.stun = 0.6; }
+    else if (nearestD < CATCH && P.inv <= 0) {
       if (P.barrier) {
         // the barrier takes the hit and blows away every oni touching it
         P.barrier = false; P.inv = INV_TIME; if (S3) S3.saves++;
@@ -2343,7 +2361,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     stageN++;
     ui.clear.hidden = true; bgmStop();
     newStage(stock);
-    startCount();
+    tutNeed(stageN) ? tutBegin() : startCount();
   }
 
   function useItem() {
@@ -2425,7 +2443,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
       : `${stageLabel(stageN)}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
-    mono('rMono', stageN, 'caught');
+    tip('rMono', stageN);
     showTitles('rTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit, true));
   }
 
@@ -2933,11 +2951,11 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   function hud() {
     // on the item pick before stage 2 or 3, show the stage about to start
     const sN = state === 'startpick' ? pendingStart : stageN;
-    const playing = state === 'play' || state === 'pause';
+    const playing = (state === 'play' || state === 'pause') && !tut;
     // counts down to the moment the oni actually step out (after the ! warning), not to the warning
     const warnLeft = pending && pending.length ? Math.min(...pending.map(p => p.t)) : null;
     const left = playing ? Math.max(0, warnLeft != null ? warnLeft : nextSpawn - t + SPAWN_WARN) : 0;
-    const key = [JSON.stringify(stageBest(recKey(sN))), state, sN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), enemies ? enemies.length : 0, level || 1, kills || 0, best, playing ? left.toFixed(1) : '-', P ? P.stock : 1, P ? P.cd.toFixed(2) : 0].join('|');
+    const key = [JSON.stringify(stageBest(recKey(sN))), state, !!tut, sN, exitOpen, hasKey, bag.join(), P && P.barrier, (t || 0).toFixed(1), enemies ? enemies.length : 0, level || 1, kills || 0, best, playing ? left.toFixed(1) : '-', P ? P.stock : 1, P ? P.cd.toFixed(2) : 0].join('|');
     if (key === hudKey) return;
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
@@ -2952,7 +2970,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       else if (exitOpen) { ui.goal.textContent = `${SN} ・ 出口へ →`; ui.goal.className = 'label goal exit'; }
       else if (toB > 0) { ui.goal.textContent = `${SN} ・ バリアまで ${fmt(toB).slice(0, 5)}`; ui.goal.className = 'label goal'; }
       else { ui.goal.textContent = `${SN} ・ 出口まで ${fmt(toE).slice(0, 5)}`; ui.goal.className = 'label goal barrier'; }
-    } else { ui.goal.textContent = SN; ui.goal.className = 'label goal'; }
+    } else { ui.goal.textContent = tut ? SN + ' ・ 練習中' : SN; ui.goal.className = 'label goal'; }
     ui.count.textContent = enemies ? enemies.length : 0;
     ui.lv.textContent = 'Lv' + (level || 1);
     ui.kills.textContent = kills || 0;
@@ -3356,12 +3374,174 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     enemies = enemies.filter(e => !e.dead);
   }
 
+  // ---------- first-time tutorial: a short practice run, with the clock off, before stages 1, 2 and 3 ----------
+  // nothing can catch the runner while it runs; finishing or skipping it starts the real stage on a fresh map
+  const TUT_KEY = REC_KEY + '-tut';
+  let tut = null, tutSave = null;
+  const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
+  const tutNeed = n => n >= 1 && n <= 3 && !tutSeen()[n];
+  function tutMark(n) { const s = tutSeen(); s[n] = true; try { localStorage.setItem(TUT_KEY, JSON.stringify(s)); } catch (_) {} }
+  // a practice oni comes out of a short ! warning a few streets away
+  const tutOni = o => { tut.want = Object.assign({}, o); tut.oni = []; tutWarn(o.at || tutSpot(5, 8), Object.assign({ t: 0.8, tut: true }, o)); };
+  const tutDown = () => tut.oni.length > 0 && tut.oni.every(e => e.dead);
+  const TUT = {
+    1: [
+      { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
+      { say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
+      { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
+      { say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
+      { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
+      { say: '2分でバリアと爆弾1個が届く。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
+    ],
+    2: [
+      { say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
+      { say: '水色のバリア鬼は爆発に1回耐える。2回当てて倒そう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: tutDown },
+      { say: '黒い鬼は自分より速い。走って逃げ切れないので、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
+      { say: '鬼を40体倒すごとに、3秒加速かランチャーが届く', info: true },
+      { say: '2分でバリアと爆弾1個。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
+    ],
+    3: [
+      { pit: true, say: '広場の落とし穴のふたに乗っている。ふたから離れると穴が開く', set: () => tutHolePlace(tut.hole), go: () => tut.hole.open },
+      { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
+      { pit: true, say: '自分が落ちても確保。一度使った落とし穴は45秒ふさがる', info: true },
+      { say: '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
+    ],
+  };
+  function tutBegin() {
+    tutSave = { stock: P.stock, kills, total, bag: bag.slice(), rk: rocketKills };
+    let hole = null, hd = 1e9;
+    for (const h of holes) { const d = Math.hypot(h.x - P.x, h.y - P.y); if (d < hd) { hd = d; hole = h; } }
+    tut = { n: stageN, i: -1, steps: TUT[stageN].filter(s => !s.pit || hole), hole, oni: [], run: 0, lx: P.x, ly: P.y };
+    for (const s of pending) dropWarn(s);
+    pending = []; nextSpawn = nextItem = 1e9; P.nextR = 1e9; P.black2 = true;
+    state = 'play'; input.stick = null;
+    bgmStart(songFor(stageN));
+    $('tutBar').hidden = false;
+    tutNext();
+  }
+  function tutNext() {
+    tut.i++;
+    const st = tut.steps[tut.i];
+    tut.wait = 0; tut.ok = 0; tut.refill = false; tut.s0 = P.stock;
+    $('tutBar').classList.remove('ok');
+    if (st.set) st.set();
+    $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
+    $('tutSay').textContent = st.say;
+    $('tutNext').hidden = !st.info && !st.end;
+    $('tutNext').textContent = st.end ? '本番スタート' : '次へ';
+  }
+  function tutTick(dt) {
+    const st = tut.steps[tut.i];
+    tut.wait += dt;
+    tut.run += Math.hypot(P.x - tut.lx, P.y - tut.ly); tut.lx = P.x; tut.ly = P.y;
+    if (tut.refill && P.stock < 1 && !mines.length) P.stock = 1;
+    // an open practice pit stays open until it has taken an oni
+    if (tut.hole && tut.hole.open && !tut.hole.ate) tut.hole.left = Math.max(tut.hole.left, 5);
+    // …and draws in a practice oni that comes near it
+    if (tut.hole && tut.hole.open && !tut.hole.ate) for (const e of tut.oni) if (!e.dead && Math.hypot(e.x - tut.hole.x, e.y - tut.hole.y) < 2.2 * Math.sqrt(TUT_U)) { e.lureT = 0.2; e.lureX = tut.hole.x; e.lureY = tut.hole.y; }
+    // a practice oni stamped out before it came: send another
+    if (tut.want && !tut.oni.length && !pending.some(s => s.tut)) tutOni(Object.assign({}, tut.want, { at: null }));
+    if (tut.ok > 0) { tut.ok -= dt; if (tut.ok <= 0) tutNext(); return; }
+    if (st.go && st.go()) {
+      tut.ok = 0.9; tut.want = null;
+      $('tutBar').classList.add('ok'); $('tutSay').textContent = 'OK!'; $('tutNext').hidden = true;
+      tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80);
+    } else if (st.go && tut.wait > 15) $('tutNext').hidden = false;  // a way on if it is not happening
+  }
+  function tutFinish() {
+    if (!tut) return;
+    const s = tutSave;
+    tutMark(tut.n); tut = null; $('tutBar').hidden = true;
+    kills = s.kills; total = s.total; bag = s.bag; rocketKills = s.rk;
+    bgmStop(); newStage(s.stock); startCount();
+  }
+  const tutQuit = () => { tut = null; $('tutBar').hidden = true; };
+  // touch-down and the click that may follow it count once
+  let tutTap = 0;
+  const tutBtn = (el, fn) => { const go = () => { const now = performance.now(); if (now - tutTap < 400) return; tutTap = now; fn(); }; el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); go(); }); el.addEventListener('click', go); };
+  tutBtn($('tutNext'), () => { if (!tut || state !== 'play' || tut.ok > 0) return; tap(); tut.steps[tut.i].end ? tutFinish() : tutNext(); });
+  tutBtn($('tutSkip'), () => { if (!tut || state !== 'play') return; tap(); tutFinish(); });
+
+  // ---------- the caught screen: one tip instead of the runner's words ----------
+  const TIPS = {
+    all: [
+      '「!」が出た場所を先に踏むと、その鬼は出てこない',
+      'ダッシュは一度使うと3.5秒使えない',
+      '爆弾は置いて1秒後に爆発する。近くの爆弾にも連鎖する',
+      '黄色い鬼は先回りしてくる。急に向きを変えるとだませる',
+      '黄色い箱を拾うと爆弾が増える。持てるのは3個まで',
+    ],
+    1: [
+      '2分でバリアと爆弾1個が届く',
+      '2分30秒で右端に出口が開く。鍵を拾ってから出口へ',
+      '出口が開くと鬼が一度に5体出て、30秒ごとに1体増える',
+    ],
+    2: [
+      '2分でバリアと爆弾1個が届く',
+      '2分30秒で出口が開くと、自分より速い黒い鬼が現れる',
+      '出口が開くと鬼が一度に7体出て、15秒ごとに1体増える',
+    ],
+    mid: [
+      '水色のバリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯む',
+      '怯んでいる鬼に触れても確保されない',
+      '黒い鬼は自分より速い。走って逃げ切れないので爆弾で倒す',
+      '鬼を40体倒すごとに、3秒加速かランチャーが届く',
+      'バリアは鬼に触れられても1回だけ守ってくれて、触れた鬼を倒す',
+      'ランチャーは向いている方向に弾を撃ち、着弾した場所の鬼を倒す',
+    ],
+    3: [
+      '落とし穴は1度使用すると45秒使用できない',
+      '落とし穴はふたを踏んで離れると開き、通った鬼をまとめて落とす',
+      '自分が落とし穴に落ちても確保になる',
+      '2分から毎分補給。偶数分はバリア+爆弾2、奇数分は爆弾2',
+      '時間が経つほど鬼の出方が変化する',
+    ],
+  };
+  let lastTip = '';
+  function tip(id, n) {
+    const el = $(id); if (!el) return;
+    const pool = [...TIPS.all, ...(n === 1 ? TIPS[1] : []), ...(n === 2 ? TIPS[2] : []), ...(n >= 2 ? TIPS.mid : []), ...(n >= 3 ? TIPS[3] : [])].filter(s => s !== lastTip);
+    // the stage's own tips come up more often than the ones every stage shares
+    const own = pool.filter(s => !TIPS.all.includes(s));
+    const from = own.length && Math.random() < 0.7 ? own : pool;
+    lastTip = from[Math.floor(Math.random() * from.length)];
+    el.hidden = false; el.textContent = 'ヒント：' + lastTip;
+  }
+
+  // tutorial helpers (2D); TUT_U: one tile here, in the tutorial's distances
+  const TUT_U = 1;
+  function tutSpot(lo, hi) {
+    flow(Math.floor(P.x), Math.floor(P.y));
+    const c = [];
+    for (let i = 0; i < dist.length; i++) if (dist[i] >= lo && dist[i] <= hi && grid[i] !== 1 && !goalT[i] && !holes.some(h => h.i === i)) c.push(i);
+    if (!c.length) return randomRoad(lo);
+    const i = c[Math.floor(Math.random() * c.length)];
+    return { x: i % COLS + 0.5, y: ((i / COLS) | 0) + 0.5 };
+  }
+  const tutItem = p => items.push({ x: p.x, y: p.y, born: 1e9 });
+  const tutWarn = (p, o) => pending.push(Object.assign({ x: p.x, y: p.y, t: SPAWN_WARN }, o));
+  const dropWarn = s => {};
+  function tutHolePlace(h) { P.x = h.x; P.y = h.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
+  // a street tile on the far side of the pit from the runner, so the oni crosses it on its way
+  function tutBeyond(h) {
+    let dx = h.x - P.x, dy = h.y - P.y; const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
+    let best = null, bs = -1e9;
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const i = idx(x, y); if (grid[i] === 1 || holes.some(q => q.i === i)) continue;
+      const ox = x + 0.5 - h.x, oy = y + 0.5 - h.y, d = Math.hypot(ox, oy);
+      if (d < 2.5 || d > 5) continue;
+      const sc = (ox * dx + oy * dy) / d - Math.abs(d - 3.5) * 0.1;
+      if (sc > bs) { bs = sc; best = { x: x + 0.5, y: y + 0.5 }; }
+    }
+    return best || tutSpot(4, 6);
+  }
+
   // ---------- flow control ----------
   function start(n = 1, item) {
     initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
-    startCount();
+    tutNeed(stageN) ? tutBegin() : startCount();
   }
   function setPause(on) {
     if (on && state === 'play') { state = 'pause'; ui.pause.hidden = false; input.stick = null; }
@@ -3487,7 +3667,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; renderRecords(); bgmStart(); };
+  const toTitle = () => { tutQuit(); state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -3654,7 +3834,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     if (n === 4) {
       daily = DAILY[dailyToday()];
       $('spKicker').textContent = `生存課題 ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
       $('startPickScreen').hidden = false;
       mono('spMono', 4, 'standby');
       fitStandby();
@@ -3662,7 +3842,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     }
     daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・時間が経つほど鬼の出方が変化する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・時間が経つほど鬼の出方が変化する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
     fitStandby();
