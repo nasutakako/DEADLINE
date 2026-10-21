@@ -327,9 +327,23 @@ h2.clear { color: #5dff9e; }
 #shareText { width: 100%; max-width: 520px; font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: none; }
 @media (max-height: 460px) { #shareImg { max-width: 300px; } #shareText { display: none; } }
 #shareToast { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 6px; background: rgba(8,9,14,.92); border: 1px solid var(--line); color: var(--ink); font-size: 13px; font-weight: 700; text-align: center; pointer-events: none; }
+/* phones: landscape only. A portrait screen is covered by a "turn it sideways" card */
+.rotlock { display: none; }
+@media (orientation: portrait) and (pointer: coarse) {
+  .rotlock { display: grid; position: fixed; inset: 0; z-index: 1000; place-items: center; padding: 24px; background: #07080d; color: #e8ebf2; text-align: center; }
+  .rotcard { display: grid; justify-items: center; gap: 12px; }
+  .rotcard b { font-size: 20px; letter-spacing: .04em; }
+  .rotcard span:last-child { font-size: 13px; color: #8b93a7; }
+  .rotphone { width: 38px; height: 64px; border: 3px solid #8fe9ff; border-radius: 9px; margin-bottom: 8px; animation: rotphone 2.2s ease-in-out infinite; }
+  @keyframes rotphone { 0%, 25% { transform: rotate(0); } 55%, 100% { transform: rotate(-90deg); } }
+}
+@media (prefers-reduced-motion: reduce) { .rotphone { animation: none; transform: rotate(-90deg); } }
+/* the title screen keeps only the title: no stage name, clock, pause or action buttons beside it */
+body.ontitle .hud, body.ontitle .sys, body.ontitle .controls { visibility: hidden; }
 </style>
 </head>
 <body>
+<div class="rotlock" id="rotLock" aria-hidden="true"><div class="rotcard"><span class="rotphone"></span><b>横向きにしてね</b><span>DEADLINEは横画面で遊ぶゲームです</span></div></div>
 <header class="hud">
   <div class="clock">
     <span class="label goal" id="goal">ステージ1</span>
@@ -1824,6 +1838,8 @@ h2.clear { color: #5dff9e; }
       }
     }
     level = 1 + Math.floor(t / LV_EVERY);
+    // the title music joins the stage's: 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
+    if (!bgmLayer && t >= (stageN >= 3 ? 360 : 120)) bgmLayerStart(SONGS.title);
     // barrier + bomb at 2:00; in the endless stage 3 again every minute after that
     if (t >= (P.nextR ?? BARRIER_AT) && (stageN >= 3 || !P.gotBarrier)) {
       P.nextR = (P.nextR ?? BARRIER_AT) + 60;
@@ -2529,13 +2545,32 @@ h2.clear { color: #5dff9e; }
     if (song.setup) song.setup(bgm);
     bgm.timer = setInterval(bgmTick, 25);
   }
-  function bgmStop() {
-    if (!bgm) return;
-    const b = bgm, now = ac.currentTime; bgm = null;
+  // later in a run the title music joins the stage's (2:00 on stages 1 and 2, 6:00 on stage 3 and the survival
+  // nights). It plays on its own clock and gain; the song code always writes to bgm, so it is swapped in for a tick
+  let bgmLayer = null;
+  function bgmLayerStart(song) {
+    if (!ac || muted || bgmLayer) return;
+    const main = bgm, now = ac.currentTime, out = ac.createGain();
+    out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(song.vol * 0.8, now + 2.5);
+    out.connect(ac.destination);
+    const nb = ac.createBuffer(1, ac.sampleRate, ac.sampleRate), ch = nb.getChannelData(0);
+    for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    const L = bgmLayer = { out, nb, song, step: 0, next: now + 0.1 };
+    bgm = L; try { if (song.setup) song.setup(L); } finally { bgm = main; }
+    L.timer = setInterval(() => { const keep = bgm; bgm = L; try { bgmTick(); } finally { bgm = keep; } }, 25);
+  }
+  function bgmFade(b) {
+    const now = ac.currentTime;
     clearInterval(b.timer);
     b.out.gain.cancelScheduledValues(now); b.out.gain.setValueAtTime(Math.max(0.0001, b.out.gain.value), now);
     b.out.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
     setTimeout(() => b.out.disconnect(), 600);
+  }
+  function bgmStop() {
+    if (bgmLayer) { bgmFade(bgmLayer); bgmLayer = null; }
+    if (!bgm) return;
+    const b = bgm; bgm = null;
+    bgmFade(b);
   }
   function bgmTick() {
     if (!bgm) return;
@@ -3213,6 +3248,18 @@ h2.clear { color: #5dff9e; }
       }).catch(() => {});
     });
     document.addEventListener('fullscreenchange', () => { ui.fs.textContent = document.fullscreenElement ? '戻す' : '全画面'; });
+  }
+  // landscape only on a phone: lock it where the browser can (Android, full screen from the first tap); where it
+  // cannot (iPhone) a portrait screen shows the "turn it sideways" card, and a run in progress pauses
+  if (matchMedia('(pointer: coarse)').matches) {
+    const lockOnce = () => {
+      removeEventListener('pointerup', lockOnce, true);
+      if (!(document.fullscreenEnabled && root.requestFullscreen) || document.fullscreenElement) return;
+      root.requestFullscreen({ navigationUI: 'hide' }).then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch (_) {} }).catch(() => {});
+    };
+    addEventListener('pointerup', lockOnce, true);
+    const portrait = matchMedia('(orientation: portrait)'), onTurn = () => { if (portrait.matches && state === 'play') setPause(true); };
+    if (portrait.addEventListener) portrait.addEventListener('change', onTurn); else portrait.addListener(onTurn);
   }
 
   // re-fit when the screen rotates; outside a run the map is rebuilt for the new shape
