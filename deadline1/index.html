@@ -326,6 +326,7 @@ h2.clear { color: #5dff9e; }
 #shareImg { width: 100%; max-width: 520px; aspect-ratio: 16 / 9; border-radius: 6px; border: 1px solid var(--line); -webkit-touch-callout: default; user-select: auto; }
 #shareText { width: 100%; max-width: 520px; font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: none; }
 @media (max-height: 460px) { #shareImg { max-width: 300px; } #shareText { display: none; } }
+#shareToast { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 6px; background: rgba(8,9,14,.92); border: 1px solid var(--line); color: var(--ink); font-size: 13px; font-weight: 700; text-align: center; pointer-events: none; }
 </style>
 </head>
 <body>
@@ -433,7 +434,7 @@ h2.clear { color: #5dff9e; }
       </div>
       <p id="rMsg"></p>
       <div class="award" id="rTitles" hidden></div>
-      <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button><button class="ghost share" id="rShare" type="button">Xでシェア</button></div>
+      <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button><button class="ghost share" id="rShare" type="button">Xでシェア</button><button class="ghost share" id="rInsta" type="button">Instagramでシェア</button></div>
     </div>
   </div>
 
@@ -451,7 +452,7 @@ h2.clear { color: #5dff9e; }
       </div>
       <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。爆弾とアイテムは持ち越し。</p>
       <div class="award" id="cTitles" hidden></div>
-      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><button class="ghost share" id="cShare" type="button">Xでシェア</button></div>
+      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><button class="ghost share" id="cShare" type="button">Xでシェア</button><button class="ghost share" id="cInsta" type="button">Instagramでシェア</button></div>
       <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
       <div class="picks" id="clearPicks">
         <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span>使うと3秒間、足が大きく速くなる</span></button>
@@ -1081,7 +1082,7 @@ h2.clear { color: #5dff9e; }
     } catch (e) {}
   }
   // where the share sheet takes no pictures: the card to save, the words to copy and a way to X
-  function shareFallback(I) {
+  function shareFallback(I, dest) {
     let o = $('shareScreen');
     if (!o) {
       o = document.createElement('div'); o.className = 'overlay'; o.id = 'shareScreen'; o.hidden = true;
@@ -1095,18 +1096,46 @@ h2.clear { color: #5dff9e; }
       });
     }
     $('shareImg').src = SHARE.url || drawCard(SHARE.kind).toDataURL('image/png');
-    $('shareHow').textContent = matchMedia('(pointer: coarse)').matches ? '画像を長押しして保存し、Xの投稿に添付してね。' : '画像を右クリックで保存して、Xの投稿に添付してね。';
+    $('shareHow').textContent = (matchMedia('(pointer: coarse)').matches ? '画像を長押しして保存し、' : '画像を右クリックで保存して、') + (dest === 'ig' ? 'Instagramに投稿してね。' : 'Xの投稿に添付してね。');
     $('shareText').value = I.text; $('shareCopy').textContent = '文面をコピー';
-    $('shareX').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text);
+    $('shareX').href = dest === 'ig' ? 'https://www.instagram.com/' : 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text);
+    $('shareX').textContent = dest === 'ig' ? 'Instagramを開く' : 'Xを開く';
     o.hidden = false;
   }
-  for (const [id, kind] of [['rShare', 'over'], ['cShare', 'clear']])
-    $(id).addEventListener('click', () => {
-      tap(); if (SHARE.kind !== kind) prepShare(kind);
-      const I = shareInfo(kind), data = SHARE.file ? { files: [SHARE.file], text: I.text } : null;
-      if (data && navigator.canShare && navigator.canShare(data)) navigator.share(data).catch(e => { if (e && e.name !== 'AbortError') shareFallback(I); });
-      else shareFallback(I);
+  // a phone opens the app straight away; a computer or the claude.ai viewer (a frame) shows the card to save
+  const inFrame = (() => { try { return window.top !== window; } catch (e) { return true; } })();
+  function copyCard() {
+    try {
+      if (!navigator.clipboard || !navigator.clipboard.write || !window.ClipboardItem) return Promise.resolve(false);
+      const blob = SHARE.file ? Promise.resolve(SHARE.file) : new Promise(r => drawCard(SHARE.kind).toBlob(r, 'image/png'));
+      return navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(() => true, () => false);
+    } catch (e) { return Promise.resolve(false); }
+  }
+  function shareToast(msg) {
+    let el = $('shareToast');
+    if (!el) { el = document.createElement('div'); el.id = 'shareToast'; el.setAttribute('role', 'status'); $('overScreen').parentNode.appendChild(el); }
+    el.textContent = msg; el.hidden = false; clearTimeout(el.t); el.t = setTimeout(() => { el.hidden = true; }, 3200);
+  }
+  // open the app by its own link; if the page is still on show a while later, the app is not there: the web instead
+  function openApp(app, web) {
+    let left = false; const off = () => { if (document.hidden) left = true; };
+    document.addEventListener('visibilitychange', off);
+    location.href = app;
+    setTimeout(() => { document.removeEventListener('visibilitychange', off); if (!left && !document.hidden) location.href = web; }, 2500);
+  }
+  function shareTo(dest, kind) {
+    tap(); if (SHARE.kind !== kind) prepShare(kind);
+    const I = shareInfo(kind);
+    if (inFrame || !matchMedia('(pointer: coarse)').matches) { shareFallback(I, dest); return; }
+    copyCard().then(ok => {
+      if (ok) shareToast(dest === 'ig' ? '画像をコピーした。ストーリーで貼り付けてね' : '画像をコピーした。投稿画面に貼り付けてね');
+      setTimeout(() => dest === 'ig'
+        ? openApp('instagram://story-camera', 'https://www.instagram.com/')
+        : openApp('twitter://post?message=' + encodeURIComponent(I.text), 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text)), ok ? 600 : 0);
     });
+  }
+  for (const [id, dest, kind] of [['rShare', 'x', 'over'], ['cShare', 'x', 'clear'], ['rInsta', 'ig', 'over'], ['cInsta', 'ig', 'clear']])
+    $(id).addEventListener('click', () => shareTo(dest, kind));
   function paintTitle() {
     // titles owned but none ever chosen: wear the hardest one
     if (!records.title && records.titles && records.titles.length) records.title = records.titles[records.titles.length - 1];
