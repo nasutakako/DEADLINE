@@ -80,6 +80,8 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .pick { text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
 .pick:hover, .pick:focus-visible { border-color: #5dff9e; }
 .pick b { font-size: 15px; white-space: nowrap; } .pick span { font-size: 12px; color: var(--muted); line-height: 1.45; }
+/* a card line breaks only between phrases, never a few characters off a word */
+.pick span i { font-style: normal; display: inline-block; }
 .pick.boost b { color: #ffb347; } .pick.barrier b { color: var(--runner); } .pick.launcher b { color: #d9b3ff; }
 .records { display: grid; gap: 5px; }
 .records h3 { margin: 0; font-size: 12px; letter-spacing: .14em; color: var(--lamp); font-weight: 700; }
@@ -512,9 +514,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><button class="ghost share" id="cShare" type="button">Xでシェア</button><button class="ghost share" id="cInsta" type="button">Instagramでシェア</button></div>
       <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
       <div class="picks" id="clearPicks">
-        <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span>使うと3秒間、足が大きく速くなる</span></button>
-        <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span>使うと1回だけ捕まっても助かるバリアを張る</span></button>
-        <button class="pick launcher" data-item="launcher" type="button"><b>3 ・ ランチャー</b><span>向いている方向の通路にロケットを撃つ。通路上の鬼を全部倒す</span></button>
+        <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span><i>3秒間だけ</i><i>足が速くなる</i></span></button>
+        <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
+        <button class="pick launcher" data-item="launcher" type="button"><b>3 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
     </div>
   </div>
@@ -525,16 +527,6 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <h2 class="clear">あそびかた</h2>
       <p class="mono" id="briefMono" hidden></p>
       <dl class="rules">
-        <dt>移動</dt><dd>画面の左半分を指でなぞった方向へ走る</dd>
-        <dt>視点</dt><dd>画面の右半分をなぞると、見る向きが変わる</dd>
-        <dt>ダッシュ</dt><dd>ボタンで一瞬だけ速く走る。次に使えるのは3.5秒後</dd>
-        <dt>爆弾</dt><dd>黄色い箱を拾うと増える。ボタンで足元に置く</dd>
-        <dt aria-hidden="true"></dt><dd>置いて1秒後に爆発し、円の中の鬼を倒す</dd>
-        <dt aria-hidden="true"></dt><dd>建物の2階で使うと窓が割れ、飛び降りて逃げられる</dd>
-        <dt>アイテム</dt><dd>3秒加速・バリア・ランチャーのどれか。ボタンで使う</dd>
-        <dt>鬼</dt><dd>赤い <b>!</b> が出た場所から現れる。先に踏めばその鬼は出ない</dd>
-        <dt aria-hidden="true"></dt><dd>黄色い鬼は先回りする。水色の鬼は爆発に1回耐える</dd>
-        <dt>建物</dt><dd>ドアから入れる。階段で2階に上がれる</dd>
         <dt>脱出</dt><dd>2分30秒でミニマップの右端に出口が開く。鍵を拾って出口へ</dd>
         <dt aria-hidden="true"></dt><dd>開くと鬼が一度に5体出て、30秒ごとに1体増える</dd>
       </dl>
@@ -549,9 +541,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <p class="mono" id="spMono" hidden></p>
       <p id="spMsg" style="white-space: pre-line">補給アイテムを1つ選ぶとステージが始まる。</p>
       <div class="picks" id="startPicks">
-        <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span>使うと3秒間、足が大きく速くなる</span></button>
-        <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span>使うと1回だけ捕まっても助かるバリアを張る</span></button>
-        <button class="pick launcher" data-item="launcher" type="button"><b>3 ・ ランチャー</b><span>向いている方向の通路にロケットを撃つ。通路上の鬼を全部倒す</span></button>
+        <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span><i>3秒間だけ</i><i>足が速くなる</i></span></button>
+        <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
+        <button class="pick launcher" data-item="launcher" type="button"><b>3 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <div class="row"><button class="ghost" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -4289,6 +4281,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const TUT = {
     1: [
       { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
+      { say: '画面の右半分をなぞると、見る向きが変わる', set: () => { tut.yaw0 = yaw; }, go: () => Math.abs(yaw - tut.yaw0) > 0.8 },
       { say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
       { say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
@@ -4634,7 +4627,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     }
     daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・時間が経つほど鬼の出方が変化する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
     fitStandby();
