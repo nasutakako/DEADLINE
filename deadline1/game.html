@@ -331,6 +331,10 @@ h2.clear { color: #5dff9e; }
 body.ontitle .hud, body.ontitle .sys, body.ontitle .controls { display: none; }
 body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) { body.ontitle .stage { grid-column: 2 / -1; } }
+/* the title screen: the name column runs to the bottom and the high scores fill what is left */
+body.ontitle .pad { padding-bottom: 8px; }
+body.ontitle .pad .who { flex: 1 1 auto; }
+body.ontitle .pad .who .records { flex: 1 1 auto; }
 /* ---- shop ---- */
 /* the name column's buttons keep their height; the high scores below give way and scroll */
 .who > button, .who > .label { flex-shrink: 0; }

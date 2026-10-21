@@ -292,6 +292,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 #shareToast { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 6px; background: rgba(8,9,14,.92); border: 1px solid var(--line); color: var(--ink); font-size: 13px; font-weight: 700; text-align: center; pointer-events: none; }
 /* the title screen keeps only the title: no full-screen button beside it */
 #game:not(.playing) #fsBtn { display: none; }
+/* the title screen: the name column runs from the top to the bottom edge and the high scores fill what is left
+   (the full-screen button it used to clear is hidden there) */
+.who.float { top: calc(var(--in-t) + 14px); bottom: calc(var(--in-b) + 14px); max-height: none; }
+.who.float .records { flex: 1 1 auto; }
 /* ---- shop ---- */
 /* the name column's buttons keep their height; the high scores below give way and scroll */
 .who > button, .who > .label { flex-shrink: 0; }
