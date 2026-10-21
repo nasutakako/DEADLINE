@@ -2027,7 +2027,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     if (item) bag.push(item);
     const stock = P.stock;
     stageN++;
-    ui.clear.hidden = true; bgmStart(songFor(stageN));
+    ui.clear.hidden = true; bgmStop();
     newStage(stock);
     startCount();
   }
@@ -2595,7 +2595,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     cdT -= dt;
     const el = $('countdown'), n = Math.ceil(cdT);
     if (cdT <= 0) {
-      el.hidden = true; state = 'play';
+      el.hidden = true; state = 'play'; bgmStart(songFor(stageN));
       // the warning ran during the count: the first oni come out right on GO
       for (const p of pending) p.t = 0;
       fx.go();
@@ -2932,7 +2932,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
 
   // ---------- flow control ----------
   function start(n = 1, item) {
-    initAudio(); bgmStart(songFor(n));  // the stage's stand-by music carries on through the run
+    initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
     startCount();
