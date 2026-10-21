@@ -335,20 +335,54 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
 /* the name column's buttons keep their height; the high scores below give way and scroll */
 .who > button, .who > .label { flex-shrink: 0; }
 .shopbtn { border: 1px solid rgba(255,120,200,.55); background: rgba(255,120,200,.08); color: #ff9bd6; border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; white-space: nowrap; }
-.card.shopcard { max-width: 640px; }
-.shopnote { color: #ff9bd6; }
-.shoplist { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 12px; padding: 2px; }
-.shopsec h3 { margin: 0 0 6px; font-size: 12px; letter-spacing: .1em; color: var(--muted); font-weight: 700; }
-.shopgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
-.shopitem { display: grid; grid-template-columns: 34px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 10px; align-items: center; text-align: left; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; }
-.shopitem .sw { grid-row: 1 / 4; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); }
-.shopitem b { font-size: 13px; line-height: 1.3; }
-.shopitem .ds { font-size: 10.5px; line-height: 1.35; color: var(--muted); }
-.shopitem .st { font-size: 11px; font-weight: 700; color: #ff9bd6; }
-.shopitem.owned .st { color: var(--runner); }
-.shopitem.on { border-color: var(--lamp); box-shadow: inset 0 0 0 1px var(--lamp); }
-.shopitem.on .st { color: var(--lamp); }
-@media (max-height: 460px) { .shopitem .ds { display: none; } .shopgrid { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); } }
+/* the shop takes the whole screen, over the side columns too */
+#shopScreen { position: fixed; inset: 0; z-index: 50; padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background: rgba(6, 8, 12, .97); }
+.shopwrap { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 1100px; height: 100%; min-height: 0; margin: 0 auto; }
+.shophead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.shophead h2 { margin: 0; font-size: clamp(22px, 4vw, 32px); color: #ff9bd6; }
+.shopnote { font-size: 12px; color: #ff9bd6; opacity: .85; }
+.shopclose { margin-left: auto; padding: 8px 16px; }
+.shopbody { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 36%); gap: 12px; }
+.shoplist { min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 14px; padding: 2px 4px 2px 2px; overscroll-behavior: contain; }
+.shopsec h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .08em; color: var(--ink); font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
+.shopsec h3 small { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.shopgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.shopgrid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.shoptile { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; text-align: center; }
+.shoptile .sw { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); }
+.shoptile b { font-size: 13px; line-height: 1.25; }
+.shoptile .pr { font-size: 11px; color: var(--muted); }
+.shoptile.owned .pr { color: var(--runner); }
+.shoptile .fxtag { position: absolute; top: 5px; right: 5px; font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 99px; background: rgba(255,207,90,.16); color: var(--lamp); border: 1px solid rgba(255,207,90,.45); }
+.shoptile.sel { border-color: #ff9bd6; box-shadow: inset 0 0 0 1px #ff9bd6; background: rgba(255,120,200,.07); }
+.shoptile.on::after { content: "装備中"; position: absolute; top: 5px; left: 5px; font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 99px; background: var(--lamp); color: #111; }
+.shopdetail { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)); }
+.shopdetail .big { display: flex; align-items: center; gap: 14px; }
+.shopdetail .big .sw { flex: none; width: 76px; height: 76px; border-radius: 50%; border: 1px solid rgba(255,255,255,.2); }
+.shopdetail .cat { font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+.shopdetail h3 { margin: 2px 0 0; font-size: 22px; line-height: 1.2; }
+.shopdetail .price { font-size: 14px; font-weight: 700; color: #ff9bd6; }
+.shopdetail .price s { color: var(--muted); font-weight: 500; margin-right: 6px; }
+.shopdetail .blk { display: grid; gap: 3px; }
+.shopdetail .blk span { font-size: 11px; letter-spacing: .1em; color: var(--muted); }
+.shopdetail .blk p { margin: 0; font-size: 14px; line-height: 1.6; }
+.shopdetail .fx { padding: 10px 12px; border-radius: 8px; border: 1px solid rgba(255,207,90,.45); background: rgba(255,207,90,.08); }
+.shopdetail .fx span { color: var(--lamp); }
+.shopdetail .fx.none { border-color: var(--line); background: rgba(255,255,255,.03); }
+.shopdetail .fx.none span { color: var(--muted); }
+.shopdetail .shopact { margin-top: auto; display: grid; gap: 6px; }
+.shopdetail .shopact button { width: 100%; padding: 12px; font-family: var(--f-body); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
+.shopdetail .shopact .state { font-size: 12px; color: var(--muted); text-align: center; }
+/* a short landscape phone: smaller tiles and a tighter detail panel */
+@media (max-height: 460px) {
+  .shophead h2 { font-size: 22px; }
+  .shopgrid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; } .shopgrid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .shoptile { padding: 8px 4px 6px; } .shoptile .sw { width: 34px; height: 34px; } .shoptile b { font-size: 12px; }
+  .shopdetail { padding: 12px; gap: 8px; } .shopdetail .big .sw { width: 56px; height: 56px; } .shopdetail h3 { font-size: 18px; }
+  .shopdetail .blk p { font-size: 13px; line-height: 1.5; } .shopdetail .shopact button { padding: 9px; font-size: 14px; }
+}
+/* a narrow screen: the detail sits under the tiles */
+@media (max-width: 640px) { .shopbody { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; } .shopdetail { max-height: 46vh; } }
 </style>
 </head>
 <body>
@@ -433,12 +467,17 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
   </div>
 
   <div class="overlay" id="shopScreen" hidden>
-    <div class="card rankcard shopcard">
-      <h2>ショップ</h2>
-      <span class="label shopnote">テスト中：いまは無料で手に入ります</span>
-      <div class="ranktabs" id="shopTabs" role="tablist"></div>
-      <div class="shoplist" id="shopList"></div>
-      <div class="row"><button class="ghost" id="shopClose" type="button">閉じる</button></div>
+    <div class="shopwrap">
+      <div class="shophead">
+        <h2>ショップ</h2>
+        <div class="ranktabs" id="shopTabs" role="tablist"></div>
+        <span class="shopnote">テスト中：いまは無料で手に入ります</span>
+        <button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
+      </div>
+      <div class="shopbody">
+        <div class="shoplist" id="shopList"></div>
+        <aside class="shopdetail" id="shopDetail" aria-live="polite"></aside>
+      </div>
     </div>
   </div>
 
@@ -1258,41 +1297,83 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
   const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
   // two copies (this device and the saved one): everything either owns, and this device's choices first
   const mergeShop = (a, b) => { a = a || {}; b = b || {}; return { owned: [...new Set([...(a.owned || []), ...(b.owned || [])])], eq: Object.assign({}, b.eq, a.eq) }; };
-  let shopTab = 'fx';
+  // what each item does in play (items not listed only change the look)
+  const SHOP_FX = {
+    bomb_emp: '爆発のあと、爆心に電気が0.5秒残る。電気に触れた鬼は怯んで動けなくなる(バリア鬼のバリアを割ったときと同じ怯み)。',
+    bomb_grav: '爆発の範囲が通常の爆弾の1.2倍に広がる。',
+    rk_plasma: '弾が壁に当たると、プラズマがマップの外周をぐるりと一周する。外周でプラズマに触れた鬼は怯んで動けなくなる。',
+    dash_warp: 'ダッシュで進む距離が通常の1.2倍になる。',
+    bs_after: '加速中、通った場所に残像が残る。近くの鬼は一瞬、本人ではなく残像のほうへ引き寄せられる。',
+    bs_thunder: '加速中、通った場所に雷が少しのあいだ残る。そこを通った鬼は怯んで動けなくなる。',
+  };
+  let shopTab = 'fx', shopSel = null;
+  const SHOP_STD = { skin: 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)', bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' };
+  function shopSwatch(el, id, sw, k) {
+    const look = SKIN[id];
+    el.style.background = sw || (look && look.m ? `radial-gradient(circle at 38% 35%,${look.m[0]},${look.m[1]} 45%,${look.m[2]})` : SHOP_STD[k]);
+    el.style.boxShadow = look && look.fx === 'neon' ? '0 0 12px #ff3fd8' : look && look.fx === 'fire' ? '0 0 12px #2b8cff' : look && look.fx === 'moon' ? '0 0 12px rgba(255,250,220,.7)' : '';
+  }
+  const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
-    for (const [k, label] of [['fx', 'アイテム演出'], ['skin', 'スキン']]) {
+    for (const [k, label] of [['fx', 'アイテム'], ['skin', 'スキン']]) {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(shopTab === k));
-      b.addEventListener('click', () => { tap(); shopTab = k; openShop(); }); tabs.append(b);
+      b.addEventListener('click', () => { tap(); shopTab = k; shopSel = null; openShop(); }); tabs.append(b);
     }
-    const list = $('shopList'), sd = shopData(); list.textContent = '';
-    for (const cat of SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'))) {
+    const list = $('shopList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
+    const cats = SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'));
+    if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')); }
+    for (const cat of cats) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
-      sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = cat.label; sec.append(h, grid);
-      const std = cat.k === 'skin' ? 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)' : { bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' }[cat.k];
-      for (const [id, name, price, desc, sw] of [['', '標準', 0, 'はじめから使える', std], ...cat.items]) {
-        const have = !id || sd.owned.includes(id), on = (sd.eq[cat.k] || '') === id;
-        const b = document.createElement('button'); b.type = 'button'; b.className = 'shopitem' + (have ? ' owned' : '') + (on ? ' on' : '');
-        const s = document.createElement('span'); s.className = 'sw';
-        const look = SKIN[id];
-        s.style.background = sw || (look && look.m ? `radial-gradient(circle at 38% 35%,${look.m[0]},${look.m[1]} 45%,${look.m[2]})` : std);
-        if (look && look.fx === 'neon') s.style.boxShadow = '0 0 10px #ff3fd8';
-        if (look && look.fx === 'fire') s.style.boxShadow = '0 0 10px #2b8cff';
-        if (look && look.fx === 'moon') s.style.boxShadow = '0 0 10px rgba(255,250,220,.7)';
-        const n = document.createElement('b'); n.textContent = name;
-        const d = document.createElement('span'); d.className = 'ds'; d.textContent = desc;
-        const st = document.createElement('span'); st.className = 'st'; st.textContent = on ? '装備中' : have ? 'タップで装備' : `${price}円 ・ いまは無料`;
-        b.append(s, n, d, st);
-        b.addEventListener('click', () => {
-          tap(); const sd2 = shopData();
-          if (id && !sd2.owned.includes(id)) sd2.owned.push(id);   // testing: no payment yet
-          sd2.eq[cat.k] = id; saveRecords(); openShop();
-        });
+      sec.className = 'shopsec'; grid.className = 'shopgrid' + (cat.items.length === 2 ? ' three' : ''); h.textContent = cat.label;
+      const fxN = cat.items.filter(it => SHOP_FX[it[0]]).length;
+      if (fxN) { const sm = document.createElement('small'); sm.textContent = `効果つき ${fxN}`; h.append(sm); }
+      sec.append(h, grid);
+      for (const it of shopItems().filter(x => x.cat === cat)) {
+        const have = !it.id || sd.owned.includes(it.id), on = (sd.eq[cat.k] || '') === it.id, sel = shopSel && shopSel.cat === cat && shopSel.id === it.id;
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile' + (have ? ' owned' : '') + (on ? ' on' : '') + (sel ? ' sel' : '');
+        const s = document.createElement('span'); s.className = 'sw'; shopSwatch(s, it.id, it.sw, cat.k);
+        const n = document.createElement('b'); n.textContent = it.name;
+        const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = !it.id ? '無料' : have ? '所持' : it.price + '円';
+        b.append(s, n, pr);
+        if (SHOP_FX[it.id]) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = '効果'; b.append(t); }
+        b.addEventListener('click', () => { tap(); shopSel = it; openShop(); });
         grid.append(b);
       }
       list.append(sec);
     }
+    list.scrollTop = keep;
+    shopDetail();
     ui.title.hidden = true; $('shopScreen').hidden = false;
+  }
+  // the chosen item: its look, what it does, and get / wear
+  function shopDetail() {
+    const it = shopSel, box = $('shopDetail'), sd = shopData(); box.textContent = '';
+    if (!it) return;
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const have = !it.id || sd.owned.includes(it.id), on = (sd.eq[it.cat.k] || '') === it.id;
+    const big = mk('div', 'big'), sw = mk('span', 'sw'), head = mk('div');
+    shopSwatch(sw, it.id, it.sw, it.cat.k);
+    const price = mk('div', 'price');
+    if (!it.id) price.textContent = '無料';
+    else if (have) price.textContent = '所持しています';
+    else { price.append(mk('s', null, it.price + '円'), document.createTextNode('いまは無料')); }
+    head.append(mk('div', 'cat', it.cat.label), mk('h3', null, it.name), price);
+    big.append(sw, head);
+    const look = mk('div', 'blk'); look.append(mk('span', null, '見た目'), mk('p', null, it.id ? it.desc : 'はじめから使える、いつもの見た目。'));
+    const fx = mk('div', 'blk fx' + (SHOP_FX[it.id] ? '' : ' none'));
+    fx.append(mk('span', null, SHOP_FX[it.id] ? '効果' : '効果なし'), mk('p', null, SHOP_FX[it.id] || '見た目だけが変わる。遊び方への影響はない。'));
+    const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
+    btn.type = 'button';
+    btn.textContent = on ? '装備中' : have ? (it.id ? '装備する' : '標準に戻す') : '無料で手に入れて装備（テスト中）';
+    btn.disabled = on;
+    btn.addEventListener('click', () => {
+      tap(); const s2 = shopData();
+      if (it.id && !s2.owned.includes(it.id)) s2.owned.push(it.id);   // testing: no payment yet
+      s2.eq[it.cat.k] = it.id; saveRecords(); openShop();
+    });
+    act.append(btn, mk('span', 'state', on ? 'いま使っている' : have ? '持っている' : 'まだ持っていない'));
+    box.append(big, look, fx, act);
   }
   $('shopBtn').addEventListener('click', () => { tap(); openShop(); });
   $('shopClose').addEventListener('click', () => closeOverlay('shopScreen'));
@@ -1866,7 +1947,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0;
+    exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; zaps = []; perim = null; decoys = [];
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
   }
@@ -1994,7 +2075,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     P.cd = Math.max(0, P.cd - dt);
     P.dashT = Math.max(0, P.dashT - dt);
     P.boostT = Math.max(0, P.boostT - dt);
-    const sp = runnerSpeed() * (P.dashT > 0 ? DASH_MULT : 1) * (P.boostT > 0 ? BOOST_MULT : 1);
+    const sp = runnerSpeed() * (P.dashT > 0 ? DASH_MULT * (EQ('dash') === 'dash_warp' ? WARP_DASH : 1) : 1) * (P.boostT > 0 ? BOOST_MULT : 1);
     const [dvx, dvy] = steer(ix, iy, sp);
     const vl = Math.hypot(P.vx, P.vy), dl = Math.hypot(dvx, dvy);
     const turn = vl > 0.5 && dl > 0.5 ? (P.vx * dvx + P.vy * dvy) / (vl * dl) : 1;  // cos of the swing
@@ -2131,6 +2212,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
         }
         gx = bxx + 0.5; gy = byy + 0.5;
       }
+      if (e.lureT > 0) { e.lureT -= dt; gx = e.lureX; gy = e.lureY; }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
       const v = e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed());
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
@@ -2144,6 +2226,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     }
 
     updateRockets(dt);
+    shopFx(dt);
 
     // open pits: every oni that crosses falls, armoured ones included.
     // the first fall shuts the pit 1 sec later; otherwise it shuts 20 sec after opening
@@ -2281,7 +2364,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     for (const e of enemies) {
       if (e.dead) continue;
       const dx = e.x - m.x, dy = e.y - m.y, d = Math.hypot(dx, dy);
-      if (d >= BLAST + e.r * 0.5) continue;
+      if (d >= blastR(m.fx) + e.r * 0.5) continue;
       e.hp--;
       if (e.hp <= 0) { e.dead = true; kills++; tally(e); blast++; continue; }
       // a tough oni survives: loses its armour, gets blown back and dazed
@@ -2293,7 +2376,8 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     shake = reduceMotion ? 0 : Math.max(shake, 0.25); flash = Math.max(flash, 0.35);
     tone(90, 0.45, 'sawtooth', 0.12, 30); noise(0.35, 0.12);
     // chain reaction
-    for (const o of mines) if (!o.gone && Math.hypot(o.x - m.x, o.y - m.y) < BLAST) explode(o);
+    for (const o of mines) if (!o.gone && Math.hypot(o.x - m.x, o.y - m.y) < blastR(m.fx)) explode(o);
+    if (m.fx === 'bomb_emp') zaps.push({ x: m.x, y: m.y, r: 1.3, t: 0, life: 0.5, kind: 'emp', hit: new Set() });
   }
 
   // the runner dropped into an open pit
@@ -2330,6 +2414,89 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     showTitles('rTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit, true));
   }
 
+  // ---------- what the shop's items do ----------
+  let zaps = [], perim = null, decoys = [];
+  const GRAV_R = 1.2, WARP_DASH = 1.2;
+  const blastR = fx => fx === 'bomb_grav' ? BLAST * GRAV_R : BLAST;
+  // the daze an armoured oni gets when its barrier breaks
+  const daze = e => { if (!e.dead) e.stun = Math.max(e.stun || 0, 0.9); };
+  // the map's edge as one loop: s runs clockwise from the top-left corner along the centre of the border tiles
+  const perimLen = () => 2 * ((COLS - 1) + (ROWS - 1));
+  function perimAt(s) {
+    const W = COLS - 1, H = ROWS - 1, L = perimLen(); s = ((s % L) + L) % L;
+    if (s < W) return [0.5 + s, 0.5]; s -= W;
+    if (s < H) return [COLS - 0.5, 0.5 + s]; s -= H;
+    if (s < W) return [COLS - 0.5 - s, ROWS - 0.5]; s -= W;
+    return [0.5, ROWS - 0.5 - s];
+  }
+  // where on the loop a point lies, and how far it is from the edge
+  function perimOf(x, y) {
+    const W = COLS - 1, H = ROWS - 1, c = [[y - 0.5, x - 0.5], [COLS - 0.5 - x, W + (y - 0.5)], [ROWS - 0.5 - y, W + H + (COLS - 0.5 - x)], [x - 0.5, 2 * W + H + (ROWS - 0.5 - y)]];
+    let best = c[0]; for (const q of c) if (q[0] < best[0]) best = q;
+    return { off: Math.abs(best[0]), s: best[1] };
+  }
+  function startPerim(x, y) { perim = { s0: perimOf(x, y).s, t: 0, hit: new Set() }; tone(180, 0.6, 'sawtooth', 0.05, 900); }
+  function shopFx(dt) {
+    // lightning left behind and the electric bomb's leftover charge
+    if (P.boostT > 0 && EQ('boost') === 'bs_thunder' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'thunder', hit: new Set() }); }
+    for (const z of zaps) {
+      z.t += dt;
+      for (const e of enemies) if (!z.hit.has(e) && Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.r * 0.5) { z.hit.add(e); daze(e); }
+    }
+    zaps = zaps.filter(z => z.t < z.life);
+    // plasma round the edge: two heads leave the point nearest the hit and meet on the far side in 1.2 sec
+    if (perim) {
+      perim.t += dt;
+      const L = perimLen(), run = Math.min(L / 2, L / 2 * perim.t / 1.2);
+      for (const e of enemies) {
+        if (perim.hit.has(e)) continue;
+        const q = perimOf(e.x, e.y); if (q.off > 1.2) continue;
+        const d = ((q.s - perim.s0) % L + L) % L, back = Math.min(d, L - d);
+        if (back <= run + 0.5) { perim.hit.add(e); daze(e); }
+      }
+      if (perim.t > 1.7) perim = null;
+    }
+    // afterimages: one every 0.45 sec of the boost, lasting 1.6 sec; oni within 7 tiles turn toward it for a moment
+    if (P.boostT > 0 && EQ('boost') === 'bs_after' && (P.decT = (P.decT || 0) - dt) <= 0) {
+      P.decT = 0.45; const d = { x: P.x, y: P.y, t: 0, life: 1.6 }; decoys.push(d);
+      for (const e of enemies) if (Math.hypot(e.x - d.x, e.y - d.y) < 7) { e.lureT = 0.45; e.lureX = d.x; e.lureY = d.y; }
+    }
+    for (const d of decoys) d.t += dt;
+    decoys = decoys.filter(d => d.t < d.life);
+  }
+  function drawShopFx(now) {
+    for (const d of decoys) {
+      const k = 1 - d.t / d.life;
+      ctx.globalAlpha = 0.55 * k; metalBall(d.x, d.y, P.r, runnerLook(now).m); ctx.globalAlpha = 1;
+      ctx.strokeStyle = `rgba(143,233,255,${0.6 * k})`; ctx.lineWidth = 0.035; ctx.beginPath(); ctx.arc(d.x, d.y, P.r + 0.1 + 0.08 * Math.sin(now * 10), 0, Math.PI * 2); ctx.stroke();
+    }
+    for (const z of zaps) {
+      const k = 1 - z.t / z.life;
+      if (z.kind === 'emp') {
+        ctx.fillStyle = `rgba(80,170,255,${0.22 * k})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = `rgba(200,240,255,${0.9 * k})`; ctx.lineWidth = 0.04;
+        for (let i = 0; i < 4; i++) { const a = Math.random() * 6.28, b = a + 1 + Math.random() * 2; bolt(z.x + Math.cos(a) * z.r * Math.random(), z.y + Math.sin(a) * z.r * Math.random(), z.x + Math.cos(b) * z.r, z.y + Math.sin(b) * z.r, 5, 0.25); }
+      } else {
+        ctx.fillStyle = `rgba(255,230,90,${0.18 * k})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * 0.8, 0, Math.PI * 2); ctx.fill();
+        if (Math.random() < 0.5) { const a = Math.random() * 6.28; ctx.strokeStyle = `rgba(255,245,170,${0.9 * k})`; ctx.lineWidth = 0.035; bolt(z.x - Math.cos(a) * 0.4, z.y - Math.sin(a) * 0.4, z.x + Math.cos(a) * 0.4, z.y + Math.sin(a) * 0.4, 4, 0.2); }
+      }
+    }
+    if (perim) {
+      const L = perimLen(), run = Math.min(L / 2, L / 2 * perim.t / 1.2), fade = Math.max(0, Math.min(1, (1.7 - perim.t) / 0.5));
+      ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = '#2bff9a'; ctx.shadowBlur = 14;
+      for (const dir of [1, -1]) {
+        const tail = Math.max(0, run - 5);
+        ctx.strokeStyle = `rgba(43,255,154,${0.85 * fade})`; ctx.lineWidth = 0.22; ctx.beginPath();
+        for (let s = tail; s <= run; s += 0.25) { const [px, py] = perimAt(perim.s0 + dir * s); s === tail ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+        ctx.stroke();
+        ctx.strokeStyle = `rgba(155,123,255,${0.5 * fade})`; ctx.lineWidth = 0.08; ctx.beginPath();
+        for (let s = 0; s <= run; s += 0.5) { const [px, py] = perimAt(perim.s0 + dir * s); s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+        ctx.stroke();
+        const [hx, hy] = perimAt(perim.s0 + dir * run); ctx.fillStyle = `rgba(240,255,248,${fade})`; ctx.beginPath(); ctx.arc(hx, hy, 0.24, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.restore(); ctx.lineCap = 'butt';
+    }
+  }
   // ---------- shop looks (2D) ----------
   // a jagged line, for electric arcs and lightning
   function bolt(x1, y1, x2, y2, n, j) {
@@ -2443,18 +2610,18 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     ctx.fill(); ctx.stroke();
   }
   function drawMine(m, now) {
-    const k = Math.max(0, m.fuse / FUSE), fx = m.fx || '';
+    const k = Math.max(0, m.fuse / FUSE), fx = m.fx || '', BR = blastR(fx);
     const C = fx === 'bomb_emp' ? { area: '70,160,255', ring: 'rgba(120,210,255,0.5)', body: '#14305e', fuse: '#5fd0ff', on: '#d8f7ff', off: '#1d4f8a' }
       : fx === 'bomb_grav' ? { area: '70,20,120', ring: 'rgba(170,110,255,0.55)', body: '#07060c', fuse: '#a678ff', on: '#efe2ff', off: '#3a1f66' }
       : { area: '255,120,60', ring: 'rgba(255,207,90,0.45)', body: '#3a3f4d', fuse: '#ffcf5a', on: '#ff3b30', off: '#7a1d18' };
     ctx.fillStyle = `rgba(${C.area},${0.06 + 0.1 * (1 - k)})`;
-    ctx.beginPath(); ctx.arc(m.x, m.y, BLAST, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(m.x, m.y, BR, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = C.ring; ctx.lineWidth = 0.04; ctx.setLineDash([0.15, 0.12]); if (fx === 'bomb_grav') ctx.lineDashOffset = now * 0.8;
-    ctx.beginPath(); ctx.arc(m.x, m.y, BLAST, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    ctx.beginPath(); ctx.arc(m.x, m.y, BR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
     if (fx === 'bomb_grav') {
       // a slow whirl pulling in
       ctx.strokeStyle = `rgba(160,100,255,${0.25 + 0.25 * (1 - k)})`; ctx.lineWidth = 0.04;
-      for (let i = 0; i < 3; i++) { const a = -now * 2.2 + i * Math.PI * 2 / 3; ctx.beginPath(); ctx.arc(m.x, m.y, BLAST * (0.35 + 0.18 * i), a, a + 1.4); ctx.stroke(); }
+      for (let i = 0; i < 3; i++) { const a = -now * 2.2 + i * Math.PI * 2 / 3; ctx.beginPath(); ctx.arc(m.x, m.y, BR * (0.35 + 0.18 * i), a, a + 1.4); ctx.stroke(); }
     }
     ctx.fillStyle = C.body;
     ctx.beginPath(); ctx.arc(m.x, m.y, 0.22, 0, Math.PI * 2); ctx.fill();
@@ -2467,35 +2634,35 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     if (fx === 'bomb_emp' && Math.random() < 0.5) { const a = Math.random() * Math.PI * 2; ctx.strokeStyle = 'rgba(160,230,255,0.85)'; ctx.lineWidth = 0.03; bolt(m.x + Math.cos(a) * 0.22, m.y + Math.sin(a) * 0.22, m.x + Math.cos(a) * 0.55, m.y + Math.sin(a) * 0.55, 4, 0.14); }
   }
   function drawBoom(b) {
-    const k = b.t / 0.6, fx = b.fx || '';
+    const k = b.t / 0.6, fx = b.fx || '', BR = blastR(fx);
     if (fx === 'bomb_emp' || fx === 'br_emf') {
       ctx.strokeStyle = `rgba(110,210,255,${1 - k})`; ctx.lineWidth = 0.16 * (1 - k);
-      ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.3 + k * 0.8), 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = `rgba(60,140,255,${0.4 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * 0.7 * (1 - k * 0.5), 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.3 + k * 0.8), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = `rgba(60,140,255,${0.4 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BR * 0.7 * (1 - k * 0.5), 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(220,245,255,${0.95 * (1 - k)})`; ctx.lineWidth = 0.05;
-      for (let i = 0; i < 7; i++) { const a = i * Math.PI * 2 / 7 + b.x; bolt(b.x, b.y, b.x + Math.cos(a) * BLAST * (0.4 + k * 0.7), b.y + Math.sin(a) * BLAST * (0.4 + k * 0.7), 5, 0.25); }
+      for (let i = 0; i < 7; i++) { const a = i * Math.PI * 2 / 7 + b.x; bolt(b.x, b.y, b.x + Math.cos(a) * BR * (0.4 + k * 0.7), b.y + Math.sin(a) * BR * (0.4 + k * 0.7), 5, 0.25); }
       return;
     }
     if (fx === 'bomb_grav') {
       // it falls inward: a ring closing on a black core
-      ctx.fillStyle = `rgba(8,0,18,${0.75 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.85 - k * 0.5), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(8,0,18,${0.75 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.85 - k * 0.5), 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(170,110,255,${1 - k})`; ctx.lineWidth = 0.14 * (1 - k * 0.5);
-      ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (1.15 - k * 0.95), 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(b.x, b.y, BR * (1.15 - k * 0.95), 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = `rgba(220,190,255,${0.7 * (1 - k)})`; ctx.lineWidth = 0.05;
-      for (let i = 0; i < 4; i++) { const a = k * 6 + i * Math.PI / 2; ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.9 - k * 0.6), a, a + 1.1); ctx.stroke(); }
+      for (let i = 0; i < 4; i++) { const a = k * 6 + i * Math.PI / 2; ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.9 - k * 0.6), a, a + 1.1); ctx.stroke(); }
       return;
     }
     if (fx === 'rk_laser') {
-      ctx.fillStyle = `rgba(255,45,85,${0.55 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.4 + k * 0.6), 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(255,45,85,${0.55 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.4 + k * 0.6), 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(255,220,230,${1 - k})`; ctx.lineWidth = 0.08 * (1 - k);
-      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(a) * BLAST * (0.5 + k), b.y + Math.sin(a) * BLAST * (0.5 + k)); ctx.stroke(); }
+      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + Math.PI / 4; ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + Math.cos(a) * BR * (0.5 + k), b.y + Math.sin(a) * BR * (0.5 + k)); ctx.stroke(); }
       return;
     }
     if (fx === 'rk_plasma') {
-      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, BLAST * (0.4 + k * 0.8));
+      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, BR * (0.4 + k * 0.8));
       g.addColorStop(0, `rgba(235,255,245,${1 - k})`); g.addColorStop(0.45, `rgba(43,255,154,${0.7 * (1 - k)})`); g.addColorStop(1, 'rgba(90,43,255,0)');
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.4 + k * 0.8), 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = `rgba(150,110,255,${1 - k})`; ctx.lineWidth = 0.1 * (1 - k); ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.35 + k * 0.85), 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.4 + k * 0.8), 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = `rgba(150,110,255,${1 - k})`; ctx.lineWidth = 0.1 * (1 - k); ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.35 + k * 0.85), 0, Math.PI * 2); ctx.stroke();
       return;
     }
     if (fx === 'br_glass') {
@@ -2509,9 +2676,9 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
       return;
     }
     ctx.strokeStyle = `rgba(255,207,90,${1 - k})`; ctx.lineWidth = 0.18 * (1 - k);
-    ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * (0.3 + k * 0.8), 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.3 + k * 0.8), 0, Math.PI * 2); ctx.stroke();
     ctx.fillStyle = `rgba(255,120,60,${0.5 * (1 - k)})`;
-    ctx.beginPath(); ctx.arc(b.x, b.y, BLAST * 0.7 * (1 - k * 0.5), 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(b.x, b.y, BR * 0.7 * (1 - k * 0.5), 0, Math.PI * 2); ctx.fill();
   }
   function drawRocket(r, now) {
     const fx = r.fx || '';
@@ -2621,6 +2788,8 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
 
     // placed mines
     for (const m of mines) drawMine(m, now);
+
+    drawShopFx(now);
 
     // spawn warnings
     for (const p of pending) {
@@ -3163,6 +3332,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
         r.done = true;
         for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 1.0) { e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
         booms.push({ x: r.x, y: r.y, t: 0, fx: r.fx });
+        if (r.fx === 'rk_plasma') startPerim(r.x, r.y);
         for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5; sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#ffcf5a' : '#ff6a3d' }); }
         shake = reduceMotion ? 0 : Math.max(shake, 0.22); tone(90, 0.4, 'sawtooth', 0.1, 30); noise(0.3, 0.1);
       }
