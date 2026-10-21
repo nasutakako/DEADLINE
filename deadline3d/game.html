@@ -3288,8 +3288,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       }
     }
     level = 1 + Math.floor(t / LV_EVERY);
-    // the title music joins the stage's, a little quieter: 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
-    if (!bgmLayer && !tut && t >= (stageN >= 3 ? 360 : 120)) bgmLayerStart(SONGS.title);
+    // the stage's music gives way to the title music alone: at 2:30 on stages 1 and 2, 6:00 on stage 3 and the survival nights
+    if (!tut && t >= (stageN >= 3 ? 360 : EXIT_AT) && (!bgm || bgm.song !== SONGS.title)) bgmStart(SONGS.title);
     // barrier + bomb at 2:00; in the endless stage 3 again every minute after that
     if (t >= (P.nextR ?? BARRIER_AT) && (stageN >= 3 || !P.gotBarrier)) {
       P.nextR = (P.nextR ?? BARRIER_AT) + 60;
@@ -3924,8 +3924,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (song.setup) song.setup(bgm);
     bgm.timer = setInterval(bgmTick, 25);
   }
-  // later in a run the title music joins the stage's, a little under it (2:00 on stages 1 and 2, 6:00 on stage 3 and
-  // the survival nights).
+  // a second song mixed under the first (no run uses it now: late in a run the title music takes over instead).
   // A layer plays on its own clock and gain; the song code always writes to bgm, so it is swapped in for a tick
   let bgmLayer = null;
   function bgmLayerStart(song) {
