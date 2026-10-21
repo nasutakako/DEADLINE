@@ -98,6 +98,7 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .tutbar[hidden] { display: none; }
 .tutbar .tstep { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--lamp); }
 .tutbar p { margin: 0; font-size: clamp(13px, 1.9vw, 16px); font-weight: 700; line-height: 1.45; text-wrap: balance; }
+.tutbar p i { font-style: normal; display: inline-block; }
 .tutbar.ok { border-color: #5ce08a; }
 .tutbar.ok p { color: #5ce08a; }
 .tutbar .trow { flex: none; display: flex; gap: 6px; }
@@ -2167,7 +2168,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // a practice oni is exactly the kind the tutorial asked for
-      if (s.tut) { black = !!s.black; tough = !!s.tough; amb = false; }
+      if (s.tut) { black = !!s.black; tough = !!s.tough; amb = !!s.amb; }
       if (tough) toughWave = true;
       enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, stun: 0 });
       if (s.tut && tut) { enemies[enemies.length - 1].tut = true; tut.oni.push(enemies[enemies.length - 1]); }
@@ -3385,15 +3386,16 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       { say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
       { say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
+      { say: '黄色い鬼は先回りする。フェイントで急に向きを変えて引きつけ、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
-      { say: '2分でバリアと爆弾1個が届く。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
+      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
       { say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
       { say: '水色のバリア鬼は爆発に1回耐える。2回当てて倒そう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: tutDown },
       { say: '黒い鬼は自分より速い。走って逃げ切れないので、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、3秒加速かランチャーが届く', info: true },
-      { say: '2分でバリアと爆弾1個。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
+      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     3: [
       { pit: true, say: '広場の落とし穴のふたに乗っている。ふたから離れると穴が開く', set: () => tutHolePlace(tut.hole), go: () => tut.hole.open },
@@ -3421,7 +3423,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     $('tutBar').classList.remove('ok');
     if (st.set) st.set();
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
-    $('tutSay').textContent = st.say;
+    // lines break only after a 。 or 、, never a few characters off a word
+    $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? '本番スタート' : '次へ';
   }
@@ -3467,12 +3470,12 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       '黄色い箱を拾うと爆弾が増える。持てるのは3個まで',
     ],
     1: [
-      '2分でバリアと爆弾1個が届く',
+      '2分経過でバリアと爆弾1個が支給される',
       '2分30秒で右端に出口が開く。鍵を拾ってから出口へ',
       '出口が開くと鬼が一度に5体出て、30秒ごとに1体増える',
     ],
     2: [
-      '2分でバリアと爆弾1個が届く',
+      '2分経過でバリアと爆弾1個が支給される',
       '2分30秒で出口が開くと、自分より速い黒い鬼が現れる',
       '出口が開くと鬼が一度に7体出て、15秒ごとに1体増える',
     ],
@@ -3837,7 +3840,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     }
     daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する' : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
     fitStandby();
