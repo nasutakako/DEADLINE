@@ -1228,6 +1228,9 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     { k: 'boost', label: '3秒加速', items: [
       ['bs_after', '残像', 200, '走ったあとに分身が残る', 'linear-gradient(90deg,rgba(143,233,255,.08),rgba(143,233,255,.35),#8fe9ff)'],
       ['bs_thunder', '雷のエフェクト', 500, '稲妻をまとって走る', 'linear-gradient(135deg,#fffbd0,#ffd23f 40%,#5a6bff)'] ] },
+    { k: 'dash', label: 'ダッシュ', items: [
+      ['dash_petal', '桜吹雪', 200, '駆け抜けたあとに花びらが舞う', 'radial-gradient(circle at 40% 40%,#fff0f5,#ffb7d0 45%,#e2558a)'],
+      ['dash_warp', '時空の裂け目', 500, '空間をゆがめて跳ぶ', 'radial-gradient(circle,#0a0018 30%,#7b3cff 55%,#3fe0ff 68%,rgba(0,0,0,0) 72%)'] ] },
     { k: 'barrier', label: 'バリア', items: [
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
       ['br_emf', '電磁シールド', 500, 'まわる電磁の輪', 'radial-gradient(circle,rgba(60,90,220,.25) 38%,#7b5cff 58%,#3fd0ff 70%,rgba(0,0,0,0) 72%)'] ] },
@@ -1266,7 +1269,7 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     for (const cat of SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'))) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
       sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = cat.label; sec.append(h, grid);
-      const std = cat.k === 'skin' ? 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)' : { bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' }[cat.k];
+      const std = cat.k === 'skin' ? 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)' : { bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' }[cat.k];
       for (const [id, name, price, desc, sw] of [['', '標準', 0, 'はじめから使える', std], ...cat.items]) {
         const have = !id || sd.owned.includes(id), on = (sd.eq[cat.k] || '') === id;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'shopitem' + (have ? ' owned' : '') + (on ? ' on' : '');
@@ -2377,6 +2380,24 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
     }
     if (q.boost && EQ('boost') === 'bs_thunder') {
       ctx.fillStyle = `rgba(255,236,120,${q.a * 0.55})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.35 * q.a, 0, Math.PI * 2); ctx.fill(); return;
+    }
+    if (!q.boost && EQ('dash') === 'dash_petal') {
+      // petals left behind, each turning as it fades
+      const sd = Math.abs(Math.sin(q.x * 12.9898 + q.y * 78.233)) % 1;
+      for (let i = 0; i < 2; i++) {
+        const a = sd * 6.28 + i * 2.6 + (1 - q.a) * 3, d = (1 - q.a) * 0.5 + 0.1;
+        ctx.fillStyle = `rgba(${i ? '255,214,228' : '255,160,195'},${q.a * 0.85})`;
+        ctx.beginPath(); ctx.ellipse(q.x + Math.cos(a) * d, q.y + Math.sin(a) * d, 0.11, 0.06, a + (1 - q.a) * 4, 0, Math.PI * 2); ctx.fill();
+      }
+      return;
+    }
+    if (!q.boost && EQ('dash') === 'dash_warp') {
+      // the air folds: rippling rings and a split of colour
+      const sd = Math.abs(Math.sin(q.x * 12.9898 + q.y * 78.233)) % 1;
+      ctx.fillStyle = `rgba(63,224,255,${q.a * 0.3})`; ctx.beginPath(); ctx.arc(q.x - 0.06, q.y, P.r * 0.8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(255,63,216,${q.a * 0.3})`; ctx.beginPath(); ctx.arc(q.x + 0.06, q.y, P.r * 0.8, 0, Math.PI * 2); ctx.fill();
+      if (sd > 0.6) { ctx.strokeStyle = `rgba(150,100,255,${q.a * 0.8})`; ctx.lineWidth = 0.04; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * (0.6 + (1 - q.a) * 1.6), 0, Math.PI * 2); ctx.stroke(); }
+      return;
     }
     ctx.fillStyle = q.boost ? `rgba(255,179,71,${q.a * 0.4})` : `rgba(143,233,255,${q.a * 0.35})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.9, 0, Math.PI * 2); ctx.fill();
   }

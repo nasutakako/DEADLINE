@@ -1194,6 +1194,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     { k: 'boost', label: '3秒加速', items: [
       ['bs_after', '残像', 200, '走ったあとに分身が残る', 'linear-gradient(90deg,rgba(143,233,255,.08),rgba(143,233,255,.35),#8fe9ff)'],
       ['bs_thunder', '雷のエフェクト', 500, '稲妻をまとって走る', 'linear-gradient(135deg,#fffbd0,#ffd23f 40%,#5a6bff)'] ] },
+    { k: 'dash', label: 'ダッシュ', items: [
+      ['dash_petal', '桜吹雪', 200, '駆け抜けたあとに花びらが舞う', 'radial-gradient(circle at 40% 40%,#fff0f5,#ffb7d0 45%,#e2558a)'],
+      ['dash_warp', '時空の裂け目', 500, '空間をゆがめて跳ぶ', 'radial-gradient(circle,#0a0018 30%,#7b3cff 55%,#3fe0ff 68%,rgba(0,0,0,0) 72%)'] ] },
     { k: 'barrier', label: 'バリア', items: [
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
       ['br_emf', '電磁シールド', 500, 'まわる電磁の輪', 'radial-gradient(circle,rgba(60,90,220,.25) 38%,#7b5cff 58%,#3fd0ff 70%,rgba(0,0,0,0) 72%)'] ] },
@@ -1232,7 +1235,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     for (const cat of SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'))) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
       sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = cat.label; sec.append(h, grid);
-      const std = cat.k === 'skin' ? 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)' : { bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' }[cat.k];
+      const std = cat.k === 'skin' ? 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)' : { bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' }[cat.k];
       for (const [id, name, price, desc, sw] of [['', '標準', 0, 'はじめから使える', std], ...cat.items]) {
         const have = !id || sd.owned.includes(id), on = (sd.eq[cat.k] || '') === id;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'shopitem' + (have ? ' owned' : '') + (on ? ' on' : '');
@@ -2854,6 +2857,36 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     }
     if (P) P.boostRing.material.color.setHex(k === 'bs_thunder' ? 0xffe35a : k === 'bs_after' ? 0x8fe9ff : 0xffb347);
   }
+  // the dash: petals thrown up behind the runner, or rings of folded space at its feet
+  let dashBits = [], dashT0 = 0;
+  const petalGeo = new THREE.PlaneGeometry(0.28, 0.16), warpGeo = new THREE.TorusGeometry(0.8, 0.05, 6, 36).rotateX(Math.PI / 2);
+  function dashFxTick(dt) {
+    const k = EQ('dash');
+    if (P && P.dashT > 0 && state === 'play' && k && (dashT0 -= dt) <= 0) {
+      const p = P.mesh.position;
+      if (k === 'dash_petal') {
+        dashT0 = 0.025;
+        for (let i = 0; i < 2; i++) {
+          const m = new THREE.Mesh(petalGeo, basic(i ? 0xffd6e4 : 0xffa0c3, { transparent: true, opacity: 0.95, side: THREE.DoubleSide, depthWrite: false }));
+          m.position.set(p.x + (Math.random() - 0.5) * 0.8, p.y + 0.4 + Math.random() * 1.2, p.z + (Math.random() - 0.5) * 0.8);
+          m.rotation.set(Math.random() * 6, Math.random() * 6, 0); dyn.add(m);
+          dashBits.push({ m, t: 0, life: 1.1, v: [(Math.random() - 0.5) * 2, 1.5 + Math.random() * 1.5, (Math.random() - 0.5) * 2], spin: (Math.random() - 0.5) * 12 });
+        }
+      } else if (k === 'dash_warp') {
+        dashT0 = 0.05;
+        const m = new THREE.Mesh(warpGeo, basic(Math.random() < 0.5 ? 0x7b3cff : 0x3fe0ff, { transparent: true, opacity: 0.9, blending: add, depthWrite: false }));
+        m.position.set(p.x, p.y + 0.15 + Math.random() * 1.6, p.z); dyn.add(m);
+        dashBits.push({ m, t: 0, life: 0.4, ring: true });
+      }
+    }
+    for (const b of dashBits) {
+      b.t += dt; const k2 = b.t / b.life;
+      if (b.ring) { b.m.scale.setScalar(0.6 + k2 * 1.8); b.m.material.opacity = 0.9 * (1 - k2); }
+      else { b.v[1] -= 4 * dt; b.m.position.x += b.v[0] * dt; b.m.position.y = Math.max(0.05, b.m.position.y + b.v[1] * dt); b.m.position.z += b.v[2] * dt; b.m.rotation.x += b.spin * dt; b.m.rotation.y += b.spin * 0.7 * dt; b.m.material.opacity = 0.95 * (1 - k2); }
+      if (k2 >= 1) { dyn.remove(b.m); b.m.material.dispose(); }
+    }
+    dashBits = dashBits.filter(b => b.t < b.life);
+  }
   const boltMat = new THREE.LineBasicMaterial({ color: 0xfff0a0, transparent: true, opacity: 0.95, blending: add, depthWrite: false }); SHARED.add(boltMat);
   // bombs, explosions and launcher shots in each look
   const MINE_LOOK = {
@@ -3527,7 +3560,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       P.boostRing.visible = P.boostT > 0; P.boostRing.rotation.z += dt * 4;
       skinTick(now);
     }
-    boostFxTick(dt, now);
+    boostFxTick(dt, now); dashFxTick(dt);
     if (P) {
       P.mesh.visible = !(P.invul > 0 && Math.sin(now * 30) < 0);
     }
