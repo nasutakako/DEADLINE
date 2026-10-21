@@ -3536,7 +3536,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     3: [
-      { pit: true, say: '広場の落とし穴のふたに乗っている。ふたから離れると穴が開く', set: () => tutHolePlace(tut.hole), go: () => tut.hole.open },
+      { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
       { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
       { pit: true, say: '自分が落ちても確保。一度使った落とし穴は45秒ふさがる', info: true },
       { say: '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
@@ -3671,7 +3671,14 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const tutItem = p => items.push({ x: p.x, y: p.y, born: 1e9 });
   const tutWarn = (p, o) => pending.push(Object.assign({ x: p.x, y: p.y, t: SPAWN_WARN }, o));
   const dropWarn = s => {};
-  function tutHolePlace(h) { P.x = h.x; P.y = h.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
+  // the runner starts a couple of tiles from the pit (on the street round its plaza, below it if it can) and walks onto the lid
+  function tutHolePlace(h) {
+    let at = { x: h.x, y: h.y };
+    for (const [dx, dy] of [[0, 2], [2, 0], [-2, 0], [0, -2], [0, 1], [1, 0], [-1, 0], [0, -1]]) {
+      const x = Math.floor(h.x) + dx, y = Math.floor(h.y) + dy, i = idx(x, y);
+      if (x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[i] !== 1 && !holes.some(q => q.i === i)) { at = { x: x + 0.5, y: y + 0.5 }; break; }
+    }
+    P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
   // a street tile on the far side of the pit from the runner, so the oni crosses it on its way
   function tutBeyond(h) {
     let dx = h.x - P.x, dy = h.y - P.y; const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
