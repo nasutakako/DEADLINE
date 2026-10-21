@@ -318,9 +318,14 @@ h2.clear { color: #5dff9e; }
 /* the daily challenge sits under the ranking button in the name column */
 .dailybtn { border: 1px solid rgba(143,233,255,.55); background: rgba(143,233,255,.08); color: var(--runner); border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; line-height: 1.3; text-align: center; white-space: pre-line; }
 .dailybtn.locked { opacity: .5; }
-a.ghost.share { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: inherit; text-decoration: none; }
+.ghost.share { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: inherit; text-decoration: none; }
 /* a short landscape screen: the three result buttons sit on one line */
 @media (max-height: 460px) { #overScreen .row > *, #clearScreen .row > * { padding-left: 14px; padding-right: 14px; } }
+#shareScreen { z-index: 30; background: rgba(6,7,11,.95); }
+#shareScreen .card { gap: 10px; }
+#shareImg { width: 100%; max-width: 520px; aspect-ratio: 16 / 9; border-radius: 6px; border: 1px solid var(--line); -webkit-touch-callout: default; user-select: auto; }
+#shareText { width: 100%; max-width: 520px; font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: none; }
+@media (max-height: 460px) { #shareImg { max-width: 300px; } #shareText { display: none; } }
 </style>
 </head>
 <body>
@@ -428,7 +433,7 @@ a.ghost.share { display: inline-flex; align-items: center; justify-content: cent
       </div>
       <p id="rMsg"></p>
       <div class="award" id="rTitles" hidden></div>
-      <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button><a class="ghost share" id="rShare" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener">Xでシェア</a></div>
+      <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button><button class="ghost share" id="rShare" type="button">Xでシェア</button></div>
     </div>
   </div>
 
@@ -446,7 +451,7 @@ a.ghost.share { display: inline-flex; align-items: center; justify-content: cent
       </div>
       <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。爆弾とアイテムは持ち越し。</p>
       <div class="award" id="cTitles" hidden></div>
-      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><a class="ghost share" id="cShare" href="https://twitter.com/intent/tweet" target="_blank" rel="noopener">Xでシェア</a></div>
+      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><button class="ghost share" id="cShare" type="button">Xでシェア</button></div>
       <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
       <div class="picks" id="clearPicks">
         <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span>使うと3秒間、足が大きく速くなる</span></button>
@@ -999,17 +1004,83 @@ a.ghost.share { display: inline-flex; align-items: center; justify-content: cent
     if (!$(el) || $(el).hidden) return;
     setTimeout(() => { tone(1319, 0.12, 'triangle', 0.045); setTimeout(() => tone(1760, 0.12, 'triangle', 0.04), 90); setTimeout(() => tone(2637, 0.3, 'triangle', 0.035), 180); }, 380);
   }
-  // share a result on X: the run in one line, the title worn and the game's public page
+  // share a result: a picture card of the run (made as the result screen opens) and the words to go with it
   const SHARE_URL = 'https://nasutakako.github.io/DEADLINE/deadline1/';
-  function shareText(kind) {
+  const SNAP = () => $('cv');
+  function shareInfo(kind) {
     const sc = $(kind === 'clear' ? 'cScore' : 'rScore').textContent, tn = titleName(records.title);
     const where = stageN === 4 ? stageLabel(4) : (STAGE_LABELS.find(x => x[0] === stageN) || [0, stageLabel(stageN)])[1];
-    const what = kind === 'clear' ? `${where}を ${sc} で脱出!`
-      : stageN >= 3 ? `${where}で ${sc} 生き残った! 撃破${$('rKills').textContent}` : `${where}で ${sc} 逃げたけど確保された…`;
-    return `${document.title} ${what}${tn ? ' 《' + tn + '》' : ''}\n#DEADLINE鬼ごっこ`;
+    const kills = $(kind === 'clear' ? 'cKills' : 'rKills').textContent;
+    const line = kind === 'clear' ? `脱出成功  撃破${kills}` : stageN >= 3 ? `生き残った  撃破${kills}` : `確保された…  撃破${kills}`;
+    const what = kind === 'clear' ? `${where}を ${sc} で脱出!` : stageN >= 3 ? `${where}で ${sc} 生き残った! 撃破${kills}` : `${where}で ${sc} 逃げたけど確保された…`;
+    const text = `${document.title} ${what}${tn ? ' 《' + tn + '》' : ''}\n#DEADLINE鬼ごっこ` + (SHARE_URL ? '\n' + SHARE_URL : '');
+    return { sc, tn, where, line, text };
+  }
+  function drawCard(kind) {
+    const W = 1200, H = 675, c = document.createElement('canvas'); c.width = W; c.height = H;
+    const g = c.getContext('2d'), I = shareInfo(kind), css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    const disp = css('--f-display') || 'sans-serif', body = css('--f-body') || 'sans-serif', num = css('--f-num') || 'monospace';
+    const oni = css('--oni') || '#ff3b30', lamp = css('--lamp') || '#ffcf5a', ink = css('--ink') || '#e8ebf2';
+    g.fillStyle = '#07080d'; g.fillRect(0, 0, W, H);
+    // the game's own last frame, filling the card
+    try { const s = SNAP(); if (s && s.width && s.height) { const k = Math.max(W / s.width, H / s.height); g.drawImage(s, (W - s.width * k) / 2, (H - s.height * k) / 2, s.width * k, s.height * k); } } catch (e) {}
+    const sh = g.createLinearGradient(0, 0, W, 0);
+    sh.addColorStop(0, 'rgba(4,5,9,.93)'); sh.addColorStop(0.6, 'rgba(4,5,9,.62)'); sh.addColorStop(1, 'rgba(4,5,9,.18)');
+    g.fillStyle = sh; g.fillRect(0, 0, W, H);
+    const fit = (t, font, max) => { let px = parseFloat(font); g.font = font; while (g.measureText(t).width > max && px > 12) { px -= 2; g.font = font.replace(/\d+px/, px + 'px'); } };
+    g.textBaseline = 'alphabetic';
+    g.fillStyle = kind === 'clear' ? (css('--runner') || '#8fe9ff') : oni; g.font = `700 26px ${body}`; g.fillText(kind === 'clear' ? 'ESCAPED' : 'CAUGHT', 72, 104);
+    g.fillStyle = ink; fit(document.title, `60px ${disp}`, W - 144); g.fillText(document.title, 72, 180);
+    g.globalAlpha = 0.78; fit(I.where, `500 34px ${body}`, W - 144); g.fillText(I.where, 72, 246); g.globalAlpha = 1;
+    g.fillStyle = lamp; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 18; fit(I.sc, `700 156px ${num}`, W - 144); g.fillText(I.sc, 64, 410); g.shadowBlur = 0;
+    g.fillStyle = ink; fit(I.line, `700 36px ${body}`, W - 144); g.fillText(I.line, 72, 476);
+    if (I.tn) {
+      const t = '《' + I.tn + '》'; g.font = `700 32px ${body}`; const w = g.measureText(t).width + 48;
+      g.strokeStyle = lamp; g.lineWidth = 2; g.fillStyle = 'rgba(0,0,0,.45)';
+      g.beginPath(); g.roundRect ? g.roundRect(72, 512, w, 58, 6) : g.rect(72, 512, w, 58); g.fill(); g.stroke();
+      g.fillStyle = lamp; g.fillText(t, 96, 552);
+    }
+    g.fillStyle = ink; g.globalAlpha = 0.72; g.font = `500 24px ${body}`;
+    g.fillText('#DEADLINE鬼ごっこ' + (SHARE_URL ? '   ' + SHARE_URL.replace(/^https:\/\//, '') : ''), 72, H - 48); g.globalAlpha = 1;
+    return c;
+  }
+  // made when the result screen opens, so the tap can hand it straight to the share sheet
+  const SHARE = { kind: '', file: null, url: '' };
+  function prepShare(kind) {
+    try {
+      const c = drawCard(kind); SHARE.kind = kind; SHARE.file = null;
+      if (SHARE.url) URL.revokeObjectURL(SHARE.url);
+      SHARE.url = '';
+      c.toBlob(b => { if (!b || SHARE.kind !== kind) return; SHARE.file = new File([b], 'deadline-result.png', { type: 'image/png' }); SHARE.url = URL.createObjectURL(b); }, 'image/png');
+    } catch (e) {}
+  }
+  // where the share sheet takes no pictures: the card to save, the words to copy and a way to X
+  function shareFallback(I) {
+    let o = $('shareScreen');
+    if (!o) {
+      o = document.createElement('div'); o.className = 'overlay'; o.id = 'shareScreen'; o.hidden = true;
+      o.innerHTML = '<div class="card"><span class="kicker">SHARE</span><h2>結果をシェア</h2><img id="shareImg" alt="結果の画像"><p id="shareHow"></p><textarea id="shareText" rows="3" readonly></textarea><div class="row"><button class="go" id="shareCopy" type="button">文面をコピー</button><a class="ghost share" id="shareX" target="_blank" rel="noopener">Xを開く</a><button class="ghost" id="shareClose" type="button">閉じる</button></div></div>';
+      $('overScreen').parentNode.appendChild(o);
+      $('shareClose').addEventListener('click', () => { tap(); o.hidden = true; });
+      $('shareCopy').addEventListener('click', () => {
+        tap(); const ta = $('shareText');
+        const done = () => { $('shareCopy').textContent = 'コピーしました'; };
+        try { navigator.clipboard.writeText(ta.value).then(done, () => { ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} }); } catch (e) { ta.select(); }
+      });
+    }
+    $('shareImg').src = SHARE.url || drawCard(SHARE.kind).toDataURL('image/png');
+    $('shareHow').textContent = matchMedia('(pointer: coarse)').matches ? '画像を長押しして保存し、Xの投稿に添付してね。' : '画像を右クリックで保存して、Xの投稿に添付してね。';
+    $('shareText').value = I.text; $('shareCopy').textContent = '文面をコピー';
+    $('shareX').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text);
+    o.hidden = false;
   }
   for (const [id, kind] of [['rShare', 'over'], ['cShare', 'clear']])
-    $(id).addEventListener('click', e => { tap(); e.currentTarget.href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(shareText(kind)) + (SHARE_URL ? '&url=' + encodeURIComponent(SHARE_URL) : ''); });
+    $(id).addEventListener('click', () => {
+      tap(); if (SHARE.kind !== kind) prepShare(kind);
+      const I = shareInfo(kind), data = SHARE.file ? { files: [SHARE.file], text: I.text } : null;
+      if (data && navigator.canShare && navigator.canShare(data)) navigator.share(data).catch(e => { if (e && e.name !== 'AbortError') shareFallback(I); });
+      else shareFallback(I);
+    });
   function paintTitle() {
     // titles owned but none ever chosen: wear the hardest one
     if (!records.title && records.titles && records.titles.length) records.title = records.titles[records.titles.length - 1];
@@ -1994,7 +2065,7 @@ a.ghost.share { display: inline-flex; align-items: center; justify-content: cent
     if (!last) $('cMsg').textContent = stageN === 1
       ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度地下に挑むか、タイトルに戻るかを選べる。'
       : 'アイテムを選んでステージ3(終わらない夜)へ進むか、もう一度挑むか、タイトルに戻るかを選べる。';
-    ui.clear.hidden = false; titleChime('cTitles');
+    ui.clear.hidden = false; titleChime('cTitles'); prepShare('clear');
   }
   function nextStage(item) {
     if (state !== 'clear' || stageN >= 3) return;
@@ -2759,7 +2830,7 @@ a.ghost.share { display: inline-flex; align-items: center; justify-content: cent
     } else if (state === 'caught') {
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
-      if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; titleChime('rTitles'); }
+      if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; titleChime('rTitles'); prepShare('over'); }
     }
     draw(); hud();
     requestAnimationFrame(frame);
