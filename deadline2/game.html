@@ -1993,6 +1993,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       // low klaxon blasts under the siren, closer together once the key is in hand
       if (P.alarmT <= 0) { klaxon(2, 0.018); P.alarmT = hasKey ? 1.4 : 2.4; }
     }
+    // stage 2: when the exit opens, one black oni (faster than you) joins the chase
+    if (stageN === 2 && t >= EXIT_AT && !P.black2) { P.black2 = true; queueSpawn(); pending[pending.length - 1].black = true; }
     if (t >= nextSpawn) {
       const batch = spawnBatch();
       for (let i = 0; i < batch; i++) queueSpawn();
@@ -3770,7 +3772,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     }
     daily = null;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? 'ネオン街' : '無限回路'}`;
-    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・一度に出る鬼は最大10体まで増える\n・2分から毎分、自分より速い黒い鬼が出る\n・4分からはバリア鬼が常に2体以上いる\n・6分からは黒と黄色の鬼が必ずどこかにいる\n・8分からは普通の鬼とバリア鬼の出現率が逆転する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと、鬼が一度に7体出て、15秒ごとに1体ずつ増える\n補給アイテムを1つ選ぶとステージ2が始まる。';
+    $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・鬼40体撃破するごとに3秒加速かランチャーが届く\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n・時間が経つほど鬼の出方が変化する' : '2分でバリアと爆弾1個。\n・2分30秒で出口が開くと、鬼が一度に7体出て、15秒ごとに1体ずつ増える\n・出口が開くと、自分より速い黒い鬼が1体現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
     fitStandby();
