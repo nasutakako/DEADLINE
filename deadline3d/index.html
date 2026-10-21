@@ -543,7 +543,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   // ---------- daily challenge: stage 4 in the code. One of three nights, in turn by the date (Japan time);
   // opens once stage 2 has been escaped. Played on the stage 3 map and rules, with every oni of one kind ----------
   const DAILY = [
-    { key: 'd1', board: 'daily1', name: '疾風の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼は1体から。2分と4分で1体ずつ増える' },
+    { key: 'd1', board: 'daily1', name: '疾風の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
     { key: 'd2', board: 'daily2', name: '先回りの夜', rule: '・出てくる鬼はすべて、先回りしてくる黄色い鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
     { key: 'd3', board: 'daily3', name: '鉄壁の夜', rule: '・出てくる鬼はすべて、爆発に1回耐えるバリア鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
   ];
@@ -2676,7 +2676,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     yaw = cYaw = Math.PI * 0.25; pitch = cPitch = 0.36; camD = CAM_DIST;
     follow.set(P.x * S, CAM_H, P.y * S);
     flow();
-    for (let i = 0; i < (daily && daily.key === 'd1' ? 1 : Math.min(3, stageN)); i++) queueSpawn();
+    for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();
     placeCamera(1);
   }
 
@@ -2698,7 +2698,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   // stage 2 opens at 2 per wave, stage 3 at 3
   // stage 3: 3 oni a wave, then one more at 4, 5, 6 and 7 min, and again at 10, 11 and 12 min (10 at most)
   // stages 1 and 2, once the exit is open: 5 a wave (+1 every 30 s) on stage 1, 7 a wave (+1 every 15 s) on stage 2
-  const spawnBatch = () => stageN < 3 && exitOpen ? (stageN === 1 ? 5 + Math.floor((t - alarmAt) / 30) : 7 + Math.floor((t - alarmAt) / 15)) : daily && daily.key === 'd1' ? (t >= 240 ? 3 : t >= 120 ? 2 : 1) : stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
+  const spawnBatch = () => stageN < 3 && exitOpen ? (stageN === 1 ? 5 + Math.floor((t - alarmAt) / 30) : 7 + Math.floor((t - alarmAt) / 15)) : stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   const enemySpeed = () => Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * STAGE_SPEEDUP);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
@@ -3859,10 +3859,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     d1: {
       standby: [
         '今夜の鬼は、全部黒い。足の速さじゃ勝てない。曲がり角で振り切るしかない。',
-        '最初は1体だけ。……でも、あいつ1体で十分すぎるほど速い。',
+        '最初から3体。……しかも1体残らず、俺より速い。',
         '風が強い夜だ。黒い影が、風より速く路地を抜けていく。',
         '直線は捨てろ。速い相手には、角と爆弾で勝負する。',
-        '2分、4分——黒い鬼が増えるたびに、夜が少しずつ狭くなる。',
+        '時間がたつほど黒い鬼が増えていく。夜が少しずつ狭くなる。',
       ],
       caught: [
         'まっすぐ逃げたのが間違いだった……。黒い鬼は、直線なら必ず追いつく。',
