@@ -155,7 +155,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .ghost { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 11px 18px; font-weight: 700; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255,59,48,.45) } 70% { box-shadow: 0 0 0 14px rgba(255,59,48,0) } 100% { box-shadow: 0 0 0 0 rgba(255,59,48,0) } }
 .err { color: var(--oni); font-size: 13px; }
-@media (max-height: 460px) { .card { gap: 8px; } .card > p:not(#spMsg) { display: none; } h1 { font-size: 30px; } h2 { font-size: 36px; } .stage { padding: 9px 10px; } .stage b { font-size: 17px; } }
+@media (max-height: 460px) { .card { gap: 8px; } .card > p:not(#spMsg, #briefMsg) { display: none; } h1 { font-size: 30px; } h2 { font-size: 36px; } .stage { padding: 9px 10px; } .stage b { font-size: 17px; } }
 @media (prefers-reduced-motion: reduce) { .go { animation: none; } }
 
 /* ---- player name + world ranking (title screen only) ---- */
@@ -281,7 +281,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 
 .award { --aw-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff3c6'/%3E%3Cstop offset='0.3' stop-color='%23e3b04a'/%3E%3Cstop offset='0.52' stop-color='%238d621a'/%3E%3Cstop offset='0.7' stop-color='%23f1cd76'/%3E%3Cstop offset='1' stop-color='%236b4a10'/%3E%3C/linearGradient%3E%3ClinearGradient id='p' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231e2535'/%3E%3Cstop offset='1' stop-color='%230b0e16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M9 1H51L59 9V51L51 59H9L1 51V9Z' fill='url%28%23p%29' stroke='url%28%23m%29' stroke-width='2.2'/%3E%3Cpath d='M11.10 5H48.90L55 11.10V48.90L48.90 55H11.10L5 48.90V11.10Z' fill='none' stroke='rgba%28240%2C200%2C110%2C.6%29' stroke-width='.9'/%3E%3Cg fill='%23ffe39a'%3E%3Cpath d='M5.1 3.1999999999999997L7.0 5.1L5.1 7.0L3.1999999999999997 5.1Z'/%3E%3Cpath d='M54.9 3.1999999999999997L56.8 5.1L54.9 7.0L53.0 5.1Z'/%3E%3Cpath d='M5.1 53.0L7.0 54.9L5.1 56.8L3.1999999999999997 54.9Z'/%3E%3Cpath d='M54.9 53.0L56.8 54.9L54.9 56.8L53.0 54.9Z'/%3E%3C/g%3E%3C/svg%3E"); --aw-ink1: #fff8de; --aw-ink2: #f3cd6d; --aw-ink3: #c18a27; --aw-how: #b9a77d; --aw-tag1: #fff0bd; --aw-tag2: #d9a542; --aw-tagink: #2a1b04; --aw-glow: rgba(240,190,80,.28); --aw-head: #f3cd6d; --aw-shine: rgba(255,248,220,.6); --aw-gem: #ffe39a; --aw-chipbg: #151a26; }
 .mono { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
-#spMsg { font-size: 13px; line-height: 1.5; }
+#spMsg, #briefMsg { font-size: 13px; line-height: 1.5; }
 /* short screens hide the cards' side notes, but the runner's words and newly earned titles stay */
 @media (max-height: 460px) { .card > p.mono:not(#_), .card > p.newtitles:not(#_) { display: block; } .card > p.newtitles[hidden], .card > p.mono[hidden] { display: none; } }
 
@@ -525,12 +525,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   <div class="overlay" id="briefScreen" hidden>
     <div class="card">
       <span class="kicker">STAGE 1 地下</span>
-      <h2 class="clear">あそびかた</h2>
+      <h2 class="clear">脱出せよ</h2>
       <p class="mono" id="briefMono" hidden></p>
-      <dl class="rules">
-        <dt>脱出</dt><dd>2分30秒でミニマップの右端に出口が開く。鍵を拾って出口へ</dd>
-        <dt aria-hidden="true"></dt><dd>開くと鬼が一度に5体出て、30秒ごとに1体増える</dd>
-      </dl>
+      <p id="briefMsg" style="white-space: pre-line">2分30秒経過すると出口が開く、鍵を拾って脱出しよう。
+出口が開くと鬼が増えるぞ。</p>
       <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
@@ -4484,7 +4482,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   }
   // item pick before stage 2 or 3: every briefing line on one row, the words at the same size
   function fitStandby() { const msg = $('spMsg'); fitLines(msg); fitMono($('spMono'), parseFloat(getComputedStyle(msg).fontSize), [msg]); }
-  const fitBrief = () => { fitRows($('briefScreen')); fitMono($('briefMono'), parseFloat(getComputedStyle($('briefScreen').querySelector('.rules')).fontSize)); };
+  const fitBrief = () => { const msg = $('briefMsg'); fitLines(msg); fitMono($('briefMono'), parseFloat(getComputedStyle(msg).fontSize), [msg]); };
 
   function showBrief() {
     tap(); state = 'brief'; bgmStart(songFor(1));

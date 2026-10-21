@@ -612,12 +612,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   <div class="overlay" id="briefScreen" hidden>
     <div class="card">
       <span class="kicker">STAGE 1 隔離区画</span>
-      <h2 class="clear">あそびかた</h2>
+      <h2 class="clear">脱出せよ</h2>
       <p class="mono" id="briefMono" hidden></p>
-      <dl class="rules">
-        <dt>脱出</dt><dd>2分30秒で右端に出口が開く。鍵を拾って出口へ</dd>
-        <dt aria-hidden="true"></dt><dd>開くと鬼が一度に5体出て、30秒ごとに1体増える</dd>
-      </dl>
+      <p id="briefMsg" style="white-space: pre-line">2分30秒経過すると出口が開く、鍵を拾って脱出しよう。
+出口が開くと鬼が増えるぞ。</p>
       <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
@@ -3805,7 +3803,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   }
   // item pick before stage 2 or 3: every briefing line on one row, the words at the same size
   function fitStandby() { const msg = $('spMsg'); fitLines(msg); fitMono($('spMono'), parseFloat(getComputedStyle(msg).fontSize), [msg]); }
-  const fitBrief = () => { fitRows($('briefScreen')); fitMono($('briefMono'), parseFloat(getComputedStyle($('briefScreen').querySelector('.rules')).fontSize)); };
+  const fitBrief = () => { const msg = $('briefMsg'); fitLines(msg); fitMono($('briefMono'), parseFloat(getComputedStyle(msg).fontSize), [msg]); };
 
   function showBrief() {
     tap(); state = 'brief'; bgmStart(songFor(1));
