@@ -432,6 +432,14 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
 .countdown { color: var(--cy); text-shadow: 0 0 26px rgba(0,229,255,.95), 0 0 4px #fff; }
 
 .award { --aw-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%239ff8ff'/%3E%3Cstop offset='0.5' stop-color='%2300e5ff'/%3E%3Cstop offset='1' stop-color='%230091b0'/%3E%3C/linearGradient%3E%3ClinearGradient id='p' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%230c1532'/%3E%3Cstop offset='1' stop-color='%23050816'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M9 1H51L59 9V51L51 59H9L1 51V9Z' fill='url%28%23p%29' stroke='url%28%23m%29' stroke-width='2.2'/%3E%3Cpath d='M11.10 5H48.90L55 11.10V48.90L48.90 55H11.10L5 48.90V11.10Z' fill='none' stroke='rgba%28255%2C43%2C214%2C.75%29' stroke-width='.9'/%3E%3Cg fill='%23ff2bd6'%3E%3Cpath d='M5.1 3.1999999999999997L7.0 5.1L5.1 7.0L3.1999999999999997 5.1Z'/%3E%3Cpath d='M54.9 3.1999999999999997L56.8 5.1L54.9 7.0L53.0 5.1Z'/%3E%3Cpath d='M5.1 53.0L7.0 54.9L5.1 56.8L3.1999999999999997 54.9Z'/%3E%3Cpath d='M54.9 53.0L56.8 54.9L54.9 56.8L53.0 54.9Z'/%3E%3C/g%3E%3C/svg%3E"); --aw-ink1: #ffffff; --aw-ink2: #bff9ff; --aw-ink3: #5beaff; --aw-how: #8fb3d6; --aw-tag1: #ff6be6; --aw-tag2: #ff2bd6; --aw-tagink: #1a0016; --aw-glow: rgba(0,229,255,.45); --aw-head: #00e5ff; --aw-shine: rgba(190,250,255,.55); --aw-gem: #ff2bd6; --aw-chipbg: #0a0f22; }
+@media (min-aspect-ratio: 5/4) and (pointer: coarse) {
+  #titleScreen { padding: 8px; }
+  #titleScreen .card { max-width: none; width: 100%; min-height: 100%; margin: 0; justify-content: center; gap: 12px; padding: 16px clamp(22px, 4vw, 56px); }
+  #titleScreen h1 { font-size: clamp(48px, 8.5vw, 96px); }
+  #titleScreen .card > p { max-width: none; font-size: clamp(13px, 1.7vw, 17px); }
+  #titleScreen .card > .row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  #titleScreen .card > .row .go { width: 100%; min-height: 64px; padding: 10px 8px; font-size: clamp(15px, 2.1vw, 22px); line-height: 1.3; letter-spacing: .06em; white-space: normal; word-break: keep-all; }
+}
 </style>
 </head>
 <body>
