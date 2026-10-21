@@ -3502,7 +3502,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     ],
     2: [
       { say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
-      { say: '水色のバリア鬼は爆発に1回耐える。2回当てて倒そう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: tutDown },
+      { say: '水色のバリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯み、怯んでいる間は触れても確保されない。2回当てて倒そう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: tutDown },
       { say: '黒い鬼は自分より速い。走って逃げ切れないので、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、3秒加速かランチャーが届く', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
