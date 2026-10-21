@@ -2616,15 +2616,15 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       // a beam from where it was fired to its head
       const sx = r.sx ?? r.x, sy = r.sy ?? r.y;
       ctx.save(); ctx.lineCap = 'round'; ctx.shadowColor = '#ff2d55'; ctx.shadowBlur = 12;
-      ctx.strokeStyle = 'rgba(255,45,85,0.75)'; ctx.lineWidth = 0.22; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(r.x, r.y); ctx.stroke();
-      ctx.strokeStyle = 'rgba(255,235,240,0.95)'; ctx.lineWidth = 0.07; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(r.x, r.y); ctx.stroke();
-      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, 0.14, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,45,85,0.7)'; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(r.x, r.y); ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,235,240,0.95)'; ctx.lineWidth = 0.3; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(r.x, r.y); ctx.stroke();
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(r.x, r.y, 0.42, 0, Math.PI * 2); ctx.fill();
       ctx.restore(); return;
     }
     if (fx === 'rk_plasma') {
-      for (let i = 1; i <= 4; i++) { ctx.fillStyle = `rgba(90,255,170,${0.32 - i * 0.06})`; ctx.beginPath(); ctx.arc(r.x - r.dx * i * 0.28, r.y - r.dy * i * 0.28, 0.24 - i * 0.03, 0, Math.PI * 2); ctx.fill(); }
-      const pr = 0.3 + 0.05 * Math.sin(now * 30), g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, pr);
-      g.addColorStop(0, '#f2fff8'); g.addColorStop(0.45, 'rgba(43,255,154,0.95)'); g.addColorStop(1, 'rgba(110,60,255,0)');
+      for (let i = 1; i <= 4; i++) { ctx.fillStyle = `rgba(90,255,170,${0.32 - i * 0.06})`; ctx.beginPath(); ctx.arc(r.x - r.dx * i * 0.45, r.y - r.dy * i * 0.45, 0.36 - i * 0.05, 0, Math.PI * 2); ctx.fill(); }
+      const pr = 0.4 + 0.03 * Math.sin(now * 30), g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, pr);
+      g.addColorStop(0, '#f2fff8'); g.addColorStop(0.3, 'rgba(43,255,154,0.95)'); g.addColorStop(0.8, 'rgba(43,255,154,0.6)'); g.addColorStop(1, 'rgba(110,60,255,0)');
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(r.x, r.y, pr, 0, Math.PI * 2); ctx.fill();
       return;
     }

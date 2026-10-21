@@ -3087,9 +3087,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     const fx = EQ('rocket'); r.fx = fx;
     if (fx === 'rk_laser') {
       const g = new THREE.Group();
-      const beam = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.34, 1), basic(0xff2d55, { transparent: true, opacity: 0.7, blending: add, depthWrite: false }));
-      const core = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 1), basic(0xfff0f3));
-      const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 12, 10), basic(0xffffff));
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(0.8 * S, 2.6, 1), basic(0xff2d55, { transparent: true, opacity: 0.4, blending: add, depthWrite: false })); beam.position.y = 0.2;
+      const core = new THREE.Mesh(new THREE.BoxGeometry(0.3 * S, 1.0, 1), basic(0xfff0f3, { transparent: true, opacity: 0.55, blending: add, depthWrite: false })); core.position.y = 0.2;
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.4 * S * 0.6, 14, 10), basic(0xffffff)); head.position.y = 0.2;
       const light = new THREE.PointLight(0xff2d55, 2.4, 10);
       g.add(beam, core, head, light); g.userData = { laser: true, beam, core, head, light };
       g.rotation.y = Math.atan2(r.dx, r.dy); r.sx = r.x; r.sy = r.y;
@@ -3097,10 +3097,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     }
     if (fx === 'rk_plasma') {
       const g = new THREE.Group();
-      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 12), basic(0x2bff9a, { transparent: true, opacity: 0.9, blending: add, depthWrite: false }));
-      const core = new THREE.Mesh(new THREE.SphereGeometry(0.22, 12, 10), basic(0xf2fff8));
+      const orb = new THREE.Mesh(new THREE.SphereGeometry(0.4 * S, 20, 14), basic(0x2bff9a, { transparent: true, opacity: 0.75, blending: add, depthWrite: false })); orb.position.y = 1.2;
+      const core = new THREE.Mesh(new THREE.SphereGeometry(0.18 * S, 14, 10), basic(0xf2fff8)); core.position.y = 1.2;
       g.add(orb, core, new THREE.PointLight(0x2bff9a, 2.6, 11));
-      for (let i = 1; i <= 3; i++) { const t = new THREE.Mesh(new THREE.SphereGeometry(0.3 - i * 0.06, 10, 8), basic(0x7b5cff, { transparent: true, opacity: 0.5 - i * 0.12, blending: add, depthWrite: false })); t.position.z = -i * 0.55; g.add(t); }
+      for (let i = 1; i <= 3; i++) { const t = new THREE.Mesh(new THREE.SphereGeometry((0.34 - i * 0.07) * S, 12, 8), basic(0x7b5cff, { transparent: true, opacity: 0.45 - i * 0.11, blending: add, depthWrite: false })); t.position.set(0, 1.2, -i * 0.5 * S); g.add(t); }
       g.userData = { plasma: true, orb };
       g.rotation.y = Math.atan2(r.dx, r.dy);
       g.position.set(r.x * S, r.h + 1.3, r.y * S); dyn.add(g); return g;
