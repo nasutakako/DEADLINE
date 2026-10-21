@@ -1838,8 +1838,10 @@ body.ontitle .hud, body.ontitle .sys, body.ontitle .controls { visibility: hidde
       }
     }
     level = 1 + Math.floor(t / LV_EVERY);
-    // the title music joins the stage's: 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
-    if (!bgmLayer && t >= (stageN >= 3 ? 360 : 120)) bgmLayerStart(SONGS.title);
+    // a second song over the stage's: stages 1 and 2 the title music from 2:00; stage 3 and the survival nights
+    // stage 1's from 2:00, stage 2's from 4:00, the title music from 6:00
+    { const L = stageN >= 3 ? (t >= 360 ? SONGS.title : t >= 240 ? SONGS[2] : t >= 120 ? SONGS[1] : null) : t >= 120 ? SONGS.title : null;
+      if (L && (!bgmLayer || bgmLayer.song !== L)) bgmLayerStart(L); }
     // barrier + bomb at 2:00; in the endless stage 3 again every minute after that
     if (t >= (P.nextR ?? BARRIER_AT) && (stageN >= 3 || !P.gotBarrier)) {
       P.nextR = (P.nextR ?? BARRIER_AT) + 60;
@@ -2545,11 +2547,13 @@ body.ontitle .hud, body.ontitle .sys, body.ontitle .controls { visibility: hidde
     if (song.setup) song.setup(bgm);
     bgm.timer = setInterval(bgmTick, 25);
   }
-  // later in a run the title music joins the stage's (2:00 on stages 1 and 2, 6:00 on stage 3 and the survival
-  // nights). It plays on its own clock and gain; the song code always writes to bgm, so it is swapped in for a tick
+  // later in a run another song joins the stage's: the title music at 2:00 on stages 1 and 2; on stage 3 and the
+  // survival nights stage 1's at 2:00, stage 2's at 4:00 and the title music at 6:00, each taking the last one's place.
+  // A layer plays on its own clock and gain; the song code always writes to bgm, so it is swapped in for a tick
   let bgmLayer = null;
   function bgmLayerStart(song) {
-    if (!ac || muted || bgmLayer) return;
+    if (!ac || muted || (bgmLayer && bgmLayer.song === song)) return;
+    if (bgmLayer) { bgmFade(bgmLayer); bgmLayer = null; }  // a new layer takes the old one's place
     const main = bgm, now = ac.currentTime, out = ac.createGain();
     out.gain.setValueAtTime(0.0001, now); out.gain.exponentialRampToValueAtTime(song.vol * 0.8, now + 2.5);
     out.connect(ac.destination);
