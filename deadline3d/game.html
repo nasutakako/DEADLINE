@@ -3555,8 +3555,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     }
     danger = clamp(1 - (nearestD - 0.35) / 2.6, 0, 1);
     // the tutorial: an oni that reaches the runner only reels back for a moment
-    if (tut) { for (const e of enemies) if (level3(e) && !(e.stun > 0) && Math.hypot(e.x - P.x, e.y - P.y) < CATCH) e.stun = 0.6; }
-    else if (nearestD < CATCH && P.invul <= 0) {
+    if (nearestD < CATCH && P.invul <= 0 && !tut) {
       if (P.barrier) {
         P.barrier = false; P.invul = INV_TIME; if (S3) S3.saves++;
         for (const e of enemies) if (level3(e) && Math.hypot(e.x - P.x, e.y - P.y) < CATCH + 0.5) { e.dead = true; kills++; tally(e); removeObj(e.mesh); }
@@ -4294,6 +4293,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   // a practice oni comes out of a short ! warning a few streets away
   const tutOni = o => { tut.want = Object.assign({}, o); tut.oni = []; tutWarn(o.at || tutSpot(5, 8), Object.assign({ t: 0.8, tut: true }, o)); };
   const tutDown = () => tut.oni.length > 0 && tut.oni.every(e => e.dead);
+  function tutClear(x, y) {
+    const p = tutScreenAt(x, y), c = tutFrame(), b = $('tutBar').getBoundingClientRect(), m = 24;
+    if (!p || p.x < m || p.y < m || p.x > c.width - m || p.y > c.height - m) return false;
+    const bx = b.left - c.left, by = b.top - c.top;
+    return !(p.x > bx - m && p.x < bx + b.width + m && p.y > by - m && p.y < by + b.height + m);
+  }
   const TUT = {
     1: [
       { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
@@ -4307,8 +4312,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     ],
     2: [
       { say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
-      { say: '水色のバリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯み、怯んでいる間は触れても確保されない。2回当てて倒そう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: tutDown },
-      { say: '黒い鬼は自分より速い。走って逃げ切れないので、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
+      { say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
+      // the barrier just broke: hold the daze long enough to read about it
+      { say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = Math.max(e.stun || 0, 3); }, go: tutDown },
+      { say: '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、3秒加速かランチャーが届く', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
@@ -4336,12 +4343,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     const st = tut.steps[tut.i];
     tut.wait = 0; tut.ok = 0; tut.refill = false; tut.s0 = P.stock;
     $('tutBar').classList.remove('ok');
-    if (st.set) st.set();
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
     // lines break only after a 。 or 、, never a few characters off a word
     $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
+    if (st.set) st.set();
   }
   function tutTick(dt) {
     const st = tut.steps[tut.i];
@@ -4404,7 +4411,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       '出口が開くと鬼が一度に7体出て、15秒ごとに1体増える',
     ],
     mid: [
-      '水色のバリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯む',
+      'バリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯む',
       '怯んでいる鬼に触れても確保されない',
       '黒い鬼は自分より速い。走って逃げ切れないので爆弾で倒す',
       '鬼を40体倒すごとに、3秒加速かランチャーが届く',
@@ -4432,6 +4439,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 
   // tutorial helpers (3D): street tiles on the ground; a tile here is about three of the 2D map's
   const TUT_U = 1 / 3;
+  const tutFrame = () => canvas.getBoundingClientRect();
+  // where a map point shows on screen (stage pixels), or null behind the camera
+  function tutScreenAt(x, y) { const v = new THREE.Vector3(x * S, 0.5, y * S).project(camera), c = tutFrame(); return v.z > 1 ? null : { x: (v.x + 1) / 2 * c.width, y: (1 - v.y) / 2 * c.height }; }
   const tutGround = i => grid[i] !== 1 && floorT[i] !== 3 && !ramp[i] && !holes.some(h => h.i === i);
   function tutSpot(lo, hi) {
     lo = Math.max(1, Math.round(lo * TUT_U)); hi = Math.max(lo + 1, Math.round(hi * TUT_U));
@@ -4439,6 +4449,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     const c = [];
     for (let i = 0; i < N; i++) if (dist[i] >= lo && dist[i] <= hi && tutGround(i)) c.push(i);
     if (!c.length) return randomRoad(lo);
+    const seen = c.filter(i => tutClear(i % COLS + 0.5, ((i / COLS) | 0) + 0.5));
+    if (seen.length) c.splice(0, c.length, ...seen);
     const i = c[Math.floor(Math.random() * c.length)];
     return { x: i % COLS + 0.5, y: ((i / COLS) | 0) + 0.5 };
   }
@@ -4646,7 +4658,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (n === 4) {
       daily = DAILY[dailyToday()];
       $('spKicker').textContent = `生存課題 ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・「!」の場所に鬼が出る。踏めばその鬼は出ない\n・広場の落とし穴：ふたを踏んで離れると開いて鬼を落とす\n・自分が落ちても確保。一度使うと45秒ふさがる\n補給アイテムを1つ選ぶと始まる。`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
       $('startPickScreen').hidden = false;
       mono('spMono', 4, 'standby');
       fitStandby();
