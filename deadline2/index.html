@@ -25,16 +25,23 @@ window.DEADLINE_SHELL = true;
 (() => {
   const g = document.getElementById('g'), inset = document.getElementById('inset');
   const coarse = matchMedia('(pointer: coarse)');
+  // the game keeps its own 16px edge, so only the part of an inset beyond that is taken off; held sideways, iPhone
+  // reports the same inset on both sides, but only the notch side needs it (the other is a rounded corner)
+  const cut = v => Math.max(0, v - 16);
   function fit() {
     const W = innerWidth, H = innerHeight, cs = getComputedStyle(inset);
     const t = parseFloat(cs.paddingTop) || 0, r = parseFloat(cs.paddingRight) || 0, b = parseFloat(cs.paddingBottom) || 0, l = parseFloat(cs.paddingLeft) || 0;
     if (coarse.matches && H > W) {
       // upright phone: the game is laid on its side, its top toward the right edge, its left edge clear of the notch
-      g.style.width = (H - t - b) + 'px'; g.style.height = W + 'px';
-      g.style.transform = 'translate(' + W + 'px,' + t + 'px) rotate(90deg)';
+      const a = cut(t), z = cut(b);
+      g.style.width = (H - a - z) + 'px'; g.style.height = W + 'px';
+      g.style.transform = 'translate(' + W + 'px,' + a + 'px) rotate(90deg)';
     } else {
-      g.style.width = (W - l - r) + 'px'; g.style.height = (H - t - b) + 'px';
-      g.style.transform = 'translate(' + l + 'px,' + t + 'px)';
+      const ang = typeof window.orientation === 'number' ? window.orientation : screen.orientation ? (screen.orientation.angle > 180 ? -90 : screen.orientation.angle) : 0;
+      // turned left (90): the notch is on the left; turned right (-90): on the right
+      const L = ang === -90 ? 0 : cut(l), R = ang === 90 ? 0 : cut(r), T = cut(t), B = cut(b);
+      g.style.width = (W - L - R) + 'px'; g.style.height = (H - T - B) + 'px';
+      g.style.transform = 'translate(' + L + 'px,' + T + 'px)';
     }
   }
   addEventListener('resize', fit); addEventListener('orientationchange', () => setTimeout(fit, 120));
