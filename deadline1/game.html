@@ -335,6 +335,11 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
 body.ontitle .pad { padding-bottom: 8px; }
 body.ontitle .pad .who { flex: 1 1 auto; }
 body.ontitle .pad .who .records { flex: 1 1 auto; }
+/* the how-to: a rule wraps without leaving a few characters alone on a line */
+.rules dd { text-wrap: pretty; }
+.rules dt:empty { padding: 0; }
+/* a short landscape phone: the rules sit closer so the start button stays on screen */
+@media (max-height: 460px) { #briefScreen .rules { row-gap: 1px; } #briefScreen .rules dd, #briefScreen .rules dt { line-height: 1.4; } #briefScreen .card { gap: 8px; } }
 /* ---- shop ---- */
 /* the name column's buttons keep their height; the high scores below give way and scroll */
 .who > button, .who > .label { flex-shrink: 0; }
@@ -544,12 +549,15 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       <h2 class="clear">あそびかた</h2>
       <p class="mono" id="briefMono" hidden></p>
       <dl class="rules">
-        <dt>移動</dt><dd>スマホ:左半分をドラッグ / PC:カーソルの方へ走る・矢印キー</dd>
-        <dt>ダッシュ</dt><dd>ボタン / Space で一瞬だけ速く走る(3.5秒ごとに使える)</dd>
-        <dt>爆弾</dt><dd>黄色い箱で1個増える。ボタン / E で置くと1秒後に爆発、円内の鬼を倒す</dd>
-        <dt>アイテム</dt><dd>3秒加速・バリア・ランチャー。ボタン / Q で使う</dd>
-        <dt>鬼</dt><dd>赤い <b>!</b> のあとに出る。黄色は先回り、水色は爆発に1回耐える</dd>
-        <dt>脱出</dt><dd>2分30秒で右端に出口が開く。鍵を拾って出口へ。開くと鬼が一度に5体出て、30秒ごとに1体ずつ増える</dd>
+        <dt>移動</dt><dd>画面の左半分を指でなぞった方向へ走る</dd>
+        <dt>ダッシュ</dt><dd>ボタンで一瞬だけ速く走る。次に使えるのは3.5秒後</dd>
+        <dt>爆弾</dt><dd>黄色い箱を拾うと増える。ボタンで足元に置く</dd>
+        <dt aria-hidden="true"></dt><dd>置いて1秒後に爆発し、円の中の鬼を倒す</dd>
+        <dt>アイテム</dt><dd>3秒加速・バリア・ランチャーのどれか。ボタンで使う</dd>
+        <dt>鬼</dt><dd>赤い <b>!</b> が出た場所から現れる</dd>
+        <dt aria-hidden="true"></dt><dd>黄色い鬼は先回りする。水色の鬼は爆発に1回耐える</dd>
+        <dt>脱出</dt><dd>2分30秒で右端に出口が開く。鍵を拾って出口へ</dd>
+        <dt aria-hidden="true"></dt><dd>開くと鬼が一度に5体出て、30秒ごとに1体増える</dd>
       </dl>
       <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -584,9 +592,9 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   <button class="btn" id="pauseBtn" type="button">停止</button>
 </nav>
 <footer class="controls">
-  <button class="act mine" id="mineBtn" type="button">爆弾 <span id="mineCount">×1</span><small>E</small></button>
+  <button class="act mine" id="mineBtn" type="button">爆弾 <span id="mineCount">×1</span></button>
   <button class="act itemb" id="itemBtn" type="button" aria-disabled="true">アイテム<small id="itemName">なし</small></button>
-  <button class="act dash" id="dashBtn" type="button">ダッシュ<small>SPACE</small></button>
+  <button class="act dash" id="dashBtn" type="button">ダッシュ</button>
 </footer>
 
 <script>

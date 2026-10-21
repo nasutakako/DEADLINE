@@ -296,6 +296,11 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
    (the full-screen button it used to clear is hidden there) */
 .who.float { top: calc(var(--in-t) + 14px); bottom: calc(var(--in-b) + 14px); max-height: none; }
 .who.float .records { flex: 1 1 auto; }
+/* the how-to: a rule wraps without leaving a few characters alone on a line */
+.rules dd { text-wrap: pretty; }
+.rules dt:empty { padding: 0; }
+/* a short landscape phone: the rules sit closer so the start button stays on screen */
+@media (max-height: 460px) { #briefScreen .rules { row-gap: 1px; } #briefScreen .rules dd, #briefScreen .rules dt { line-height: 1.4; } #briefScreen .card { gap: 8px; } }
 /* ---- shop ---- */
 /* the name column's buttons keep their height; the high scores below give way and scroll */
 .who > button, .who > .label { flex-shrink: 0; }
@@ -370,10 +375,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     <div class="pi oni"><span class="label">鬼</span><b id="pCount">0</b></div>
   </div>
   <div class="fixpad" id="fixPad"><div class="padknob" id="padKnob"></div></div>
-  <div class="hint">カーソル / WASD 移動 ・ ドラッグ / ←→ 視点 ・ Space ダッシュ ・ E 爆弾 ・ Q アイテム</div>
   <div class="acts">
     <button class="act mine" id="mineBtn" type="button">爆弾<small id="mineCount">×1</small></button>
-    <button class="act itemb" id="itemBtn" type="button" aria-disabled="true"><span id="itemName">道具なし</span><small>Q</small></button>
+    <button class="act itemb" id="itemBtn" type="button" aria-disabled="true"><span id="itemName">道具なし</span></button>
     <button class="act dash" id="dashBtn" type="button">ダッシュ</button>
   </div>
   <div class="stick" id="stick" hidden></div>
@@ -507,14 +511,18 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <h2 class="clear">あそびかた</h2>
       <p class="mono" id="briefMono" hidden></p>
       <dl class="rules">
-        <dt>移動</dt><dd>スマホ:左半分をドラッグ / PC:カーソルの方へ走る・WASD</dd>
-        <dt>視点</dt><dd>スマホ:右半分をドラッグ / PC:ドラッグ・←→</dd>
-        <dt>ダッシュ</dt><dd>ボタン / Space で一瞬だけ速く走る(3.5秒ごとに使える)</dd>
-        <dt>爆弾</dt><dd>黄色い箱で1個増える。ボタン / E で置くと1秒後に爆発し、円の中の鬼を倒す。建物の2階で使うと窓ガラスも割れて、飛び降りて逃げられる</dd>
-        <dt>アイテム</dt><dd>3秒加速・バリア・ランチャー。ボタン / Q で使う</dd>
-        <dt>鬼</dt><dd>赤い <b>!</b> のあとに出る。黄色は先回り、水色は爆発に1回耐える</dd>
+        <dt>移動</dt><dd>画面の左半分を指でなぞった方向へ走る</dd>
+        <dt>視点</dt><dd>画面の右半分をなぞると、見る向きが変わる</dd>
+        <dt>ダッシュ</dt><dd>ボタンで一瞬だけ速く走る。次に使えるのは3.5秒後</dd>
+        <dt>爆弾</dt><dd>黄色い箱を拾うと増える。ボタンで足元に置く</dd>
+        <dt aria-hidden="true"></dt><dd>置いて1秒後に爆発し、円の中の鬼を倒す</dd>
+        <dt aria-hidden="true"></dt><dd>建物の2階で使うと窓が割れ、飛び降りて逃げられる</dd>
+        <dt>アイテム</dt><dd>3秒加速・バリア・ランチャーのどれか。ボタンで使う</dd>
+        <dt>鬼</dt><dd>赤い <b>!</b> が出た場所から現れる</dd>
+        <dt aria-hidden="true"></dt><dd>黄色い鬼は先回りする。水色の鬼は爆発に1回耐える</dd>
         <dt>建物</dt><dd>ドアから入れる。階段で2階に上がれる</dd>
-        <dt>脱出</dt><dd>2分30秒で東端(ミニマップ右端)に出口が開く。鍵を拾って出口へ。開くと鬼が一度に5体出て、30秒ごとに1体ずつ増える</dd>
+        <dt>脱出</dt><dd>2分30秒でミニマップの右端に出口が開く。鍵を拾って出口へ</dd>
+        <dt aria-hidden="true"></dt><dd>開くと鬼が一度に5体出て、30秒ごとに1体増える</dd>
       </dl>
       <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
     </div>
