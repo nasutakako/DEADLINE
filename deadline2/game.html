@@ -2197,7 +2197,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     flash = Math.max(0, flash - dt * 3);
 
     let nearestD = 99;
-    for (const e of enemies) nearestD = Math.min(nearestD, Math.hypot(e.x - P.x, e.y - P.y));
+    // a dazed oni cannot catch the runner (touching it is safe)
+    for (const e of enemies) if (!(e.stun > 0)) nearestD = Math.min(nearestD, Math.hypot(e.x - P.x, e.y - P.y));
     // heartbeat: faster the closer the nearest oni, louder the more oni are close
     const near = enemies.filter(e => Math.hypot(e.x - P.x, e.y - P.y) < 4).length;
     if (near > 0) {

@@ -3501,7 +3501,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 
     let nearestD = 99;
     const level3 = e => Math.abs(e.h - P.h) < 0.9;
-    for (const e of enemies) if (level3(e)) nearestD = Math.min(nearestD, Math.hypot(e.x - P.x, e.y - P.y));
+    // a dazed oni cannot catch the runner (touching it is safe)
+    for (const e of enemies) if (level3(e) && !(e.stun > 0)) nearestD = Math.min(nearestD, Math.hypot(e.x - P.x, e.y - P.y));
     // heartbeat: faster the closer the nearest oni, louder the more oni are close
     const near = enemies.filter(e => level3(e) && Math.hypot(e.x - P.x, e.y - P.y) < 3).length;
     if (near > 0) {
