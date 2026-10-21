@@ -48,6 +48,10 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 /* ---- first-time tutorial ---- */
 .tutbar { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(94%, 680px); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 10px; background: rgba(8,10,16,.9); border: 1.5px solid var(--lamp); box-shadow: 0 6px 24px rgba(0,0,0,.5); color: var(--ink); }
 .tutbar[hidden] { display: none; }
+.go.tutlbtn { background: #3b4458; }
+#tutPicks .pick b { color: var(--lamp); }
+/* title on a short (landscape phone) screen: the stage buttons and the tutorial list two to a row, so all four fit */
+@media (max-height: 520px) { #titleScreen .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } #titleScreen .row .go { align-self: stretch; padding: 10px 8px; font-size: 15px; letter-spacing: .02em; white-space: nowrap; } }
 .tutbar .tstep { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--lamp); }
 .tutbar p { margin: 0; font-size: clamp(13px, 1.9vw, 16px); font-weight: 700; line-height: 1.45; text-wrap: balance; }
 .tutbar p i { font-style: normal; display: inline-block; }
@@ -417,7 +421,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
-      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 終わらない夜</button></div>
+      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 地下から</button><button class="go alt" id="start2Btn" type="button">ステージ2 地上から</button><button class="go alt" id="start3Btn" type="button">ステージ3 終わらない夜</button><button class="go alt tutlbtn" id="tutListBtn" type="button">チュートリアル一覧</button></div>
       <span class="err" id="err" hidden>この端末では 3D 表示を始められませんでした。別のブラウザで開いてみてください。</span>
     </div>
   </div>
@@ -530,6 +534,19 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <p id="briefMsg" style="white-space: pre-line">2分30秒経過すると出口が開く、鍵を拾って脱出しよう。
 出口が開くと鬼が増えるぞ。</p>
       <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="tutScreen" hidden>
+    <div class="card">
+      <span class="kicker">TUTORIAL</span>
+      <h2 class="clear">チュートリアル一覧</h2>
+      <div class="picks" id="tutPicks">
+        <button class="pick" data-tut="1" type="button"><b>ステージ1</b><span><i>走る・ダッシュ・</i><i>爆弾・黄色い鬼・</i><i>「!」を踏む</i></span></button>
+        <button class="pick" data-tut="2" type="button"><b>ステージ2</b><span><i>補給アイテム・</i><i>バリア鬼・黒い鬼・</i><i>40体ごとの支給</i></span></button>
+        <button class="pick" data-tut="3" type="button"><b>ステージ3</b><span><i>落とし穴</i></span></button>
+      </div>
+      <div class="row"><button class="ghost" id="tutBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -4270,9 +4287,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   // ---------- first-time tutorial: a short practice run, with the clock off, before stages 1, 2 and 3 ----------
   // nothing can catch the runner while it runs; finishing or skipping it starts the real stage on a fresh map
   const TUT_KEY = REC_KEY + '-tut';
-  let tut = null, tutSave = null;
+  let tut = null, tutSave = null, tutReplay = 0;
   const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
-  const tutNeed = n => n >= 1 && n <= 3 && !tutSeen()[n];
+  const tutNeed = n => n >= 1 && n <= 3 && (tutReplay === n || !tutSeen()[n]);
   function tutMark(n) { const s = tutSeen(); s[n] = true; try { localStorage.setItem(TUT_KEY, JSON.stringify(s)); } catch (_) {} }
   // a practice oni comes out of a short ! warning a few streets away
   const tutOni = o => { tut.want = Object.assign({}, o); tut.oni = []; tutWarn(o.at || tutSpot(5, 8), Object.assign({ t: 0.8, tut: true }, o)); };
@@ -4305,7 +4322,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   function tutBegin() {
     tutSave = { stock: P.stock, kills, total, bag: bag.slice(), rk: rocketKills };
     let hole = null, hd = 1e9;
-    for (const h of holes) { const d = Math.hypot(h.x - P.x, h.y - P.y); if (d < hd) { hd = d; hole = h; } }
+    for (const h of holes) { const d = Math.hypot(h.x - COLS / 2, h.y - ROWS / 2); if (d < hd) { hd = d; hole = h; } }
     tut = { n: stageN, i: -1, steps: TUT[stageN].filter(s => !s.pit || hole), hole, oni: [], run: 0, lx: P.x, ly: P.y };
     for (const s of pending) dropWarn(s);
     pending = []; nextSpawn = nextItem = 1e9; P.nextR = 1e9; P.black2 = true;
@@ -4324,7 +4341,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     // lines break only after a 。 or 、, never a few characters off a word
     $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
-    $('tutNext').textContent = st.end ? '本番スタート' : '次へ';
+    $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
   }
   function tutTick(dt) {
     const st = tut.steps[tut.i];
@@ -4347,11 +4364,20 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   function tutFinish() {
     if (!tut) return;
     const s = tutSave;
-    tutMark(tut.n); tut = null; $('tutBar').hidden = true;
+    tutMark(tut.n);
+    if (tutReplay) { bgmStop(); toTitle(); openTutList(); return; }
+    tut = null; $('tutBar').hidden = true;
     kills = s.kills; total = s.total; bag = s.bag; rocketKills = s.rk;
     bgmStop(); newStage(s.stock); startCount();
   }
-  const tutQuit = () => { tut = null; $('tutBar').hidden = true; };
+  const tutQuit = () => { tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
+  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; }
+  $('tutListBtn').addEventListener('click', () => { tap(); openTutList(); });
+  $('tutBackBtn').addEventListener('click', () => { tap(); toTitle(); });
+  for (const b of document.querySelectorAll('#tutPicks .pick')) b.addEventListener('click', () => {
+    if (state !== 'tutlist') return;
+    tap(); $('tutScreen').hidden = true; tutReplay = +b.dataset.tut; start(tutReplay);
+  });
   // touch-down and the click that may follow it count once
   let tutTap = 0;
   const tutBtn = (el, fn) => { const go = () => { const now = performance.now(); if (now - tutTap < 400) return; tutTap = now; fn(); }; el.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); go(); }); el.addEventListener('click', go); };
