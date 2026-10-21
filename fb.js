@@ -27,6 +27,8 @@
         auth = { uid: j.user_id, idToken: j.id_token, refreshToken: j.refresh_token, exp: Date.now() + j.expires_in * 1000 };
         save(); return auth.idToken;
       }
+      // only a refresh token Firebase has really rejected starts a new player; a hiccup keeps this one for next time
+      if (r.status !== 400) throw fail('unavailable', 'token refresh failed');
     }
     const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${API_KEY}`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"returnSecureToken":true}' });

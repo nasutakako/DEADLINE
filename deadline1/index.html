@@ -672,7 +672,11 @@ h2.clear { color: #5dff9e; }
   // ---------- world ranking: a unique player name (names/<key> claims it) and each player's best stage 3
   // escape time (players/<id>), readable by everyone; the list shows the top 100 plus your own place ----------
   const Rank = (() => {
-    let db = null, uid = null, me = null, canWrite = true, ready = false, asked = false;
+    let db = null, uid = null, me = null, canWrite = true, ready = false, asked = false, firstAsk = false;
+    // this device's name (shared by the DEADLINEs on one site) and whether the first-visit prompt was put off
+    const NAME_LS = 'deadline-name', LATER_LS = 'deadline-name-later';
+    const lsGet = k => { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
     const norm = s => String(s || '').normalize('NFKC').replace(/[\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim();
     const keyOf = s => 'n' + Array.from(new TextEncoder().encode(norm(s).toLowerCase()), b => b.toString(16).padStart(2, '0')).join('');
     const myBest = () => { const r = stageBest(3); return r ? +(+r.time).toFixed(1) : 0; };
@@ -714,6 +718,24 @@ h2.clear { color: #5dff9e; }
       try { await ref.set(me); }
       catch (e) { if (!('title' in me)) throw e; const { title, ...rest } = me; await ref.set(rest); me = rest; }
     }
+    // take this device's name for this player without asking; false if someone else holds it here
+    async function reclaim(name) {
+      name = norm(name); if (!name || [...name].length > 10) return false;
+      const key = keyOf(name);
+      try {
+        const ref = db.doc('names/' + key);
+        const l = await ref.acquire({ holder: uid, ttlMs: 5000 });
+        const s = l.acquired ? await ref.get() : null;
+        const owner = s && s.exists ? (s.data() || {}).owner : null;
+        if (!l.acquired || (owner && owner !== uid)) return false;
+        if (owner !== uid) await ref.set({ owner: uid, name });
+        me = Object.assign({}, me, { name, key });
+        const b = myBest(); if (b > (me.best || 0)) Object.assign(me, { best: b, at: new Date().toISOString() });
+        { const tt = titleName(records.title); if (tt || me.title) me.title = tt; }
+        await put(); syncDaily();
+        return true;
+      } catch (e) { return false; }
+    }
     async function init() {
       try {
         if (!window.claude || !window.claude.use) throw 0;
@@ -724,19 +746,21 @@ h2.clear { color: #5dff9e; }
         if (await u.can('data.write') === false) canWrite = false;
         const s = await db.doc('players/' + uid).get();
         if (s.exists) me = s.data();
+        if (me && me.name) lsSet(NAME_LS, me.name);
+        else if (canWrite && lsGet(NAME_LS)) await reclaim(lsGet(NAME_LS));
       } catch (e) { db = null; }
       ready = true; paint(); sync();
       onTitle();
     }
     // first visit: ask for a name as soon as the title is up
     function onTitle() {
-      if (ready && db && canWrite && !(me && me.name) && !asked && !ui.title.hidden) { asked = true; openName(true); }
+      if (ready && db && canWrite && !(me && me.name) && !asked && !lsGet(LATER_LS) && !ui.title.hidden) { asked = true; openName(true); }
     }
     function openName(first) {
       if (!db || !canWrite) return;
       $('nameIn').value = me && me.name || '';
       $('nameErr').textContent = '';
-      $('nameCancel').hidden = !!first;
+      firstAsk = !!first; $('nameCancel').hidden = false; $('nameCancel').textContent = first ? 'あとで' : 'やめる';
       ui.title.hidden = true; $('nameScreen').hidden = false;
       setTimeout(() => { try { $('nameIn').focus(); } catch (e) {} }, 50);
     }
@@ -761,6 +785,7 @@ h2.clear { color: #5dff9e; }
         { const tt = titleName(records.title); if (tt || me.title) me.title = tt; }
         await put();
         if (old && old !== key) { try { await db.doc('names/' + old).delete(); } catch (e) {} }
+        lsSet(NAME_LS, name);
         syncDaily(); paint(); closeName(); tap();
       } catch (e) {
         if (e && e.code === 'invalid_argument') { canWrite = false; paint(); closeName(); }
@@ -822,7 +847,8 @@ h2.clear { color: #5dff9e; }
     $('rankBtn').addEventListener('click', () => { tap(); openRank('players'); });
     $('rankClose').addEventListener('click', () => { tap(); $('rankScreen').hidden = true; ui.title.hidden = false; });
     $('nameOk').addEventListener('click', claim);
-    $('nameCancel').addEventListener('click', () => { tap(); closeName(); });
+    // put off on the first visit: not asked again on this device; the name button on the title still opens it
+    $('nameCancel').addEventListener('click', () => { tap(); if (firstAsk) lsSet(LATER_LS, '1'); closeName(); });
     $('nameIn').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && !e.isComposing) claim(); });
     $('nameIn').addEventListener('keyup', e => e.stopPropagation());
     const overlaysUp = () => !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden;
