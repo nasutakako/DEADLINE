@@ -391,6 +391,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shoptile { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; text-align: center; }
 .shoptile .sw { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); }
 .shoptile b { font-size: 13px; line-height: 1.25; }
+.shoptile .sw.star, .shopdetail .big .sw.star { display: grid; place-items: center; background: radial-gradient(circle at 38% 32%, #fff6c8, #ffcf5a 45%, #a86e08); color: #5a3800; font-size: 24px; line-height: 1; }
+.shopdetail .big .sw.star { font-size: 38px; }
 .shoptile .pr { font-size: 11px; color: var(--muted); }
 .shoptile.owned .pr { color: var(--runner); }
 .shoptile .fxtag { position: absolute; top: 5px; right: 5px; font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 99px; background: rgba(255,207,90,.16); color: var(--lamp); border: 1px solid rgba(255,207,90,.45); }
@@ -410,7 +412,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .fx span { color: var(--lamp); }
 .shopdetail .fx.none { border-color: var(--line); background: rgba(255,255,255,.03); }
 .shopdetail .fx.none span { color: var(--muted); }
-.shopdetail .clip { position: relative; flex: none; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 16 / 10; }
+.shopdetail .clip { position: relative; flex: none; align-self: flex-start; height: clamp(64px, 22vh, 150px); width: auto; max-width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 16 / 10; }
 .shopdetail .clip video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .shopdetail .clip span { position: absolute; left: 8px; top: 6px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,.6); font-size: 10px; letter-spacing: .1em; color: #fff; }
 .shopstars { font-weight: 800; color: var(--lamp); letter-spacing: .04em; white-space: nowrap; }
@@ -452,7 +454,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 @keyframes sgtxt { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .sgrow i, .sgrow b, .sgtxt { animation: none; opacity: 1; transform: none; } .sgrow i::after { display: none; } }
 @media (max-height: 460px) { .sgrow i { width: 24px; height: 24px; } }
-.shopdetail .shopact { margin-top: auto; display: grid; gap: 6px; }
+.shopdetail .shopact { margin-top: auto; display: grid; gap: 6px; position: sticky; bottom: -16px; margin-bottom: -16px; padding: 10px 0 16px; background: linear-gradient(180deg, rgba(8,10,15,0), rgb(8,10,15) 14px); z-index: 1; }
 .shopdetail .shopact button { width: 100%; padding: 12px; font-family: var(--f-body); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
 .shopdetail .shopact .state { font-size: 12px; color: var(--muted); text-align: center; }
 /* a short landscape phone: smaller tiles and a tighter detail panel */
@@ -460,7 +462,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   .shophead h2 { font-size: 22px; }
   .shopgrid { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 6px; } .shopgrid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .shoptile { padding: 8px 4px 6px; } .shoptile .sw { width: 34px; height: 34px; } .shoptile b { font-size: 12px; }
-  .shopdetail { padding: 12px; gap: 8px; } .shopdetail .big .sw { width: 56px; height: 56px; } .shopdetail h3 { font-size: 18px; }
+  .shopdetail { padding: 12px; gap: 8px; } .shopdetail .shopact { bottom: -12px; margin-bottom: -12px; padding: 8px 0 12px; } .shopdetail .big .sw { width: 56px; height: 56px; } .shopdetail h3 { font-size: 18px; }
   .shopdetail .blk p { font-size: 13px; line-height: 1.5; } .shopdetail .shopact button { padding: 9px; font-size: 14px; }
 }
 /* a narrow screen: the detail sits under the tiles */
@@ -1359,7 +1361,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     { k: 'bomb', label: '爆弾', items: [
       ['bomb_emp', '青い電磁爆弾', 500, '青い稲妻を散らして弾ける', 'radial-gradient(circle at 40% 35%,#bff3ff,#2a6fd0 45%,#0a1d3d)'],
       ['bomb_grav', '黒い重力爆弾', 500, 'まわりを吸い込む黒い渦', 'radial-gradient(circle,#000 35%,#5a22c8 62%,#c9a8ff)'],
-      ['bomb_big', '大爆発', 500, '巨大な火球と二重の衝撃波で吹き飛ぶ', 'radial-gradient(circle at 45% 40%,#fff6c8,#ffb030 30%,#ff4a12 58%,#3a0800)'] ] },
+      ['bomb_big', '大爆発', 500, '巨大な火球と二重の衝撃波。波に当たった鬼は少し吹き飛ぶ', 'radial-gradient(circle at 45% 40%,#fff6c8,#ffb030 30%,#ff4a12 58%,#3a0800)'] ] },
     { k: 'rocket', label: 'ランチャー', items: [
       ['rk_laser', 'レーザー砲', 200, '通路を貫く赤い光線', 'linear-gradient(90deg,#3a0010,#ff2d55 45%,#fff 55%,#ff2d55 65%,#3a0010)'],
       ['rk_plasma', 'プラズマ砲', 500, '脈打つ緑の光弾', 'radial-gradient(circle,#effff6 12%,#2bff9a 42%,#5a2bff 80%)'] ] },
@@ -1532,13 +1534,14 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
-    for (const [k, label] of [['fx', 'アイテム'], ['skin', 'スキン']]) {
+    for (const [k, label] of [['fx', 'アイテム'], ['skin', 'スキン'], ['star', '★を買う']]) {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(shopTab === k));
       b.addEventListener('click', () => { tap(); shopTab = k; shopSel = null; openShop(); }); tabs.append(b);
     }
     const list = $('shopList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
-    const cats = SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'));
-    if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')); }
+    const cats = shopTab === 'star' ? [] : SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'));
+    if (shopTab === 'star') shopPacks(list);
+    else if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')); }
     for (const cat of cats) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
       sec.className = 'shopsec'; grid.className = 'shopgrid' + (cat.items.length === 2 ? ' three' : ''); h.textContent = cat.label;
@@ -1564,9 +1567,44 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     $('shopStars').textContent = `★ ${starHave()}`;
     bgmStart(SONGS.shop);
   }
+  // ★ in packs (4円 a star, like the items: 200円 = ★50); free while testing
+  const STAR_PACKS = [50, 100, 250, 500, 750, 1000].map(n => ({ pack: n, yen: n * 4 }));
+  function shopPacks(list) {
+    if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
+    const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
+    sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = '★をまとめて手に入れる';
+    sec.append(h, grid);
+    for (const pk of STAR_PACKS) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile' + (shopSel === pk ? ' sel' : '');
+      const s = document.createElement('span'); s.className = 'sw star'; s.textContent = '★';
+      const n = document.createElement('b'); n.textContent = '★' + pk.pack;
+      const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = pk.yen.toLocaleString() + '円';
+      b.append(s, n, pr);
+      b.addEventListener('click', () => { tap(); shopSel = pk; openShop(); });
+      grid.append(b);
+    }
+    list.append(sec);
+  }
+  function packDetail(box) {
+    const pk = shopSel && shopSel.pack ? shopSel : STAR_PACKS[0];
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const big = mk('div', 'big'), sw = mk('span', 'sw star', '★'), head = mk('div'), price = mk('div', 'price');
+    price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
+    head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
+    big.append(sw, head);
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★は見た目だけが変わるアイテムとの交換に使える(★50・★125)。生存課題のミッションでも毎日10個まで集められる。'));
+    const act = mk('div', 'shopact'), btn = mk('button', 'go', '無料で受け取る（テスト中）'); btn.type = 'button';
+    btn.addEventListener('click', () => {
+      tap(); starW().e += pk.pack; saveRecords(); openShop();
+      for (let i = 0; i < 4; i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, i * 90);
+    });
+    act.append(btn, mk('span', 'state', `所持 ★${starHave()}`));
+    box.append(big, what, act);
+  }
   // the chosen item: its look, what it does, and get / wear
   function shopDetail() {
     const it = shopSel, box = $('shopDetail'), sd = shopData(); box.textContent = '';
+    if (shopTab === 'star') { packDetail(box); return; }
     if (!it) return;
     const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const have = !it.id || sd.owned.includes(it.id), on = (sd.eq[it.cat.k] || '') === it.id;
@@ -2668,7 +2706,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     mines = mines.filter(m => !m.gone);
     enemies = enemies.filter(e => !e.dead);
 
-    for (const b of booms) b.t += dt;
+    for (const b of booms) { b.t += dt; if (b.fx === 'bomb_big' && !b.barrier) bigWaves(b); }
     for (const b of beams) b.t += dt;
     beams = beams.filter(b => b.t < 0.45);
     booms = booms.filter(b => b.t < 0.6);
@@ -2796,6 +2834,21 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       shake = reduceMotion ? 0 : Math.max(shake, 0.55); flash = Math.max(flash, 0.75); tone(48, 0.9, 'sawtooth', 0.12, 22); noise(0.7, 0.16);
     }
     if (m.fx === 'bomb_emp') zaps.push({ x: m.x, y: m.y, r: 1.3, t: 0, life: 0.5, kind: 'emp', hit: new Set() });
+  }
+
+  // 大爆発: the two shock waves (drawn in drawBoom) throw each oni they pass over a little way out, once per wave (just a push: no daze)
+  function bigWaves(b) {
+    const k = Math.min(1, b.t / 0.6), rings = [BLAST * (0.4 + k * 1.9), BLAST * (0.2 + k * 1.4)];
+    b.hit = b.hit || [new Set(), new Set()];
+    rings.forEach((r, j) => {
+      for (const e of enemies) {
+        if (e.dead || b.hit[j].has(e)) continue;
+        const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy);
+        if (d > r + e.r * 0.5 || d < 0.01) continue;
+        b.hit[j].add(e);
+        for (let n = 0; n < 5; n++) { e.x += dx / d * 0.1; e.y += dy / d * 0.1; collide(e); }
+      }
+    });
   }
 
   // the runner dropped into an open pit
