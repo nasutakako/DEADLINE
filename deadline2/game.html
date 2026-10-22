@@ -3554,6 +3554,12 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   // no tap needed where the browser allows it: keep trying for a while, and again whenever the page is focused or shown
   for (const ev of ['focus', 'pageshow']) addEventListener(ev, titleMusic);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) titleMusic(); });
+  // leaving the page (back to the game list, another tab or app): its music stops with it. Phones keep a page
+  // alive in the back history, and its sound used to carry on under the next page
+  const hush = () => { if (ac && ac.state === 'running') ac.suspend().catch(() => {}); };
+  addEventListener('pagehide', hush);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) hush(); });
+  addEventListener('pageshow', e => { if (e.persisted) titleMusic(); });
   { let tries = 0; const knock = setInterval(() => { if ((ac && ac.state === 'running') || ++tries > 30) { clearInterval(knock); return; } titleMusic(); }, 400); }
   // try right away too: some browsers let the page play sound without a tap
   titleMusic();
