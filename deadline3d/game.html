@@ -364,6 +364,25 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .shopdetail .clip video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .shopdetail .clip span { position: absolute; left: 8px; top: 6px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,.6); font-size: 10px; letter-spacing: .1em; color: #fff; }
 .shopstars { font-weight: 800; color: var(--lamp); letter-spacing: .04em; white-space: nowrap; }
+/* today's missions: three at a time in the left panel (or over the map's corner without the thumb pad) */
+.misbox { position: absolute; left: calc(var(--in-l) + 16px); top: calc(var(--in-t) + 50px); width: 124px; display: flex; pointer-events: none; z-index: 2; flex-direction: column; gap: 3px; padding: 6px 8px; border: 1px solid rgba(255,207,90,.35); border-radius: 6px; background: rgba(10,12,18,.62); font-size: 10px; line-height: 1.25; }
+.misbox[hidden] { display: none; }
+.misbox .mh { font-size: 10px; font-weight: 700; color: var(--lamp); letter-spacing: .06em; }
+.misbox .mi { display: grid; grid-template-columns: 1fr auto; gap: 0 6px; align-items: baseline; }
+.misbox .mi b { font-family: var(--f-num); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.misbox .mi.done, .misbox .mi.done b { color: var(--lamp); }
+.misbox .mi.done { animation: misdone 1.6s ease-out; transform-origin: left center; }
+@keyframes misdone { 0% { transform: scale(1.15); text-shadow: 0 0 12px var(--lamp); } 60% { text-shadow: 0 0 6px var(--lamp); } 100% { transform: none; } }
+.mislist { display: flex; flex-direction: column; gap: 6px; margin-top: -8px; }
+.mislist[hidden], .mislist ol[hidden] { display: none; }
+.mistog { align-self: flex-start; padding: 2px 8px; line-height: 1.4; border: 1px solid rgba(255,207,90,.45); border-radius: 6px; background: rgba(255,207,90,.08); color: var(--lamp); font-weight: 700; font-size: 12px; letter-spacing: .03em; text-align: left; }
+.mislist ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; gap: 2px 14px; font-size: 11px; line-height: 1.35; text-align: left; }
+.mislist li { display: grid; grid-template-columns: 16px 1fr auto; gap: 0 4px; align-items: baseline; color: var(--muted); }
+.mislist li span { font-family: var(--f-num); text-align: center; }
+.mislist li b { font-family: var(--f-num); font-weight: 600; font-variant-numeric: tabular-nums; }
+.mislist li.on { color: var(--ink); } .mislist li.done { color: var(--lamp); }
+@media (max-width: 520px) { .mislist ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
+@media (pointer: coarse) { .misbox { top: calc(var(--in-t) + 166px); } }
 .stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .stargain[hidden] { display: none; }
 .sgrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
@@ -415,6 +434,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     <div class="pi kill"><span class="label">撃破</span><b id="pKills">0</b></div>
     <div class="pi oni"><span class="label">鬼</span><b id="pCount">0</b></div>
   </div>
+  <div class="misbox" id="misBox" hidden></div>
   <div class="fixpad" id="fixPad"><div class="padknob" id="padKnob"></div></div>
   <div class="acts">
     <button class="act itemb" id="itemBtn" type="button" aria-disabled="true"><span id="itemName">道具なし</span></button>
@@ -577,6 +597,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       <h2 class="clear">アイテムを選ぶ</h2>
       <p class="mono" id="spMono" hidden></p>
       <p id="spMsg" style="white-space: pre-line">補給アイテムを1つ選ぶとステージが始まる。</p>
+      <div class="mislist" id="spMis" hidden><button class="mistog" id="spMisTog" type="button"></button><ol id="spMisList" hidden></ol></div>
       <div class="picks" id="startPicks">
         <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span><i>3秒間だけ</i><i>足が速くなる</i></span></button>
         <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
@@ -1318,7 +1339,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     sk_moon: { m: ['#fffbe8', '#cfd3e6', '#4a4f66'], glow: '255,250,220', fx: 'moon' },
   };
   const shopData = () => (records.shop = Object.assign({ owned: [], eq: {} }, records.shop));
-  // stars: earned on the survival nights (one per full minute survived), spent on the items that only change the look.
+  // stars: earned on the survival nights (★1 for each of the day's missions), spent on the items that only change the look.
   // Kept as totals earned and spent, so two saved copies merge by taking the larger of each
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
@@ -1330,6 +1351,98 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
   }
   const starPrice = it => Math.round(it.price / 4);   // 200円 -> ★50, 500円 -> ★125
+
+  // ---------- today's missions (the survival nights): ten a day, easiest first, three on show at a time, ★1 each ----------
+  // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
+  // of the day, 'best' needs it in one night. [count, sum|best, goal, the full line, the short line for the side panel]
+  const MIS_POOL = [
+    [['time', 'sum', 60, '今日の合計で1分逃げる', '合計1分逃げる'], ['bombs', 'sum', 2, '爆弾を合計2個置く', '爆弾を置く'], ['dashes', 'sum', 5, 'ダッシュを合計5回使う', 'ダッシュする']],
+    [['time', 'sum', 180, '今日の合計で3分逃げる', '合計3分逃げる'], ['kills', 'sum', 5, '鬼を合計5体倒す', '鬼を倒す'], ['items', 'sum', 2, 'アイテムを合計2回使う', 'アイテムを使う']],
+    [['time', 'best', 120, '1回で2分逃げきる', '1回で2分逃げる'], ['stomps', 'sum', 2, '「!」を合計2回踏んで鬼を止める', '「!」を踏む'], ['bombs', 'sum', 6, '爆弾を合計6個置く', '爆弾を置く']],
+    [['kills', 'sum', 12, '鬼を合計12体倒す', '鬼を倒す'], ['time', 'sum', 360, '今日の合計で6分逃げる', '合計6分逃げる'], ['dashes', 'sum', 25, 'ダッシュを合計25回使う', 'ダッシュする']],
+    [['pit', 'sum', 1, '落とし穴で鬼を1体落とす', '穴に落とす'], ['kills', 'best', 6, '1回で鬼を6体倒す', '1回で倒す'], ['maxBlast', 'best', 2, '1回の爆発で鬼を2体倒す', '爆発1回で倒す']],
+    [['time', 'best', 180, '1回で3分逃げきる', '1回で3分逃げる'], ['kills', 'sum', 20, '鬼を合計20体倒す', '鬼を倒す'], ['saves', 'sum', 1, 'バリアで確保を1回防ぐ', 'バリアで防ぐ']],
+    [['time', 'sum', 600, '今日の合計で10分逃げる', '合計10分逃げる'], ['kills', 'best', 10, '1回で鬼を10体倒す', '1回で倒す'], ['pit', 'sum', 3, '落とし穴で鬼を合計3体落とす', '穴に落とす']],
+    [['time', 'best', 240, '1回で4分逃げきる', '1回で4分逃げる'], ['maxBlast', 'best', 3, '1回の爆発で鬼を3体倒す', '爆発1回で倒す'], ['kills', 'sum', 35, '鬼を合計35体倒す', '鬼を倒す']],
+    [['time', 'best', 300, '1回で5分逃げきる', '1回で5分逃げる'], ['kills', 'best', 18, '1回で鬼を18体倒す', '1回で倒す'], ['maxRocket', 'best', 3, 'ランチャー1発で鬼を3体倒す', 'ランチャー1発']],
+    [['time', 'best', 420, '1回で7分逃げきる', '1回で7分逃げる'], ['kills', 'best', 25, '1回で鬼を25体倒す', '1回で倒す'], ['time', 'sum', 1200, '今日の合計で20分逃げる', '合計20分逃げる']],
+  ];
+  const MIS_KEYS = ['time', 'kills', 'bombs', 'dashes', 'items', 'stomps', 'pit', 'saves', 'maxBlast', 'maxRocket'];
+  const misDay = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3);
+  const misToday = () => { const d = misDay(); return MIS_POOL.map((v, i) => v[(d + i * 2) % v.length]); };
+  // kept on this device: the day, its totals and bests so far, and the missions done
+  let misS = null, misLive = false, misGot = 0, misFlash = null, misHtml = '';
+  function misState() {
+    const d = misDay();
+    if (!misS) { try { misS = JSON.parse(localStorage.getItem(REC_KEY + '-mis') || 'null'); } catch (e) {} }
+    if (!misS || misS.day !== d || !misS.sum) misS = { day: d, sum: {}, best: {}, done: [] };
+    return misS;
+  }
+  const misSave = () => { try { localStorage.setItem(REC_KEY + '-mis', JSON.stringify(misS)); } catch (e) {} };
+  const misRun = k => !misLive ? 0 : k === 'time' ? t : k === 'kills' ? kills - stageKillStart : (S3 && S3[k]) || 0;
+  const misVal = m => { const s = misState(), r = misRun(m[0]); return m[1] === 'sum' ? (s.sum[m[0]] || 0) + r : Math.max(s.best[m[0]] || 0, r); };
+  const misFmt = (m, v) => m[0] === 'time' ? `${Math.floor(Math.min(v, m[2]) / 60)}:${String(Math.floor(Math.min(v, m[2]) % 60)).padStart(2, '0')}` : `${Math.min(v, m[2])}/${m[2]}`;
+  // the three on show: the first three not done yet (one just done stays a moment, ticked)
+  function misShown() {
+    const s = misState(), out = [];
+    for (let i = 0; i < MIS_POOL.length && out.length < 3; i++) if (!s.done.includes(i) || (misFlash && misFlash.i === i)) out.push(i);
+    return out;
+  }
+  function misClear(i) {
+    misState().done.push(i); misSave(); starW().e += 1; saveRecords(); misGot++;
+  }
+  // every frame of a survival night: a mission on show that is met pays its star at once
+  function misTick() {
+    if (misFlash && performance.now() > misFlash.until) misFlash = null;
+    if (!misFlash) {
+      const s = misState(), L = misToday();
+      const i = misShown().find(i => !s.done.includes(i) && misVal(L[i]) >= L[i][2]);
+      if (i != null) {
+        misClear(i); misFlash = { i, until: performance.now() + 1600 };
+        tone(1568, 0.07, 'triangle', 0.05); setTimeout(() => tone(2093, 0.1, 'triangle', 0.045), 80); setTimeout(() => tone(3136, 0.2, 'sine', 0.035), 170);
+      }
+    }
+    misRender();
+  }
+  // the night is over (caught, or left for the title): it goes into today's totals, and whatever it met is paid
+  function misEnd() {
+    if (!misLive) return;
+    const s = misState();
+    for (const k of MIS_KEYS) { const r = misRun(k); s.sum[k] = (s.sum[k] || 0) + r; s.best[k] = Math.max(s.best[k] || 0, r); }
+    misLive = false; misFlash = null; misSave();
+    const L = misToday();
+    for (;;) { const i = misShown().find(i => !s.done.includes(i) && misVal(L[i]) >= L[i][2]); if (i == null) break; misClear(i); }
+    misRender();
+  }
+  function misRender() {
+    const box = $('misBox'); if (!box) return;
+    if (!misLive) { box.hidden = true; misHtml = ''; return; }
+    const host = MIS_HOST();
+    if (host && box.parentNode !== host) host.append(box);
+    box.classList.toggle('float', !!host && host.id === 'stage');
+    const s = misState(), L = misToday();
+    const html = `<span class="mh">ミッション ${s.done.length}/${MIS_POOL.length}</span>` + (misShown().map(i => {
+      const m = L[i], done = s.done.includes(i);
+      return `<span class="mi${done ? ' done' : ''}"><span>${m[4]}</span><b>${done ? '★+1' : misFmt(m, misVal(m))}</b></span>`;
+    }).join('') || '<span class="mi done"><span>今日はすべて達成</span><b>★</b></span>');
+    if (html !== misHtml) { box.innerHTML = html; misHtml = html; }
+    box.hidden = false;
+  }
+  // the stand-by screen of a survival night: one line (how many done today), opening onto all ten
+  let misOpen = false;
+  function misList() {
+    const el = $('spMis'); if (!el) return;
+    const s = misState(), L = misToday(), on = misShown();
+    $('spMisTog').textContent = `★ 今日のミッション ${s.done.length}/${MIS_POOL.length} ・ 1つ達成ごとに★1(ショップで交換) ${misOpen ? '▲' : '▼ 一覧'}`;
+    $('spMisList').innerHTML = L.map((m, i) => {
+      const done = s.done.includes(i), cls = done ? 'done' : on.includes(i) ? 'on' : '';
+      return `<li class="${cls}"><span>${done ? '★' : i + 1}</span>${m[3]}<b>${done ? '' : misFmt(m, misVal(m))}</b></li>`;
+    }).join('');
+    $('spMisList').hidden = !misOpen;
+    el.hidden = false;
+  }
+  $('spMisTog').addEventListener('click', () => { tap(); misOpen = !misOpen; misList(); });
+  const MIS_HOST = () => null;
   const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
   // two copies (this device and the saved one): everything either owns, and this device's choices first
   const mergeShop = (a, b) => { a = a || {}; b = b || {}; return { owned: [...new Set([...(a.owned || []), ...(b.owned || [])])], eq: Object.assign({}, b.eq, a.eq) }; };
@@ -3337,6 +3450,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   function update(dt) {
     t += dt; total += dt;
     if (tut) tutTick(dt);
+    if (misLive) misTick();
     // every oni taken down, however it went down, pushes the next oni back by 0.4 s
     if (P.killSeen == null) { P.killSeen = kills; P.rocketSeen = rocketKills; }
     if (kills > P.killSeen) {
@@ -3735,16 +3849,17 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
-    // a survival night pays a star for every full minute survived
-    { const got = stageN === 4 ? Math.floor(t / 60) : 0; $('rStars').hidden = stageN !== 4;
-      if (got) { starW().e += got; saveRecords(); }
+    // a survival night: the stars its missions paid
+    misEnd();
+    { const got = stageN === 4 ? misGot : 0; $('rStars').hidden = stageN !== 4;
       starGot = stageN === 4 ? got : -1;
       const row = $('rStarRow'); row.textContent = '';
-      // one star per minute, landing one after another once the screen is up (a long night: the rest as a count)
+      // one star per mission, landing one after another once the screen is up
       for (let i = 0; i < Math.min(got, STAR_SHOW); i++) { const e = document.createElement('i'); e.style.animationDelay = (0.25 + i * STAR_GAP) + 's'; row.append(e); }
       if (got > STAR_SHOW) { const e = document.createElement('b'); e.textContent = '+' + (got - STAR_SHOW); e.style.animationDelay = (0.25 + STAR_SHOW * STAR_GAP) + 's'; row.append(e); }
       const tx = $('rStarTxt'); tx.style.animationDelay = (0.35 + Math.min(got, STAR_SHOW + 1) * STAR_GAP) + 's';
-      tx.textContent = got ? `★ +${got} 獲得 ・ 所持 ★${starHave()}` : `1分生き残るごとに★1 ・ 所持 ★${starHave()}`; }
+      const left = MIS_POOL.length - misState().done.length;
+      tx.textContent = (got ? `ミッション達成 ★ +${got}` : left ? 'ミッションを達成すると★1' : '今日のミッションはすべて達成') + ` ・ 所持 ★${starHave()}` + (got && left ? ` ・ 残り${left}個` : ''); }
     $('rScoreLabel').textContent = `${stageLabel(stageN)} 逃走時間`;
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
@@ -4643,9 +4758,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 
   // ---------- flow ----------
   function start(n = 1, item) {
-    initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
+    misEnd(); initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
+    misLive = stageN === 4 && !!daily && !tut; misGot = 0; misFlash = null; misRender();
     tutNeed(stageN) ? tutBegin() : startCount();
     ui.game.classList.add('playing');
     resize();
@@ -4653,7 +4769,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   // the title card sits over the night city, slowly circling (the underground is too dark to show)
   function titleWorld() { const n = stageN; stageN = 1; genMap(STAGES[0]); buildWorld(STAGES[0]); stageN = n; }
   function toTitle() {
-    tutQuit(); state = 'title'; endTouches();
+    misEnd(); tutQuit(); state = 'title'; endTouches();
     clearDyn(); P = null; enemies = []; falls = []; pending = []; items = []; mines = []; booms = []; t = 0;
     titleWorld();
     ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false;
@@ -4835,13 +4951,14 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (n === 4) {
       daily = DAILY[dailyToday()];
       $('spKicker').textContent = `生存課題 ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n・逃げた分数に応じて★を獲得。★はショップで交換できる\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
       $('startPickScreen').hidden = false;
+      misList();
       mono('spMono', 4, 'standby');
       fitStandby();
       return;
     }
-    daily = null;
+    daily = null; $('spMis').hidden = true;
     $('spKicker').textContent = `STAGE ${n} ${n === 2 ? '地上' : '終わらない夜'}`;
     $('spMsg').textContent = n === 3 ? '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する' : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n補給アイテムを1つ選ぶとステージ2が始まる。';
     $('startPickScreen').hidden = false;
