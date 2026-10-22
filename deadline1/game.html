@@ -2181,7 +2181,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   let holes = [], falls = [], pendingStart = 2, rockets = [];
   // warp points (the DEADLINE2 maps): stand on one for 0.5 sec to come out of the other; both rest a minute and a half after a jump
   let warps = [];
-  const WARP_HOLD = 0.5, WARP_COOL = 90, WARP_R = 0.46;
+  const WARP_HOLD = 0.3, WARP_COOL = 90, WARP_R = 0.46;
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
 
@@ -3874,7 +3874,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   }
   const TUT = {
     w: [
-      { warp: true, say: '隔離区画にはワープポイントがある。乗って0.5秒待つと、もう1つのワープポイントに飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
+      { warp: true, say: '隔離区画にはワープポイントがある。乗って0.3秒待つと、もう1つのワープポイントに飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
       { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
       { say: '2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
     ],
