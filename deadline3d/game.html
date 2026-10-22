@@ -1803,11 +1803,15 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       if (st.key === 'war') { block(bx, by, (x, y) => wall(x, y, K_RUIN, FLOOR * rnd(0.6, 2.4))); for (let n = 2; n > 0; n--) open(bx + Math.floor(rnd(0, 3)), by + Math.floor(rnd(0, 3)), 1); }
       else block(bx, by, (x, y) => { wall(x, y, K_BLDG, st.key === 'under' ? FLOOR * 2 + 0.4 : (2 + Math.floor(Math.random() * 3)) * FLOOR + 0.6, id); floorT[idx(x, y)] = 0; });
     };
+    // no two open squares side by side (the sports field counts as open)
+    const nextTo = ([ax, ay], l) => l.some(([bx, by]) => Math.abs(ax - bx) + Math.abs(ay - by) === 4);
+    const fieldB = allB.filter(b => inField(b[0], b[1]));
     {
-      const pl = allB.filter(isPlaza).sort(() => Math.random() - 0.5);
+      const pl = [];
+      for (const b of allB.filter(isPlaza).sort(() => Math.random() - 0.5)) if (nextTo(b, pl) || nextTo(b, fieldB)) toBuilding(b); else pl.push(b);
       const rest = allB.filter(b => !isPlaza(b) && !inField(b[0], b[1]) && !nearStart(b)).sort(() => Math.random() - 0.5);
       const cap = field ? 4 : 5;
-      while (pl.length + (field ? 1 : 0) < 3 && rest.length) { const b = rest.pop(); toPlaza(b); pl.push(b); }
+      while (pl.length + (field ? 1 : 0) < 3 && rest.length) { const b = rest.pop(); if (nextTo(b, pl) || nextTo(b, fieldB)) continue; toPlaza(b); pl.push(b); }
       while (pl.length > cap) toBuilding(pl.pop());
     }
     const plazaSet = new Set(allB.filter(isPlaza).map(([bx, by]) => bx + ',' + by));
@@ -1823,9 +1827,10 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       // at least three squares with a pit: turn spare classroom blocks into gardens
       while (blocks.filter(([bx, by]) => isOpen(bx, by)).length < 3 && spare.length) {
         const [bx, by] = spare.pop();
+        if (nextTo([bx, by], blocks.filter(([ox, oy]) => isOpen(ox, oy)))) continue;
         block(bx, by, (x, y) => open(x, y, 1));
         scatter(bx, by, 2, (x, y) => wall(x, y, K_TREE, 7));
-        features.push({ type: 'garden', bx, by });
+        features.push({ type: 'garden', bx, by }); plazaSet.add(bx + ',' + by);
       }
       // two pits, in two random open squares
       for (const [bx, by] of blocks.filter(([bx, by]) => isOpen(bx, by)).sort(() => Math.random() - 0.5).slice(0, 2)) {

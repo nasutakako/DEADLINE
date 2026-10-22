@@ -1658,14 +1658,17 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
         for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) grid[idx(bx + cx + x, by + cy + y)] = 0;
       }
     }
-    // every map has 3 to 5 open plazas (the stage 3 pit squares among them)
+    // every map has 3 to 5 open plazas (the stage 3 pit squares among them), never two side by side
     {
       const all = [];
       for (let by = 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) all.push([bx, by]);
       const isPlaza = ([bx, by]) => grid[idx(bx + 1, by + 1)] === 2;
       const fill = ([bx, by], v) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) grid[idx(x, y)] = v; };
-      const pl = all.filter(isPlaza).sort(() => Math.random() - 0.5), rest = all.filter(b => !isPlaza(b)).sort(() => Math.random() - 0.5);
-      while (pl.length < 3 && rest.length) { const b = rest.pop(); fill(b, 2); pl.push(b); }
+      const nextTo = ([ax, ay], l) => l.some(([bx, by]) => Math.abs(ax - bx) + Math.abs(ay - by) === 4);
+      const pl = [];
+      for (const b of all.filter(isPlaza).sort(() => Math.random() - 0.5)) if (nextTo(b, pl)) fill(b, 1); else pl.push(b);
+      const rest = all.filter(b => !isPlaza(b)).sort(() => Math.random() - 0.5);
+      while (pl.length < 3 && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
       while (pl.length > 5) fill(pl.pop(), 1);
     }
     // stage 3: a pit in the middle of every open plaza; oni that step in fall
@@ -1680,6 +1683,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       const others = blocks.filter(([bx, by]) => !open(bx, by) && !(Math.abs(bx - sx) < 3 && Math.abs(by - sy) < 3)).sort(() => Math.random() - 0.5);
       while (plazas.length < 2 && others.length) {
         const [bx, by] = others.pop();
+        if (plazas.some(([px, py]) => Math.abs(px - bx) + Math.abs(py - by) === 4)) continue;
         for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) grid[idx(x, y)] = 2;
         plazas.push([bx, by]);
       }
@@ -1691,6 +1695,12 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
         const [bx, by] = blocks.slice().sort((a, b) => mid(a) - mid(b))[0];
         for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) grid[idx(x, y)] = 2;
         if (!holes.some(h => h.i === idx(bx + 1, by + 1))) holes[0] = { x: bx + 1.5, y: by + 1.5, i: idx(bx + 1, by + 1) };
+        // no plaza beside it (a pit there goes with it)
+        for (const [nx, ny] of [[bx - 4, by], [bx + 4, by], [bx, by - 4], [bx, by + 4]]) {
+          if (nx < 1 || ny < 1 || nx + 3 >= COLS || ny + 3 >= ROWS || grid[idx(nx + 1, ny + 1)] !== 2) continue;
+          for (let y = ny; y < ny + 3; y++) for (let x = nx; x < nx + 3; x++) grid[idx(x, y)] = 1;
+          holes = holes.filter(h => h.i !== idx(nx + 1, ny + 1));
+        }
       }
     }
     courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS);
