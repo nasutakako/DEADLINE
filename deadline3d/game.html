@@ -1357,6 +1357,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     list.scrollTop = keep;
     shopDetail();
     ui.title.hidden = true; $('shopScreen').hidden = false;
+    bgmStart(SONGS.shop);
   }
   // the chosen item: its look, what it does, and get / wear
   function shopDetail() {
@@ -1399,7 +1400,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (clip) clip.firstChild.play().catch(() => {});
   }
   $('shopBtn').addEventListener('click', () => { tap(); openShop(); });
-  $('shopClose').addEventListener('click', () => closeOverlay('shopScreen'));
+  $('shopClose').addEventListener('click', () => { closeOverlay('shopScreen'); bgmStart(SONGS.title); });
   $('whoTitle').addEventListener('click', () => { tap(); openTitles(); });
   $('titlesClose').addEventListener('click', () => closeOverlay('titlesScreen'));
   $('recClose').addEventListener('click', () => closeOverlay('recScreen'));
@@ -4240,12 +4241,83 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   };
   const songFor = n => SONGS[Math.min(3, Math.max(1, n))];
 
+  // tutorial: "practice run" (112 BPM, D dorian). Bright but still electro: a tight kick on 1 and 3,
+  // a rim on 2 and 4, a 16th shaker, a plucked bass and a bouncing arpeggio with a dotted echo;
+  // a soft bell marks each new bar. Dm9 - G - Bbmaj7 - C, eight bars, the arpeggio climbs in the second half.
+  function setupPractice(b) {
+    const d = ac.createDelay(1), fb = ac.createGain(), lp = ac.createBiquadFilter();
+    d.delayTime.value = 60 / 112 * 0.75; fb.gain.value = 0.32; lp.type = 'lowpass'; lp.frequency.value = 3800;
+    d.connect(lp).connect(fb).connect(d); lp.connect(b.out);
+    b.echo = d;
+  }
+  function stepPractice(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 8;
+    const root = [38, 43, 46, 48][bar % 4], chord = [[0, 3, 7, 10, 14], [0, 4, 7, 11, 14], [0, 4, 7, 11, 14], [0, 4, 7, 9, 14]][bar % 4];
+    if (st === 0 || st === 8 || (st === 14 && bar % 2)) voice({ f: 130, f2: 48, at, dec: 0.28, v: 0.8, att: 0.002 });
+    if (st === 4 || st === 12) { voice({ type: 'square', f: 1800, at, dec: 0.03, v: 0.06, cut: 5200, att: 0.001 }); hiss({ at, dec: 0.08, v: 0.08, type: 'bandpass', f: 2600, q: 1.2 }); }
+    hiss({ at, dec: 0.025, v: st % 2 ? 0.02 : 0.035, f: 9500 });
+    // plucked bass: root on the beat, octave pick-ups
+    const bn = { 0: 0, 3: 0, 6: 12, 8: 0, 10: 7, 14: 12 }[st];
+    if (bn != null) voice({ type: 'sawtooth', f: midi(root - 12 + bn), at, dec: 0.22, v: 0.13, cut: 700, q: 4 });
+    // the arpeggio: up through the chord, an octave higher from bar 5
+    if (st % 2 === 0) {
+      const n = chord[(st / 2) % chord.length] + (bar >= 4 ? 12 : 0) + (st >= 8 && st % 4 === 2 ? 12 : 0);
+      voice({ type: 'square', f: midi(root + 24 + n), at, dec: 0.16, v: 0.035, cut: 2800 });
+      voice({ type: 'triangle', f: midi(root + 24 + n), at, dec: 0.16, v: 0.03, to: bgm.echo });
+    }
+    // a bell on each bar, a little lead phrase over the last two bars
+    if (st === 0) for (const [m, v] of [[1, 0.045], [3.01, 0.012]]) voice({ f: midi(root + 36 + chord[2]) * m, at, dec: 1.6, v, att: 0.002, to: bgm.echo });
+    const lead = bar >= 6 ? { 0: 14, 3: 12, 6: 10, 8: 7, 12: 9, 14: 10 }[st] : null;
+    if (lead != null) voice({ type: 'triangle', f: midi(root + 24 + lead), at, dec: 0.3, v: 0.06, vib: 3, att: 0.01 });
+    if (bar === 7 && st === 8) hiss({ at, dec: 60 / 112 * 2, v: 0.05, type: 'bandpass', f: 600, f2: 5000, q: 1.5 });
+  }
+
+  // shop: "after-hours counter" (90 BPM, swung, F major). A laid-back lounge loop: electric-piano
+  // chords with a slow tremolo, a round walking bass, brushed snare and a soft kick, vinyl crackle,
+  // and now and then a little coin chime. Fmaj7 - Em7 - Dm9 - G13, then Bbmaj7 - Am7 - Gm7 - C7sus.
+  function setupLounge(b) {
+    const len = Math.floor(ac.sampleRate * 1.6), ir = ac.createBuffer(2, len, ac.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4); }
+    const cv = ac.createConvolver(), g = ac.createGain();
+    cv.buffer = ir; g.gain.value = 0.45; cv.connect(g).connect(b.out);
+    b.room = cv;
+  }
+  function stepLounge(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 8, BAR = 60 / 90 * 4;
+    const sw = st % 2 ? 60 / 90 / 4 * 0.3 : 0;   // heavy swing
+    const root = [41, 40, 38, 43, 46, 45, 43, 48][bar];
+    const chord = [[4, 7, 11, 16], [3, 7, 10, 14], [3, 7, 10, 14], [4, 10, 14, 21], [4, 7, 11, 14], [3, 7, 10, 14], [3, 7, 10, 14], [5, 7, 10, 14]][bar];
+    // drums: soft kick, brushes, a ride-ish tick
+    if (st === 0 || st === 10) voice({ f: 95, f2: 50, at, dec: 0.3, v: 0.5, att: 0.003 });
+    if (st === 4 || st === 12) hiss({ at, dec: 0.22, v: 0.07, type: 'bandpass', f: 3200, q: 0.6, f2: 1800 });
+    if (st % 4 === 0 || st % 4 === 3) hiss({ at: at + sw, dec: 0.05, v: 0.025, f: 7000 });
+    // walking bass: root, fifth, approach note
+    const walk = { 0: 0, 4: 7, 8: 12, 12: 11 }[st];
+    if (walk != null) voice({ f: midi(root - 12 + (st === 12 ? (bar % 2 ? 11 : 10) : walk)), at, dec: 0.55, v: 0.26, att: 0.01, cut: 900 });
+    // electric piano: a sine with a bell overtone, comped on the "and" of beats
+    if (st === 0 || st === 6 || (st === 11 && bar % 2)) for (const c of chord) {
+      const f = midi(root + 12 + c);
+      voice({ f, at: at + sw, dec: st === 0 ? 1.6 : 0.7, v: st === 0 ? 0.032 : 0.022, att: 0.004, vib: 1.2, to: bgm.room });
+      voice({ f: f * 2, at: at + sw, dec: 0.35, v: 0.008, att: 0.002 });
+    }
+    // a lazy melody in the second half
+    const mel = bar >= 4 ? { 2: 16, 5: 14, 8: 12, 11: 11, 14: 9 }[st] : null;
+    if (mel != null && bar % 2 === 0) voice({ type: 'triangle', f: midi(root + 24 + mel), at: at + sw, dec: 0.5, v: 0.045, vib: 4, att: 0.02, to: bgm.room });
+    // vinyl crackle and, every few bars, a coin chime
+    if (Math.random() < 0.18) hiss({ at: at + Math.random() * 0.1, dec: 0.008, v: 0.03 + Math.random() * 0.03, f: 3000 });
+    if (st === 0) hiss({ at, dec: BAR, v: 0.006, type: 'lowpass', f: 1200 });
+    if (bar % 4 === 3 && st === 14) for (const [f, dt] of [[2637, 0], [3136, 0.07]]) voice({ type: 'square', f, at: at + dt, dec: 0.25, v: 0.016, att: 0.001, cut: 6000, to: bgm.room });
+  }
+  // two more pieces, the same in every DEADLINE: the tutorial's and the shop's
+  SONGS.tut = { bpm: 112, vol: 0.85, step: stepPractice, setup: setupPractice };
+  SONGS.shop = { bpm: 90, vol: 1, step: stepLounge, setup: setupLounge };
+
   // short click for menu buttons
   function tap() { initAudio(); tone(1175, 0.05, 'square', 0.045); setTimeout(() => tone(1568, 0.06, 'square', 0.035), 45); }
   // browsers only allow sound after a touch: the first tap on the title starts the music
   const titleMusic = () => {
     if (state !== 'title' && state !== 'startpick' && state !== 'brief') return;
-    initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : SONGS.title);
+    initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : !$('shopScreen').hidden ? SONGS.shop : SONGS.title);
     if (ac) ac.resume().then(() => { const h = $('bgmHint'); if (h) h.hidden = ac.state === 'running'; }).catch(() => {});
   };
   // iPhone only unlocks audio on touchend / click, so listen to all of them
@@ -4357,7 +4429,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     for (const s of pending) dropWarn(s);
     pending = []; nextSpawn = nextItem = 1e9; P.nextR = 1e9; P.black2 = true;
     state = 'play'; input.stick = null;
-    bgmStart(songFor(stageN));
+    bgmStart(SONGS.tut);
     $('tutBar').hidden = false;
     tutNext();
   }
