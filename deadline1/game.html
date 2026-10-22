@@ -2615,6 +2615,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     const ambT = P.ambT;
     for (const e of enemies) {
       if (e.stun > 0) { e.stun -= dt; e.vx *= 0.9; e.vy *= 0.9; continue; }
+      // 大爆発's shock wave: thrown out on a smooth slide that slows to a stop, then it eases back into the chase
+      if (e.kbT > 0) { const u = e.kbT / KB_T; e.vx = e.kbx * u; e.vy = e.kby * u; move(e, e.vx, e.vy, dt); e.kbT -= dt; continue; }
       const tx = Math.floor(e.x), ty = Math.floor(e.y);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
       let amb = ambT && e.amb && (walk(tx, ty) ? dist[idx(tx, ty)] : 0) > 3;
@@ -2846,7 +2848,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
         const dx = e.x - b.x, dy = e.y - b.y, d = Math.hypot(dx, dy);
         if (d > r + e.r * 0.5 || d < 0.01) continue;
         b.hit[j].add(e);
-        for (let n = 0; n < 5; n++) { e.x += dx / d * 0.1; e.y += dy / d * 0.1; collide(e); }
+        e.kbx = dx / d * KB_V; e.kby = dy / d * KB_V; e.kbT = KB_T;
       }
     });
   }
@@ -2899,6 +2901,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   // ---------- what the shop's items do ----------
   let zaps = [], perim = null, decoys = [];
   const GRAV_R = 1.2, WARP_DASH = 1.2;
+  // the shock wave's throw: starting speed (tiles/s) and how long the slide lasts (about a tile per wave)
+  const KB_V = 6.5, KB_T = 0.35;
   const blastR = fx => fx === 'bomb_grav' ? BLAST * GRAV_R : BLAST;
   // the daze an armoured oni gets when its barrier breaks
   const daze = e => { if (!e.dead) e.stun = Math.max(e.stun || 0, 0.9); };
