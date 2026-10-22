@@ -367,6 +367,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 /* today's missions: three at a time in the left panel (or over the map's corner without the thumb pad) */
 .misbox { position: absolute; left: calc(var(--in-l) + 16px); top: calc(var(--in-t) + 50px); width: 124px; display: flex; pointer-events: none; z-index: 2; flex-direction: column; gap: 3px; padding: 6px 8px; border: 1px solid rgba(255,207,90,.35); border-radius: 6px; background: rgba(10,12,18,.62); font-size: 10px; line-height: 1.25; }
 .misbox[hidden] { display: none; }
+.misbox .mgot, .misbox .mrows { display: flex; flex-direction: column; gap: 3px; }
+.misbox .mgot:empty { display: none; }
 .misbox .mh { font-size: 10px; font-weight: 700; color: var(--lamp); letter-spacing: .06em; }
 .misbox .mi { display: grid; grid-template-columns: 1fr auto; gap: 0 6px; align-items: baseline; }
 .misbox .mi b { font-family: var(--f-num); font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -380,7 +382,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .mislist li { display: grid; grid-template-columns: 16px 1fr auto; gap: 0 4px; align-items: baseline; color: var(--muted); }
 .mislist li span { font-family: var(--f-num); text-align: center; }
 .mislist li b { font-family: var(--f-num); font-weight: 600; font-variant-numeric: tabular-nums; }
-.mislist li.on { color: var(--ink); } .mislist li.done { color: var(--lamp); }
+.mislist li.on { color: var(--ink); } .mislist li.done { color: var(--lamp); text-decoration: line-through; text-decoration-color: rgba(255,207,90,.55); }
+.mislist li.done span { text-decoration: none; }
 @media (max-width: 520px) { .mislist ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
 @media (pointer: coarse) { .misbox { top: calc(var(--in-t) + 166px); } }
 .stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
@@ -1371,7 +1374,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const misDay = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3);
   const misToday = () => { const d = misDay(); return MIS_POOL.map((v, i) => v[(d + i * 2) % v.length]); };
   // kept on this device: the day, its totals and bests so far, and the missions done
-  let misS = null, misLive = false, misGot = 0, misFlash = null, misHtml = '';
+  let misS = null, misLive = false, misGot = 0, misFlash = null, misQ = [], misHtml = '';
   function misState() {
     const d = misDay();
     if (!misS) { try { misS = JSON.parse(localStorage.getItem(REC_KEY + '-mis') || 'null'); } catch (e) {} }
@@ -1382,25 +1385,24 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const misRun = k => !misLive ? 0 : k === 'time' ? t : k === 'kills' ? kills - stageKillStart : (S3 && S3[k]) || 0;
   const misVal = m => { const s = misState(), r = misRun(m[0]); return m[1] === 'sum' ? (s.sum[m[0]] || 0) + r : Math.max(s.best[m[0]] || 0, r); };
   const misFmt = (m, v) => m[0] === 'time' ? `${Math.floor(Math.min(v, m[2]) / 60)}:${String(Math.floor(Math.min(v, m[2]) % 60)).padStart(2, '0')}` : `${Math.min(v, m[2])}/${m[2]}`;
-  // the three on show: the first three not done yet (one just done stays a moment, ticked)
+  // the three on show: the first three not done yet
   function misShown() {
     const s = misState(), out = [];
-    for (let i = 0; i < MIS_POOL.length && out.length < 3; i++) if (!s.done.includes(i) || (misFlash && misFlash.i === i)) out.push(i);
+    for (let i = 0; i < MIS_POOL.length && out.length < 3; i++) if (!s.done.includes(i)) out.push(i);
     return out;
   }
   function misClear(i) {
     misState().done.push(i); misSave(); starW().e += 1; saveRecords(); misGot++;
   }
-  // every frame of a survival night: a mission on show that is met pays its star at once
+  // every frame of a survival night: any of today's missions that is met (on show or not) pays its star at once,
+  // and the panel announces each in turn at its top, ticked, for a moment
   function misTick() {
+    const s = misState(), L = misToday();
+    for (let i = 0; i < L.length; i++) if (!s.done.includes(i) && misVal(L[i]) >= L[i][2]) { misClear(i); misQ.push(i); }
     if (misFlash && performance.now() > misFlash.until) misFlash = null;
-    if (!misFlash) {
-      const s = misState(), L = misToday();
-      const i = misShown().find(i => !s.done.includes(i) && misVal(L[i]) >= L[i][2]);
-      if (i != null) {
-        misClear(i); misFlash = { i, until: performance.now() + 1600 };
-        tone(1568, 0.07, 'triangle', 0.05); setTimeout(() => tone(2093, 0.1, 'triangle', 0.045), 80); setTimeout(() => tone(3136, 0.2, 'sine', 0.035), 170);
-      }
+    if (!misFlash && misQ.length) {
+      misFlash = { i: misQ.shift(), until: performance.now() + 1600 };
+      tone(1568, 0.07, 'triangle', 0.05); setTimeout(() => tone(2093, 0.1, 'triangle', 0.045), 80); setTimeout(() => tone(3136, 0.2, 'sine', 0.035), 170);
     }
     misRender();
   }
@@ -1409,9 +1411,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (!misLive) return;
     const s = misState();
     for (const k of MIS_KEYS) { const r = misRun(k); s.sum[k] = (s.sum[k] || 0) + r; s.best[k] = Math.max(s.best[k] || 0, r); }
-    misLive = false; misFlash = null; misSave();
+    misLive = false; misFlash = null; misQ = []; misSave();
     const L = misToday();
-    for (;;) { const i = misShown().find(i => !s.done.includes(i) && misVal(L[i]) >= L[i][2]); if (i == null) break; misClear(i); }
+    for (let i = 0; i < L.length; i++) if (!s.done.includes(i) && misVal(L[i]) >= L[i][2]) misClear(i);
     misRender();
   }
   function misRender() {
@@ -1421,11 +1423,16 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (host && box.parentNode !== host) host.append(box);
     box.classList.toggle('float', !!host && host.id === 'stage');
     const s = misState(), L = misToday();
-    const html = `<span class="mh">ミッション ${s.done.length}/${MIS_POOL.length}</span>` + (misShown().map(i => {
-      const m = L[i], done = s.done.includes(i);
-      return `<span class="mi${done ? ' done' : ''}"><span>${m[4]}</span><b>${done ? '★+1' : misFmt(m, misVal(m))}</b></span>`;
-    }).join('') || '<span class="mi done"><span>今日はすべて達成</span><b>★</b></span>');
-    if (html !== misHtml) { box.innerHTML = html; misHtml = html; }
+    // three parts, each redrawn only when it changes (so the tick on a mission just met plays once)
+    if (!box.firstChild) box.innerHTML = '<span class="mh"></span><span class="mgot"></span><span class="mrows"></span>';
+    const [head, gotEl, rows] = box.children;
+    const got = misFlash ? `<span class="mi done"><span>達成 ${L[misFlash.i][3]}</span><b>★+1</b></span>` : '';
+    const list = misShown().map(i => { const m = L[i]; return `<span class="mi"><span>${m[4]}</span><b>${misFmt(m, misVal(m))}</b></span>`; }).join('')
+      || (got ? '' : '<span class="mi done"><span>今日はすべて達成</span><b>★</b></span>');
+    const h = `ミッション ${s.done.length}/${MIS_POOL.length}`;
+    if (head.textContent !== h) head.textContent = h;
+    if (gotEl.dataset.k !== got) { gotEl.innerHTML = got; gotEl.dataset.k = got; }
+    if (list !== misHtml) { rows.innerHTML = list; misHtml = list; }
     box.hidden = false;
   }
   // the stand-by screen of a survival night: one line (how many done today), opening onto all ten
@@ -1436,7 +1443,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('spMisTog').textContent = `★ 今日のミッション ${s.done.length}/${MIS_POOL.length} ・ 1つ達成ごとに★1(ショップで交換) ${misOpen ? '▲' : '▼ 一覧'}`;
     $('spMisList').innerHTML = L.map((m, i) => {
       const done = s.done.includes(i), cls = done ? 'done' : on.includes(i) ? 'on' : '';
-      return `<li class="${cls}"><span>${done ? '★' : i + 1}</span>${m[3]}<b>${done ? '' : misFmt(m, misVal(m))}</b></li>`;
+      return `<li class="${cls}"><span>${done ? '★' : i + 1}</span>${m[3]}<b>${done ? '達成' : misFmt(m, misVal(m))}</b></li>`;
     }).join('');
     $('spMisList').hidden = !misOpen;
     el.hidden = false;
@@ -4761,7 +4768,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     misEnd(); initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
-    misLive = stageN === 4 && !!daily && !tut; misGot = 0; misFlash = null; misRender();
+    misLive = stageN === 4 && !!daily && !tut; misGot = 0; misFlash = null; misQ = []; misRender();
     tutNeed(stageN) ? tutBegin() : startCount();
     ui.game.classList.add('playing');
     resize();
