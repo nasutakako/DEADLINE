@@ -8,7 +8,7 @@
 <title>DEADLINE1</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700&family=Azeret+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700&family=Azeret+Mono:wght@500;700&display=swap">
 <style>
 /* Layout: one-screen arcade. Portrait = HUD on top, map, controls below. Landscape = HUD column | map | controls column, so the map gets the full height. Single dark look by choice (a night chase). */
 :root {
@@ -24,6 +24,8 @@
   --f-display: "Dela Gothic One", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
   --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
   --f-num: "Azeret Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  /* the runner's words (and the hints) in DEADLINE2's dot face */
+  --f-say: "DotGothic16", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -333,7 +335,7 @@ h2.clear { color: #5dff9e; }
 }
 
 .award { --aw-frame: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23fff3c6'/%3E%3Cstop offset='0.3' stop-color='%23e3b04a'/%3E%3Cstop offset='0.52' stop-color='%238d621a'/%3E%3Cstop offset='0.7' stop-color='%23f1cd76'/%3E%3Cstop offset='1' stop-color='%236b4a10'/%3E%3C/linearGradient%3E%3ClinearGradient id='p' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231e2535'/%3E%3Cstop offset='1' stop-color='%230b0e16'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M9 1H51L59 9V51L51 59H9L1 51V9Z' fill='url%28%23p%29' stroke='url%28%23m%29' stroke-width='2.2'/%3E%3Cpath d='M11.10 5H48.90L55 11.10V48.90L48.90 55H11.10L5 48.90V11.10Z' fill='none' stroke='rgba%28240%2C200%2C110%2C.6%29' stroke-width='.9'/%3E%3Cg fill='%23ffe39a'%3E%3Cpath d='M5.1 3.1999999999999997L7.0 5.1L5.1 7.0L3.1999999999999997 5.1Z'/%3E%3Cpath d='M54.9 3.1999999999999997L56.8 5.1L54.9 7.0L53.0 5.1Z'/%3E%3Cpath d='M5.1 53.0L7.0 54.9L5.1 56.8L3.1999999999999997 54.9Z'/%3E%3Cpath d='M54.9 53.0L56.8 54.9L54.9 56.8L53.0 54.9Z'/%3E%3C/g%3E%3C/svg%3E"); --aw-ink1: #fff8de; --aw-ink2: #f3cd6d; --aw-ink3: #c18a27; --aw-how: #b9a77d; --aw-tag1: #fff0bd; --aw-tag2: #d9a542; --aw-tagink: #2a1b04; --aw-glow: rgba(240,190,80,.28); --aw-head: #f3cd6d; --aw-shine: rgba(255,248,220,.6); --aw-gem: #ffe39a; --aw-chipbg: #151a26; }
-.mono { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
+.mono { margin: 0; font-family: var(--f-say); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
 
 .ranktabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .ranktabs button { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 6px 11px; font-weight: 700; font-size: 12px; white-space: nowrap; }
