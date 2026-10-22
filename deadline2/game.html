@@ -526,11 +526,11 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   <div class="overlay" id="titleScreen">
     <div class="card">
       <h1>DEAD<span>LINE</span><em>2</em></h1>
-      <p>閉じ込められた隔離区画から鬼をかわして脱出しろ。ステージ1は隔離区画、ステージ2からはネオン街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
+      <p>閉じ込められた隔離区画から鬼をかわして脱出しろ。ステージ1は隔離区画、ステージ2からは電脳都市。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
-      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 隔離区画から</button><button class="go alt" id="start2Btn" type="button">ステージ2 ネオン街から</button><button class="go alt" id="start3Btn" type="button">ステージ3 無限回路</button><button class="go alt tutlbtn" id="tutListBtn" type="button">チュートリアル一覧</button></div>
+      <div class="row"><button class="go" id="startBtn" type="button">ステージ1 隔離区画から</button><button class="go alt" id="start2Btn" type="button">ステージ2 電脳都市から</button><button class="go alt" id="start3Btn" type="button">ステージ3 無限回路</button><button class="go alt tutlbtn" id="tutListBtn" type="button">チュートリアル一覧</button></div>
     </div>
   </div>
 
@@ -795,7 +795,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     if (hint && hint.animate) hint.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 260 });
   }
   const stageBest = n => { const l = (records.stages[n] || []).filter(r => r.time != null).sort(better); return l.length ? l[0] : null; };
-  const STAGE_LABELS = [[1, 'ステージ1 隔離区画'], [2, 'ステージ2 ネオン街'], [3, 'ステージ3 無限回路']];
+  const STAGE_LABELS = [[1, 'ステージ1 隔離区画'], [2, 'ステージ2 電脳都市'], [3, 'ステージ3 無限回路']];
   function renderRecords() {
     updateLocks();
     const box = $('records'); if (!box) return;
@@ -1421,7 +1421,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
   const mergeStar = (a, b) => ({ e: Math.max((a && a.e) || 0, (b && b.e) || 0), s: Math.max((a && a.s) || 0, (b && b.s) || 0) });
-  const starPrice = it => Math.round(it.price / 20);   // 200円 -> ★10, 500円 -> ★25
+  const starPrice = it => Math.round(it.price / 4);   // 200円 -> ★50, 500円 -> ★125
   const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
   // two copies (this device and the saved one): everything either owns, and this device's choices first
   const mergeShop = (a, b) => { a = a || {}; b = b || {}; return { owned: [...new Set([...(a.owned || []), ...(b.owned || [])])], eq: Object.assign({}, b.eq, a.eq) }; };
@@ -2356,7 +2356,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('cRank').textContent = rankText(stageN, crank);
     $('cNext').textContent = '×' + P.stock;
     if (!last) $('cMsg').textContent = stageN === 1
-      ? 'ネオン街に出た。アイテムを選んでステージ2へ進むか、もう一度隔離区画に挑むか、タイトルに戻るかを選べる。'
+      ? '電脳都市に出た。アイテムを選んでステージ2へ進むか、もう一度隔離区画に挑むか、タイトルに戻るかを選べる。'
       : 'アイテムを選んでステージ3(無限回路)へ進むか、もう一度挑むか、タイトルに戻るかを選べる。';
     ui.clear.hidden = false; titleChime('cTitles'); prepShare('clear');
   }
@@ -3849,7 +3849,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   }
 
   // ---------- map choice (stages 1-3): this game's map or the DEADLINE2 one ----------
-  const MAP_NAMES = { d1: ['隔離区画', 'ネオン街', '無限回路'], d2: ['隔離区画', 'ネオン街', '無限回路'] };
+  const MAP_NAMES = { d1: ['隔離区画', '電脳都市', '無限回路'], d2: ['隔離区画', '電脳都市', '無限回路'] };
   const MAP_THUMBS = {};
   const MAP_KEY = REC_KEY + '-map';
   const mapOpen = () => isCleared(1) && isCleared(2);
@@ -3859,6 +3859,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   function mapChoose(n, skin) {
     const p = mapPicks(); p[n] = skin; try { localStorage.setItem(MAP_KEY, JSON.stringify(p)); } catch (_) {}
     mapSkin = mapPick(n); bgmStart(songFor(n)); mapRow(n);
+    if (n === 1) { mono('briefMono', 1, 'standby'); fitBrief(); } else { mono('spMono', n, 'standby'); fitStandby(); }
   }
   // the two map cards on a stand-by screen
   function mapRow(n) {
@@ -4080,7 +4081,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     },
     2: {
       standby: [
-        'ネオン街。人の気配はないのに、ヤツらだけはいる。逃げ切れば何かが変わるはずだ。走るしかない。',
+        '電脳都市。人の気配はないのに、ヤツらだけはいる。逃げ切れば何かが変わるはずだ。走るしかない。',
         'ネオンだけが明滅する無人の街。聞こえる足音は、ヤツらのものだけだ。',
         '2分でバリアの補給が来る。それまでは逃げに徹する。',
         '広場は見通しがいい。でも、ヤツらのセンサーからも丸見えだ。',
@@ -4168,7 +4169,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   };
   function mono(id, n, kind) {
     const el = $(id); if (!el) return;
-    const m = MONO[n === 4 && daily ? daily.key : Math.min(3, n)], l = m && m[kind], s = l && l[Math.floor(Math.random() * l.length)];
+    const m = (mapSkin === 'd2' && n <= 3 ? MONO2 : MONO)[n === 4 && daily ? daily.key : Math.min(3, n)], l = m && m[kind], s = l && l[Math.floor(Math.random() * l.length)];
     el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
   }
   function begin(n) {

@@ -1307,7 +1307,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
   const mergeStar = (a, b) => ({ e: Math.max((a && a.e) || 0, (b && b.e) || 0), s: Math.max((a && a.s) || 0, (b && b.s) || 0) });
-  const starPrice = it => Math.round(it.price / 20);   // 200円 -> ★10, 500円 -> ★25
+  const starPrice = it => Math.round(it.price / 4);   // 200円 -> ★50, 500円 -> ★125
   const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
   // two copies (this device and the saved one): everything either owns, and this device's choices first
   const mergeShop = (a, b) => { a = a || {}; b = b || {}; return { owned: [...new Set([...(a.owned || []), ...(b.owned || [])])], eq: Object.assign({}, b.eq, a.eq) }; };
