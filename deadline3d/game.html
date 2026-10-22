@@ -1389,7 +1389,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 
   // ---------- map ----------
   let grid, kind, hgt, floorT, bid, dist, queue, tanks = [], features = [], holes = [];
-  const HOLE_R = 0.42, PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45;
+  const HOLE_R = 0.42, PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45, PIT_FLASH = 1.5;
   const idx = (x, y) => y * COLS + x;
   const walk = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1;
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -3515,7 +3515,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     // open pits: every oni that crosses falls, armoured ones included.
     // the first fall shuts the pit 1 sec later; otherwise it shuts 20 sec after opening
     for (const h of holes) {
-      if (!h.open) { if (h.cool > 0) { h.cool -= dt; if (h.cool <= 0) tone(1320, 0.12, 'triangle', 0.04); } continue; }
+      if (!h.open) { if (h.flash > 0) h.flash -= dt; if (h.cool > 0) { h.cool -= dt; if (h.cool <= 0) { h.flash = PIT_FLASH; tone(1320, 0.12, 'triangle', 0.04); setTimeout(() => tone(1760, 0.16, 'triangle', 0.04), 110); } } continue; }
       h.left -= dt;
       for (const e of enemies) {
         if (e.dead || e.f !== 0 || Math.hypot(e.x - h.x, e.y - h.y) > HOLE_R - 0.04) continue;
@@ -3761,7 +3761,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       // a usable lid glows faintly; a locked one stays dull
       const ready = !(h.cool > 0);
       h.lid.material.emissive.setHex(0x8fe9ff);
-      h.lid.material.emissiveIntensity = ready ? 0.22 + 0.12 * Math.sin(now * 3) : 0;
+      h.lid.material.emissiveIntensity = ready ? 0.22 + 0.12 * Math.sin(now * 3) + (h.flash > 0 ? 1.4 * h.flash / PIT_FLASH : 0) : 0;
       h.lid.material.color.setHex(ready ? 0x6a7280 : 0x4a515e);
     }
     if (P && P.pit) {
@@ -4321,7 +4321,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     3: [
       { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
       { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
-      { pit: true, say: '自分が落ちても確保。一度使った落とし穴は45秒ふさがる', info: true },
+      { pit: true, say: '一度使った落とし穴は45秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
+      { pit: true, say: '自分が落とし穴に落ちても確保になるので注意', info: true },
       { say: '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
     ],
   };
@@ -4356,6 +4357,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (tut.refill && P.stock < 1 && !mines.length) P.stock = 1;
     // an open practice pit stays open until it has taken an oni
     if (tut.hole && tut.hole.open && !tut.hole.ate) tut.hole.left = Math.max(tut.hole.left, 5);
+    // …and once used, stays shut a few seconds, not 45
+    if (tut.hole && tut.hole.cool > 5) { tut.hole.cool = 5; tut.coolSeen = true; }
     // …and draws in a practice oni that comes near it
     if (tut.hole && tut.hole.open && !tut.hole.ate) for (const e of tut.oni) if (!e.dead && Math.hypot(e.x - tut.hole.x, e.y - tut.hole.y) < 2.2 * Math.sqrt(TUT_U)) { e.lureT = 0.2; e.lureX = tut.hole.x; e.lureY = tut.hole.y; }
     // a practice oni stamped out before it came: send another
@@ -4421,6 +4424,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       '落とし穴は1度使用すると45秒使用できない',
       '落とし穴はふたを踏んで離れると開き、通った鬼をまとめて落とす',
       '自分が落とし穴に落ちても確保になる',
+      '使えるようになった落とし穴はふたが光る',
       '2分から毎分補給。偶数分はバリア+爆弾2、奇数分は爆弾2',
       '時間が経つほど鬼の出方が変化する',
     ],
