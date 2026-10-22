@@ -378,7 +378,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopwrap { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 1100px; height: 100%; min-height: 0; margin: 0 auto; }
 .shophead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .shophead h2 { margin: 0; font-size: clamp(22px, 4vw, 32px); color: #ff9bd6; }
-.shopnote { font-size: 12px; color: #ff9bd6; opacity: .85; }
+.shopnote { font-size: 12px; color: var(--muted); }
 .shopclose { margin-left: auto; padding: 8px 16px; }
 .shopbody { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 36%); gap: 12px; }
 .shoplist { min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 14px; padding: 2px 4px 2px 2px; overscroll-behavior: contain; }
@@ -530,7 +530,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       <div class="shophead">
         <h2>ショップ</h2>
         <div class="ranktabs" id="shopTabs" role="tablist"></div>
-        <span class="shopstars" id="shopStars"></span><span class="shopnote">見た目だけのアイテムは★で交換。効果つきはテスト中につき無料</span>
+        <span class="shopstars" id="shopStars"></span><span class="shopnote">★は生存課題で獲得できます</span>
         <button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
       </div>
       <div class="shopbody">
@@ -4471,7 +4471,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     if (n === 4) {
       daily = DAILY[dailyToday()];
       $('spKicker').textContent = `生存課題 ${daily.name}`;
-      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n${daily.rule}\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
+      $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n・逃げた分数に応じて★を獲得。★はショップで交換できる\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
       $('spMaps').hidden = true;
       $('startPickScreen').hidden = false;
       mono('spMono', 4, 'standby');
