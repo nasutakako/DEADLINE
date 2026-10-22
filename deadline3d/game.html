@@ -364,8 +364,22 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .shopdetail .clip video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .shopdetail .clip span { position: absolute; left: 8px; top: 6px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,.6); font-size: 10px; letter-spacing: .1em; color: #fff; }
 .shopstars { font-weight: 800; color: var(--lamp); letter-spacing: .04em; white-space: nowrap; }
-.starget { margin: 0; font-weight: 800; color: var(--lamp); letter-spacing: .04em; }
-.starget[hidden] { display: none; }
+.stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.stargain[hidden] { display: none; }
+.sgrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+/* a glossy gold star: a bright top, a deep base, a white highlight, and a glint that sweeps across as it lands */
+.sgrow i { position: relative; width: 30px; height: 30px; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: linear-gradient(160deg, #fffbe3 0%, #ffe066 28%, #ffb400 55%, #d97a00 78%, #ffcf4a 100%); filter: drop-shadow(0 0 6px rgba(255,200,60,.8));
+  opacity: 0; transform: scale(0) rotate(-40deg); animation: sgpop .42s cubic-bezier(.2,1.7,.45,1) forwards; overflow: hidden; }
+.sgrow i::before { content: ""; position: absolute; left: 22%; top: 16%; width: 30%; height: 22%; border-radius: 50%; background: rgba(255,255,255,.85); filter: blur(1px); transform: rotate(-30deg); }
+.sgrow i::after { content: ""; position: absolute; inset: -20% auto -20% -60%; width: 40%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent); transform: skewX(-20deg); animation: sgglint .5s ease-out forwards; animation-delay: inherit; }
+.sgrow b { font-family: var(--f-num); font-weight: 800; color: var(--lamp); opacity: 0; animation: sgtxt .3s ease-out forwards; }
+.sgtxt { font-weight: 800; color: var(--lamp); letter-spacing: .04em; opacity: 0; animation: sgtxt .4s ease-out forwards; }
+@keyframes sgpop { 0% { opacity: 0; transform: scale(0) rotate(-40deg); } 70% { opacity: 1; transform: scale(1.3) rotate(8deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes sgglint { 0% { left: -60%; } 100% { left: 130%; } }
+@keyframes sgtxt { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sgrow i, .sgrow b, .sgtxt { animation: none; opacity: 1; transform: none; } .sgrow i::after { display: none; } }
+@media (max-height: 460px) { .sgrow i { width: 24px; height: 24px; } }
 .shopdetail .shopact { margin-top: auto; display: grid; gap: 6px; }
 .shopdetail .shopact button { width: 100%; padding: 12px; font-family: var(--f-body); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
 .shopdetail .shopact .state { font-size: 12px; color: var(--muted); text-align: center; }
@@ -479,7 +493,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     <div class="card rankcard">
       <h2>世界ランキング</h2>
       <div class="ranktabs" id="rankTabs" role="tablist"></div>
-      <span class="label" id="rankLabel">ステージ3 終わらない夜 ・ 逃走時間 上位100</span>
+      <span class="label" id="rankLabel">終わらない夜 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -490,7 +504,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     <div class="card">
       <span class="kicker" id="rStage">CAUGHT</span>
       <h2>確保</h2>
-      <p class="starget" id="rStars" hidden></p>
+      <div class="stargain" id="rStars" hidden><div class="sgrow" id="rStarRow"></div><span class="sgtxt" id="rStarTxt"></span></div>
       <p class="mono" id="rMono" hidden></p>
       <div class="score"><span class="label" id="rScoreLabel">逃走時間</span><b id="rScore">0:00.0</b><em id="rRank"></em></div>
       <div class="result">
@@ -879,7 +893,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       return li;
     }
     // stage 3 and the three daily nights, one tab each
-    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    // the endless stage by its name alone (it needs no "ステージ3")
+    const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
+    const boards = () => [['players', endless(), endless()], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -902,7 +918,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
         const q = await db.collection(board).where('best', '>', 0).orderBy('best', 'desc').limit(100).get();
         if ($('rankLabel').textContent.indexOf(info[1]) !== 0) return;   // another tab was opened meanwhile
         list.textContent = '';
-        if (q.empty) { msg(`まだ記録がありません。${board === 'players' ? 'ステージ3' : info[1]}で最初の記録を残そう。`); }
+        if (q.empty) { msg(`まだ記録がありません。${info[1]}で最初の記録を残そう。`); }
         let no = 0, prev = null, inTop = false;
         q.docs.forEach((d, i) => {
           const p = d.data() || {};
@@ -1307,6 +1323,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
   const mergeStar = (a, b) => ({ e: Math.max((a && a.e) || 0, (b && b.e) || 0), s: Math.max((a && a.s) || 0, (b && b.s) || 0) });
+  // the result screen's stars: how many this night earned (-1: not a survival night), and their glints
+  let starGot = -1;
+  const STAR_SHOW = 10, STAR_GAP = 0.28;
+  function starChime() {
+    for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
+  }
   const starPrice = it => Math.round(it.price / 4);   // 200円 -> ★50, 500円 -> ★125
   const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
   // two copies (this device and the saved one): everything either owns, and this device's choices first
@@ -3714,9 +3736,15 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     // a survival night pays a star for every full minute survived
-    { const el = $('rStars'), got = stageN === 4 ? Math.floor(t / 60) : 0; el.hidden = stageN !== 4;
+    { const got = stageN === 4 ? Math.floor(t / 60) : 0; $('rStars').hidden = stageN !== 4;
       if (got) { starW().e += got; saveRecords(); }
-      if (stageN === 4) el.textContent = got ? `★ +${got} 獲得  (所持 ★${starHave()})` : `1分生き残るごとに★1。所持 ★${starHave()}`; }
+      starGot = stageN === 4 ? got : -1;
+      const row = $('rStarRow'); row.textContent = '';
+      // one star per minute, landing one after another once the screen is up (a long night: the rest as a count)
+      for (let i = 0; i < Math.min(got, STAR_SHOW); i++) { const e = document.createElement('i'); e.style.animationDelay = (0.25 + i * STAR_GAP) + 's'; row.append(e); }
+      if (got > STAR_SHOW) { const e = document.createElement('b'); e.textContent = '+' + (got - STAR_SHOW); e.style.animationDelay = (0.25 + STAR_SHOW * STAR_GAP) + 's'; row.append(e); }
+      const tx = $('rStarTxt'); tx.style.animationDelay = (0.35 + Math.min(got, STAR_SHOW + 1) * STAR_GAP) + 's';
+      tx.textContent = got ? `★ +${got} 獲得 ・ 所持 ★${starHave()}` : `1分生き残るごとに★1 ・ 所持 ★${starHave()}`; }
     $('rScoreLabel').textContent = `${stageLabel(stageN)} 逃走時間`;
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
@@ -4857,7 +4885,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
       while (rem > 1e-6 && state === 'play') { const h = Math.min(rem, 1 / 120); update(h); rem -= h; }
     } else if (state === 'caught') {
       caughtTimer -= dt;
-      if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; ui.game.classList.remove('playing'); titleChime('rTitles'); prepShare('over'); }
+      if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; ui.game.classList.remove('playing'); titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     visuals(dt);
     if (state === 'title') titleCamera(dt); else if (P) placeCamera(dt);

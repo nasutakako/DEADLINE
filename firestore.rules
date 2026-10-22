@@ -7,10 +7,10 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function okGame(g) { return g in ['deadline1', 'deadline2', 'deadline3d']; }
 
-    // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, daily1-3 the daily nights
+    // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, loop DEADLINE1's 無限回路, daily1-3 the daily nights
     match /games/{game}/{board}/{uid} {
-      allow read: if okGame(game) && board in ['players', 'daily1', 'daily2', 'daily3'];
-      allow create, update: if okGame(game) && board in ['players', 'daily1', 'daily2', 'daily3'] && signedIn() && request.auth.uid == uid
+      allow read: if okGame(game) && board in ['players', 'loop', 'daily1', 'daily2', 'daily3'];
+      allow create, update: if okGame(game) && board in ['players', 'loop', 'daily1', 'daily2', 'daily3'] && signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['name', 'key', 'best', 'at', 'title'])
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20

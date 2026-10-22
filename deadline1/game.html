@@ -544,7 +544,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     <div class="card rankcard">
       <h2>世界ランキング</h2>
       <div class="ranktabs" id="rankTabs" role="tablist"></div>
-      <span class="label" id="rankLabel">ステージ3 終わらない夜 ・ 逃走時間 上位100</span>
+      <span class="label" id="rankLabel">終わらない夜 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -723,7 +723,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   ];
   const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
   let daily = null;   // the night being played on stage 4
-  const recKey = n => n === 4 && daily ? daily.key : n;
+  const recKey = n => n === 4 && daily ? daily.key : n === 3 && mapSkin === 'd2' ? 'n3' : n;
   const stageLabel = n => n === 4 && daily ? '生存課題 ' + daily.name : 'ステージ' + n;
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
   // the daily nights open with stage 3, once stage 2 has been escaped
@@ -836,7 +836,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
     const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
     async function syncDaily() {
       if (!db || !me || !me.name || !canWrite) return;
-      for (const d of DAILY) {
+      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : [])]) {
         const b = bestOf(d.key); if (!(b > 0)) continue;
         let cur = boardDocs[d.board];
         if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
@@ -942,7 +942,9 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
       return li;
     }
     // stage 3 and the three daily nights, one tab each
-    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    // the endless stage by its name alone (it needs no "ステージ3")
+    const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
+    const boards = () => [['players', endless(), endless()], ...(MAP_CHOICE ? [['loop', MAP_NAMES.d2[2], MAP_NAMES.d2[2]]] : []), ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -965,7 +967,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
         const q = await db.collection(board).where('best', '>', 0).orderBy('best', 'desc').limit(100).get();
         if ($('rankLabel').textContent.indexOf(info[1]) !== 0) return;   // another tab was opened meanwhile
         list.textContent = '';
-        if (q.empty) { msg(`まだ記録がありません。${board === 'players' ? 'ステージ3' : info[1]}で最初の記録を残そう。`); }
+        if (q.empty) { msg(`まだ記録がありません。${info[1]}で最初の記録を残そう。`); }
         let no = 0, prev = null, inTop = false;
         q.docs.forEach((d, i) => {
           const p = d.data() || {};

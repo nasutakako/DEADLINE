@@ -412,8 +412,22 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .clip video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .shopdetail .clip span { position: absolute; left: 8px; top: 6px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,.6); font-size: 10px; letter-spacing: .1em; color: #fff; }
 .shopstars { font-weight: 800; color: var(--lamp); letter-spacing: .04em; white-space: nowrap; }
-.starget { margin: 0; font-weight: 800; color: var(--lamp); letter-spacing: .04em; }
-.starget[hidden] { display: none; }
+.stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
+.stargain[hidden] { display: none; }
+.sgrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+/* a glossy gold star: a bright top, a deep base, a white highlight, and a glint that sweeps across as it lands */
+.sgrow i { position: relative; width: 30px; height: 30px; clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: linear-gradient(160deg, #fffbe3 0%, #ffe066 28%, #ffb400 55%, #d97a00 78%, #ffcf4a 100%); filter: drop-shadow(0 0 6px rgba(255,200,60,.8));
+  opacity: 0; transform: scale(0) rotate(-40deg); animation: sgpop .42s cubic-bezier(.2,1.7,.45,1) forwards; overflow: hidden; }
+.sgrow i::before { content: ""; position: absolute; left: 22%; top: 16%; width: 30%; height: 22%; border-radius: 50%; background: rgba(255,255,255,.85); filter: blur(1px); transform: rotate(-30deg); }
+.sgrow i::after { content: ""; position: absolute; inset: -20% auto -20% -60%; width: 40%; background: linear-gradient(90deg, transparent, rgba(255,255,255,.95), transparent); transform: skewX(-20deg); animation: sgglint .5s ease-out forwards; animation-delay: inherit; }
+.sgrow b { font-family: var(--f-num); font-weight: 800; color: var(--lamp); opacity: 0; animation: sgtxt .3s ease-out forwards; }
+.sgtxt { font-weight: 800; color: var(--lamp); letter-spacing: .04em; opacity: 0; animation: sgtxt .4s ease-out forwards; }
+@keyframes sgpop { 0% { opacity: 0; transform: scale(0) rotate(-40deg); } 70% { opacity: 1; transform: scale(1.3) rotate(8deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes sgglint { 0% { left: -60%; } 100% { left: 130%; } }
+@keyframes sgtxt { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .sgrow i, .sgrow b, .sgtxt { animation: none; opacity: 1; transform: none; } .sgrow i::after { display: none; } }
+@media (max-height: 460px) { .sgrow i { width: 24px; height: 24px; } }
 .shopdetail .shopact { margin-top: auto; display: grid; gap: 6px; }
 .shopdetail .shopact button { width: 100%; padding: 12px; font-family: var(--f-body); font-weight: 700; font-size: 15px; letter-spacing: .02em; }
 .shopdetail .shopact .state { font-size: 12px; color: var(--muted); text-align: center; }
@@ -581,7 +595,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <div class="card rankcard">
       <h2>世界ランキング</h2>
       <div class="ranktabs" id="rankTabs" role="tablist"></div>
-      <span class="label" id="rankLabel">ステージ3 無限回路 ・ 逃走時間 上位100</span>
+      <span class="label" id="rankLabel">無限回路 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -592,7 +606,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     <div class="card">
       <span class="kicker">CAUGHT</span>
       <h2>確保</h2>
-      <p class="starget" id="rStars" hidden></p>
+      <div class="stargain" id="rStars" hidden><div class="sgrow" id="rStarRow"></div><span class="sgtxt" id="rStarTxt"></span></div>
       <p class="mono" id="rMono" hidden></p>
       <div class="score"><span class="label" id="rScoreLabel">逃走時間</span><b id="rScore">0:00.0</b><em id="rRank"></em></div>
       <div class="result">
@@ -651,6 +665,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         <button class="pick" data-tut="1" type="button"><b>ステージ1</b><span><i>走る・ダッシュ・</i><i>爆弾・黄色い鬼・</i><i>「!」を踏む</i></span></button>
         <button class="pick" data-tut="2" type="button"><b>ステージ2</b><span><i>補給アイテム・</i><i>バリア鬼・黒い鬼・</i><i>40体ごとの支給</i></span></button>
         <button class="pick" data-tut="3" type="button"><b>ステージ3</b><span><i>落とし穴</i></span></button>
+        <button class="pick" data-tut="w" type="button"><b>隔離区画</b><span><i>ワープポイント</i></span></button>
       </div>
       <div class="row"><button class="ghost" id="tutBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -770,7 +785,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   ];
   const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
   let daily = null;   // the night being played on stage 4
-  const recKey = n => n === 4 && daily ? daily.key : n;
+  const recKey = n => n === 4 && daily ? daily.key : n === 3 && mapSkin === 'd2' ? 'n3' : n;
   const stageLabel = n => n === 4 && daily ? '生存課題 ' + daily.name : 'ステージ' + n;
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
   // the daily nights open with stage 3, once stage 2 has been escaped
@@ -813,7 +828,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   }
   async function saveRecords() {
     try { localStorage.setItem(REC_KEY, JSON.stringify(records)); } catch (e) {}
-    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 } }); } catch (e) {} }
+    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {} }); } catch (e) {} }
   }
   // records this stage's result; returns its rank (1-3) within that stage, or 0
   function addRecord(n, rec) {
@@ -835,7 +850,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         const d = snap.data() || {};
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
-          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       if (strikeOld()) saveRecords();
@@ -885,7 +900,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
     async function syncDaily() {
       if (!db || !me || !me.name || !canWrite) return;
-      for (const d of DAILY) {
+      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : [])]) {
         const b = bestOf(d.key); if (!(b > 0)) continue;
         let cur = boardDocs[d.board];
         if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
@@ -993,7 +1008,9 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       return li;
     }
     // stage 3 and the three daily nights, one tab each
-    const boards = () => [['players', STAGE_LABELS[2][1], 'ステージ3'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    // the endless stage by its name alone (it needs no "ステージ3")
+    const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
+    const boards = () => [['players', endless(), endless()], ...(MAP_CHOICE ? [['loop', MAP_NAMES.d2[2], MAP_NAMES.d2[2]]] : []), ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -1016,7 +1033,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         const q = await db.collection(board).where('best', '>', 0).orderBy('best', 'desc').limit(100).get();
         if ($('rankLabel').textContent.indexOf(info[1]) !== 0) return;   // another tab was opened meanwhile
         list.textContent = '';
-        if (q.empty) { msg(`まだ記録がありません。${board === 'players' ? 'ステージ3' : info[1]}で最初の記録を残そう。`); }
+        if (q.empty) { msg(`まだ記録がありません。${info[1]}で最初の記録を残そう。`); }
         let no = 0, prev = null, inTop = false;
         q.docs.forEach((d, i) => {
           const p = d.data() || {};
@@ -1421,6 +1438,12 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
   const mergeStar = (a, b) => ({ e: Math.max((a && a.e) || 0, (b && b.e) || 0), s: Math.max((a && a.s) || 0, (b && b.s) || 0) });
+  // the result screen's stars: how many this night earned (-1: not a survival night), and their glints
+  let starGot = -1;
+  const STAR_SHOW = 10, STAR_GAP = 0.28;
+  function starChime() {
+    for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
+  }
   const starPrice = it => Math.round(it.price / 4);   // 200円 -> ★50, 500円 -> ★125
   const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
   // two copies (this device and the saved one): everything either owns, and this device's choices first
@@ -1648,6 +1671,22 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       const n = Math.floor(Math.random() * 3);
       for (let k = 0; k < n; k++) windows.push([x + 0.18 + Math.random() * 0.56, y + 0.22 + Math.random() * 0.5]);
     }
+    warps = mapSkin === 'd2' ? makeWarps() : [];
+  }
+  // two street tiles at least half the map apart (never a pit, a goal or the start crossing)
+  function makeWarps() {
+    const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4, c = [];
+    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+      const i = idx(x, y);
+      if (grid[i] === 1 || goalT[i] || holes.some(h => Math.hypot(h.x - x - 0.5, h.y - y - 0.5) < 2.5) || Math.hypot(x - sx, y - sy) < 3) continue;
+      c.push([x, y]);
+    }
+    const need = Math.max(8, Math.hypot(COLS, ROWS) / 2);
+    for (let k = 0; k < 400 && c.length; k++) {
+      const a = c[Math.floor(Math.random() * c.length)], b = c[Math.floor(Math.random() * c.length)];
+      if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b].map(([x, y]) => ({ x: x + 0.5, y: y + 0.5, cool: 0, flash: 0 }));
+    }
+    return [];
   }
 
   function resize() {
@@ -1961,6 +2000,9 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   let shake = 0, flash = 0, caughtTimer = 0, beatTimer = 0, nextItem = 0, danger = 0;
   const PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45, PIT_FLASH = 1.5;
   let holes = [], falls = [], pendingStart = 2, rockets = [];
+  // warp points (the DEADLINE2 maps): stand on one for 0.5 sec to come out of the other; both rest a minute and a half after a jump
+  let warps = [];
+  const WARP_HOLD = 0.5, WARP_COOL = 90, WARP_R = 0.46;
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
 
@@ -2126,6 +2168,25 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         else if (d < 0.46) h.armed = true;
         else if (h.armed && d > 0.46 + P.r) { h.armed = false; h.open = true; h.left = PIT_OPEN; h.ate = false; fx.pitOpen(); }
       } else if (d < 0.46 - 0.06) { if (tut) { P.x = bx; P.y = by; P.vx = P.vy = 0; continue; } fallIn(h); return; }  // the barrier does not help here (the tutorial's pit is a wall)
+    }
+    if (warps.length === 2) {
+      for (const w of warps) { if (w.flash > 0) w.flash -= dt; if (w.cool > 0) { w.cool -= dt; if (w.cool <= 0) { w.flash = PIT_FLASH; if (w === warps[0]) { tone(1175, 0.12, 'triangle', 0.04); setTimeout(() => tone(1568, 0.16, 'triangle', 0.04), 110); } } } }
+      // the point the runner came out of only works again once they have stepped off it
+      if (P.warpAway && Math.hypot(P.x - P.warpAway.x, P.y - P.warpAway.y) > WARP_R + 0.2) P.warpAway = null;
+      const on = !(warps[0].cool > 0) && warps.find(w => w !== P.warpAway && Math.hypot(P.x - w.x, P.y - w.y) < WARP_R);
+      if (on) {
+        if (!P.warpT) tone(660, 0.5, 'sine', 0.035, 1320);
+        P.warpT = (P.warpT || 0) + dt; P.warpOn = on;
+        if (P.warpT >= WARP_HOLD) {
+          const to = warps.find(w => w !== on);
+          for (const [x, y] of [[on.x, on.y], [to.x, to.y]]) for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 4; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: i % 2 ? '#3fe0ff' : '#ff4fd8' }); }
+          P.x = to.x; P.y = to.y; P.vx = P.vy = 0; P.hist = []; P.trail = []; P.warpAway = to;
+          for (const w of warps) w.cool = WARP_COOL;
+          P.warpT = 0; P.warpOn = null; flash = Math.max(flash, 0.3);
+          tone(1320, 0.18, 'sine', 0.05, 330); setTimeout(() => tone(440, 0.25, 'sine', 0.05, 1760), 90);
+          if (tut) tut.warped = true;
+        }
+      } else { P.warpT = 0; P.warpOn = null; }
     }
     // remember actual travel direction for buffered turns
     // footsteps for the oni to follow
@@ -2341,6 +2402,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('cKills').textContent = kills + '体';
     $('cTotal').textContent = total.toFixed(1) + '秒';
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
+    if (mapSkin === 'd2') records.mclear = Object.assign(records.mclear || {}, { [stageN]: true });
     const crank = addRecord(stageN, { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
     mono('cMono', stageN, 'clear');
     showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
@@ -2443,9 +2505,15 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     // a survival night pays a star for every full minute survived
-    { const el = $('rStars'), got = stageN === 4 ? Math.floor(t / 60) : 0; el.hidden = stageN !== 4;
+    { const got = stageN === 4 ? Math.floor(t / 60) : 0; $('rStars').hidden = stageN !== 4;
       if (got) { starW().e += got; saveRecords(); }
-      if (stageN === 4) el.textContent = got ? `★ +${got} 獲得  (所持 ★${starHave()})` : `1分生き残るごとに★1。所持 ★${starHave()}`; }
+      starGot = stageN === 4 ? got : -1;
+      const row = $('rStarRow'); row.textContent = '';
+      // one star per minute, landing one after another once the screen is up (a long night: the rest as a count)
+      for (let i = 0; i < Math.min(got, STAR_SHOW); i++) { const e = document.createElement('i'); e.style.animationDelay = (0.25 + i * STAR_GAP) + 's'; row.append(e); }
+      if (got > STAR_SHOW) { const e = document.createElement('b'); e.textContent = '+' + (got - STAR_SHOW); e.style.animationDelay = (0.25 + STAR_SHOW * STAR_GAP) + 's'; row.append(e); }
+      const tx = $('rStarTxt'); tx.style.animationDelay = (0.35 + Math.min(got, STAR_SHOW + 1) * STAR_GAP) + 's';
+      tx.textContent = got ? `★ +${got} 獲得 ・ 所持 ★${starHave()}` : `1分生き残るごとに★1 ・ 所持 ★${starHave()}`; }
     $('rScoreLabel').textContent = `${stageLabel(stageN)} 逃走時間`;
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
@@ -2801,6 +2869,26 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     ctx.setTransform(s, 0, 0, s, (ox + sx) * dpr, (oy + sy) * dpr);
     const now = performance.now() / 1000;
 
+    // warp points: a swirl in cyan and magenta while usable, dark while resting (the arc shows the minute running down)
+    for (const w of warps) {
+      const ready = !(w.cool > 0), fl = w.flash > 0 ? w.flash / PIT_FLASH : 0;
+      if (ready) {
+        const a = Math.min(0.9, 0.25 + 0.12 * Math.sin(now * 3) + 0.6 * fl), rr = 0.9 + 0.6 * fl, g = ctx.createRadialGradient(w.x, w.y, 0.2, w.x, w.y, rr);
+        g.addColorStop(0, `rgba(160,90,255,${a})`); g.addColorStop(1, 'rgba(63,224,255,0)');
+        ctx.fillStyle = g; ctx.fillRect(w.x - rr, w.y - rr, rr * 2, rr * 2);
+      }
+      ctx.fillStyle = ready ? '#120a26' : '#16171f'; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R, 0, Math.PI * 2); ctx.fill();
+      if (ready) {
+        ctx.lineWidth = 0.05;
+        for (let i = 0; i < 3; i++) { const a0 = now * 2.6 + i * Math.PI * 2 / 3; ctx.strokeStyle = i % 2 ? 'rgba(255,79,216,0.85)' : 'rgba(63,224,255,0.9)'; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R * (0.35 + 0.2 * i), a0, a0 + 2.1); ctx.stroke(); }
+        ctx.strokeStyle = `rgba(63,224,255,${0.5 + 0.3 * Math.sin(now * 4)})`; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R, 0, Math.PI * 2); ctx.stroke();
+      } else {
+        ctx.strokeStyle = 'rgba(120,130,160,0.35)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R, 0, Math.PI * 2); ctx.stroke();
+        ctx.strokeStyle = 'rgba(63,224,255,0.45)'; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R - 0.08, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - w.cool / WARP_COOL)); ctx.stroke();
+      }
+      // the runner standing on it: the charge fills
+      if (P && P.warpOn === w) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.09; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R + 0.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, P.warpT / WARP_HOLD)); ctx.stroke(); }
+    }
     // pits
     for (const h of holes) {
       const hg = ctx.createRadialGradient(h.x, h.y, 0, h.x, h.y, 0.46);
@@ -3656,7 +3744,10 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const TUT_KEY = REC_KEY + '-tut';
   let tut = null, tutSave = null, tutReplay = 0;
   const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
-  const tutNeed = n => n >= 1 && n <= 3 && (tutReplay === n || !tutSeen()[n]);
+  // the tutorial a stage starts with: its own, or on 隔離区画 the warp points ('w')
+  // (the DEADLINE2 maps: only 隔離区画 has one, the warp points; 電脳都市 and 無限回路 bring nothing new)
+  const tutKeyOf = n => mapSkin === 'd2' ? (n === 1 ? 'w' : null) : n;
+  const tutNeed = n => { const k = tutKeyOf(n); return k != null && (k === 'w' || (n >= 1 && n <= 3)) && (tutReplay === k || !tutSeen()[k]); };
   function tutMark(n) { const s = tutSeen(); s[n] = true; try { localStorage.setItem(TUT_KEY, JSON.stringify(s)); } catch (_) {} }
   // a practice oni comes out of a short ! warning a few streets away
   const tutOni = o => { tut.want = Object.assign({}, o); tut.oni = []; tutWarn(o.at || tutSpot(5, 8), Object.assign({ t: 0.8, tut: true }, o)); };
@@ -3668,6 +3759,11 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     return !(p.x > bx - m && p.x < bx + b.width + m && p.y > by - m && p.y < by + b.height + m);
   }
   const TUT = {
+    w: [
+      { warp: true, say: '隔離区画にはワープポイントがある。乗って0.5秒待つと、もう1つのワープポイントに飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
+      { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
+      { say: '2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
+    ],
     1: [
       { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
       { say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
@@ -3698,7 +3794,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     tutSave = { stock: P.stock, kills, total, bag: bag.slice(), rk: rocketKills };
     let hole = null, hd = 1e9;
     for (const h of holes) { const d = Math.hypot(h.x - COLS / 2, h.y - ROWS / 2); if (d < hd) { hd = d; hole = h; } }
-    tut = { n: stageN, i: -1, steps: TUT[stageN].filter(s => !s.pit || hole), hole, oni: [], run: 0, lx: P.x, ly: P.y };
+    const tk = tutKeyOf(stageN);
+    tut = { n: tk, i: -1, steps: TUT[tk].filter(s => (!s.pit || hole) && (!s.warp || warps.length === 2)), hole, oni: [], run: 0, lx: P.x, ly: P.y };
     for (const s of pending) dropWarn(s);
     pending = []; nextSpawn = nextItem = 1e9; P.nextR = 1e9; P.black2 = true;
     state = 'play'; input.stick = null;
@@ -3725,7 +3822,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     if (tut.refill && P.stock < 1 && !mines.length) P.stock = 1;
     // an open practice pit stays open until it has taken an oni
     if (tut.hole && tut.hole.open && !tut.hole.ate) tut.hole.left = Math.max(tut.hole.left, 5);
-    // …and once used, stays shut a few seconds, not 45
+    // …and once used, stays shut a few seconds, not 45 (a warp point rests a few seconds, not a minute and a half)
+    if (warps[0] && warps[0].cool > 5) { for (const w of warps) w.cool = 5; tut.wcool = true; }
     if (tut.hole && tut.hole.cool > 5) { tut.hole.cool = 5; tut.coolSeen = true; }
     // …and draws in a practice oni that comes near it
     if (tut.hole && tut.hole.open && !tut.hole.ate) for (const e of tut.oni) if (!e.dead && Math.hypot(e.x - tut.hole.x, e.y - tut.hole.y) < 2.2 * Math.sqrt(TUT_U)) { e.lureT = 0.2; e.lureX = tut.hole.x; e.lureY = tut.hole.y; }
@@ -3748,12 +3846,12 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     bgmStop(); newStage(s.stock); startCount();
   }
   const tutQuit = () => { tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
-  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; }
+  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; document.querySelector('#tutPicks [data-tut="w"]').hidden = !MAP_CHOICE; }
   $('tutListBtn').addEventListener('click', () => { tap(); openTutList(); });
   $('tutBackBtn').addEventListener('click', () => { tap(); toTitle(); });
   for (const b of document.querySelectorAll('#tutPicks .pick')) b.addEventListener('click', () => {
     if (state !== 'tutlist') return;
-    tap(); $('tutScreen').hidden = true; tutReplay = +b.dataset.tut; start(tutReplay);
+    tap(); $('tutScreen').hidden = true; const k = b.dataset.tut; tutReplay = k === 'w' ? 'w' : +k; start(k === 'w' ? 1 : +k, undefined, k === 'w' ? 'd2' : 'd1');
   });
   // touch-down and the click that may follow it count once
   let tutTap = 0;
@@ -3835,6 +3933,16 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     }
     P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
   // a street tile on the far side of the pit from the runner, so the oni crosses it on its way
+  // the warp tutorial: the runner starts two tiles from the warp point lower on the map (clear of the banner)
+  function tutWarpPlace() {
+    const w = warps[0].y >= warps[1].y ? warps[0] : warps[1];
+    let at = { x: w.x, y: w.y };
+    for (const [dx, dy] of [[0, 2], [2, 0], [-2, 0], [0, -2], [0, 1], [1, 0], [-1, 0], [0, -1]]) {
+      const x = Math.floor(w.x) + dx, y = Math.floor(w.y) + dy;
+      if (x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1 && !warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1)) { at = { x: x + 0.5, y: y + 0.5 }; break; }
+    }
+    P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; for (const q of warps) { q.cool = 0; q.flash = 0; } tut.lx = P.x; tut.ly = P.y;
+  }
   function tutBeyond(h) {
     let dx = h.x - P.x, dy = h.y - P.y; const m = Math.hypot(dx, dy) || 1; dx /= m; dy /= m;
     let best = null, bs = -1e9;
@@ -3852,9 +3960,12 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   const MAP_NAMES = { d1: ['隔離区画', '電脳都市', '無限回路'], d2: ['隔離区画', '電脳都市', '無限回路'] };
   const MAP_THUMBS = {};
   const MAP_KEY = REC_KEY + '-map';
-  const mapOpen = () => isCleared(1) && isCleared(2);
+  // each DEADLINE2 map opens with the one before it: 隔離区画 once 地下 and 夜の街 are escaped, 電脳都市 once 隔離区画 is,
+  // 無限回路 once 電脳都市 is (records.mclear: the DEADLINE2 maps escaped)
+  const mapOpen = n => n === 1 ? isCleared(1) && isCleared(2) : !!(records.mclear || {})[n - 1];
+  const MAP_LOCK = ['地下と夜の街をクリアで解放', '隔離区画をクリアで解放', '電脳都市をクリアで解放'];
   const mapPicks = () => { try { return JSON.parse(localStorage.getItem(MAP_KEY)) || {}; } catch (_) { return {}; } };
-  const mapPick = n => MAP_CHOICE && n >= 1 && n <= 3 && mapOpen() && mapPicks()[n] === 'd2' ? 'd2' : 'd1';
+  const mapPick = n => MAP_CHOICE && n >= 1 && n <= 3 && mapOpen(n) && mapPicks()[n] === 'd2' ? 'd2' : 'd1';
   const mapName = (n, skin = mapSkin) => MAP_NAMES[skin][Math.min(3, Math.max(1, n)) - 1];
   function mapChoose(n, skin) {
     const p = mapPicks(); p[n] = skin; try { localStorage.setItem(MAP_KEY, JSON.stringify(p)); } catch (_) {}
@@ -3866,14 +3977,14 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const box = $(n === 1 ? 'briefMaps' : 'spMaps'); if (!box) return;
     box.textContent = ''; box.hidden = !MAP_CHOICE;
     if (!MAP_CHOICE) return;
-    const open = mapOpen();
+    const open = mapOpen(n);
     for (const skin of ['d1', 'd2']) {
       const lock = skin === 'd2' && !open, on = mapSkin === skin;
       const b = document.createElement('button'); b.type = 'button'; b.className = 'mapcard' + (on ? ' on' : '') + (lock ? ' locked' : '');
       const im = document.createElement('span'); im.className = 'thumb'; if (MAP_THUMBS[skin + n]) im.style.backgroundImage = `url(${MAP_THUMBS[skin + n]})`;
       const nm = document.createElement('b'); nm.textContent = (lock ? '🔒 ' : '') + mapName(n, skin);
-      const sub = document.createElement('small'); sub.textContent = lock ? '地下と夜の街をクリアで解放' : skin === 'd1' ? 'DEADLINE1' : 'DEADLINE2';
-      b.append(im, nm, sub);
+      b.append(im, nm);
+      if (lock) { const sub = document.createElement('small'); sub.textContent = MAP_LOCK[n - 1]; b.append(sub); }
       b.setAttribute('aria-pressed', String(on));
       b.addEventListener('click', () => { if (lock) { lockedTap(n === 1 ? 1 : n); return; } if (!on) { tap(); mapChoose(n, skin); if (n === 1) $('briefKicker').textContent = 'STAGE 1 ' + mapName(1); else $('spKicker').textContent = `STAGE ${n} ${mapName(n)}`; } });
       box.append(b);
@@ -3881,8 +3992,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
   }
 
   // ---------- flow control ----------
-  function start(n = 1, item) {
-    mapSkin = n <= 3 ? mapPick(n) : 'd1';
+  function start(n = 1, item, skin) {
+    mapSkin = skin || (n <= 3 ? mapPick(n) : 'd1');
     initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
@@ -3911,7 +4022,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     } else if (state === 'caught') {
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
-      if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; titleChime('rTitles'); prepShare('over'); }
+      if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     draw(); hud();
     requestAnimationFrame(frame);
