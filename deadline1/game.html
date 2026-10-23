@@ -558,24 +558,22 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .meter i { background: var(--lamp); }
 
 /* ---- type ---- */
-.kicker { font-family: var(--f-px); font-size: 10px; letter-spacing: .12em; text-shadow: 0 0 8px currentColor; }
+.kicker { font-family: var(--f-px); font-size: 11px; letter-spacing: .12em; text-shadow: 0 0 8px currentColor; }
 h1 { font-family: var(--f-px); font-size: clamp(22px, 5.4vw, 40px); letter-spacing: 0; line-height: 1.2; color: var(--crt-name);
   text-shadow: 0 0 12px rgba(255,176,0,.55), 4px 4px 0 #2a1704; }
 h1 span { color: var(--oni); text-shadow: 0 0 12px rgba(255,59,48,.6), 4px 4px 0 #2a0604; }
 h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px color-mix(in srgb, currentColor 50%, transparent), 3px 3px 0 rgba(0,0,0,.7); }
-.card p { font-size: 13px; line-height: 1.75; }
-.ghost { padding: 10px 16px; font-size: 14px; }
+.card p { line-height: 1.75; }
 .label { letter-spacing: .1em; }
 .time { font-family: var(--f-px); font-size: clamp(20px, 5vw, 30px); color: var(--crt-name); text-shadow: 0 0 10px rgba(255,176,0,.5); }
 .score b { font-family: var(--f-px); font-size: 24px; text-shadow: 0 0 10px rgba(255,176,0,.5); }
 .records h3, .reclists h3 { font-family: var(--f-body); }
 .countdown { font-family: var(--f-px); color: var(--crt-name); text-shadow: 0 0 30px rgba(255,176,0,.85), 6px 6px 0 #000; }
-.mono { border-left-color: var(--lamp); color: var(--crt-hi); font-size: 12px; line-height: 1.6; }
-#briefMsg, #spMsg { font-size: 12px; line-height: 1.6; }
+.mono { border-left-color: var(--lamp); color: var(--crt-hi); }
 .goal.barrier { color: var(--runner); }
 
 /* ---- buttons ---- */
-.go { border-radius: 2px; border: 2px solid var(--crt-name); background: var(--lamp); color: #1a0e00; font-family: var(--f-body); font-size: 16px; letter-spacing: .04em; padding: 11px 22px;
+.go { border-radius: 2px; border: 2px solid var(--crt-name); background: var(--lamp); color: #1a0e00; font-family: var(--f-body); letter-spacing: .04em;
   animation: crtglow 1.4s ease-in-out infinite; }
 .go:hover, .go:focus-visible { background: #ffc634; }
 .go.alt, .go.tutlbtn { background: #140c04; color: var(--crt-name); border-color: var(--crt-dim); animation: none; box-shadow: none; }
@@ -606,14 +604,14 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 .crtft { padding-top: 8px; font-family: var(--f-px); font-size: 8px; color: var(--crt-dim); text-align: center; letter-spacing: .06em; flex-shrink: 0; animation: crtblink 1.2s step-end infinite; }
 .idcard { gap: 1px; padding: 4px 4px 9px; margin-bottom: 6px; border: 0; border-bottom: 2px solid var(--line); border-radius: 0; background: none; }
 .idcard .label { display: none; }
-.idcard .whoname, .idcard .whoname.unset { font-size: 14px; color: var(--crt-name); text-shadow: 0 0 6px rgba(255,176,0,.35); }
+.idcard .whoname, .idcard .whoname.unset { font-size: 15px; color: var(--crt-name); text-shadow: 0 0 6px rgba(255,176,0,.35); }
 .idcard .whoname.unset::after { content: none; }
-.idcard .whotitle, .idcard .whotitle.none { font-size: 10px; color: var(--muted); }
+.idcard .whotitle, .idcard .whotitle.none { font-size: 10.5px; color: var(--muted); }
 .idcard .whotitle:not(.none) { color: var(--crt-item); }
 .menu { gap: 0; }
 .mrow, .mrow.daily { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 6px 6px; border: 0; border-radius: 0; background: none; color: var(--crt-item); transition: none; }
 .mrow .ic { display: none; }
-.mrow b { font-size: 13px; }
+.mrow b { font-size: 14px; }
 .mrow small, .mrow.daily small, .mrow.shop small, .mrow.daily.locked small { font-size: 9.5px; color: var(--crt-dim); margin-top: 2px; }
 .mrow:active { transform: none; }
 .mrow:hover, .mrow:focus-visible { color: var(--crt-hi); background: linear-gradient(90deg, rgba(255,176,0,.22), transparent); }
@@ -647,22 +645,26 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 /* the stand-by screens on a landscape phone: smaller type so the whole screen fits without scrolling */
 @media (max-height: 520px) {
   #briefScreen .card, #startPickScreen .card { gap: 6px; max-width: 520px; }
-  #briefScreen h2, #startPickScreen h2 { font-size: 26px; }
-  #briefScreen .kicker, #startPickScreen .kicker { font-size: 8px; }
-  #briefScreen .mono, #startPickScreen .mono { font-size: 10px; line-height: 1.5; padding: 1px 0 1px 8px; }
-  #briefScreen .card p, #startPickScreen .card p, #briefMsg, #spMsg { font-size: 10px; line-height: 1.5; }
-  .mapcard { padding: 3px 5px; } .mapcard .thumb { width: 48px; height: 30px; } .mapcard b { font-size: 12px; } .mapcard small { font-size: 9px; }
+  #briefScreen .mono, #startPickScreen .mono { line-height: 1.5; padding: 1px 0 1px 8px; }
+  #briefScreen .card p, #startPickScreen .card p { line-height: 1.5; }
+  .mapcard { padding: 3px 5px; } .mapcard .thumb { width: 48px; height: 30px; }
   #startPickScreen .picks { gap: 6px; }
   #startPickScreen .pick { padding: 5px 8px; gap: 1px; }
-  #startPickScreen .pick b { font-size: 12px; }
-  #startPickScreen .pick span { font-size: 10px; line-height: 1.35; }
+  #startPickScreen .pick b { font-size: 14px; }
+  #startPickScreen .pick span { line-height: 1.35; }
   .mistog { font-size: 10.5px; padding: 1px 6px; }
   .mislist { margin-top: -4px; }
-  #startPickScreen .ghost, #briefScreen .ghost { padding: 6px 12px; font-size: 12px; }
-  #briefScreen .go { padding: 8px 18px; font-size: 14px; }
+  #startPickScreen .ghost, #briefScreen .ghost { padding: 6px 14px; }
+  #briefScreen .go { padding: 8px 20px; }
   .mislist ol { font-size: 10px; line-height: 1.25; }
   /* the ten missions opened: the runner's words and the item notes step aside for them */
-  #startPickScreen:has(#spMisList:not([hidden])) .mono, #startPickScreen:has(#spMisList:not([hidden])) .pick span { display: none; }
+  #startPickScreen:has(#spMisList:not([hidden])) .mono, #startPickScreen:has(#spMisList:not([hidden])) #spMsg, #startPickScreen:has(#spMisList:not([hidden])) .pick span { display: none; }
+}
+@media (max-height: 380px) {
+  #briefScreen h2, #startPickScreen h2 { font-size: 28px; }
+  #briefScreen .card, #startPickScreen .card { gap: 4px; }
+  #startPickScreen .pick { padding: 4px 8px; }
+  #startPickScreen .picks { gap: 5px; }
 }
 </style>
 <!--/THEME-C-->

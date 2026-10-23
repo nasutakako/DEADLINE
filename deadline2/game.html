@@ -587,10 +587,6 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
 .mrow.daily.todo { animation: neonbreathe 2.6s ease-in-out infinite; }
 @keyframes neonbreathe { 50% { box-shadow: 0 0 10px var(--c), 0 0 24px color-mix(in srgb, var(--c) 55%, transparent), inset 0 0 12px color-mix(in srgb, var(--c) 40%, transparent); } }
 .mrow.daily.locked { animation: none; opacity: .45; box-shadow: none; }
-.starled { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px; border-radius: 6px; background: #120a02; border: 1px solid #3a2208; flex-shrink: 0; }
-.starled span { font-family: var(--f-num); font-size: 10px; letter-spacing: .14em; color: #8b6a3a; }
-.starled b { font-family: var(--f-num); font-size: 20px; line-height: 1; letter-spacing: .12em; color: #ffb000; text-shadow: 0 0 6px #ff8a00, 0 0 14px rgba(255,138,0,.6); }
-.who.inline .starled { flex: 1 1 100%; }
 @media (prefers-reduced-motion: reduce) { .mrow.daily.todo { animation: none; } }
 </style>
 </head>
@@ -625,7 +621,6 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       <button class="mrow rank" id="rankBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8M9 17h6"/></svg></i><span class="mt"><b>ランキング</b><small>世界の逃走時間</small></span></button>
       <button class="mrow shop" id="shopBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><span class="mt"><b>ショップ</b><small id="mShopSub"></small></span></button>
     </div>
-    <div class="starled"><span>STAR</span><b id="whoStarLed">000</b></div>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
   <div class="padinfo" id="padInfo">
@@ -911,7 +906,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         let done = 0; try { done = misState().done.length; } catch (e) {}
         b.classList.toggle('todo', ok && done < 10);
         $('m4Sub').textContent = ok ? `${DAILY[dailyToday()].name}\nミッション ${done}/10` : '🔒 ステージ2で解放';
-        try { $('mShopSub').textContent = `★ ${starHave()}`; $('whoStarLed').textContent = String(starHave()).padStart(3, '0'); } catch (e) {}
+        try { $('mShopSub').textContent = `★ ${starHave()}`; } catch (e) {}
         try { const wc = $('whoCredit'); if (wc) wc.textContent = String(starHave()).padStart(2, '0'); } catch (e) {}
         if (!ok) locked.push('生存課題はステージ2をクリアすると解放');
         continue;
