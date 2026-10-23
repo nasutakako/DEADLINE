@@ -1,0 +1,6 @@
+/* DEADLINE1's faces, bundled with the app (cut down to the game's own text, kana and JIS level-1 kanji) */
+@font-face { font-family: "Dela Gothic One"; src: url("dela.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "DotGothic16"; src: url("dot.woff2") format("woff2"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Zen Kaku Gothic New"; src: url("zen-500.woff2") format("woff2"); font-weight: 500; font-display: swap; }
+@font-face { font-family: "Zen Kaku Gothic New"; src: url("zen-700.woff2") format("woff2"); font-weight: 700; font-display: swap; }
+@font-face { font-family: "Azeret Mono"; src: url("azeret.woff2") format("woff2"); font-weight: 500 700; font-display: swap; }

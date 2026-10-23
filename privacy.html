@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DEADLINE プライバシーポリシー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* A single reading column in the games' own night palette (one dark look on purpose, like the site's top page).
+   Articles are numbered because a policy is cited by its article. */
+:root {
+  --night: #0c0f16;
+  --panel: #141823;
+  --line: #262c3b;
+  --ink: #e8ebf2;
+  --muted: #9aa2b6;
+  --oni: #ff3b30;
+  --lamp: #ffcf5a;
+  --f-display: "Dela Gothic One", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--night); color: var(--ink); font-family: var(--f-body); font-weight: 500;
+  font-size: 15px; line-height: 1.85;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  background-image: radial-gradient(ellipse at 50% -20%, rgba(255,59,48,.14), transparent 60%);
+}
+main { max-width: 42em; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.back { color: var(--muted); font-size: 13px; text-decoration: none; }
+.back:hover, .back:focus-visible { color: var(--ink); }
+header { display: grid; gap: 8px; }
+.kicker { font-family: var(--f-display); font-size: 13px; letter-spacing: .14em; color: var(--oni); }
+h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(26px, 6vw, 38px); line-height: 1.25; margin: 0; text-wrap: balance; }
+.meta { color: var(--muted); font-size: 13px; margin: 0; }
+.summary { margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-left: 3px solid var(--lamp); border-radius: 6px; background: var(--panel); }
+section { display: grid; gap: 8px; }
+h2 { font-family: var(--f-display); font-weight: 400; font-size: 19px; line-height: 1.4; margin: 0; display: flex; gap: 10px; align-items: baseline; }
+h2 small { font-family: var(--f-body); font-weight: 700; font-size: 12px; letter-spacing: .1em; color: var(--muted); }
+p { margin: 0; }
+ul { margin: 0; padding-left: 1.3em; display: grid; gap: 4px; }
+li::marker { color: var(--muted); }
+b { font-weight: 700; }
+.table { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.6; min-width: 30em; }
+th, td { text-align: left; vertical-align: top; padding: 9px 10px; border-bottom: 1px solid var(--line); }
+th { font-weight: 700; color: var(--muted); font-size: 12px; letter-spacing: .06em; }
+td:first-child { white-space: nowrap; font-weight: 700; }
+.fill { color: var(--lamp); }
+a { color: var(--ink); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+footer { border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted); font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="https://nasutakako.github.io/DEADLINE/">← DEADLINE のトップへ</a>
+  <header>
+    <span class="kicker">DEADLINE</span>
+    <h1>プライバシーポリシー</h1>
+    <p class="meta">制定日 2026年10月23日 ・ 対象: DEADLINE1(App Store 版・ブラウザ版)、DEADLINE2、3D 版</p>
+  </header>
+
+  <p class="summary">DEADLINE が外に送るのは、世界ランキングのための<b>プレイヤー名と逃走時間の記録</b>だけです。広告、行動の分析、追跡はしていません。遊んだ記録や★は、あなたの端末の中にだけ保存されます。</p>
+
+  <section>
+    <h2><small>第1条</small>運営者</h2>
+    <p>DEADLINE は個人の開発者 <span class="fill">(運営者名を記入)</span> が運営しています。お問い合わせは第9条の連絡先までお願いします。</p>
+  </section>
+
+  <section>
+    <h2><small>第2条</small>サーバーに送る情報</h2>
+    <p>名前を登録して世界ランキングに参加したときだけ、次の情報を送ります。名前を登録しなければ、何も送りません。</p>
+    <div class="table">
+      <table>
+        <thead><tr><th>情報</th><th>内容</th><th>使いみち</th></tr></thead>
+        <tbody>
+          <tr><td>プレイヤー名</td><td>あなたが入力した10文字までの名前</td><td>ランキングに表示する。同じ名前を2人が使えないようにする</td></tr>
+          <tr><td>ランキングの記録</td><td>終わらない夜・無限回路・生存課題の最高逃走時間、記録した日時、装備している称号</td><td>ランキングの順位を出す</td></tr>
+          <tr><td>匿名の識別番号</td><td>Firebase 匿名認証が発行する番号。メールアドレス、電話番号、Apple ID は使いません</td><td>自分の記録を自分だけが書き換えられるようにする</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section>
+    <h2><small>第3条</small>端末の中だけに保存する情報</h2>
+    <p>次の情報はあなたの端末(ブラウザまたはアプリ)の中にだけ保存し、サーバーには送りません。</p>
+    <ul>
+      <li>各ステージの記録、撃破数、獲得した称号</li>
+      <li>★の数、ショップで手に入れたアイテム、装備</li>
+      <li>今日のミッションの進み具合、チュートリアルを見たかどうか、つぶやきの進み具合</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><small>第4条</small>公開される範囲</h2>
+    <p>世界ランキングに載せたプレイヤー名、称号、逃走時間は、DEADLINE を遊ぶ誰でも見ることができます。<b>名前には本名、住所、学校名など、あなたを特定できる情報を入れないでください。</b></p>
+  </section>
+
+  <section>
+    <h2><small>第5条</small>保存先と第三者への提供</h2>
+    <p>第2条の情報は Google LLC が提供する Firebase(Cloud Firestore、Firebase Authentication)に保存します。データは日本国外(主にアメリカ合衆国)のサーバーに置かれることがあります。法令にもとづく場合を除き、第三者に提供したり売ったりすることはありません。</p>
+  </section>
+
+  <section>
+    <h2><small>第6条</small>アプリ内課金</h2>
+    <p>App Store 版での★やアイテムの購入は、Apple の App Store のアプリ内課金で処理されます。カード番号などの支払い情報を運営者が受け取ることはありません。購入の確認には、Apple から届く購入の記録だけを使います。</p>
+  </section>
+
+  <section>
+    <h2><small>第7条</small>削除のしかた</h2>
+    <ul>
+      <li><b>名前とランキングの記録</b>: タイトル画面で自分の名前を押し、「名前とランキングの記録を削除」を押すと、サーバーから消えます。</li>
+      <li><b>端末の中の記録</b>: アプリを削除するか、ブラウザのサイトデータを消すと消えます。</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><small>第8条</small>このポリシーの変更</h2>
+    <p>内容を変えるときは、このページを更新し、制定日の下に改定日を記します。</p>
+  </section>
+
+  <section>
+    <h2><small>第9条</small>お問い合わせ</h2>
+    <p>連絡先: <span class="fill">(問い合わせ用のメールアドレスを記入)</span></p>
+    <p>遊び方や困ったときは <a href="https://nasutakako.github.io/DEADLINE/support.html">サポートページ</a> をご覧ください。</p>
+  </section>
+
+  <footer>© DEADLINE</footer>
+</main>
+
+</body>
+</html>

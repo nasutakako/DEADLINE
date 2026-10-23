@@ -21,7 +21,8 @@ service cloud.firestore {
         && (!('title' in request.resource.data) || (request.resource.data.title is string && request.resource.data.title.size() <= 20))
         // the name on the record must be one this player owns
         && get(/databases/$(database)/documents/games/$(game)/names/$(request.resource.data.key)).data.owner == request.auth.uid;
-      allow delete: if false;
+      // a player can take their own record off (the name and ranking deletion in the game)
+      allow delete: if okGame(game) && board in ['players', 'loop', 'daily1', 'daily2', 'daily3'] && signedIn() && request.auth.uid == uid;
     }
 
     // games/<game>/names/<key>: { owner, name } — one owner per name

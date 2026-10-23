@@ -1,0 +1,11 @@
+{
+  "appId": "com.example.deadline1",
+  "appName": "DEADLINE1",
+  "webDir": "www",
+  "backgroundColor": "#07080d",
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false,
+    "backgroundColor": "#07080d"
+  }
+}

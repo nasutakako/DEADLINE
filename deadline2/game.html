@@ -381,7 +381,9 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shophead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .shophead h2 { margin: 0; font-size: clamp(22px, 4vw, 32px); color: #ff9bd6; }
 .shopnote { font-size: 12px; color: var(--muted); }
-.shopclose { margin-left: auto; padding: 8px 16px; }
+.shopclose { padding: 8px 16px; }
+.shoprestore { margin-left: auto; padding: 8px 12px; font-size: 12px; }
+.shopmsg { flex-basis: 100%; font-size: 12px; color: var(--lamp); }
 .shopbody { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 36%); gap: 12px; }
 .shoplist { min-height: 0; overflow-y: auto; display: grid; align-content: start; gap: 14px; padding: 2px 4px 2px 2px; overscroll-behavior: contain; }
 .shopsec h3 { margin: 0 0 6px; font-size: 13px; letter-spacing: .08em; color: var(--ink); font-weight: 700; display: flex; align-items: baseline; gap: 8px; }
@@ -438,6 +440,11 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .mislist li.on { color: var(--ink); } .mislist li.done { color: var(--lamp); text-decoration: line-through; text-decoration-color: rgba(255,207,90,.55); }
 .mislist li.done span { text-decoration: none; }
 @media (max-width: 520px) { .mislist ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
+/* erasing the name: a quiet line under the card, red once it asks to be sure */
+.namedel { align-self: flex-start; padding: 4px 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.namedel.arm { color: var(--oni); font-weight: 700; }
+.card p.legal { margin: 0; font-size: 12px; color: var(--muted); }
+.legal a { color: var(--muted); text-underline-offset: 3px; }
 .stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .stargain[hidden] { display: none; }
 .sgrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
@@ -582,6 +589,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       <input class="namein" id="nameIn" type="text" maxlength="10" autocomplete="off" spellcheck="false" placeholder="10文字まで" aria-label="プレイヤー名">
       <span class="nameerr" id="nameErr" role="status"></span>
       <div class="row"><button class="go" id="nameOk" type="button">登録</button><button class="ghost" id="nameCancel" type="button" hidden>やめる</button></div>
+      <button class="namedel" id="nameDel" type="button" hidden>名前とランキングの記録を削除</button>
+      <p class="legal"><a href="https://nasutakako.github.io/DEADLINE/privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a> ・ <a href="https://nasutakako.github.io/DEADLINE/support.html" target="_blank" rel="noopener">サポート</a></p>
     </div>
   </div>
 
@@ -609,7 +618,8 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         <h2>ショップ</h2>
         <div class="ranktabs" id="shopTabs" role="tablist"></div>
         <span class="shopstars" id="shopStars"></span><span class="shopnote">★は生存課題で獲得できます</span>
-        <button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
+        <button class="ghost shoprestore" id="shopRestore" type="button">購入を復元</button><button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
+        <span class="shopmsg" id="shopMsg" role="status" hidden></span>
       </div>
       <div class="shopbody">
         <div class="shoplist" id="shopList"></div>
@@ -998,6 +1008,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
       $('nameIn').value = me && me.name || '';
       $('nameErr').textContent = '';
       firstAsk = !!first; $('nameCancel').hidden = false; $('nameCancel').textContent = first ? 'あとで' : 'やめる';
+      delArm = false; $('nameDel').hidden = !(me && me.name); $('nameDel').textContent = '名前とランキングの記録を削除'; $('nameDel').classList.remove('arm');
       ui.title.hidden = true; $('nameScreen').hidden = false;
       setTimeout(() => { try { $('nameIn').focus(); } catch (e) {} }, 50);
     }
@@ -1028,6 +1039,22 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
         if (e && e.code === 'invalid_argument') { canWrite = false; paint(); closeName(); }
         else err.textContent = 'うまく登録できませんでした。もう一度試してね';
       } finally { ok.disabled = false; }
+    }
+    // the player's name and every ranking record of theirs, taken off the server (the play records on this device
+    // stay); the first press only asks to be sure
+    let delArm = false;
+    async function erase() {
+      const b = $('nameDel'), err = $('nameErr');
+      if (!delArm) { delArm = true; b.textContent = '本当に削除する(元には戻せません)'; b.classList.add('arm'); err.textContent = '名前と、すべてのランキングの記録が消えます。'; return; }
+      b.disabled = true; err.textContent = '削除中…';
+      try {
+        for (const bd of ['players', 'loop', 'daily1', 'daily2', 'daily3']) { try { await db.doc(bd + '/' + uid).delete(); } catch (e) {} }
+        if (me && me.key) await db.doc('names/' + me.key).delete();
+        me = null; for (const k in boardDocs) delete boardDocs[k];
+        lsSet(NAME_LS, ''); lsSet(LATER_LS, '1');
+        paint(); closeName(); tap();
+      } catch (e) { err.textContent = 'うまく削除できませんでした。通信状態を確認してね'; }
+      finally { b.disabled = false; delArm = false; b.classList.remove('arm'); b.textContent = '名前とランキングの記録を削除'; }
     }
     const fmt = s => fmtTime(+s || 0);
     function row(no, p, mine) {
@@ -1086,6 +1113,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('rankBtn').addEventListener('click', () => { tap(); openRank('players'); });
     $('rankClose').addEventListener('click', () => { tap(); $('rankScreen').hidden = true; ui.title.hidden = false; });
     $('nameOk').addEventListener('click', claim);
+    $('nameDel').addEventListener('click', () => { tap(); erase(); });
     // put off on the first visit: not asked again on this device; the name button on the title still opens it
     $('nameCancel').addEventListener('click', () => { tap(); if (firstAsk) lsSet(LATER_LS, '1'); closeName(); });
     $('nameIn').addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Enter' && !e.isComposing) claim(); });
@@ -1633,6 +1661,33 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     $('shopStars').textContent = `★ ${starHave()}`;
     bgmStart(SONGS.shop);
   }
+  // ---------- purchases: every paid thing goes through here (the items priced in 円 and the ★ packs). On the site
+  // and claude.ai they are free while testing; the App Store build sets window.DEADLINE_IAP (StoreKit) and they are
+  // bought for real. Product ids: deadline1.item.<item id> (kept for good, restorable), deadline1.stars.<count> (used up)
+  const PRODUCT = { item: id => 'deadline1.item.' + id, pack: n => 'deadline1.stars.' + n };
+  const Store = {
+    live: () => !!window.DEADLINE_IAP,
+    // the App Store's own price for a product (in the player's currency), or null before it is known
+    price: pid => (window.DEADLINE_IAP && window.DEADLINE_IAP.price(pid)) || null,
+    // resolves { ok } (ok false: cancelled or failed, with msg to show)
+    async buy(pid) {
+      if (!window.DEADLINE_IAP) return { ok: true };
+      try { return await window.DEADLINE_IAP.buy(pid); } catch (e) { return { ok: false, msg: '購入できませんでした。もう一度試してね' }; }
+    },
+    // resolves the product ids this Apple ID has bought for good
+    async restore() { return window.DEADLINE_IAP ? window.DEADLINE_IAP.restore() : null; },
+  };
+  function shopSay(t) { const m = $('shopMsg'); m.textContent = t; m.hidden = !t; }
+  $('shopRestore').addEventListener('click', async () => {
+    tap();
+    if (!Store.live()) { shopSay('購入の復元は App Store 版で使えます(いまはテスト中のため、すべて無料で手に入ります)'); return; }
+    shopSay('復元中…');
+    try {
+      const ids = await Store.restore() || [], sd = shopData(); let n = 0;
+      for (const pid of ids) { const id = pid.startsWith('deadline1.item.') ? pid.slice(15) : null; if (id && !sd.owned.includes(id)) { sd.owned.push(id); n++; } }
+      saveRecords(); openShop(); shopSay(n ? `${n}個のアイテムを復元しました` : '復元するアイテムはありませんでした');
+    } catch (e) { shopSay('復元できませんでした。通信状態を確認してね'); }
+  });
   // ★ in packs (4円 a star, like the items: 200円 = ★50); free while testing
   const STAR_PACKS = [50, 100, 250, 500, 750, 1000].map(n => ({ pack: n, yen: n * 4 }));
   function shopPacks(list) {
@@ -1655,13 +1710,18 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const pk = shopSel && shopSel.pack ? shopSel : STAR_PACKS[0];
     const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const big = mk('div', 'big'), sw = mk('span', 'sw star', '★'), head = mk('div'), price = mk('div', 'price');
-    price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
+    const pp = Store.price(PRODUCT.pack(pk.pack));
+    if (Store.live()) price.textContent = pp || pk.yen.toLocaleString() + '円';
+    else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
     const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★は見た目だけが変わるアイテムとの交換に使える(★50・★125)。生存課題のミッションでも毎日10個まで集められる。'));
-    const act = mk('div', 'shopact'), btn = mk('button', 'go', '無料で受け取る（テスト中）'); btn.type = 'button';
-    btn.addEventListener('click', () => {
-      tap(); starW().e += pk.pack; saveRecords(); openShop();
+    const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
+    btn.addEventListener('click', async () => {
+      tap(); btn.disabled = true;
+      const r = await Store.buy(PRODUCT.pack(pk.pack));
+      if (!r.ok) { btn.disabled = false; shopSay(r.msg || ''); return; }
+      starW().e += pk.pack; saveRecords(); openShop(); shopSay('');
       for (let i = 0; i < 4; i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, i * 90);
     });
     act.append(btn, mk('span', 'state', `所持 ★${starHave()}`));
@@ -1679,7 +1739,7 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const price = mk('div', 'price');
     if (!it.id) price.textContent = '無料';
     else if (have) price.textContent = '所持しています';
-    else if (SHOP_FX[it.id]) { price.append(mk('s', null, it.price + '円'), document.createTextNode('いまは無料')); }
+    else if (SHOP_FX[it.id]) { if (Store.live()) price.textContent = Store.price(PRODUCT.item(it.id)) || it.price + '円'; else price.append(mk('s', null, it.price + '円'), document.createTextNode('いまは無料')); }
     else price.textContent = `★${starPrice(it)} で交換（所持 ★${starHave()}）`;
     head.append(mk('div', 'cat', it.cat.label), mk('h3', null, it.name), price);
     big.append(sw, head);
@@ -1699,19 +1759,25 @@ button:active { transform: translateY(1px) scale(.98); filter: brightness(1.35);
     const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
     btn.type = 'button';
     const cost = !have && !SHOP_FX[it.id] ? starPrice(it) : 0, short = cost > starHave();
-    btn.textContent = on ? '装備中' : have ? (it.id ? '装備する' : '標準に戻す') : cost ? (short ? `★があと${cost - starHave()}個たりない` : `★${cost}で交換して装備`) : '無料で手に入れて装備（テスト中）';
+    btn.textContent = on ? '装備中' : have ? (it.id ? '装備する' : '標準に戻す') : cost ? (short ? `★があと${cost - starHave()}個たりない` : `★${cost}で交換して装備`) : Store.live() ? `${Store.price(PRODUCT.item(it.id)) || it.price + '円'}で購入して装備` : '無料で手に入れて装備（テスト中）';
     btn.disabled = on || (cost > 0 && short);
-    btn.addEventListener('click', () => {
-      tap(); const s2 = shopData();
-      if (it.id && !s2.owned.includes(it.id)) { if (cost) starW().s += cost; s2.owned.push(it.id); }   // the items with an effect: free while testing
-      s2.eq[it.cat.k] = it.id; saveRecords(); openShop();
+    btn.addEventListener('click', async () => {
+      tap();
+      if (it.id && !shopData().owned.includes(it.id) && !cost) {   // an item priced in 円: bought through the store (free while testing)
+        btn.disabled = true;
+        const r = await Store.buy(PRODUCT.item(it.id));
+        if (!r.ok) { btn.disabled = false; shopSay(r.msg || ''); return; }
+      }
+      const s2 = shopData();
+      if (it.id && !s2.owned.includes(it.id)) { if (cost) starW().s += cost; s2.owned.push(it.id); }
+      s2.eq[it.cat.k] = it.id; saveRecords(); openShop(); shopSay('');
     });
     act.append(btn, mk('span', 'state', on ? 'いま使っている' : have ? '持っている' : 'まだ持っていない'));
     box.append(big, ...(clip ? [clip] : []), look, fx, act);
     if (clip) clip.firstChild.play().catch(() => {});
   }
-  $('shopBtn').addEventListener('click', () => { tap(); openShop(); });
-  $('shopClose').addEventListener('click', () => { closeOverlay('shopScreen'); bgmStart(SONGS.title); });
+  $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
+  $('shopClose').addEventListener('click', () => { shopSay(''); closeOverlay('shopScreen'); bgmStart(SONGS.title); });
   $('whoTitle').addEventListener('click', () => { tap(); openTitles(); });
   $('titlesClose').addEventListener('click', () => closeOverlay('titlesScreen'));
   $('recClose').addEventListener('click', () => closeOverlay('recScreen'));

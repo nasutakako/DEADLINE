@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>DEADLINE サポート</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* The same reading column as the privacy page; questions grouped by where in the game they come up. */
+:root {
+  --night: #0c0f16;
+  --panel: #141823;
+  --line: #262c3b;
+  --ink: #e8ebf2;
+  --muted: #9aa2b6;
+  --oni: #ff3b30;
+  --runner: #8fe9ff;
+  --lamp: #ffcf5a;
+  --f-display: "Dela Gothic One", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
+  --f-body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--night); color: var(--ink); font-family: var(--f-body); font-weight: 500;
+  font-size: 15px; line-height: 1.85;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 32px 56px;
+  background-image: radial-gradient(ellipse at 50% -20%, rgba(143,233,255,.12), transparent 60%);
+}
+main { max-width: 42em; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.back { color: var(--muted); font-size: 13px; text-decoration: none; }
+.back:hover, .back:focus-visible { color: var(--ink); }
+header { display: grid; gap: 8px; }
+.kicker { font-family: var(--f-display); font-size: 13px; letter-spacing: .14em; color: var(--runner); }
+h1 { font-family: var(--f-display); font-weight: 400; font-size: clamp(26px, 6vw, 38px); line-height: 1.25; margin: 0; text-wrap: balance; }
+.lead { margin: 0; color: var(--muted); }
+.group { display: grid; gap: 10px; }
+.group > h2 { font-family: var(--f-display); font-weight: 400; font-size: 13px; letter-spacing: .14em; color: var(--muted); margin: 0; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+details { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+summary { cursor: pointer; list-style: none; padding: 12px 40px 12px 14px; font-weight: 700; position: relative; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; position: absolute; right: 14px; top: 10px; font-family: var(--f-display); color: var(--lamp); }
+details[open] summary::after { content: "−"; }
+summary:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; border-radius: 8px; }
+.ans { padding: 0 14px 14px; display: grid; gap: 6px; color: var(--ink); }
+.ans p { margin: 0; }
+b { font-weight: 700; color: var(--lamp); }
+.contact { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--line); border-left: 3px solid var(--oni); border-radius: 6px; background: var(--panel); }
+.contact h2 { font-family: var(--f-display); font-weight: 400; font-size: 19px; margin: 0; }
+.contact p { margin: 0; }
+.fill { color: var(--lamp); }
+a { color: var(--ink); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
+footer { border-top: 1px solid var(--line); padding-top: 16px; color: var(--muted); font-size: 13px; }
+@media (prefers-reduced-motion: no-preference) { details[open] .ans { animation: open .18s ease-out; } @keyframes open { from { opacity: 0; transform: translateY(-3px); } } }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="https://nasutakako.github.io/DEADLINE/">← DEADLINE のトップへ</a>
+  <header>
+    <span class="kicker">DEADLINE</span>
+    <h1>サポート</h1>
+    <p class="lead">よくある質問をまとめています。ここで解決しないときは、いちばん下の連絡先へどうぞ。</p>
+  </header>
+
+  <div class="group">
+    <h2>遊び方</h2>
+    <details>
+      <summary>操作がわからない</summary>
+      <div class="ans"><p>タイトル画面の「チュートリアル一覧」から、ステージごとの練習をいつでもやり直せます。左のスティックで走り、右のボタンで爆弾・アイテム・ダッシュを使います。</p></div>
+    </details>
+    <details>
+      <summary>ステージ2や3が選べない</summary>
+      <div class="ans"><p>ステージ1を脱出するとステージ2が、ステージ2を脱出するとステージ3(終わらない夜)が遊べるようになります。隔離区画・電脳都市・無限回路も、前のマップをクリアすると順に選べるようになります。</p></div>
+    </details>
+    <details>
+      <summary>音が出ない</summary>
+      <div class="ans"><p>一度画面をタップすると音が鳴り始めます。iPhone は本体のマナーモード(消音スイッチ)がオンだと音が出ないことがあります。</p></div>
+    </details>
+  </div>
+
+  <div class="group">
+    <h2>★とミッション</h2>
+    <details>
+      <summary>★はどうやって集める？</summary>
+      <div class="ans"><p>生存課題の<b>今日のミッション</b>を1つ達成するごとに★1。ミッションは毎日10個で、日本時間の0時に入れ替わります。</p></div>
+    </details>
+    <details>
+      <summary>ミッションを達成したのに★が増えない</summary>
+      <div class="ans"><p>★は達成した瞬間に増え、プレイ画面のミッション欄に「達成 ★+1」と出ます。出撃前の画面の「今日のミッション ▼ 一覧」で、達成済みのミッションは金色になっています。ミッションの進み具合はその端末にだけ記録されます。</p></div>
+    </details>
+  </div>
+
+  <div class="group">
+    <h2>ランキングと名前</h2>
+    <details>
+      <summary>ランキングに自分が出ない</summary>
+      <div class="ans"><p>ランキングに載るのは、名前を登録したプレイヤーの「終わらない夜」「無限回路」「生存課題」の記録です。名前はタイトル画面の「名前を登録」から付けられます。通信できないときはランキングを読み込めません。</p></div>
+    </details>
+    <details>
+      <summary>名前を変えたい・消したい</summary>
+      <div class="ans"><p>タイトル画面で自分の名前を押すと変更できます。同じ画面の「名前とランキングの記録を削除」で、名前とランキングの記録をサーバーから消せます。消した記録は元に戻せません。</p></div>
+    </details>
+  </div>
+
+  <div class="group">
+    <h2>購入と機種変更(App Store 版)</h2>
+    <details>
+      <summary>買ったアイテムが消えた</summary>
+      <div class="ans"><p>ショップの「購入を復元」を押すと、同じ Apple ID で円で買ったアイテムが戻ります。</p><p>★のまとめ買いは使うとなくなる種類の購入のため、復元では戻りません。</p></div>
+    </details>
+    <details>
+      <summary>機種変更したら記録や★が引き継がれていない</summary>
+      <div class="ans"><p>ステージの記録、★、ミッションの進み具合は端末の中に保存しているため、新しい端末には引き継がれません。円で買ったアイテムは「購入を復元」で戻せます。</p></div>
+    </details>
+  </div>
+
+  <section class="contact">
+    <h2>お問い合わせ</h2>
+    <p>連絡先: <span class="fill">(問い合わせ用のメールアドレスを記入)</span></p>
+    <p>不具合の連絡には、使っている機種、DEADLINE1/2/3D のどれか、起きたときの画面を書いてもらえると早く直せます。</p>
+    <p><a href="https://nasutakako.github.io/DEADLINE/privacy.html">プライバシーポリシー</a></p>
+  </section>
+
+  <footer>© DEADLINE</footer>
+</main>
+
+</body>
+</html>
