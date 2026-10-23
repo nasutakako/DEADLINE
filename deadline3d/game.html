@@ -388,6 +388,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .mislist li.done span { text-decoration: none; }
 @media (max-width: 520px) { .mislist ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
 @media (pointer: coarse) { .misbox { top: calc(var(--in-t) + 166px); } }
+/* the tutorial points at the button it is teaching: it blinks in the button's own colour */
+.act.tutglow { --g: var(--ink); animation: tutblink .8s step-end infinite; z-index: 1; }
+.act.dash.tutglow { --g: var(--runner); } .act.mine.tutglow { --g: var(--lamp); } .act.itemb.tutglow { --g: #c792ff; }
+@keyframes tutblink { 0% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g) 70%, transparent), 0 0 26px 8px color-mix(in srgb, var(--g) 75%, transparent); background-color: color-mix(in srgb, var(--g) 30%, var(--panel)); border-color: var(--g); }
+  50% { box-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .act.tutglow { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--g) 70%, transparent), 0 0 16px 2px var(--g); } }
 .stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .stargain[hidden] { display: none; }
 .sgrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
@@ -4645,19 +4651,19 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     1: [
       { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
       { say: '画面の右半分をなぞると、見る向きが変わる', set: () => { tut.yaw0 = yaw; }, go: () => Math.abs(yaw - tut.yaw0) > 0.8 },
-      { say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
+      { btn: 'dash', say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
-      { say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
-      { say: '黄色い鬼は先回りする。フェイントで急に向きを変えて引きつけ、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
+      { btn: 'mine', say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
+      { btn: 'mine', say: '黄色い鬼は先回りする。フェイントで急に向きを変えて引きつけ、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
-      { say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
-      { say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
+      { btn: 'item', say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
+      { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
-      { say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = Math.max(e.stun || 0, 3); }, go: tutDown },
-      { say: '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
+      { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = Math.max(e.stun || 0, 3); }, go: tutDown },
+      { btn: 'dash mine', say: '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、3秒加速かランチャーが届く', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
@@ -4691,6 +4697,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
+    tutGlow(st.btn);
     if (st.set) st.set();
   }
   function tutTick(dt) {
@@ -4709,12 +4716,13 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (tut.ok > 0) { tut.ok -= dt; if (tut.ok <= 0) tutNext(); return; }
     if (st.go && st.go()) {
       tut.ok = 0.9; tut.want = null;
-      $('tutBar').classList.add('ok'); $('tutSay').textContent = 'OK!'; $('tutNext').hidden = true;
+      $('tutBar').classList.add('ok'); $('tutSay').textContent = 'OK!'; $('tutNext').hidden = true; tutGlow('');
       tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80);
     } else if (st.go && tut.wait > 15) $('tutNext').hidden = false;  // a way on if it is not happening
   }
   function tutFinish() {
     if (!tut) return;
+    tutGlow('');
     const s = tutSave;
     tutMark(tut.n);
     if (tutReplay) { bgmStop(); toTitle(); openTutList(); return; }
@@ -4722,7 +4730,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     kills = s.kills; total = s.total; bag = s.bag; rocketKills = s.rk;
     bgmStop(); newStage(s.stock); startCount();
   }
-  const tutQuit = () => { tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
+  // the buttons a step teaches ('dash', 'mine', 'item', space-separated) glow until it is done
+  function tutGlow(which) {
+    const on = String(which || '').split(' ');
+    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item]]) if (b) b.classList.toggle('tutglow', on.includes(k));
+  }
+  const tutQuit = () => { tutGlow(''); tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
   function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; }
   $('tutListBtn').addEventListener('click', () => { tap(); openTutList(); });
   $('tutBackBtn').addEventListener('click', () => { tap(); toTitle(); });
