@@ -30,6 +30,8 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+/* iPhone Safari enlarges text when the phone is turned sideways: keep every size as written */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 [hidden] { display: none !important; }
 html, body { height: 100%; margin: 0; overflow: hidden; }
 body { background: var(--night); color: var(--ink); font-family: var(--f-body); font-weight: 500; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
@@ -388,12 +390,43 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .mislist li.done span { text-decoration: none; }
 @media (max-width: 520px) { .mislist ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
 @media (pointer: coarse) { .misbox { top: calc(var(--in-t) + 166px); } }
+/* the title's left column: who you are (name, title) on one card, then the three places to go as one list.
+   Each row: a small coloured mark, its name, and one live line (today's night and missions, stars) */
+.who { gap: 8px; }
+.idcard { display: grid; gap: 3px; padding: 8px 10px 9px; border: 1px solid var(--line); border-radius: 8px; background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); min-width: 0; flex-shrink: 0; }
+.idcard .label { font-size: 9.5px; letter-spacing: .18em; color: var(--muted); }
+.idcard .whoname { border: 0; background: none; padding: 0; font-size: 15px; line-height: 1.25; color: var(--ink); }
+.idcard .whoname.unset { color: var(--lamp); }
+.idcard .whoname.unset::after { content: " ›"; }
+.idcard .whotitle { border: 0; background: none; padding: 0; font-size: 10.5px; line-height: 1.3; color: var(--lamp); }
+.idcard .whotitle.none { color: var(--muted); }
+.idcard .whoname:focus-visible, .idcard .whotitle:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; border-radius: 3px; }
+.menu { display: grid; gap: 6px; flex-shrink: 0; }
+.mrow { --c: var(--ink); display: grid; grid-template-columns: 24px minmax(0, 1fr); align-items: center; gap: 8px; width: 100%; padding: 7px 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); text-align: left; font: inherit; cursor: pointer; transition: border-color .15s, background .15s, transform .15s; }
+.mrow .ic { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; background: color-mix(in srgb, var(--c) 16%, transparent); color: var(--c); }
+.mrow .ic svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mrow .mt { display: grid; min-width: 0; }
+.mrow b { font-size: 13px; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.mrow small { font-size: 10px; line-height: 1.3; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mrow:hover, .mrow:focus-visible { border-color: var(--c); outline: none; }
+.mrow:active { transform: scale(.98); }
+.mrow.daily { --c: var(--runner); border-color: color-mix(in srgb, var(--runner) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--runner) 14%, var(--panel)), var(--panel) 70%); }
+.mrow.daily small { color: color-mix(in srgb, var(--runner) 75%, var(--muted)); white-space: pre-line; letter-spacing: -.02em; }
+.mrow.daily.locked { opacity: .55; }
+.mrow.daily.locked small { color: var(--muted); }
+.mrow.rank { --c: var(--lamp); }
+.mrow.shop { --c: #ff9bd6; }
+.mrow.shop small { color: var(--lamp); }
+.who.inline .idcard { flex: 1 1 140px; }
+.who.inline .menu { flex: 2 1 260px; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
+@media (prefers-reduced-motion: reduce) { .mrow { transition: none; } .mrow:active { transform: none; } }
 /* the tutorial points at the button it is teaching: it blinks in the button's own colour */
-.act.tutglow { --g: var(--ink); animation: tutblink .8s step-end infinite; z-index: 1; }
-.act.dash.tutglow { --g: var(--runner); } .act.mine.tutglow { --g: var(--lamp); } .act.itemb.tutglow { --g: #c792ff; }
-@keyframes tutblink { 0% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--g) 70%, transparent), 0 0 26px 8px color-mix(in srgb, var(--g) 75%, transparent); background-color: color-mix(in srgb, var(--g) 30%, var(--panel)); border-color: var(--g); }
-  50% { box-shadow: none; } }
-@media (prefers-reduced-motion: reduce) { .act.tutglow { animation: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--g) 70%, transparent), 0 0 16px 2px var(--g); } }
+.act.tutglow { animation: tutblink-w .8s step-end infinite; z-index: 1; }
+.act.dash.tutglow { animation-name: tutblink-d; } .act.mine.tutglow { animation-name: tutblink-m; } .act.itemb.tutglow { animation-name: tutblink-i; }
+@keyframes tutblink-w { 0% { box-shadow: 0 0 0 4px rgba(232,235,242,.7), 0 0 26px 8px rgba(232,235,242,.75); background-color: rgba(232,235,242,.3); border-color: #e8ebf2; } 50% { box-shadow: none; } }
+@keyframes tutblink-d { 0% { box-shadow: 0 0 0 4px rgba(143,233,255,.7), 0 0 26px 8px rgba(143,233,255,.75); background-color: rgba(143,233,255,.3); border-color: #8fe9ff; } 50% { box-shadow: none; } }
+@keyframes tutblink-m { 0% { box-shadow: 0 0 0 4px rgba(255,207,90,.7), 0 0 26px 8px rgba(255,207,90,.75); background-color: rgba(255,207,90,.3); border-color: #ffcf5a; } 50% { box-shadow: none; } }
+@keyframes tutblink-i { 0% { box-shadow: 0 0 0 4px rgba(199,146,255,.7), 0 0 26px 8px rgba(199,146,255,.75); background-color: rgba(199,146,255,.3); border-color: #c792ff; } 50% { box-shadow: none; } }
 .stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .stargain[hidden] { display: none; }
 .sgrow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
@@ -456,12 +489,16 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
   <div class="knob" id="knob" hidden></div>
 
   <div class="who float" id="who" hidden>
-    <span class="label">PLAYER</span>
-    <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
-    <button class="whoname unset" id="whoName" type="button">名前を登録</button>
-    <button class="rankbtn" id="rankBtn" type="button">🏆 ランキング</button>
-    <button class="dailybtn" id="start4Btn" type="button">生存課題</button>
-    <button class="shopbtn" id="shopBtn" type="button">🛒 ショップ</button>
+    <div class="idcard">
+      <span class="label">PLAYER</span>
+      <button class="whoname unset" id="whoName" type="button">名前を登録</button>
+      <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
+    </div>
+    <div class="menu">
+      <button class="mrow daily" id="start4Btn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg></i><span class="mt"><b>生存課題</b><small id="m4Sub"></small></span></button>
+      <button class="mrow rank" id="rankBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8M9 17h6"/></svg></i><span class="mt"><b>ランキング</b><small>世界の逃走時間</small></span></button>
+      <button class="mrow shop" id="shopBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><span class="mt"><b>ショップ</b><small id="mShopSub"></small></span></button>
+    </div>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
 
@@ -716,6 +753,16 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     const locked = [];
     for (const n of [2, 3, 4]) {
       const b = $('start' + n + 'Btn'); if (!b) continue;
+      if (n === 4 && b.classList.contains('mrow')) {
+        // the menu row: its live line shows today's night and the missions done, or what opens it
+        const ok = unlocked(4);
+        b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
+        let done = 0; try { done = misState().done.length; } catch (e) {}
+        $('m4Sub').textContent = ok ? `${DAILY[dailyToday()].name}\nミッション ${done}/10` : '🔒 ステージ2で解放';
+        try { $('mShopSub').textContent = `★ ${starHave()}`; } catch (e) {}
+        if (!ok) locked.push('生存課題はステージ2をクリアすると解放');
+        continue;
+      }
       if (n === 4) b.dataset.label = '生存課題\n' + DAILY[dailyToday()].name;
       if (!b.dataset.label) b.dataset.label = b.textContent;
       const ok = unlocked(n);
@@ -1600,7 +1647,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
     if (clip) clip.firstChild.play().catch(() => {});
   }
   $('shopBtn').addEventListener('click', () => { tap(); openShop(); });
-  $('shopClose').addEventListener('click', () => { closeOverlay('shopScreen'); bgmStart(SONGS.title); });
+  $('shopClose').addEventListener('click', () => { closeOverlay('shopScreen'); bgmStart(SONGS.title); updateLocks(); });
   $('whoTitle').addEventListener('click', () => { tap(); openTitles(); });
   $('titlesClose').addEventListener('click', () => closeOverlay('titlesScreen'));
   $('recClose').addEventListener('click', () => closeOverlay('recScreen'));

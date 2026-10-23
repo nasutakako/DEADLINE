@@ -29,6 +29,8 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+/* iPhone Safari enlarges text when the phone is turned sideways: keep every size as written */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 [hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
@@ -568,7 +570,8 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 .score b { font-family: var(--f-px); font-size: 24px; text-shadow: 0 0 10px rgba(255,176,0,.5); }
 .records h3, .reclists h3 { font-family: var(--f-body); }
 .countdown { font-family: var(--f-px); color: var(--crt-name); text-shadow: 0 0 30px rgba(255,176,0,.85), 6px 6px 0 #000; }
-.mono { border-left-color: var(--lamp); color: var(--crt-hi); }
+.mono { border-left-color: var(--lamp); color: var(--crt-hi); font-size: 12px; line-height: 1.6; }
+#briefMsg, #spMsg { font-size: 12px; line-height: 1.6; }
 .goal.barrier { color: var(--runner); }
 
 /* ---- buttons ---- */
@@ -641,6 +644,26 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 .shopbtn { color: var(--lamp); border-color: rgba(255,176,0,.55); background: rgba(255,176,0,.08); }
 
 @media (prefers-reduced-motion: reduce) { .go, .crtft { animation: none !important; } }
+/* the stand-by screens on a landscape phone: smaller type so the whole screen fits without scrolling */
+@media (max-height: 520px) {
+  #briefScreen .card, #startPickScreen .card { gap: 6px; max-width: 520px; }
+  #briefScreen h2, #startPickScreen h2 { font-size: 26px; }
+  #briefScreen .kicker, #startPickScreen .kicker { font-size: 8px; }
+  #briefScreen .mono, #startPickScreen .mono { font-size: 10px; line-height: 1.5; padding: 1px 0 1px 8px; }
+  #briefScreen .card p, #startPickScreen .card p, #briefMsg, #spMsg { font-size: 10px; line-height: 1.5; }
+  .mapcard { padding: 3px 5px; } .mapcard .thumb { width: 48px; height: 30px; } .mapcard b { font-size: 12px; } .mapcard small { font-size: 9px; }
+  #startPickScreen .picks { gap: 6px; }
+  #startPickScreen .pick { padding: 5px 8px; gap: 1px; }
+  #startPickScreen .pick b { font-size: 12px; }
+  #startPickScreen .pick span { font-size: 10px; line-height: 1.35; }
+  .mistog { font-size: 10.5px; padding: 1px 6px; }
+  .mislist { margin-top: -4px; }
+  #startPickScreen .ghost, #briefScreen .ghost { padding: 6px 12px; font-size: 12px; }
+  #briefScreen .go { padding: 8px 18px; font-size: 14px; }
+  .mislist ol { font-size: 10px; line-height: 1.25; }
+  /* the ten missions opened: the runner's words and the item notes step aside for them */
+  #startPickScreen:has(#spMisList:not([hidden])) .mono, #startPickScreen:has(#spMisList:not([hidden])) .pick span { display: none; }
+}
 </style>
 <!--/THEME-C-->
 
