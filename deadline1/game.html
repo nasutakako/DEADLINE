@@ -4494,14 +4494,17 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // (now and then the runner drops a bomb, dashes, or uses an item, drawn the way the game draws them)
   let demo = null;
   // the chase keeps to the middle of the map, the part the slow zoom always shows and the name column does not cover
-  const dwalk = (x, y) => walk(x, y) && x >= Math.floor(COLS * 0.24) && x <= Math.ceil(COLS * 0.9) && y >= Math.floor(ROWS * 0.14) && y <= Math.ceil(ROWS * 0.86);
+  // (its edges are on streets, every 4th tile, so the edge of the area is a road round it, not a dead end)
+  const dbox = () => [Math.ceil(COLS * 0.24 / 4) * 4, Math.floor(COLS * 0.92 / 4) * 4, Math.ceil(ROWS * 0.12 / 4) * 4, Math.floor(ROWS * 0.88 / 4) * 4];
+  const dwalk = (x, y) => { const [x0, x1, y0, y1] = demo && demo.box || dbox(); return walk(x, y) && x >= x0 && x <= x1 && y >= y0 && y <= y1; };
   function demoInit() {
+    demo = null;
     const open = [];
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (dwalk(x, y)) open.push([x, y]);
     if (open.length < 20) { demo = null; return; }
     const pick = () => open[Math.floor(Math.random() * open.length)];
     const mk = (sp, kind) => { const [x, y] = pick(); return { x: x + 0.5, y: y + 0.5, cx: x, cy: y, tx: x, ty: y, vx: 1, vy: 0, sp, kind, born: performance.now() / 1000 }; };
-    demo = { grid, open, pick, r: mk(3.3, 'runner'), oni: [mk(2.7, 'oni'), mk(2.9, 'oni'), mk(3.0, 'amb'), mk(2.6, 'oni')], dist: null, dKey: -1,
+    demo = { box: dbox(), grid, open, pick, r: mk(3.4, 'runner'), oni: [mk(2.2, 'oni'), mk(2.4, 'oni'), mk(2.9, 'amb'), mk(2.1, 'oni')], dist: null, dKey: -1,
       mines: [], booms: [], beams: [], trail: [], dash: 0, dashCd: 2, bombCd: 2.5, item: null, itemT: 0, itemCd: 6, items: ['boost', 'barrier', 'launcher'], ii: 0, shield: 0 };
   }
   // distance along the roads to the runner's tile, for the oni to follow
@@ -4538,10 +4541,26 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!demo || demo.grid !== grid) demoInit();
     if (!demo) return;
     const r = demo.r, near = Math.min(...demo.oni.map(o => Math.hypot(o.x - r.x, o.y - r.y)));
+    for (const b of demo.booms) b.t += dt;
+    demo.booms = demo.booms.filter(b => b.t < 0.6);
+    if (demo.caught > 0) {
+      demo.caught -= dt;
+      if (demo.caught <= 0) {
+        // back on its feet away from every oni
+        let p = demo.pick(), bd = -1;
+        for (let k = 0; k < 30; k++) { const c = demo.pick(), dd = Math.min(...demo.oni.map(o => Math.hypot(c[0] + 0.5 - o.x, c[1] + 0.5 - o.y))); if (dd > bd) { bd = dd; p = c; } }
+        Object.assign(r, { x: p[0] + 0.5, y: p[1] + 0.5, cx: p[0], cy: p[1], tx: p[0], ty: p[1] });
+        demo.trail = []; demo.dash = 0; demo.item = null; demo.reborn = performance.now() / 1000;
+      }
+      return;
+    }
     // dash when an oni gets close; the 3-second boost item runs faster for a while
     demo.dashCd -= dt; demo.bombCd -= dt; demo.itemCd -= dt;
+    // cornered: a bomb at its feet and a dash out, whatever the wait (mostly it gets away; now and then it is caught)
+    demo.sos = (demo.sos || 0) - dt;
+    if (near < 1.3 && demo.sos <= 0) { demo.sos = 4; demo.dash = 0.45; demo.dashCd = 2; if (Math.random() < 0.85) { demo.mines.push({ x: r.x, y: r.y, fuse: 0.35, fx: EQ('bomb') }); demo.bombCd = 3; } }
     if (demo.dash > 0) demo.dash -= dt;
-    else if (demo.dashCd <= 0 && near < 2.2) { demo.dash = 0.35; demo.dashCd = 3 + Math.random() * 2; }
+    else if (demo.dashCd <= 0 && near < 2.6) { demo.dash = 0.4; demo.dashCd = 2.5 + Math.random() * 1.5; }
     if (demo.item) { demo.itemT -= dt; if (demo.itemT <= 0) demo.item = null; }
     const fast = demo.dash > 0 ? 2.3 : demo.item === 'boost' ? 1.5 : 1;
     if (fast > 1) demo.trail.push({ x: r.x, y: r.y, a: 1 });
@@ -4553,7 +4572,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       let best = null, bs = -1e9;
       for (const n of ns) {
         let sc = Math.random() * 1.5 + (n[0] - a.cx === a.vx && n[1] - a.cy === a.vy ? 1.2 : 0) - (n[0] === a.cx - a.vx && n[1] === a.cy - a.vy ? 3 : 0);
-        for (const o of demo.oni) { const dd = Math.hypot(n[0] + 0.5 - o.x, n[1] + 0.5 - o.y); if (dd < 5) sc += dd * 0.9 - 4; }
+        for (const o of demo.oni) { const dd = Math.hypot(n[0] + 0.5 - o.x, n[1] + 0.5 - o.y); if (dd < 6) sc += dd * 1.2 - 5; if (dd < 2.2) sc -= 30; }
         if (sc > bs) { bs = sc; best = n; }
       }
       return best;
@@ -4583,8 +4602,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         } else demo.itemCd = 1;
       }
     }
-    for (const b of demo.booms) b.t += dt;
-    demo.booms = demo.booms.filter(b => b.t < 0.6);
     for (const b of demo.beams) b.t += dt;
     demo.beams = demo.beams.filter(b => b.t < 0.45);
     const D = demoDist();
@@ -4595,10 +4612,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         for (const n of ns) { const v = D[n[1] * COLS + n[0]]; const dv = (v < 0 ? 999 : v) + Math.random() * (o.kind === 'amb' ? 1.6 : 0.6); if (dv < bd) { bd = dv; best = n; } }
         return best;
       });
-      // a catch: the barrier breaks if it is up; either way that oni steps back into the dark somewhere else
-      if (Math.hypot(o.x - r.x, o.y - r.y) < 0.55) {
-        if (demo.shield) { demo.shield = 0; demo.booms.push({ x: r.x, y: r.y, t: 0, barrier: true, fx: EQ('barrier') }); }
-        demoRespawn(o);
+      // a catch: the barrier takes it and throws that oni off; without one the runner is caught
+      if (Math.hypot(o.x - r.x, o.y - r.y) < 0.62) {
+        if (demo.shield) { demo.shield = 0; demo.booms.push({ x: r.x, y: r.y, t: 0, barrier: true, fx: EQ('barrier') }); demoRespawn(o); }
+        else { demo.caught = 1.6; demo.caughtAt = performance.now() / 1000; demo.mines = []; o.x = r.x - Math.sign(o.vx) * 0.62; o.y = r.y - Math.sign(o.vy) * 0.62; return; }
       }
     }
   }
@@ -4613,9 +4630,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 1.4);
     g.addColorStop(0, look.glow(0.28)); g.addColorStop(1, look.glow(0));
     ctx.fillStyle = g; ctx.fillRect(r.x - 1.5, r.y - 1.5, 3, 3);
-    skinUnder(look, r.x, r.y, 0.32, now);
-    metalBall(r.x, r.y, 0.32, look.m);
-    skinOver(look, r.x, r.y, 0.32, now);
+    const down = demo.caught > 0;
+    if (down) {
+      // caught: a red ring spreads from the runner, which goes grey
+      const k = Math.min(1, (now - demo.caughtAt) / 0.6);
+      ctx.strokeStyle = `rgba(255,59,48,${0.9 * (1 - k)})`; ctx.lineWidth = 0.08;
+      ctx.beginPath(); ctx.arc(r.x, r.y, 0.4 + k * 1.4, 0, Math.PI * 2); ctx.stroke();
+    }
+    if (!down) skinUnder(look, r.x, r.y, 0.32, now);
+    // coming back: it grows in from nothing
+    const rs = demo.reborn ? 0.32 * Math.min(1, 0.3 + (now - demo.reborn) / 0.4 * 0.7) : 0.32;
+    metalBall(r.x, r.y, rs, down ? METAL.caught : look.m);
+    if (!down) skinOver(look, r.x, r.y, rs, now);
     const fl = Math.hypot(r.vx, r.vy) || 1;
     ctx.fillStyle = '#0c0f16'; ctx.beginPath(); ctx.arc(r.x + r.vx / fl * 0.12, r.y + r.vy / fl * 0.12, 0.07, 0, Math.PI * 2); ctx.fill();
     if (demo.shield) drawBarrier(r.x, r.y, now);
