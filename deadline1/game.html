@@ -519,14 +519,12 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 <!--THEME-C-->
 <style>
 /* DEADLINE's own touches over the shared look (DEADLINE 3D's manner): the world shows through the title and the
-   stand-by screens, the map drifts slowly behind the title, and a stand-by screen takes the whole screen */
+   stand-by screens, and the map drifts slowly behind the title */
 #titleScreen { background: rgba(8, 10, 15, .5); }
 #titleScreen .card, :is(#briefScreen, #startPickScreen) .card { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
 body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-out infinite alternate; }
 @keyframes titledrift { from { transform: scale(1.18) translate(-2.5%, -1.5%); } to { transform: scale(1.3) translate(2.5%, 1.5%); } }
 @media (prefers-reduced-motion: reduce) { body.ontitle #cv { animation: none; transform: scale(1.18); } }
-body:has(:is(#briefScreen, #startPickScreen):not([hidden])) :is(.hud, .sys, .controls, .pad) { display: none; }
-body:has(:is(#briefScreen, #startPickScreen):not([hidden])) .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
 :is(#briefScreen, #startPickScreen) { background: rgba(8, 10, 15, .6); }
 /* the title: the map runs under the name column too, its cards see-through over it (as in DEADLINE 3D) */
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
@@ -556,7 +554,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   #startPickScreen:has(#spMisList:not([hidden])) .mono, #startPickScreen:has(#spMisList:not([hidden])) #spMsg, #startPickScreen:has(#spMisList:not([hidden])) .pick span { display: none; }
 }
 @media (max-height: 380px) {
-  :is(#briefScreen, #startPickScreen) h2 { font-size: 26px; }
+  :is(#briefScreen, #startPickScreen) h2 { font-size: 24px; }
+  #briefScreen .mono, #startPickScreen .mono { line-height: 1.4; }
   #briefScreen .card, #startPickScreen .card { gap: 4px; }
   #startPickScreen .pick { padding: 4px 8px; }
   #startPickScreen .picks { gap: 5px; }
@@ -3401,6 +3400,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     let sx = 0, sy = 0;
     if (shake > 0) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
     if (mapCache) ctx.drawImage(mapCache, Math.round((ox + sx) * dpr), Math.round((oy + sy) * dpr));
+    // the title: the attract mode instead of the last game's leftovers
+    if (state === 'title') { ctx.setTransform(T * dpr, 0, 0, T * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
     if (!P) return;
     const s = T * dpr;
     ctx.setTransform(s, 0, 0, s, (ox + sx) * dpr, (oy + sy) * dpr);
@@ -4448,7 +4449,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const mapName = (n, skin = mapSkin) => MAP_NAMES[skin][Math.min(3, Math.max(1, n)) - 1];
   function mapChoose(n, skin) {
     const p = mapPicks(); p[n] = skin; try { localStorage.setItem(MAP_KEY, JSON.stringify(p)); } catch (_) {}
-    mapSkin = mapPick(n); bgmStart(songFor(n)); mapRow(n);
+    mapSkin = mapPick(n); bgmStart(songFor(n)); mapRow(n); previewMap(n, true);
     if (n === 1) { mono('briefMono', 1, 'standby'); fitBrief(); } else { mono('spMono', n, 'standby'); fitStandby(); }
   }
   // the two map cards on a stand-by screen
@@ -4489,12 +4490,168 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tone(880, 0.12, 'triangle', 0.05, 1500);
   }
 
+  // ---------- the title's attract mode: a runner and a few oni running the night city behind the title ----------
+  // (now and then the runner drops a bomb, dashes, or uses an item, drawn the way the game draws them)
+  let demo = null;
+  // the chase keeps to the middle of the map, the part the slow zoom always shows and the name column does not cover
+  const dwalk = (x, y) => walk(x, y) && x >= Math.floor(COLS * 0.24) && x <= Math.ceil(COLS * 0.9) && y >= Math.floor(ROWS * 0.14) && y <= Math.ceil(ROWS * 0.86);
+  function demoInit() {
+    const open = [];
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (dwalk(x, y)) open.push([x, y]);
+    if (open.length < 20) { demo = null; return; }
+    const pick = () => open[Math.floor(Math.random() * open.length)];
+    const mk = (sp, kind) => { const [x, y] = pick(); return { x: x + 0.5, y: y + 0.5, cx: x, cy: y, tx: x, ty: y, vx: 1, vy: 0, sp, kind, born: performance.now() / 1000 }; };
+    demo = { grid, open, pick, r: mk(3.3, 'runner'), oni: [mk(2.7, 'oni'), mk(2.9, 'oni'), mk(3.0, 'amb'), mk(2.6, 'oni')], dist: null, dKey: -1,
+      mines: [], booms: [], beams: [], trail: [], dash: 0, dashCd: 2, bombCd: 2.5, item: null, itemT: 0, itemCd: 6, items: ['boost', 'barrier', 'launcher'], ii: 0, shield: 0 };
+  }
+  // distance along the roads to the runner's tile, for the oni to follow
+  function demoDist() {
+    const r = demo.r, key = r.cy * COLS + r.cx;
+    if (demo.dKey === key) return demo.dist;
+    const D = new Int16Array(COLS * ROWS).fill(-1), q = [key]; D[key] = 0;
+    for (let h = 0; h < q.length; h++) {
+      const c = q[h], x = c % COLS, y = (c / COLS) | 0;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (dwalk(nx, ny) && D[ny * COLS + nx] < 0) { D[ny * COLS + nx] = D[c] + 1; q.push(ny * COLS + nx); } }
+    }
+    demo.dKey = key; demo.dist = D; return D;
+  }
+  function demoStep(a, dist, choose) {
+    let left = dist;
+    while (left > 0) {
+      const ex = a.tx + 0.5 - a.x, ey = a.ty + 0.5 - a.y, d = Math.hypot(ex, ey);
+      if (d <= left) {
+        a.x = a.tx + 0.5; a.y = a.ty + 0.5; a.cx = a.tx; a.cy = a.ty; left -= d;
+        const n = choose(a); if (!n) return;
+        a.vx = n[0] - a.cx; a.vy = n[1] - a.cy; a.tx = n[0]; a.ty = n[1];
+      } else { a.x += ex / d * left; a.y += ey / d * left; left = 0; }
+    }
+  }
+  const demoNext = a => [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => [a.cx + dx, a.cy + dy]).filter(([x, y]) => dwalk(x, y));
+  // an oni taken out (or one that caught the runner) comes back somewhere far off
+  function demoRespawn(o) {
+    const r = demo.r; let p = demo.pick();
+    for (let k = 0; k < 20 && Math.hypot(p[0] - r.cx, p[1] - r.cy) < 8; k++) p = demo.pick();
+    Object.assign(o, { x: p[0] + 0.5, y: p[1] + 0.5, cx: p[0], cy: p[1], tx: p[0], ty: p[1], born: performance.now() / 1000 });
+  }
+  function demoTick(dt) {
+    if (!grid) return;
+    if (!demo || demo.grid !== grid) demoInit();
+    if (!demo) return;
+    const r = demo.r, near = Math.min(...demo.oni.map(o => Math.hypot(o.x - r.x, o.y - r.y)));
+    // dash when an oni gets close; the 3-second boost item runs faster for a while
+    demo.dashCd -= dt; demo.bombCd -= dt; demo.itemCd -= dt;
+    if (demo.dash > 0) demo.dash -= dt;
+    else if (demo.dashCd <= 0 && near < 2.2) { demo.dash = 0.35; demo.dashCd = 3 + Math.random() * 2; }
+    if (demo.item) { demo.itemT -= dt; if (demo.itemT <= 0) demo.item = null; }
+    const fast = demo.dash > 0 ? 2.3 : demo.item === 'boost' ? 1.5 : 1;
+    if (fast > 1) demo.trail.push({ x: r.x, y: r.y, a: 1 });
+    for (const q of demo.trail) q.a -= dt * 3;
+    demo.trail = demo.trail.filter(q => q.a > 0);
+    // the runner keeps going, turns at corners, and runs away from the nearest oni
+    demoStep(r, r.sp * fast * dt, a => {
+      const ns = demoNext(a); if (!ns.length) return null;
+      let best = null, bs = -1e9;
+      for (const n of ns) {
+        let sc = Math.random() * 1.5 + (n[0] - a.cx === a.vx && n[1] - a.cy === a.vy ? 1.2 : 0) - (n[0] === a.cx - a.vx && n[1] === a.cy - a.vy ? 3 : 0);
+        for (const o of demo.oni) { const dd = Math.hypot(n[0] + 0.5 - o.x, n[1] + 0.5 - o.y); if (dd < 5) sc += dd * 0.9 - 4; }
+        if (sc > bs) { bs = sc; best = n; }
+      }
+      return best;
+    });
+    // a bomb left behind when an oni follows close
+    if (demo.bombCd <= 0 && (near < 4.5 || demo.bombCd < -3)) { demo.mines.push({ x: r.x, y: r.y, fuse: FUSE, fx: EQ('bomb') }); demo.bombCd = 3.5 + Math.random() * 2.5; }
+    for (const m of demo.mines) {
+      m.fuse -= dt;
+      if (m.fuse <= 0) {
+        demo.booms.push({ x: m.x, y: m.y, t: 0, fx: m.fx });
+        const BR = blastR(m.fx);
+        for (const o of demo.oni) if (Math.hypot(o.x - m.x, o.y - m.y) < BR) demoRespawn(o);
+      }
+    }
+    demo.mines = demo.mines.filter(m => m.fuse > 0);
+    // now and then an item: the 3-second boost, a barrier, or the launcher down the street ahead
+    if (!demo.item && demo.itemCd <= 0) {
+      const it = demo.items[demo.ii++ % 3]; demo.itemCd = 7 + Math.random() * 4;
+      if (it === 'boost') { demo.item = 'boost'; demo.itemT = 3; }
+      else if (it === 'barrier') { demo.shield = 1; }
+      else {
+        const dx = Math.sign(r.vx), dy = Math.sign(r.vy);
+        let len = 0; while (dwalk(r.cx + dx * (len + 1), r.cy + dy * (len + 1)) && len < 30) len++;
+        if (len >= 3) {
+          demo.beams.push({ x: r.x, y: r.y, dx, dy, len: len + 0.5, t: 0 });
+          for (const o of demo.oni) { const along = (o.x - r.x) * dx + (o.y - r.y) * dy, off = Math.abs((o.x - r.x) * dy - (o.y - r.y) * dx); if (along > 0 && along < len + 0.5 && off < 0.6) demoRespawn(o); }
+        } else demo.itemCd = 1;
+      }
+    }
+    for (const b of demo.booms) b.t += dt;
+    demo.booms = demo.booms.filter(b => b.t < 0.6);
+    for (const b of demo.beams) b.t += dt;
+    demo.beams = demo.beams.filter(b => b.t < 0.45);
+    const D = demoDist();
+    for (const o of demo.oni) {
+      demoStep(o, o.sp * dt, a => {
+        const ns = demoNext(a); if (!ns.length) return null;
+        let best = ns[0], bd = 1e9;
+        for (const n of ns) { const v = D[n[1] * COLS + n[0]]; const dv = (v < 0 ? 999 : v) + Math.random() * (o.kind === 'amb' ? 1.6 : 0.6); if (dv < bd) { bd = dv; best = n; } }
+        return best;
+      });
+      // a catch: the barrier breaks if it is up; either way that oni steps back into the dark somewhere else
+      if (Math.hypot(o.x - r.x, o.y - r.y) < 0.55) {
+        if (demo.shield) { demo.shield = 0; demo.booms.push({ x: r.x, y: r.y, t: 0, barrier: true, fx: EQ('barrier') }); }
+        demoRespawn(o);
+      }
+    }
+  }
+  function demoDraw(now) {
+    if (!demo) return;
+    const r = demo.r, look = runnerLook(now);
+    for (const m of demo.mines) drawMine(m, now);
+    // the dash and boost leave afterimages of the runner
+    for (const q of demo.trail) { ctx.globalAlpha = Math.max(0, q.a) * 0.3; metalBall(q.x, q.y, 0.3, look.m); }
+    ctx.globalAlpha = 1;
+    // the runner in the look it wears in the shop
+    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 1.4);
+    g.addColorStop(0, look.glow(0.28)); g.addColorStop(1, look.glow(0));
+    ctx.fillStyle = g; ctx.fillRect(r.x - 1.5, r.y - 1.5, 3, 3);
+    skinUnder(look, r.x, r.y, 0.32, now);
+    metalBall(r.x, r.y, 0.32, look.m);
+    skinOver(look, r.x, r.y, 0.32, now);
+    const fl = Math.hypot(r.vx, r.vy) || 1;
+    ctx.fillStyle = '#0c0f16'; ctx.beginPath(); ctx.arc(r.x + r.vx / fl * 0.12, r.y + r.vy / fl * 0.12, 0.07, 0, Math.PI * 2); ctx.fill();
+    if (demo.shield) drawBarrier(r.x, r.y, now);
+    for (const o of demo.oni) {
+      const age = Math.min(1, (now - o.born) / 0.4), rr = 0.34 * (0.4 + 0.6 * age);
+      const eg = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 1.1);
+      eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
+      ctx.fillStyle = eg; ctx.fillRect(o.x - 1.2, o.y - 1.2, 2.4, 2.4);
+      metalBall(o.x, o.y, rr, o.kind === 'amb' ? METAL.amb : METAL.oni);
+      const vl = Math.hypot(o.vx, o.vy) || 1;
+      ctx.fillStyle = '#0c0f16'; ctx.beginPath(); ctx.arc(o.x + o.vx / vl * rr * 0.4, o.y + o.vy / vl * rr * 0.4, rr * 0.24, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const b of demo.booms) drawBoom(b);
+    for (const b of demo.beams) {
+      const k = b.t / 0.45, w = 0.5 * (1 - k) + 0.08;
+      ctx.strokeStyle = `rgba(217,179,255,${0.9 * (1 - k)})`; ctx.lineWidth = w; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + b.dx * b.len, b.y + b.dy * b.len); ctx.stroke();
+      ctx.strokeStyle = `rgba(255,255,255,${1 - k})`; ctx.lineWidth = w * 0.35;
+      ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + b.dx * b.len, b.y + b.dy * b.len); ctx.stroke();
+      ctx.lineCap = 'butt';
+    }
+  }
+  // the map behind a screen: the title shows the night city; a stand-by screen shows its own stage
+  function previewMap(n, force) {
+    if (!force && stageN === n && grid) return;
+    stageN = n; if (n !== 4) daily = null;
+    pickDims(); genMap(); resize();
+  }
+
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000); last = now;
     alarmFx(now / 1000);
     if (pad.classList.contains('on') && !(input.stick && input.stick.pad)) padReset();
     if (state === 'count') tickCount(dt); else if (!$('countdown').hidden) $('countdown').hidden = true;
+    if (state === 'title') demoTick(dt);
     if (state === 'play') {
       // fixed small steps keep movement and collisions smooth at any frame rate
       let rem = dt;
@@ -4603,7 +4760,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -4636,7 +4793,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const fitBrief = () => { const msg = $('briefMsg'); fitLines(msg); fitMono($('briefMono'), parseFloat(getComputedStyle(msg).fontSize), [msg]); };
 
   function showBrief() {
-    tap(); state = 'brief'; mapSkin = mapPick(1); bgmStart(songFor(1));
+    tap(); state = 'brief'; mapSkin = mapPick(1); bgmStart(songFor(1)); previewMap(1, true);
     $('briefKicker').textContent = 'STAGE 1 ' + mapName(1); mapRow(1);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('briefScreen').hidden = false;
@@ -4857,7 +5014,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function begin(n) {
     tap(); daily = null;
     if (n < 2) { start(n); return; }
-    pendingStart = n; state = 'startpick'; mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n));
+    pendingStart = n; state = 'startpick'; mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -4946,7 +5103,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     resize();
   }).observe(stage);
 
-  pickDims(); genMap(); resize();
+  stageN = 2; pickDims(); genMap(); resize();
   renderRecords();
   requestAnimationFrame(frame);
 })();
