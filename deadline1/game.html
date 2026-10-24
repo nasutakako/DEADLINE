@@ -3400,8 +3400,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     let sx = 0, sy = 0;
     if (shake > 0) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
     if (mapCache) ctx.drawImage(mapCache, Math.round((ox + sx) * dpr), Math.round((oy + sy) * dpr));
-    // the title: the attract mode instead of the last game's leftovers
-    if (state === 'title') { ctx.setTransform(T * dpr, 0, 0, T * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
+    // the title and the stand-by screens: the attract mode instead of the last game's leftovers
+    if (demoOn()) { ctx.setTransform(T * dpr, 0, 0, T * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
     if (!P) return;
     const s = T * dpr;
     ctx.setTransform(s, 0, 0, s, (ox + sx) * dpr, (oy + sy) * dpr);
@@ -4493,9 +4493,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // ---------- the title's attract mode: a runner and a few oni running the night city behind the title ----------
   // (now and then the runner drops a bomb, dashes, or uses an item, drawn the way the game draws them)
   let demo = null;
+  // the title and the stand-by screens run it
+  const demoOn = () => state === 'title' || state === 'brief' || state === 'startpick';
   // the chase keeps to the middle of the map, the part the slow zoom always shows and the name column does not cover
   // (its edges are on streets, every 4th tile, so the edge of the area is a road round it, not a dead end)
-  const dbox = () => [Math.ceil(COLS * 0.24 / 4) * 4, Math.floor(COLS * 0.92 / 4) * 4, Math.ceil(ROWS * 0.12 / 4) * 4, Math.floor(ROWS * 0.88 / 4) * 4];
+  // (on a stand-by screen nothing zooms or covers the map's edge: the chase has all of it)
+  const dbox = () => state === 'title' ? [Math.ceil(COLS * 0.24 / 4) * 4, Math.floor(COLS * 0.92 / 4) * 4, Math.ceil(ROWS * 0.12 / 4) * 4, Math.floor(ROWS * 0.88 / 4) * 4] : [0, COLS - 1, 0, ROWS - 1];
   const dwalk = (x, y) => { const [x0, x1, y0, y1] = demo && demo.box || dbox(); return walk(x, y) && x >= x0 && x <= x1 && y >= y0 && y <= y1; };
   function demoInit() {
     demo = null;
@@ -4677,7 +4680,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     alarmFx(now / 1000);
     if (pad.classList.contains('on') && !(input.stick && input.stick.pad)) padReset();
     if (state === 'count') tickCount(dt); else if (!$('countdown').hidden) $('countdown').hidden = true;
-    if (state === 'title') demoTick(dt);
+    if (demoOn()) demoTick(dt);
     if (state === 'play') {
       // fixed small steps keep movement and collisions smooth at any frame rate
       let rem = dt;
@@ -5119,10 +5122,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     addEventListener('pointerup', lockOnce, true);
   }
 
-  // re-fit when the screen rotates; outside a run the map is rebuilt for the new shape
+  // re-fit when the screen rotates; outside a run the map is rebuilt for the new shape (the stand-by screens too:
+  // they open with the side columns back, so the map is made again for the narrower screen and fills it)
   new ResizeObserver(() => {
     if (!grid) return;
-    if (state === 'title' || state === 'over') {
+    if (state === 'title' || state === 'over' || state === 'brief' || state === 'startpick') {
       const c = COLS, r = ROWS; pickDims();
       if (c !== COLS || r !== ROWS) { genMap(); P = null; }
     }
