@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>html, body { margin: 0; }</style>
 <script src="../fb.js" data-game="deadline1"></script>
-<title>DEADLINE1</title>
+<title>DEADLINE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700&family=Azeret+Mono:wght@500;700&display=swap">
@@ -124,6 +124,11 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .tutbar button { font: inherit; font-size: 12px; font-weight: 800; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); cursor: pointer; touch-action: manipulation; }
 .tutbar button.go { background: var(--lamp); border-color: var(--lamp); color: #111; }
 .tutbar button[hidden] { display: none; }
+/* before the count: the screen goes dark and the runner's line types out in the middle (a tap skips it) */
+.intro { position: absolute; inset: 0; z-index: 9; display: grid; place-items: center; padding: 24px; background: #000; cursor: pointer; transition: opacity .3s; }
+.intro.out { opacity: 0; }
+@media (max-height: 520px) { .intro p { font-size: 12px; } }
+.intro p { margin: 0; max-width: 32em; font-family: var(--f-say); font-size: 14px; line-height: 1.8; color: var(--ink); text-align: center; text-wrap: balance; white-space: pre-line; }
 .alarmfx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,30,30,0) 42%, rgba(255,30,30,.35) 75%, rgba(200,0,0,.75) 100%); }
 .stage { grid-area: stage; position: relative; min-height: 0; min-width: 0; border-radius: 8px; overflow: hidden; background: var(--night); touch-action: none; }
 #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -519,7 +524,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 <!--THEME-C-->
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
 <style>
-/* DEADLINE1 look: an old arcade select screen. Amber phosphor on a dark warm tube, scanlines over everything,
+/* DEADLINE look: an old arcade select screen. Amber phosphor on a dark warm tube, scanlines over everything,
    pixel faces (Press Start 2P for the Latin, DotGothic16 for the Japanese), square corners. Sizes follow the old look.
    The map keeps its own colours; the dash, bomb and item buttons keep theirs so they stay told apart. */
 :root {
@@ -642,6 +647,8 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 .shopbtn { color: var(--lamp); border-color: rgba(255,176,0,.55); background: rgba(255,176,0,.08); }
 
 @media (prefers-reduced-motion: reduce) { .go, .crtft { animation: none !important; } }
+.intro { background: #050302; }
+.intro p { color: var(--crt-hi); text-shadow: 0 0 8px rgba(255,176,0,.55); }
 /* the stand-by screens on a landscape phone: smaller type so the whole screen fits without scrolling */
 @media (max-height: 520px) {
   #briefScreen .card, #startPickScreen .card { gap: 6px; max-width: 520px; }
@@ -715,11 +722,12 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
+  <div class="intro" id="intro" hidden><p id="introTxt"></p></div>
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
 
   <div class="overlay" id="titleScreen">
     <div class="card">
-      <h1>DEAD<span>LINE</span>1</h1>
+      <h1>DEAD<span>LINE</span></h1>
       <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
@@ -3055,7 +3063,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
     stageN++;
     ui.clear.hidden = true; bgmStop();
     newStage(stock);
-    tutNeed(stageN) ? tutBegin() : startCount();
+    tutNeed(stageN) ? introThen(stageN, tutBegin) : introThen(stageN);
   }
 
   function useItem() {
@@ -4322,6 +4330,44 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   // nothing can catch the runner while it runs; finishing or skipping it starts the real stage on a fresh map
   const TUT_KEY = REC_KEY + '-tut';
   let tut = null, tutSave = null, tutReplay = 0;
+  // the stand-by line waits for the dark before the count; a retry (もう一度) goes straight to the count
+  let introLine = null, noIntro = false, introSkip = null, introRun = 0;
+  // a line still typing is dropped when another starts or the game goes back to the title
+  const introStop = () => { introRun++; introSkip = null; clearTimeout(introStop.t); const b = $('intro'); b.hidden = true; b.classList.remove('out'); };
+  // then: what comes after the line (the count, or the stage's first-time tutorial)
+  function introThen(n, then = startCount) {
+    introStop(); const run = introRun;
+    const line = noIntro || tutReplay ? null : introLine !== null ? introLine : monoText(n, 'standby');
+    introLine = null; noIntro = false;
+    if (!line) { then(); return; }
+    state = 'intro'; input.stick = null;
+    const box = $('intro'), tx = $('introTxt'), chars = [...('「' + line + '」')];
+    box.classList.remove('out'); box.hidden = false; tx.textContent = '';
+    // a speed you can read along with: a letter every 85 ms, a breath after 、 and a longer one after 。 and ……
+    const wait = c => c === '。' || c === '？' || c === '！' ? 420 : c === '、' ? 220 : c === '…' ? 110 : 85;
+    let i = 0, done = false;
+    const end = () => {
+      if (done || run !== introRun) return; done = true; clearTimeout(introStop.t); introSkip = null; box.classList.add('out');
+      introStop.t = setTimeout(() => { if (run !== introRun) return; box.hidden = true; box.classList.remove('out'); if (state === 'intro') then(); }, 500);
+    };
+    // the whole line stays up long enough to read again: 2.2 s, a little more for a long one
+    const hold = () => { introStop.t = setTimeout(end, Math.min(4000, 2200 + chars.length * 15)); };
+    // one short blip a letter, its pitch a little different each time
+    const type = () => {
+      if (done || run !== introRun) return;
+      if (i >= chars.length) { hold(); return; }
+      const c = chars[i++]; tx.textContent += c;
+      if (!/[\s「」、。…・？！]/.test(c)) tone(1150 + Math.random() * 450, 0.035, 'square', 0.022);
+      introStop.t = setTimeout(type, wait(c));
+    };
+    // a tap while it types shows the whole line; a tap after that goes on
+    introSkip = () => {
+      if (i < chars.length) { clearTimeout(introStop.t); i = chars.length; tx.textContent = chars.join(''); hold(); }
+      else end();
+    };
+    type();
+  }
+  $('intro').addEventListener('click', () => { if (introSkip) introSkip(); });
   const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
   // the tutorial a stage starts with: its own, or on 隔離区画 the warp points ('w')
   // (the DEADLINE2 maps: only 隔離区画 has one, the warp points; 電脳都市 and 無限回路 bring nothing new)
@@ -4584,7 +4630,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
     misLive = stageN === 4 && !!daily && !tut; misGot = 0; misFlash = null; misQ = []; misRender();
-    tutNeed(stageN) ? tutBegin() : startCount();
+    tutNeed(stageN) ? introThen(stageN, tutBegin) : introThen(stageN);
   }
   function setPause(on) {
     if (on && state === 'play') { state = 'pause'; ui.pause.hidden = false; input.stick = null; }
@@ -4710,7 +4756,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; introStop(); introLine = null; noIntro = false; renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -4778,6 +4824,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
       ],
     },
     2: {
+      first: 'やっと地下から這い出した。膝がまだ笑ってる。……なのに見上げた街は、灯りだけ残して静まり返ってる。今度は、外に閉じ込められたのか。',
       standby: [
         '育った街なのに、人がひとりもいない。コンビニの灯りも、信号の音も、みんな止まったままだ。',
         '電柱に、色あせた貼り紙。「この人を探しています」——写真の顔は、俺だった。日付は、10年前。',
@@ -4801,6 +4848,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
       ],
     },
     3: {
+      first: '家の灯りまで、あと少しだったのに。気づけば、また夜の真ん中に立ってる。腕時計の数字が、ぐにゃりと「∞」に溶けた。',
       standby: [
         '終わらない夜。腕時計は「∞」のまま。ここでは、逃げた時間だけが俺を前へ進める。',
         '鬼の正体がわかった。あの夜、俺を探しに来てくれた人たちの影だ。捕まえたいんじゃない、連れ戻したいんだ。',
@@ -4864,10 +4912,12 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
         '硬い夜だった……。でも、壊せない壁なんてない。もう一回だ。',
       ],
     },
+    dfirst: '何度も夜を抜けてきた。なのに今夜は、空気が違う。鬼の気配が、いつもより濃い。……今夜を生き延びろ、ってことか。',
   };
   // <d2mono> the runner's words on the DEADLINE2 maps (the games built from this one drop this block)
   const MONO2 = {
     1: {
+      first: '夜の街を抜けた、はずだった。目を開けたら、白い天井と鉄の扉。地下とも違う……ここは、どこの「中」なんだ。',
       standby: [
         '……隔離区画？ 目が覚めたら、全部の扉がロックされてた。天井のスピーカーが告げる。「被験体07、起動を確認」。',
         '腕にバーコードが刻まれてる。「07」。……俺には、番号じゃない名前があったはずだ。',
@@ -4891,6 +4941,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
       ],
     },
     2: {
+      first: '隔離区画のゲートで、指先がまだしびれてる。外に出たのに、空がドットみたいに粗い。ここは、本物の街じゃない。',
       standby: [
         '電脳都市。人の姿はないのに、街頭ビジョンには笑ってる人たちが映り続けてる。',
         'ビルの壁一面に、少女の顔。「ミオ」——Mは、この子か。胸の奥が、ずきりと痛んだ。',
@@ -4914,6 +4965,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
       ],
     },
     3: {
+      first: 'ミオの声を追って街を抜けたら、足元が光の線に変わった。走っても走っても、同じ景色が戻ってくる。',
       standby: [
         '無限回路。出口のない回路を、ただ走り続ける。ここでは、逃げた時間だけがログに残る。',
         '回収班の正体がわかった。捕まった01から06が、上書きされた姿だ。捕まれば、俺も08を追う側になる。',
@@ -4933,8 +4985,20 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   // </d2mono>
   function mono(id, n, kind) {
     const el = $(id); if (!el) return;
+    const s = monoText(n, kind);
+    if (kind === 'standby') { introLine = s || ''; el.hidden = true; el.textContent = ''; return; }
+    el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
+  }
+  function monoText(n, kind) {
     const k = n === 4 && daily ? daily.key : Math.min(3, n), m = (mapSkin === 'd2' && n <= 3 ? MONO2 : MONO)[k], l = m && m[kind];
     // stages 1-3 tell the story in order, each kind on its own count (kept on this device); the daily nights pick at random
+    // the first time a stage opens (or the first night of 生存課題): a line of its own, once, before the stage's story
+    if (kind === 'standby') {
+      const first = typeof k === 'number' ? m && m.first : mapSkin !== 'd2' && MONO.dfirst;
+      const fk = (typeof k === 'number' ? (mapSkin === 'd2' ? 'm' : 's') + k : 'daily') + 'first';
+      let at = {}; try { at = JSON.parse(localStorage.getItem(REC_KEY + '-story') || '{}') || {}; } catch (e) {}
+      if (first && !at[fk]) { at[fk] = 1; try { localStorage.setItem(REC_KEY + '-story', JSON.stringify(at)); } catch (e) {} return first; }
+    }
     let s = null;
     if (l && typeof k === 'number') {
       const key = (mapSkin === 'd2' ? 'm' : 's') + k + kind;
@@ -4942,7 +5006,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
       const i = at[key] | 0; s = l[i % l.length]; at[key] = i + 1;
       try { localStorage.setItem(REC_KEY + '-story', JSON.stringify(at)); } catch (e) {}
     } else if (l) s = l[Math.floor(Math.random() * l.length)];
-    el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
+    return s;
   }
   function begin(n) {
     tap(); daily = null;
@@ -4983,9 +5047,9 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   $('start3Btn').addEventListener('click', () => unlocked(3) ? begin(3) : lockedTap(3));
   $('start4Btn').addEventListener('click', () => unlocked(4) ? begin(4) : lockedTap(4));
   updateLocks();
-  $('retryBtn').addEventListener('click', () => begin(stageN));
+  $('retryBtn').addEventListener('click', () => { noIntro = true; begin(stageN); });
   $('menuBtn').addEventListener('click', () => { tap(); toTitle(); });
-  $('againBtn').addEventListener('click', () => begin(stageN));
+  $('againBtn').addEventListener('click', () => { noIntro = true; begin(stageN); });
   $('clearTitleBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('quitBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('spBackBtn').addEventListener('click', () => { tap(); toTitle(); });

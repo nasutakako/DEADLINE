@@ -1,6 +1,6 @@
 {
- "name": "DEADLINE1",
- "short_name": "DEADLINE1",
+ "name": "DEADLINE",
+ "short_name": "DEADLINE",
  "start_url": "./",
  "scope": "./",
  "display": "fullscreen",
