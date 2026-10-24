@@ -517,151 +517,46 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 </head>
 <body>
 <!--THEME-C-->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
 <style>
-/* DEADLINE look: an old arcade select screen. Amber phosphor on a dark warm tube, scanlines over everything,
-   pixel faces (Press Start 2P for the Latin, DotGothic16 for the Japanese), square corners. Sizes follow the old look.
-   The map keeps its own colours; the dash, bomb and item buttons keep theirs so they stay told apart. */
-:root {
-  --night: #0a0603;
-  --asphalt: #140d05;
-  --panel: #120b04;
-  --line: #4a3410;
-  --ink: #ffe2a8;
-  --muted: #a07a3a;
-  --lamp: #ffb000;
-  --crt-hi: #fff3c4;
-  --crt-name: #ffd27a;
-  --crt-item: #c99a4a;
-  --crt-dim: #8a6a30;
-  --f-px: "Press Start 2P", "DotGothic16", monospace;
-  --f-display: "Press Start 2P", "DotGothic16", "Hiragino Kaku Gothic StdN", sans-serif;
-  --f-body: "DotGothic16", "Hiragino Kaku Gothic StdN", "Yu Gothic", sans-serif;
-  --f-num: "DotGothic16", ui-monospace, monospace;
+/* DEADLINE's own touches over the shared look (DEADLINE 3D's manner): the world shows through the title and the
+   stand-by screens, the map drifts slowly behind the title, and a stand-by screen takes the whole screen */
+#titleScreen { background: rgba(8, 10, 15, .5); }
+#titleScreen .card, :is(#briefScreen, #startPickScreen) .card { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
+body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-out infinite alternate; }
+@keyframes titledrift { from { transform: scale(1.18) translate(-2.5%, -1.5%); } to { transform: scale(1.3) translate(2.5%, 1.5%); } }
+@media (prefers-reduced-motion: reduce) { body.ontitle #cv { animation: none; transform: scale(1.18); } }
+body:has(:is(#briefScreen, #startPickScreen):not([hidden])) :is(.hud, .sys, .controls, .pad) { display: none; }
+body:has(:is(#briefScreen, #startPickScreen):not([hidden])) .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
+:is(#briefScreen, #startPickScreen) { background: rgba(8, 10, 15, .6); }
+/* the title: the map runs under the name column too, its cards see-through over it (as in DEADLINE 3D) */
+@media (min-aspect-ratio: 5/4) and (pointer: coarse) {
+  body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
+  body.ontitle .pad { grid-area: 1 / 1 / -1 / 2; z-index: 2; background: none; padding-top: 8px; }
+  body.ontitle #titleScreen { padding-left: calc(var(--side) + 16px); }
 }
-body { background: radial-gradient(ellipse 120% 90% at 50% 40%, #150d04, #060402 80%) fixed, var(--night); }
-body * { font-weight: 400 !important; }
-body::after { content: ""; position: fixed; inset: 0; z-index: 100; pointer-events: none;
-  background: repeating-linear-gradient(0deg, rgba(0,0,0,.24) 0 1px, transparent 1px 3px); }
-button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
-@keyframes crtblink { 50% { opacity: 0; } }
-@keyframes crtglow { 0%, 100% { box-shadow: 0 0 0 2px #1a0e00, 0 0 10px rgba(255,176,0,.35); } 50% { box-shadow: 0 0 0 2px #1a0e00, 0 0 22px rgba(255,176,0,.75); } }
-
-/* ---- frames ---- */
-.stage { border-radius: 4px; box-shadow: 0 0 0 2px var(--line), 0 0 28px rgba(255,140,0,.07); }
-.overlay { background: rgba(8,5,2,.84); backdrop-filter: none; }
-#shopScreen { background: rgba(7,4,2,.97); }
-#shareScreen { background: rgba(7,4,2,.96); }
-.stat, .pi, .result div, .records, .mapcard, .pick, .shoptile, .ranklist, .rankme, .titlelist, .reclists, .misbox, .namein, #shareText, #shareImg, .ghost, .btn, .ranktabs button, .mistog, .tutbar button { border-radius: 2px; }
-.who .records, .card .records { background: #0b0703; }
-.meter { border-radius: 0; background: #2a1d08; }
-.meter i { background: var(--lamp); }
-
-/* ---- type ---- */
-.kicker { font-family: var(--f-px); font-size: 11px; letter-spacing: .12em; text-shadow: 0 0 8px currentColor; }
-h1 { font-family: var(--f-px); font-size: clamp(22px, 5.4vw, 40px); letter-spacing: 0; line-height: 1.2; color: var(--crt-name);
-  text-shadow: 0 0 12px rgba(255,176,0,.55), 4px 4px 0 #2a1704; }
-h1 span { color: var(--oni); text-shadow: 0 0 12px rgba(255,59,48,.6), 4px 4px 0 #2a0604; }
-h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px color-mix(in srgb, currentColor 50%, transparent), 3px 3px 0 rgba(0,0,0,.7); }
-.card p { line-height: 1.75; }
-.label { letter-spacing: .1em; }
-.time { font-family: var(--f-px); font-size: clamp(20px, 5vw, 30px); color: var(--crt-name); text-shadow: 0 0 10px rgba(255,176,0,.5); }
-.score b { font-family: var(--f-px); font-size: 24px; text-shadow: 0 0 10px rgba(255,176,0,.5); }
-.records h3, .reclists h3 { font-family: var(--f-body); }
-.countdown { font-family: var(--f-px); color: var(--crt-name); text-shadow: 0 0 30px rgba(255,176,0,.85), 6px 6px 0 #000; }
-.mono { border-left-color: var(--lamp); color: var(--crt-hi); }
-.goal.barrier { color: var(--runner); }
-
-/* ---- buttons ---- */
-.go { border-radius: 2px; border: 2px solid var(--crt-name); background: var(--lamp); color: #1a0e00; font-family: var(--f-body); letter-spacing: .04em;
-  animation: crtglow 1.4s ease-in-out infinite; }
-.go:hover, .go:focus-visible { background: #ffc634; }
-.go.alt, .go.tutlbtn { background: #140c04; color: var(--crt-name); border-color: var(--crt-dim); animation: none; box-shadow: none; }
-.go.alt:hover, .go.alt:focus-visible, .go.tutlbtn:hover, .go.tutlbtn:focus-visible { color: var(--crt-hi); border-color: var(--lamp); background: linear-gradient(90deg, rgba(255,176,0,.22), #140c04); }
-.go.locked { background: #0e0905 !important; color: #5e4820 !important; border-color: #33240c !important; }
-.go.proceed { background: #1fae5b; border-color: #7dffb4; color: #04140a; }
-.ghost, .btn { border: 2px solid var(--line); background: #120b04; color: var(--crt-item); }
-.ghost:hover, .ghost:focus-visible, .btn:hover { color: var(--crt-hi); border-color: var(--crt-dim); background: linear-gradient(90deg, rgba(255,176,0,.18), #120b04); }
-.act { border-radius: 3px; border-width: 2px; background: #0e0804; }
-.act small { font-family: var(--f-body); }
-.padbase { border-color: rgba(255,176,0,.35); background: rgba(255,176,0,.05); }
-.padknob { background: rgba(255,176,0,.28); border-color: rgba(255,176,0,.75); }
-.pad.on .padbase { border-color: rgba(255,176,0,.65); }
-@media (min-aspect-ratio: 5/4) and (pointer: coarse) { .pad { background: rgba(255,176,0,.025); border-radius: 4px; } }
-@media (min-aspect-ratio: 5/4) { .time { font-size: 13px; } }
-.pick:hover, .pick:focus-visible { border-color: var(--lamp); background: linear-gradient(90deg, rgba(255,176,0,.14), var(--panel)); }
-#tutPicks .pick b { color: var(--crt-name); }
-.ranktabs button[aria-selected="true"] { color: var(--crt-hi); border-color: var(--lamp); background: rgba(255,176,0,.16); }
-
-/* ---- tutorial bar ---- */
-.tutbar { border-radius: 2px; border-width: 2px; background: rgba(10,6,2,.95); box-shadow: 0 0 0 2px #000, 0 0 20px rgba(255,176,0,.25); }
-.tutbar .tstep { font-family: var(--f-px); font-size: 8px; }
-.tutbar button.go { animation: none; }
-
-/* ---- the title's left column: a select screen ---- */
-.who { gap: 0; padding: 10px 8px; border: 2px solid var(--line); border-radius: 4px; background: #0b0703; box-shadow: 0 0 0 2px #000 inset, 0 0 18px rgba(255,140,0,.06); }
-.crthd { display: flex; justify-content: space-between; gap: 6px; padding: 0 2px 8px; font-family: var(--f-px); font-size: 7px; line-height: 1.3; color: var(--lamp); white-space: nowrap; flex-shrink: 0; }
-.crtft { padding-top: 8px; font-family: var(--f-px); font-size: 8px; color: var(--crt-dim); text-align: center; letter-spacing: .06em; flex-shrink: 0; animation: crtblink 1.2s step-end infinite; }
-.idcard { gap: 1px; padding: 4px 4px 9px; margin-bottom: 6px; border: 0; border-bottom: 2px solid var(--line); border-radius: 0; background: none; }
-.idcard .label { display: none; }
-.idcard .whoname, .idcard .whoname.unset { font-size: 15px; color: var(--crt-name); text-shadow: 0 0 6px rgba(255,176,0,.35); }
-.idcard .whoname.unset::after { content: none; }
-.idcard .whotitle, .idcard .whotitle.none { font-size: 10.5px; color: var(--muted); }
-.idcard .whotitle:not(.none) { color: var(--crt-item); }
-.menu { gap: 0; }
-.mrow, .mrow.daily { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 6px 6px; border: 0; border-radius: 0; background: none; color: var(--crt-item); transition: none; }
-.mrow .ic { display: none; }
-.mrow b { font-size: 14px; }
-.mrow small, .mrow.daily small, .mrow.shop small, .mrow.daily.locked small { font-size: 9.5px; color: var(--crt-dim); margin-top: 2px; }
-.mrow:active { transform: none; }
-.mrow:hover, .mrow:focus-visible { color: var(--crt-hi); background: linear-gradient(90deg, rgba(255,176,0,.22), transparent); }
-.mrow:hover b, .mrow:focus-visible b { text-shadow: 0 0 6px var(--lamp); }
-.mrow.daily.locked { opacity: .5; }
-.who .records { margin-top: 8px; border: 1px solid var(--line); }
-.who .whonote { margin-top: 6px; }
-.who.inline { padding: 8px; gap: 6px; }
-.who.inline .crthd, .who.inline .crtft { display: none; }
-.who.inline .idcard { margin: 0; padding-bottom: 6px; }
-.who.inline .menu { gap: 2px; }
-
-/* ---- results, lists ---- */
-.result b { color: var(--crt-name); }
-.ranklist li:nth-child(-n+3) .no, .reclists li:first-child .no, .reclists li:first-child .tm { color: var(--lamp); }
-.titlelist button.sel { background: rgba(255,176,0,.16); }
-
-/* ---- shop: amber instead of pink ---- */
-.mrow.shop { --c: var(--lamp); }
-.shophead h2, .shopdetail .price { color: var(--lamp); }
-.shoptile { border-radius: 3px; background: #0e0804; }
-.shoptile.sel { border-color: var(--lamp); box-shadow: inset 0 0 0 1px var(--lamp), 0 0 12px rgba(255,176,0,.25); background: rgba(255,176,0,.08); }
-.shoptile.on::after { border-radius: 2px; }
-.shopdetail { border-radius: 4px; border-width: 2px; background: #0b0703; }
-.shopdetail .clip { border-radius: 2px; }
-.shopdetail .fx { border-radius: 2px; }
-.shopdetail .shopact { background: linear-gradient(180deg, rgba(11,7,3,0), #0b0703 14px); }
-.shopbtn { color: var(--lamp); border-color: rgba(255,176,0,.55); background: rgba(255,176,0,.08); }
-
-@media (prefers-reduced-motion: reduce) { .go, .crtft { animation: none !important; } }
-/* the stand-by screens on a landscape phone: smaller type so the whole screen fits without scrolling */
+body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .8), rgba(16, 19, 28, .78) 70%); }
+body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
+/* a landscape phone: the stand-by screens fit without scrolling */
 @media (max-height: 520px) {
-  #briefScreen .card, #startPickScreen .card { gap: 6px; max-width: 520px; }
+  #briefScreen .card, #startPickScreen .card { gap: 6px; max-width: 560px; }
+  :is(#briefScreen, #startPickScreen) h2 { font-size: 30px; }
   #briefScreen .mono, #startPickScreen .mono { line-height: 1.5; padding: 1px 0 1px 8px; }
   #briefScreen .card p, #startPickScreen .card p { line-height: 1.5; }
   .mapcard { padding: 3px 5px; } .mapcard .thumb { width: 48px; height: 30px; }
   #startPickScreen .picks { gap: 6px; }
   #startPickScreen .pick { padding: 5px 8px; gap: 1px; }
-  #startPickScreen .pick b { font-size: 14px; }
   #startPickScreen .pick span { line-height: 1.35; }
   .mistog { font-size: 10.5px; padding: 1px 6px; }
   .mislist { margin-top: -4px; }
-  #startPickScreen .ghost, #briefScreen .ghost { padding: 6px 14px; }
-  #briefScreen .go { padding: 8px 20px; }
   .mislist ol { font-size: 10px; line-height: 1.25; }
+  #startPickScreen .ghost, #briefScreen .ghost { padding: 7px 14px; font-size: 13px; }
+  #briefScreen .go { padding: 9px 22px; font-size: 16px; }
   /* the ten missions opened: the runner's words and the item notes step aside for them */
   #startPickScreen:has(#spMisList:not([hidden])) .mono, #startPickScreen:has(#spMisList:not([hidden])) #spMsg, #startPickScreen:has(#spMisList:not([hidden])) .pick span { display: none; }
 }
 @media (max-height: 380px) {
-  #briefScreen h2, #startPickScreen h2 { font-size: 28px; }
+  :is(#briefScreen, #startPickScreen) h2 { font-size: 26px; }
   #briefScreen .card, #startPickScreen .card { gap: 4px; }
   #startPickScreen .pick { padding: 4px 8px; }
   #startPickScreen .picks { gap: 5px; }
@@ -689,7 +584,6 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 
 <div class="pad" id="pad">
   <div class="who" id="who" hidden>
-    <!--THEME-C--><div class="crthd"><span>1P</span><span>CREDIT <b id="whoCredit">00</b></span></div><!--/THEME-C-->
     <div class="idcard">
       <span class="label">PLAYER</span>
       <button class="whotitle none" id="whoTitle" type="button">称号なし</button>
@@ -974,7 +868,6 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
         let done = 0; try { done = misState().done.length; } catch (e) {}
         $('m4Sub').textContent = ok ? `${DAILY[dailyToday()].name}\nミッション ${done}/10` : '🔒 ステージ2で解放';
         try { $('mShopSub').textContent = `★ ${starHave()}`; } catch (e) {}
-        try { const wc = $('whoCredit'); if (wc) wc.textContent = String(starHave()).padStart(2, '0'); } catch (e) {}
         if (!ok) locked.push('生存課題はステージ2をクリアすると解放');
         continue;
       }
