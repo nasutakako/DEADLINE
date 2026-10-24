@@ -383,6 +383,11 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shophead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .shophead h2 { margin: 0; font-size: clamp(22px, 4vw, 32px); color: #ff9bd6; }
 .shopnote { font-size: 12px; color: var(--muted); }
+/* the header keeps 購入を復元 and 閉じる together at the right end: the note gives way (cut short) when the row is tight */
+.shophead .shopnote { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.shophead .shoprestore { margin-left: 0; }
+.shophead > h2, .shophead > .ranktabs, .shophead > .shopstars, .shophead > .shoprestore, .shophead > .shopclose { flex-shrink: 0; }
+.shophead > .ranktabs { flex-wrap: nowrap; }
 .shopclose { padding: 8px 16px; }
 .shoprestore { margin-left: auto; padding: 8px 12px; font-size: 12px; }
 .shopmsg { flex-basis: 100%; font-size: 12px; color: var(--lamp); }
