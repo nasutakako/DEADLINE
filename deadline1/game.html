@@ -124,11 +124,6 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .tutbar button { font: inherit; font-size: 12px; font-weight: 800; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); cursor: pointer; touch-action: manipulation; }
 .tutbar button.go { background: var(--lamp); border-color: var(--lamp); color: #111; }
 .tutbar button[hidden] { display: none; }
-/* before the count: the screen goes dark and the runner's line types out in the middle (a tap skips it) */
-.intro { position: absolute; inset: 0; z-index: 9; display: grid; place-items: center; padding: 24px; background: #000; cursor: pointer; transition: opacity .3s; }
-.intro.out { opacity: 0; }
-@media (max-height: 520px) { .intro p { font-size: 12px; } }
-.intro p { margin: 0; max-width: 32em; font-family: var(--f-say); font-size: 14px; line-height: 1.8; color: var(--ink); text-align: center; text-wrap: balance; white-space: pre-line; }
 .alarmfx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,30,30,0) 42%, rgba(255,30,30,.35) 75%, rgba(200,0,0,.75) 100%); }
 .stage { grid-area: stage; position: relative; min-height: 0; min-width: 0; border-radius: 8px; overflow: hidden; background: var(--night); touch-action: none; }
 #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -647,8 +642,6 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
 .shopbtn { color: var(--lamp); border-color: rgba(255,176,0,.55); background: rgba(255,176,0,.08); }
 
 @media (prefers-reduced-motion: reduce) { .go, .crtft { animation: none !important; } }
-.intro { background: #050302; }
-.intro p { color: var(--crt-hi); text-shadow: 0 0 8px rgba(255,176,0,.55); }
 /* the stand-by screens on a landscape phone: smaller type so the whole screen fits without scrolling */
 @media (max-height: 520px) {
   #briefScreen .card, #startPickScreen .card { gap: 6px; max-width: 520px; }
@@ -722,7 +715,6 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
-  <div class="intro" id="intro" hidden><p id="introTxt"></p></div>
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
 
   <div class="overlay" id="titleScreen">
@@ -3063,7 +3055,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
     stageN++;
     ui.clear.hidden = true; bgmStop();
     newStage(stock);
-    tutNeed(stageN) ? introThen(stageN, tutBegin) : introThen(stageN);
+    tutNeed(stageN) ? tutBegin() : startCount();
   }
 
   function useItem() {
@@ -4330,44 +4322,6 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   // nothing can catch the runner while it runs; finishing or skipping it starts the real stage on a fresh map
   const TUT_KEY = REC_KEY + '-tut';
   let tut = null, tutSave = null, tutReplay = 0;
-  // the stand-by line waits for the dark before the count; a retry (もう一度) goes straight to the count
-  let introLine = null, noIntro = false, introSkip = null, introRun = 0;
-  // a line still typing is dropped when another starts or the game goes back to the title
-  const introStop = () => { introRun++; introSkip = null; clearTimeout(introStop.t); const b = $('intro'); b.hidden = true; b.classList.remove('out'); };
-  // then: what comes after the line (the count, or the stage's first-time tutorial)
-  function introThen(n, then = startCount) {
-    introStop(); const run = introRun;
-    const line = noIntro || tutReplay ? null : introLine !== null ? introLine : monoText(n, 'standby');
-    introLine = null; noIntro = false;
-    if (!line) { then(); return; }
-    state = 'intro'; input.stick = null;
-    const box = $('intro'), tx = $('introTxt'), chars = [...('「' + line + '」')];
-    box.classList.remove('out'); box.hidden = false; tx.textContent = '';
-    // a speed you can read along with: a letter every 85 ms, a breath after 、 and a longer one after 。 and ……
-    const wait = c => c === '。' || c === '？' || c === '！' ? 420 : c === '、' ? 220 : c === '…' ? 110 : 85;
-    let i = 0, done = false;
-    const end = () => {
-      if (done || run !== introRun) return; done = true; clearTimeout(introStop.t); introSkip = null; box.classList.add('out');
-      introStop.t = setTimeout(() => { if (run !== introRun) return; box.hidden = true; box.classList.remove('out'); if (state === 'intro') then(); }, 500);
-    };
-    // the whole line stays up long enough to read again: 2.2 s, a little more for a long one
-    const hold = () => { introStop.t = setTimeout(end, Math.min(4000, 2200 + chars.length * 15)); };
-    // one short blip a letter, its pitch a little different each time
-    const type = () => {
-      if (done || run !== introRun) return;
-      if (i >= chars.length) { hold(); return; }
-      const c = chars[i++]; tx.textContent += c;
-      if (!/[\s「」、。…・？！]/.test(c)) tone(1150 + Math.random() * 450, 0.035, 'square', 0.022);
-      introStop.t = setTimeout(type, wait(c));
-    };
-    // a tap while it types shows the whole line; a tap after that goes on
-    introSkip = () => {
-      if (i < chars.length) { clearTimeout(introStop.t); i = chars.length; tx.textContent = chars.join(''); hold(); }
-      else end();
-    };
-    type();
-  }
-  $('intro').addEventListener('click', () => { if (introSkip) introSkip(); });
   const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
   // the tutorial a stage starts with: its own, or on 隔離区画 the warp points ('w')
   // (the DEADLINE2 maps: only 隔離区画 has one, the warp points; 電脳都市 and 無限回路 bring nothing new)
@@ -4630,7 +4584,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
     misLive = stageN === 4 && !!daily && !tut; misGot = 0; misFlash = null; misQ = []; misRender();
-    tutNeed(stageN) ? introThen(stageN, tutBegin) : introThen(stageN);
+    tutNeed(stageN) ? tutBegin() : startCount();
   }
   function setPause(on) {
     if (on && state === 'play') { state = 'pause'; ui.pause.hidden = false; input.stick = null; }
@@ -4756,7 +4710,7 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; introStop(); introLine = null; noIntro = false; renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -4986,7 +4940,6 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   function mono(id, n, kind) {
     const el = $(id); if (!el) return;
     const s = monoText(n, kind);
-    if (kind === 'standby') { introLine = s || ''; el.hidden = true; el.textContent = ''; return; }
     el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
   }
   function monoText(n, kind) {
@@ -5047,9 +5000,9 @@ h2 { font-family: var(--f-body); letter-spacing: .04em; text-shadow: 0 0 14px co
   $('start3Btn').addEventListener('click', () => unlocked(3) ? begin(3) : lockedTap(3));
   $('start4Btn').addEventListener('click', () => unlocked(4) ? begin(4) : lockedTap(4));
   updateLocks();
-  $('retryBtn').addEventListener('click', () => { noIntro = true; begin(stageN); });
+  $('retryBtn').addEventListener('click', () => begin(stageN));
   $('menuBtn').addEventListener('click', () => { tap(); toTitle(); });
-  $('againBtn').addEventListener('click', () => { noIntro = true; begin(stageN); });
+  $('againBtn').addEventListener('click', () => begin(stageN));
   $('clearTitleBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('quitBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('spBackBtn').addEventListener('click', () => { tap(); toTitle(); });
