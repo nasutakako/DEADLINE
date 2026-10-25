@@ -817,17 +817,17 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <h3 class="tgrp">帰り道</h3>
         <button class="pick" data-tut="1" type="button"><b>ステージ1 地下</b><span><i>走る・ダッシュ・</i><i>爆弾・黄色い鬼・</i><i>「!」を踏む</i></span></button>
         <button class="pick" data-tut="2" type="button"><b>ステージ2 夜の街</b><span><i>補給アイテム・</i><i>バリア鬼・</i><i>黒い鬼・</i><i>40体ごとの支給</i></span></button>
-        <button class="pick" data-tut="3h" type="button"><b>ステージ3 終わらない夜</b><span><i>九死に一生・</i><i>落とし穴・</i><i>8分で出口</i></span></button>
+        <button class="pick" data-tut="3h" type="button"><b>ステージ3 終わらない夜</b><span><i>九死に一生・</i><i>落とし穴・</i><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="cyber">電脳の檻</h3>
         <button class="pick" data-tut="w" type="button"><b>ステージ1 隔離区画</b><span><i>ワープポイント</i></span></button>
-        <button class="pick" data-tut="3c" type="button"><b>ステージ3 無限回路</b><span><i>電磁爆弾・</i><i>8分で出口</i></span></button>
+        <button class="pick" data-tut="3c" type="button"><b>ステージ3 無限回路</b><span><i>電磁爆弾・</i><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="shadow">影踏み</h3>
         <button class="pick" data-tut="k1" type="button"><b>ステージ1 影の街</b><span><i>分裂する</i><i>黄色い鬼・</i><i>建物の影</i></span></button>
         <button class="pick" data-tut="k2" type="button"><b>ステージ2 黄昏通り</b><span><i>影分身ダッシュ</i></span></button>
-        <button class="pick" data-tut="k3" type="button"><b>ステージ3 月蝕の夜</b><span><i>黒い鬼も分裂・</i><i>8分で出口</i></span></button>
+        <button class="pick" data-tut="k3" type="button"><b>ステージ3 月蝕の夜</b><span><i>黒い鬼も分裂・</i><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="fuse">導火線</h3>
         <button class="pick" data-tut="b1" type="button"><b>ステージ1 花火工場</b><span><i>自爆する鬼・</i><i>誘爆</i></span></button>
-        <button class="pick" data-tut="3b" type="button"><b>ステージ3 花火の夜</b><span><i>韋駄天・</i><i>自爆1.5倍・</i><i>8分で出口</i></span></button>
+        <button class="pick" data-tut="3b" type="button"><b>ステージ3 花火の夜</b><span><i>韋駄天・</i><i>自爆1.5倍・</i><i>6分30秒で出口</i></span></button>
       </div>
       <div class="row"><button class="ghost" id="tutBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -890,8 +890,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
   const STICK_R = 34;
   const BARRIER_AT = 120, EXIT_AT = 150, INV_TIME = 1.5;
-  // a story's stage 3 (not the weekly ranking): the exit opens at 8:00 and a key drops
-  const STORY_EXIT = 480;
+  // a story's stage 3 (not the weekly ranking): the exit opens at 6:30 and a key drops
+  const STORY_EXIT = 390;
   const BOOST_TIME = 3, BOOST_MULT = 1.7;
   const ITEM_NAMES = { boost: '3秒加速', barrier: 'バリア', launcher: 'ランチャー' };
   // stage 1 is indoors (own palette); outdoor stages start with the blue night city
@@ -5159,7 +5159,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the tutorial a stage starts with: its own, or on 隔離区画 the warp points ('w')
   // (the DEADLINE2 maps: only 隔離区画 has one, the warp points; 電脳都市 and 無限回路 bring nothing new)
   const tutKeyOf = n => mapSkin === 'd4' ? (n === 1 ? 'b1' : n) : mapSkin === 'd3' ? (n <= 3 ? 'k' + n : n) : mapSkin === 'd2' ? (n === 1 ? 'w' : null) : n;
-  // a story's stage 3 has its own: its prize, then the pits (if not seen yet), then the way out at 8:00
+  // a story's stage 3 has its own: its prize, then the pits (if not seen yet), then the way out at 6:30
   const tutKey = n => n === 3 && MAP_CHOICE && !rankRun && tutReplay !== 3 && ROUTE[mapSkin] !== 'shadow' ? ({ home: '3h', cyber: '3c', fuse: '3b' })[ROUTE[mapSkin]] : tutKeyOf(n);
   const tutNeed = n => { const k = tutKey(n); return k != null && (k === 'w' || (n >= 1 && n <= 3)) && (tutReplay === k || !tutSeen()[k]); };
   function tutMark(n) { const s = tutSeen(); s[n] = true; try { localStorage.setItem(TUT_KEY, JSON.stringify(s)); } catch (_) {} }
@@ -5210,18 +5210,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
       { pit: true, say: '一度使った落とし穴は45秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
       { pit: true, say: '自分が落とし穴に落ちても確保になるので注意', info: true },
-      { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは8分で出口が開く。週替わりランキングは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
+      { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは6分30秒で出口が開く。週替わりランキングは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
     ],
     '3h': [
       { say: '帰り道のステージ3では、スキル「九死に一生」が特別に使える。ダッシュの10回に1回、通常の1.5倍の距離を走る', info: true },
       { btn: 'dash', say: 'ダッシュしてみよう。いまは必ず発動する。光の尾が大きくなれば九死に一生', set: () => { tut.luckNext = true; tut.lucky = false; }, go: () => tut.lucky },
-      { say: '8分経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
     ],
     '3b': [
       { say: '花火の夜では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は3.5秒で戻る(2回分で7秒)', info: true },
       { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
       { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。6分からは黒い鬼と同じ速さになる。点滅したら、韋駄天で一気に離れよう', info: true },
-      { say: '8分経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
       { say: '花火工場には、自爆する橙色の鬼がいる。逃走者より少し速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
@@ -5237,7 +5237,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     k3: [
       { say: '月蝕の夜では、6分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する。黒い鬼の影は、黒い鬼と同じく逃走者より速い', info: true },
       { say: '黒い鬼の影も建物の影は踏めない。黒い鬼の影が来た。建物の影に1秒入ってやり過ごそう', set: () => tutShade(true), go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
-      { say: '8分経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
@@ -5247,7 +5247,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     '3c': [
       { say: '電脳の檻のステージ3では、電磁爆弾が特別に使える。爆発のあと電気が残り、触れた鬼は怯んで動けなくなる', info: true },
       { btn: 'mine', say: '電磁爆弾で鬼を倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
-      { say: '8分経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
     ],
   };
   function tutBegin() {
@@ -6028,7 +6028,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       first: '月が欠けていく。光が消えるほど、影が濃くなる。月蝕の夜——ここで、俺の影を取り戻す。',
       standby: [
         '月が赤く染まった。影と闇の境目が、どんどん曖昧になっていく。',
-        '8分。月蝕が明けるまで逃げ切れば、出口が開くはずだ。',
+        '6分30秒。月蝕が明けるまで逃げ切れば、出口が開くはずだ。',
         '闇の中で、俺の影が俺の名前を呼んだ。……あいつも、ずっと逃げてたのか。',
         '黄色い鬼の分身が、赤い月の下で二重に揺れてる。どっちが本体か、目を凝らせ。',
         '影は持ち主を探してる。俺も、影を探してる。出口で、会えるはずだ。',
@@ -6102,7 +6102,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     3: {
       first: '河原に出た。夜空いっぱいに花火が咲いてる。……なのに、花火が終わらない。この夜は、終わらないのか。',
       standby: [
-        '8分。最後の花火が上がりきったら、出口が開くはずだ。',
+        '6分30秒。最後の花火が上がりきったら、出口が開くはずだ。',
         '空の花火と地上の爆発。どっちの光で照らされてるのか、もうわからない。',
         '橙色の鬼が次々に弾ける。まるで、地上の花火だ。',
         '設計図の最後のページ。「最後の一発に、名前をつける」。……俺の名前が書いてあった。',
@@ -6241,7 +6241,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // the stand-by notes of stages 2 and 3, for the map picked
   function spText(n) {
-    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `8分で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える。6分からは黒い鬼も分裂する' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
+    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える。6分からは黒い鬼も分裂する' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
   }
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
