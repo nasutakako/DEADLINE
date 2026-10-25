@@ -226,6 +226,8 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
 }
 .card p.rotate { display: none; color: var(--lamp); font-size: 13px; }
 @media (orientation: portrait) { .card p.rotate { display: block; } }
+/* a story's end: what it gave, shown even on a short screen (there are no item picks under it) */
+#cMsg.story { display: block !important; margin: 0; font-size: 14px; font-weight: 700; line-height: 1.5; color: #5dff9e; }
 @media (max-height: 460px) { #cMsg { display: none; } .card { gap: 8px; } h2 { font-size: 34px; } .card p { font-size: 13px; line-height: 1.5; } .result b { font-size: 15px; } }
 h2.clear { color: #5dff9e; }
 .go.proceed { background: #1fae5b; }
@@ -3468,6 +3470,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!last) bgmStart(songFor(stageN + 1));  // the next stage's waiting music under the item pick
     $('pickLabel').hidden = last; $('clearPicks').hidden = last;
     if (last) $('cMsg').textContent = '全ステージ制覇。もう一度挑むか、タイトルに戻るかを選べる。';
+    $('cMsg').classList.toggle('story', last && MAP_CHOICE);
     if (last && MAP_CHOICE) {
       const route = ROUTE[mapSkin], got = STORY_PRIZE[route] ? givePrize(route) : '';
       $('cMsg').textContent = `${STORY_NAMES[route]} 完結。` + (got ? `${got}を獲得した。タイトルの「装備」で付け替えられる。` : 'もう一度挑むか、タイトルに戻るかを選べる。');
@@ -5912,6 +5915,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         '消毒液の匂いがする。ピッ、ピッ、と規則正しい音も。……この夜は、眠ったままの俺が見てる夢なのか。',
         '夜明けは、逃げ続けた先にある。世界中で同じ夜を走ってるやつらと一緒に、朝を迎えてやる。',
       ],
+      clear: [
+        '出口の光をくぐった瞬間、腕時計の「∞」がほどけて、ちゃんとした時刻に戻った。',
+        '白い天井。消毒液の匂い。握られた手の温かさ。……長い帰り道だった。ただいま。',
+        '目を開けると、母さんが泣いてた。10年分の夜を、やっと走り抜けた。',
+        '鬼だと思ってた影は、ずっと俺を呼んでた人たちだった。もう、逃げなくていい。',
+        '夜が明けた。今度は、自分の足で家まで歩いて帰ろう。',
+      ],
       caught: [
         '……また、最初からか。でも捕まるたびに、あの夜のことがはっきりしていく。',
         '鬼の手が触れた瞬間、白い天井が見えた。誰かが、俺の手を握ってた。',
@@ -6178,6 +6188,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         'ネオンが明滅するたび、ミオの声がひとつずつ届く。「あと少し」「もう少しだけ」。',
         'ログによると、世界中に同じ回路を走ってる“被験者”がいる。俺たちの逃走時間で、何かが計算されてる。',
         '逃げ続けた時間が、このシステムの停止コードになる。ミオはそう言った。なら、止まるわけにはいかない。',
+      ],
+      clear: [
+        '回路の出口で、ノイズが止んだ。最後に聞こえたのは、ミオの「おかえり」だった。',
+        '停止コード、受理。無限回路のネオンが、ひとつずつ静かに消えていく。',
+        '01から06のログが、一斉に「解放」に書き換わった。……みんな、やっと休める。',
+        '目を開けると、生命維持装置の向こうにミオがいた。コピーじゃない、本物の俺の目で見てる。',
+        'もう被験体07じゃない。名前を呼ばれた。……俺の名前だ。',
       ],
       caught: [
         '……リセットか。でも、消されたはずの記憶が、少しずつ戻ってくる。',
