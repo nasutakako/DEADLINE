@@ -1786,7 +1786,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the long shadows of the tall buildings: the shadow oni cannot step on them, and loses a runner standing in one
   let shadeMap = null, shadeField = null, shadeKey = '';
   const shadeAt = (x, y) => !!shadeMap && x >= 0 && y >= 0 && x < COLS && y < ROWS && shadeMap[idx(Math.floor(x), Math.floor(y))] === 1;
-  const shadePass = (x, y) => walk(x, y) && !shadeMap[idx(x, y)];
+  // the shadow oni walks anywhere, building shadows too, except into the shadow the runner hides in (shadeBan)
+  let shadeBan = null;
+  const shadePass = (x, y) => walk(x, y) && !(shadeBan && shadeBan.has(idx(x, y)));
   function shadeBfs(out, sx, sy) {
     out.fill(-1); if (!shadePass(sx, sy)) return;
     const q = new Int32Array(COLS * ROWS); let h = 0, n = 0;
@@ -1804,41 +1806,42 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tone(330, 0.2, 'sawtooth', 0.04, 110);
     return sh;
   }
-  // the shadow oni: the shortest way to the runner that keeps off the building shadows; with the runner in a shadow
-  // it has lost them and wanders a little way
+  // the shadow oni: the shortest way to the runner; with the runner hidden in a building's shadow it has lost them,
+  // comes round that shadow and prowls along its edge, never into it
   // the lit street tiles the shadow oni can stand on round the runner: the edge of the building shadow the runner
   // is in (all of that shadow, joined up), or, with the runner walled off from it, the spots within 3 tiles of them
-  let shadeNearKey = '', shadeNearList = [];
+  let shadeNearKey = '', shadeNearList = [], shadeNearBan = null;
   function shadeNear() {
     const rx = Math.floor(P.x), ry = Math.floor(P.y), key = rx + ',' + ry + ',' + COLS + ',' + stageN;
-    if (key === shadeNearKey) return shadeNearList;
-    shadeNearKey = key; const out = [], seen = new Set();
+    if (key === shadeNearKey) { shadeBan = shadeNearBan; return shadeNearList; }
+    shadeNearKey = key; const out = [], seen = new Set(); shadeNearBan = null;
     if (shadeAt(P.x, P.y)) {
-      const q = [[rx, ry]], inS = new Set([idx(rx, ry)]);
+      const q = [[rx, ry]], inS = new Set([idx(rx, ry)]); shadeNearBan = inS;
       while (q.length) {
         const [x, y] = q.pop();
         for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
           if (nx < 0 || ny < 0 || nx >= COLS || ny >= ROWS) continue;
           const i = idx(nx, ny);
           if (shadeAt(nx + 0.5, ny + 0.5)) { if (!inS.has(i)) { inS.add(i); q.push([nx, ny]); } }
-          else if (shadePass(nx, ny) && !seen.has(i)) { seen.add(i); out.push([nx, ny]); }
+          else if (walk(nx, ny) && !seen.has(i)) { seen.add(i); out.push([nx, ny]); }
         }
       }
       // (the part of the edge close by the runner, where there is some)
       const close = out.filter(([x, y]) => Math.hypot(x + 0.5 - P.x, y + 0.5 - P.y) <= 3.5);
       if (close.length) out.splice(0, out.length, ...close);
-    } else for (let y = ry - 3; y <= ry + 3; y++) for (let x = rx - 3; x <= rx + 3; x++) if (shadePass(x, y) && Math.hypot(x - rx, y - ry) <= 3) out.push([x, y]);
+    } else for (let y = ry - 3; y <= ry + 3; y++) for (let x = rx - 3; x <= rx + 3; x++) if (walk(x, y) && Math.hypot(x - rx, y - ry) <= 3) out.push([x, y]);
+    shadeBan = shadeNearBan;
     return (shadeNearList = out);
   }
   function shadeStep(e, dt, es) {
     const tx = Math.floor(e.x), ty = Math.floor(e.y);
-    let hidden = shadeAt(P.x, P.y), gx = P.x, gy = P.y, field = null;
+    const hidden = shadeAt(P.x, P.y);
+    let gx = P.x, gy = P.y, field = null;
+    if (hidden) shadeNear(); else shadeBan = null;
     if (!hidden) {
       const key = Math.floor(P.x) + ',' + Math.floor(P.y) + ',' + COLS;
       if (!shadeField || shadeField.length !== COLS * ROWS) shadeField = new Int16Array(COLS * ROWS);
       if (key !== shadeKey) { shadeKey = key; shadeBfs(shadeField, Math.floor(P.x), Math.floor(P.y)); }
-      // shadows wall the runner off from it: lost, as if the runner were hidden
-      if (shadePass(tx, ty) && shadeField[idx(tx, ty)] < 0) hidden = true;
     }
     if (!hidden) { field = shadeField; e.roam = null; }
     else {
@@ -1879,8 +1882,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
     const ox = e.x, oy = e.y;
     move(e, e.vx, e.vy, dt);
-    // never onto a building's shadow: slide along its edge instead
-    if (shadeAt(e.x, e.y)) { const nx = e.x, ny = e.y; e.x = ox; if (shadeAt(e.x, e.y)) { e.x = nx; e.y = oy; if (shadeAt(e.x, e.y)) { e.x = ox; e.y = oy; e.vx = e.vy = 0; } } }
+    // never into the shadow the runner hides in: slide along its edge instead
+    const banned = (x, y) => !!shadeBan && shadeBan.has(idx(Math.floor(x), Math.floor(y)));
+    if (banned(e.x, e.y)) { const nx = e.x, ny = e.y; e.x = ox; if (banned(e.x, e.y)) { e.x = nx; e.y = oy; if (banned(e.x, e.y)) { e.x = ox; e.y = oy; e.vx = e.vy = 0; } } }
   }
   const dashFx = () => shadowStory() && stageN >= 2 && !rankRun ? 'dash_shadow' : EQ('dash');
   const IDATEN_N = 2;
@@ -1905,7 +1909,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
     bs_fire: '加速中、通った場所に炎が1.2秒残る。触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     dash_ice: 'ダッシュした道に氷が2.4秒残る。氷を踏んだ鬼は1.6秒遅くなる。',
-    dash_shadow: 'ダッシュの瞬間、影の分身が別の道へ走る。逃走者にいちばん近い鬼と、近くの鬼の半分ほどが分身を追う(2.2秒)。',
+    dash_shadow: 'ダッシュの瞬間、影の分身が別の道へ走る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で2.2秒)。',
     dash_water: 'ダッシュした場所に水の分身が2.2秒残る。分身が見えた鬼の半分ほどがそちらへ向かう。',
   };
   let shopTab = 'fx', shopSel = null;
@@ -3277,7 +3281,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // 大爆発's shock wave: thrown out on a smooth slide that slows to a stop, then it eases back into the chase
       if (e.shade) { shadeStep(e, dt, es); continue; }
       // 影踏み: near the runner, the yellow oni splits off its shadow (not while it stands in a building's shadow)
-      if ((e.amb || (e.black && stageN === 3 && t >= 300)) && !e.split && shadowStory() && Math.hypot(P.x - e.x, P.y - e.y) < SPLIT_D && !shadeAt(e.x, e.y)) shadeSplit(e);
+      if ((e.amb || (e.black && stageN === 3 && t >= 300)) && !e.split && shadowStory() && Math.hypot(P.x - e.x, P.y - e.y) < SPLIT_D) shadeSplit(e);
       if (e.kbT > 0) { const u = Math.min(1, e.kbT / (e.kbT0 || KB_T)); e.vx = e.kbx * u; e.vy = e.kby * u; move(e, e.vx, e.vy, dt); e.kbT -= dt; continue; }
       const tx = Math.floor(e.x), ty = Math.floor(e.y);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
@@ -3740,9 +3744,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (sight && !clearLine(e.x, e.y, c.x, c.y)) continue;
       seen.push(e); const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < fd) { fd = d; first = e; }
     }
-    for (const e of seen) if (e === first || Math.random() < (e.amb ? EL.ambLure : EL.lure)) { e.decoy = c; got.push(e); }
-    // never all of them: when every one in reach took the bait, one of them (not the closest) sees through it
-    if (seen.length > 1 && got.length === seen.length) { const o = got.filter(e => e !== first); o[Math.floor(Math.random() * o.length)].decoy = null; }
+    // the closer to the runner, the longer it chases the decoy: the closest for the decoy's whole life, each next one
+    // 60% as long (the yellow ones half that again), and one that would come back to the runner within 0.35 s not at all
+    seen.sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
+    seen.forEach((e, i) => { const d = c.life * Math.pow(0.6, i) * (e.amb && i ? 0.5 : 1); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
   }
   function elemTick(dt) {
     // the boost's flames and the dash's ice, spaced out so they never pile up
@@ -3769,7 +3774,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     elems = elems.filter(o => o.t < o.life + (o.delay > 0 ? o.delay : 0));
     // the oni drawn by a clone follow it while it lasts, then go back to the chase
     for (const e of enemies) if (e.slowT > 0 && e.slowSrc && !elems.includes(e.slowSrc)) { e.slowT = 0; e.slowSrc = null; }
-    for (const e of enemies) if (e.decoy) { if (elems.includes(e.decoy)) { e.lureT = 0.1; e.lureX = e.decoy.x; e.lureY = e.decoy.y; } else e.decoy = null; }
+    for (const e of enemies) if (e.decoy) { if (e.decoyT != null && (e.decoyT -= dt) <= 0) { e.decoy = null; e.decoyT = null; continue; } if (elems.includes(e.decoy)) { e.lureT = 0.1; e.lureX = e.decoy.x; e.lureY = e.decoy.y; } else e.decoy = null; }
   }
   // the map's edge as one loop: s runs clockwise from the top-left corner along the centre of the border tiles
   const perimLen = () => 2 * ((COLS - 1) + (ROWS - 1));
@@ -5231,17 +5236,17 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     k1: [
       { say: '影の街では、先回りする黄色い鬼が逃走者に近づくと、黒い影の鬼と分裂する。影の鬼は別の道から追ってくる', info: true },
       { btn: 'mine', say: '影の鬼に触れても確保される。本体を爆弾で倒すと、影の鬼も一緒に消える。倒してみよう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
-      { say: '影の鬼は建物の影(暗いところ)を踏めない。建物の影に入ると、影の鬼は逃走者を見失う。影に1秒入ってみよう', set: tutShade, go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
+      { say: '建物の影(暗いところ)に入ると、影の鬼は逃走者を見失う。影のまわりまでは来るが、中には入ってこない。影に1秒入ってみよう', set: tutShade, go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k3: [
       { say: '月蝕の夜では、5分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する。黒い鬼の影は、黒い鬼と同じく逃走者より速い', info: true },
-      { say: '黒い鬼の影も建物の影は踏めない。黒い鬼の影が来た。建物の影に1秒入ってやり過ごそう', set: () => tutShade(true), go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
+      { say: '黒い鬼の影も、建物の影に隠れた逃走者は見失う。黒い鬼の影が来た。建物の影に1秒入ってやり過ごそう', set: () => tutShade(true), go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
-      { btn: 'dash', say: 'ダッシュの瞬間、影の分身が別の道へ走り、いちばん近い鬼と、近くの鬼の半分ほどが分身を追う。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 },
+      { btn: 'dash', say: 'ダッシュの瞬間、影の分身が別の道へ走り、近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     '3c': [
