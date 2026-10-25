@@ -1774,7 +1774,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const fuseStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'fuse' && stageN <= 3 && !daily && state !== 'title';
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
   // (on 花火の夜 its blast is half as wide again as a bomb's)
-  const bomberMult = () => stageN >= 3 && t >= 360 ? BLACK_MULT : (1 + BLACK_MULT) / 2;
+  const bomberMult = () => (1 + BLACK_MULT) / 2;
   const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
   const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 2, 3];
   // 影踏み: a yellow oni within this distance of the runner splits off its shadow oni (once)
@@ -3122,14 +3122,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const batch = spawnBatch();
       for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
-    // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
-    if (stageN === 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
-    // from 4:00 there are always at least two barrier oni about, and from 6:00 at least one black and one yellow:
+    // stage 3, 2:00-5:00: once a minute, the next wave always brings one black oni (faster than you)
+    if (stageN === 3 && t < 300 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
+    // from 4:00 there are always at least two barrier oni about, and from 5:00 at least one black and one yellow:
     // if a kind is short (counting the map and the oni already warned), the next wave makes up the shortfall
     // (two barrier oni at once when there are none). Stomping a "!" still cancels it, and the wave after makes up again.
     if (stageN === 3 && t >= 240 && pending.length) {
       const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
-      for (const k of t >= 360 ? ['black', 'tough', 'amb'] : ['tough']) {
+      for (const k of t >= 300 ? ['black', 'tough', 'amb'] : ['tough']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
         for (let n = (k === 'tough' ? 2 : 1) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
       }
@@ -3275,7 +3275,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // 大爆発's shock wave: thrown out on a smooth slide that slows to a stop, then it eases back into the chase
       if (e.shade) { shadeStep(e, dt, es); continue; }
       // 影踏み: near the runner, the yellow oni splits off its shadow (not while it stands in a building's shadow)
-      if ((e.amb || (e.black && stageN === 3 && t >= 360)) && !e.split && shadowStory() && Math.hypot(P.x - e.x, P.y - e.y) < SPLIT_D && !shadeAt(e.x, e.y)) shadeSplit(e);
+      if ((e.amb || (e.black && stageN === 3 && t >= 300)) && !e.split && shadowStory() && Math.hypot(P.x - e.x, P.y - e.y) < SPLIT_D && !shadeAt(e.x, e.y)) shadeSplit(e);
       if (e.kbT > 0) { const u = Math.min(1, e.kbT / (e.kbT0 || KB_T)); e.vx = e.kbx * u; e.vy = e.kby * u; move(e, e.vx, e.vy, dt); e.kbT -= dt; continue; }
       const tx = Math.floor(e.x), ty = Math.floor(e.y);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
@@ -3335,7 +3335,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         }
       }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
-      // (a bomber runs a little faster than the runner; on stage 3 from 6:00 as fast as a black oni)
+      // (a bomber runs between the plain oni and the black one: a little faster than the runner)
       const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? runnerSpeed() * bomberMult() : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
@@ -3562,10 +3562,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function bomberBlow(e, self) {
     if (e.blown) return;
     e.blown = true; e.dead = true; e.fuseT = null;
-    const FW = [['255,90,90', '255,214,90'], ['122,216,255', '255,255,255'], ['199,146,255', '255,155,214'], ['125,255,158', '255,243,160']];
-    booms.push({ x: e.x, y: e.y, t: 0, fx: '', fw: true, life: 1.1, r: bomberR(), cols: FW[Math.floor(Math.random() * FW.length)], seed: Math.random() * 6 });
-    // the crackle after the burst
-    for (let i = 0; i < 5; i++) setTimeout(() => noise(0.05, 0.05), 380 + i * 70 + Math.random() * 60);
+    booms.push({ x: e.x, y: e.y, t: 0, fx: '', r: bomberR() });
     for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: ['#ffcf5a', '#ff6a3d', '#fff1c4'][i % 3] }); }
     shake = reduceMotion ? 0 : Math.max(shake, 0.3); flash = Math.max(flash, 0.35);
     tone(80, 0.5, 'sawtooth', 0.12, 28); noise(0.4, 0.13);
@@ -4073,7 +4070,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ctx.restore();
       return;
     }
-    const k = b.t / 0.6, fx = b.fx || '', BR = blastR(fx);
+    const k = b.t / 0.6, fx = b.fx || '', BR = b.r || blastR(fx);
     if (fx === 'bomb_emp' || fx === 'br_emf') {
       ctx.strokeStyle = `rgba(110,210,255,${1 - k})`; ctx.lineWidth = 0.16 * (1 - k);
       ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.3 + k * 0.8), 0, Math.PI * 2); ctx.stroke();
@@ -5220,7 +5217,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     '3b': [
       { say: '花火の夜では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は3.5秒で戻る(2回分で7秒)', info: true },
       { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
-      { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。6分からは黒い鬼と同じ速さになる。点滅したら、韋駄天で一気に離れよう', info: true },
+      { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、韋駄天で一気に離れよう', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
@@ -5235,7 +5232,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k3: [
-      { say: '月蝕の夜では、6分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する。黒い鬼の影は、黒い鬼と同じく逃走者より速い', info: true },
+      { say: '月蝕の夜では、5分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する。黒い鬼の影は、黒い鬼と同じく逃走者より速い', info: true },
       { say: '黒い鬼の影も建物の影は踏めない。黒い鬼の影が来た。建物の影に1秒入ってやり過ごそう', set: () => tutShade(true), go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
@@ -6241,7 +6238,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // the stand-by notes of stages 2 and 3, for the map picked
   function spText(n) {
-    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える。6分からは黒い鬼も分裂する' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
+    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える。5分からは黒い鬼も分裂する' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
   }
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
