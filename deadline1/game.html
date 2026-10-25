@@ -112,9 +112,9 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .mapcard.locked { opacity: .55; }
 /* the story's name on a dark band along the bottom of the map's picture (it takes no room from the card) */
 .mapcard .thumb { position: relative; overflow: hidden; }
-.mapcard .thumb .story { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; background: rgba(0,0,0,.72); color: var(--lamp); font-size: 9px; line-height: 1.2; font-weight: 700; letter-spacing: .04em; text-align: center; white-space: nowrap; }
+.mapcard .thumb .story { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; background: rgba(0,0,0,.72); color: #c4c8d2; font-size: 9px; line-height: 1.2; font-weight: 700; letter-spacing: .04em; text-align: center; white-space: nowrap; }
 .mapcard small:not(.story) { grid-column: 2 / 4; }
-.mapcard small.prize { color: var(--lamp); white-space: normal; line-height: 1.2; }
+.mapcard small.prize { color: var(--muted); white-space: normal; line-height: 1.2; }
 .mapcard.locked .thumb { filter: grayscale(1) brightness(.5); }
 @media (max-height: 460px) { .mapcard .thumb { width: 60px; height: 38px; } .mapcard { padding: 4px 6px; } }
 #tutPicks .pick b { color: var(--lamp); }
@@ -4914,7 +4914,109 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     3: { bpm: 84, vol: 0.5, step: stepCore, setup: setupCore },
   };
   // </d2songs>
-  const songFor = n => (mapSkin === 'd2' ? SONGS2 : SONGS)[Math.min(3, Math.max(1, n))];
+  // ---------- 影踏み soundtrack ----------
+  // 影の街 (88 BPM, E phrygian): a music box in an empty street. A soft heartbeat kick, a clock tick, a low
+  // drone, and a music-box tune (bright sines, an echo behind) that loses a note now and then.
+  function stepShade(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8, BAR = 60 / 88 * 4;
+    const root = [40, 41, 40, 38][bar % 4];
+    if (st === 0 || st === 3) voice({ f: 70, f2: 40, at, dec: 0.35, v: st ? 0.45 : 0.7, att: 0.003 });
+    if (st % 4 === 2) voice({ type: 'square', f: 2600, at, dec: 0.015, v: 0.02, cut: 7000, att: 0.001 });
+    if (st === 0) { voice({ f: midi(root - 12), at, dec: BAR * 1.02, v: 0.18, att: 0.3 }); voice({ type: 'triangle', f: midi(root + 7 - 12), at, dec: BAR, v: 0.05, att: 0.6, to: bgm.verb }); }
+    const tune = [[76, 0, 79, 0, 77, 0, 76, 0, 72, 0, 74, 0, 76, 0, 0, 0], [77, 0, 76, 0, 74, 0, 72, 0, 71, 0, 72, 0, 74, 0, 0, 0], [76, 0, 79, 0, 81, 0, 79, 0, 77, 0, 76, 0, 77, 0, 76, 0], [74, 0, 72, 0, 71, 0, 0, 0, 69, 0, 71, 0, 72, 0, 0, 0]][bar % 4];
+    const n = tune[st];
+    if (n && hsh(bar * 13 + st) > 0.12) { voice({ f: midi(n + 12), at, dec: 0.5, v: 0.05, att: 0.001 }); voice({ f: midi(n + 24), at, dec: 0.25, v: 0.012, att: 0.001 }); voice({ f: midi(n + 12), at, dec: 0.5, v: 0.025, att: 0.001, to: bgm.echo }); }
+    if (ph >= 4 && st === 8) hiss({ at, dec: BAR * 0.6, v: 0.04, type: 'bandpass', f: 600, f2: 1800, q: 6, to: bgm.verb });
+  }
+  // 黄昏通り (104 BPM, D dorian): a warm walk at dusk. Brushed hats, a walking bass, a plucked arpeggio
+  // and, on the back half, a breathy flute line; an evening bell every four bars.
+  function stepDusk(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8, BAR = 60 / 104 * 4;
+    const root = [50, 48, 46, 45][bar % 4], ch = [[0, 3, 7, 10], [0, 4, 7, 11], [0, 4, 7, 11], [0, 3, 7, 10]][bar % 4];
+    if (st === 0 || st === 10) voice({ f: 85, f2: 45, at, dec: 0.4, v: 0.7, att: 0.003 });
+    if (st === 4 || st === 12) { hiss({ at, dec: 0.14, v: 0.12, type: 'bandpass', f: 2600, q: 0.6 }); hiss({ at, dec: 0.4, v: 0.05, type: 'bandpass', f: 2200, to: bgm.verb }); }
+    hiss({ at, dec: 0.05, v: st % 2 ? 0.02 : 0.035, type: 'bandpass', f: 7000, q: 0.9 });
+    if (st % 4 === 0) voice({ type: 'triangle', f: midi(root - 12 + [0, 7, 12, 10][st / 4]), at, dec: 0.3, v: 0.22, cut: 900 });
+    if (st % 2 === 0) { const c = ch[(st / 2) % 4]; voice({ type: 'triangle', f: midi(root + 12 + c), at, dec: 0.25, v: 0.05, cut: 2600, att: 0.002 }); }
+    if (ph >= 4) {
+      const n = [{ 0: 74, 4: 77, 6: 76, 8: 74, 12: 72 }, { 0: 72, 4: 74, 8: 76, 12: 79 }, { 0: 77, 6: 76, 8: 74, 12: 70 }, { 0: 69, 4: 72, 8: 74, 14: 72 }][bar % 4][st];
+      if (n) { voice({ f: midi(n), at, dec: 0.7, v: 0.05, att: 0.06, vib: 5 }); hiss({ at, dec: 0.12, v: 0.015, type: 'bandpass', f: midi(n) * 2, q: 4 }); voice({ f: midi(n), at, dec: 0.7, v: 0.02, att: 0.06, to: bgm.echo }); }
+    }
+    if (bar % 4 === 0 && st === 0) fmv(midi(root + 24), at, 3, 0.04, 2.76, midi(root + 24), bgm.verb, 0.002);
+  }
+  // 月蝕の夜 (76 BPM, C# minor): the moon goes out. Deep drum booms, a slow choir of detuned saws,
+  // a falling bell, and a hiss that rises every four bars.
+  function stepEclipse(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8, BAR = 60 / 76 * 4;
+    const root = [37, 33, 35, 32][bar % 4];
+    if (st === 0 || st === 6 || st === 10) { voice({ f: 65, f2: 32, at, dec: 0.8, v: st ? 0.6 : 0.9, att: 0.003 }); hiss({ at, dec: 0.3, v: 0.08, type: 'lowpass', f: 300 }); }
+    if (st === 8) { hiss({ at, dec: 0.3, v: 0.12, type: 'bandpass', f: 1200, q: 2 }); hiss({ at, dec: 0.9, v: 0.06, type: 'bandpass', f: 1000, to: bgm.verb }); }
+    if (st === 0) for (const c of [0, 3, 7]) for (const d of [-14, 14]) voice({ type: 'sawtooth', f: midi(root + 12 + c), at, dec: BAR * 1.05, v: 0.012, att: 1, cut: 1100, q: 3, det: d, to: bgm.verb });
+    if (st === 0) voice({ f: midi(root - 12), at, dec: BAR, v: 0.22, att: 0.2 });
+    if (bar % 2 === 1 && st % 4 === 0) fmv(midi(root + 36 - st / 2), at, 1.6, 0.035, 1.41, midi(root + 36), bgm.echo, 0.002);
+    if (ph >= 4 && bar % 2 === 0) {
+      const n = { 0: 68, 4: 69, 8: 68, 12: 64 }[st];
+      if (n) voice({ type: 'square', f: midi(n), at, dec: 0.6, v: 0.022, cut: 1600, vib: 4, to: bgm.echo });
+    }
+    if (bar % 4 === 3 && st === 0) hiss({ at, dec: BAR, v: 0.07, type: 'bandpass', f: 300, f2: 3000, q: 3, to: bgm.verb });
+  }
+  const SONGS3 = {
+    1: { bpm: 88, vol: 0.9, step: stepShade, setup: b => cyberFx(b, 60 / 88 * 0.75, 0.45, 3) },
+    2: { bpm: 104, vol: 0.85, step: stepDusk, setup: b => cyberFx(b, 60 / 104 * 0.75, 0.3, 2.2) },
+    3: { bpm: 76, vol: 0.55, step: stepEclipse, setup: b => cyberFx(b, 60 / 76 * 0.5, 0.45, 4) },
+  };
+
+  // ---------- 導火線 soundtrack: festival music in a fireworks night (the yo scale: D E G A B) ----------
+  // 花火工場 (120 BPM): a works at speed. Machine clanks, a fuse sizzle, taiko kicks and a shamisen-like
+  // pluck running the yo scale.
+  const YO = [0, 2, 5, 7, 9, 12, 14, 17, 19, 21];
+  function stepWorks(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8;
+    const root = [50, 50, 48, 45][bar % 4];
+    if (st === 0 || st === 7 || st === 10) voice({ f: 95, f2: 50, at, dec: 0.35, v: 0.8, att: 0.002 });
+    if (st === 4 || st === 12) { voice({ type: 'square', f: 420, at, dec: 0.08, v: 0.05, cut: 3000 }); hiss({ at, dec: 0.12, v: 0.14, type: 'bandpass', f: 3200, q: 6 }); }
+    hiss({ at, dec: 0.03, v: 0.025 + (st % 4 === 2 ? 0.02 : 0), type: 'highpass', f: 6000 });
+    if (st % 2 === 0) voice({ type: 'sawtooth', f: midi(root - 12 + (st % 8 === 6 ? 7 : 0)), at, dec: 0.12, v: 0.12, cut: 700, q: 4 });
+    const r = hsh(Math.floor(bar / 2) * 29 + st);
+    if (r < 0.6) { const n = YO[Math.floor(hsh(bar * 7 + st * 3) * 8)]; voice({ type: 'square', f: midi(root + 12 + n), at, dec: 0.14, v: 0.035, cut: 2600, att: 0.001 }); }
+    if (ph >= 4 && st === 0) hiss({ at, dec: 60 / 120 * 4, v: 0.05, type: 'bandpass', f: 4000, f2: 9000, q: 8 });
+  }
+  // 縁日通り (128 BPM): a festival band. Taiko don-don, a bright kane bell on the off-beats, a shamisen
+  // pluck under, and the fue flute leading.
+  function stepFair(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8;
+    const root = [50, 50, 45, 48][bar % 4];
+    if ([0, 3, 6, 8].includes(st)) voice({ f: st === 0 ? 105 : 120, f2: 55, at, dec: 0.3, v: st === 0 ? 0.85 : 0.5, att: 0.002 });
+    if (st === 14 && bar % 2) voice({ f: 140, f2: 70, at, dec: 0.2, v: 0.4, att: 0.002 });
+    if (st % 4 === 2) fmv(3200, at, 0.18, 0.03, 1.47, 2200, bgm.out, 0.001);
+    if (st % 2 === 0) voice({ type: 'square', f: midi(root + YO[[0, 2, 3, 4][(st / 2) % 4]]), at, dec: 0.1, v: 0.04, cut: 2000, att: 0.001 });
+    const melody = [{ 0: 74, 2: 76, 4: 79, 8: 81, 10: 79, 12: 76 }, { 0: 74, 4: 72, 6: 74, 8: 76, 12: 74 }, { 0: 79, 2: 81, 4: 83, 8: 81, 12: 79, 14: 76 }, { 0: 76, 4: 74, 8: 72, 12: 74 }][bar % 4];
+    const n = ph >= 2 ? melody[st] : null;
+    if (n) { voice({ f: midi(n + 12), at, dec: 0.4, v: 0.045, att: 0.03, vib: 7 }); hiss({ at, dec: 0.08, v: 0.012, type: 'bandpass', f: midi(n + 12) * 2, q: 5 }); voice({ f: midi(n + 12), at, dec: 0.4, v: 0.018, att: 0.03, to: bgm.echo }); }
+  }
+  // 花火の夜 (100 BPM, A-flat major): the big show. A firework boom every two bars (a kick and a burst of
+  // noise opening up), crackling sparkles, a wide pad and a soaring lead on the back half.
+  function stepShow(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8, BAR = 60 / 100 * 4;
+    const root = [44, 41, 37, 39][bar % 4], ch = [[0, 4, 7], [0, 3, 7], [0, 4, 7], [0, 4, 7]][bar % 4];
+    if (st === 0 || st === 8) voice({ f: 80, f2: 40, at, dec: 0.5, v: 0.8, att: 0.002 });
+    if (st === 4 || st === 12) { hiss({ at, dec: 0.18, v: 0.16, type: 'bandpass', f: 1700, q: 0.8 }); hiss({ at, dec: 0.7, v: 0.07, type: 'bandpass', f: 2000, to: bgm.verb }); }
+    if (bar % 2 === 0 && st === 0) { voice({ f: 55, f2: 28, at, dec: 1.1, v: 0.6, att: 0.003 }); hiss({ at, dec: 1.4, v: 0.1, type: 'lowpass', f: 600, f2: 4000, to: bgm.verb }); }
+    if (bar % 2 === 0 && st >= 4 && st <= 9) hiss({ at, dec: 0.02, v: 0.05 * hsh(bar * 5 + st), type: 'highpass', f: 9000 });
+    if (st === 0) for (const c of ch) for (const d of [-10, 10]) voice({ type: 'sawtooth', f: midi(root + 12 + c), at, dec: BAR, v: 0.012, att: 0.4, cut: 2200, det: d, to: bgm.verb });
+    if (st % 4 === 0) voice({ type: 'triangle', f: midi(root - 12), at, dec: 0.4, v: 0.2, cut: 800 });
+    voice({ f: midi(root + 24 + [...ch, 12][s % 4]), at, dec: 0.12, v: 0.018, att: 0.001, to: bgm.echo });
+    if (ph >= 4) {
+      const n = [{ 0: 80, 4: 84, 8: 87, 12: 84 }, { 0: 82, 6: 80, 8: 77, 12: 80 }, { 0: 77, 4: 80, 8: 82, 12: 84 }, { 0: 87, 6: 85, 8: 84, 14: 82 }][bar % 4][st];
+      if (n) { voice({ type: 'sawtooth', f: midi(n), at, dec: 0.6, v: 0.03, cut: 3200, q: 2, vib: 5 }); voice({ type: 'sawtooth', f: midi(n), at, dec: 0.6, v: 0.016, cut: 3200, to: bgm.echo }); }
+    }
+  }
+  const SONGS4 = {
+    1: { bpm: 120, vol: 0.7, step: stepWorks, setup: b => cyberFx(b, 60 / 120 * 0.75, 0.3, 1.6) },
+    2: { bpm: 128, vol: 0.75, step: stepFair, setup: b => cyberFx(b, 60 / 128 * 0.75, 0.3, 1.8) },
+    3: { bpm: 100, vol: 0.52, step: stepShow, setup: b => cyberFx(b, 60 / 100 * 0.75, 0.35, 3) },
+  };
+  const songFor = n => (mapSkin === 'd2' ? SONGS2 : mapSkin === 'd3' ? SONGS3 : mapSkin === 'd4' ? SONGS4 : SONGS)[Math.min(3, Math.max(1, n))];
   const titleSong = () => mapSkin === 'd2' ? SONGS2.title : SONGS.title;
 
   // tutorial: "practice run" (112 BPM, D dorian). Bright but still electro: a tight kick on 1 and 3,
