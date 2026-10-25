@@ -911,6 +911,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // page's private per-person store on claude.ai so it survives closing the app; browser storage is only a fallback ----------
   let records = { stages: {}, plays: 0, bestTime: 0, cleared: {} };
   try { const r = JSON.parse(localStorage.getItem(REC_KEY) || 'null'); if (r && r.stages) records = Object.assign(records, r); } catch (e) {}
+  // a fresh start, once on every device (the stories now open in turn): the stages, the escapes and the clears, the
+  // tutorials and the story lines seen, the map picks all go (the name, titles, shop and stars stay)
+  const FRESH_KEY = REC_KEY + '-fresh1';
+  let freshStart = false;
+  const freshen = r => Object.assign(r, { stages: {}, plays: 0, bestTime: 0, cleared: {}, mclear: {}, s3: { plays: 0, time: 0, kills: 0 } });
+  try {
+    if (!localStorage.getItem(FRESH_KEY)) {
+      freshStart = true; freshen(records); best = 0;
+      for (const k of [REC_KEY + '-tut', REC_KEY + '-map', REC_KEY + '-story', 'onigokko-best']) localStorage.removeItem(k);
+      localStorage.setItem(REC_KEY, JSON.stringify(records)); localStorage.setItem(FRESH_KEY, '1');
+    }
+  } catch (e) {}
   let recDoc = null, stageKillStart = 0;
   const TOP_N = 5;
   // escapes rank above captures; faster escapes first, then longer survivals
@@ -1023,6 +1035,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
           dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
+      // (the fresh start goes for the saved copy too)
+      if (freshStart) { freshen(records); best = 0; saveRecords(); }
       if (records.bestTime > best) best = records.bestTime;
       renderRecords(); Rank.sync();
     } catch (e) { recDoc = null; }
@@ -1750,7 +1764,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
   // (on 花火の夜 its blast is half as wide again as a bomb's)
   const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
-  const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.25, 0.3, 0.35], BOMBER_MAX = [2, 3, 4];
+  const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 2, 3];
   // 影踏み: a yellow oni within this distance of the runner splits off its shadow oni (once)
   const SPLIT_D = 4;
   // how far down-right the tall blocks' shadows reach on each stage (the low sun of 黄昏通り throws them longest)
@@ -3298,7 +3312,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
       if (e.lureT > 0) { e.lureT -= dt; gx = e.lureX; gy = e.lureY; }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
-      const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
+      // (a bomber runs as fast as a black oni)
+      const v = (e.black || e.bomber ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
       move(e, e.vx, e.vy, dt);
@@ -3306,7 +3321,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (let i = 0; i < enemies.length; i++) for (let j = i + 1; j < enemies.length; j++) {
       const p = enemies[i], q = enemies[j];
       const dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
-      if (d > 0 && d < 0.62 && !p.black && !q.black && !p.amb && !q.amb && !p.shade && !q.shade) { const k = (0.62 - d) / 2; p.x -= dx / d * k; p.y -= dy / d * k; q.x += dx / d * k; q.y += dy / d * k; collide(p); collide(q); }
+      if (d > 0 && d < 0.62 && !p.black && !q.black && !p.amb && !q.amb && !p.shade && !q.shade && !p.bomber && !q.bomber) { const k = (0.62 - d) / 2; p.x -= dx / d * k; p.y -= dy / d * k; q.x += dx / d * k; q.y += dy / d * k; collide(p); collide(q); }
     }
 
     // 導火線: a bomber near the runner lights its fuse, blinks, and goes off
@@ -3418,7 +3433,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('cKills').textContent = kills + '体';
     $('cTotal').textContent = total.toFixed(1) + '秒';
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
-    if (mapSkin in MCLEAR) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
+    if (mapSkin in MCLEAR && (mapSkin !== 'd1' || stageN === 3)) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
     const crank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
     mono('cMono', stageN, 'clear');
     showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
@@ -3531,7 +3546,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: ['#ffcf5a', '#ff6a3d', '#fff1c4'][i % 3] }); }
     shake = reduceMotion ? 0 : Math.max(shake, 0.3); flash = Math.max(flash, 0.35);
     tone(80, 0.5, 'sawtooth', 0.12, 28); noise(0.4, 0.13);
-    for (const o of enemies) {
+    // going off on its own it harms no oni; set off by the runner's blast it takes the oni round it with it
+    if (!self) for (const o of enemies) {
       if (o.dead || Math.hypot(o.x - e.x, o.y - e.y) >= bomberR() + o.r * 0.5) continue;
       if (o.bomber) { kills++; tally(o); bomberBlow(o, false); continue; }
       o.hp--;
@@ -5080,8 +5096,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '8分経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
-      { say: '花火工場には、自爆する橙色の鬼がいる。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
-      { btn: 'mine', say: '点滅する前に爆弾で倒すか、点滅したら円の外へ逃げよう。爆弾で倒すと誘爆して、まわりの鬼も吹き飛ぶ', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
+      { say: '花火工場には、自爆する橙色の鬼がいる。黒い鬼と同じく逃走者より速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
+      { btn: 'mine', say: '点滅する前に爆弾で倒すか、点滅したら円の外へ逃げよう。自爆では他の鬼は倒れないが、爆弾で倒すと誘爆して、まわりの鬼も吹き飛ぶ', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
       { say: '2分経過でバリアと爆弾1個が支給される。バリアは自爆も1回防ぐ。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k1: [
@@ -5305,9 +5321,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const MAP_KEY = REC_KEY + '-map';
   // each DEADLINE2 map opens with the one before it: 隔離区画 once 地下 and 夜の街 are escaped, 電脳都市 once 隔離区画 is,
   // 無限回路 once 電脳都市 is (records.mclear: the DEADLINE2 maps escaped)
-  const MCLEAR = { d2: '', d3: 's', d4: 'b' };
-  const mapOpen = (n, skin = 'd2') => n === 1 ? isCleared(1) && isCleared(2) : !!(records.mclear || {})[MCLEAR[skin] + (n - 1)];
-  const MAP_LOCKS = { d2: ['地下と夜の街をクリアで解放', '隔離区画をクリアで解放', '電脳都市をクリアで解放'], d3: ['地下と夜の街をクリアで解放', '影の街をクリアで解放', '黄昏通りをクリアで解放'], d4: ['地下と夜の街をクリアで解放', '花火工場をクリアで解放', '縁日通りをクリアで解放'] };
+  const MCLEAR = { d1: 'h', d2: '', d3: 's', d4: 'b' }, PREV_STORY = { d2: 'd1', d3: 'd2', d4: 'd3' };
+  // a story is done once its stage 3 is escaped (帰り道's from before its own mark, by its stage 3 escapes)
+  const storyDone = skin => !!(records.mclear || {})[MCLEAR[skin] + 3] || (skin === 'd1' && (records.stages[3] || []).some(r => r.escaped));
+  const mapOpen = (n, skin = 'd2') => n === 1 ? storyDone(PREV_STORY[skin]) : !!(records.mclear || {})[MCLEAR[skin] + (n - 1)];
+  const MAP_LOCKS = { d2: ['帰り道をクリアで解放', '隔離区画をクリアで解放', '電脳都市をクリアで解放'], d3: ['電脳の檻をクリアで解放', '影の街をクリアで解放', '黄昏通りをクリアで解放'], d4: ['影踏みをクリアで解放', '花火工場をクリアで解放', '縁日通りをクリアで解放'] };
   const mapPicks = () => { try { return JSON.parse(localStorage.getItem(MAP_KEY)) || {}; } catch (_) { return {}; } };
   const mapPick = n => { const k = mapPicks()[n]; return MAP_CHOICE && n >= 1 && n <= 3 && k in MCLEAR && mapOpen(n, k) ? k : 'd1'; };
   const mapName = (n, skin = mapSkin) => MAP_NAMES[skin][Math.min(3, Math.max(1, n)) - 1];
