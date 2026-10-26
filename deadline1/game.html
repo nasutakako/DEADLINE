@@ -1886,7 +1886,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (e.pin && Math.hypot(e.pin[0] + 0.5 - e.x, e.pin[1] + 0.5 - e.y) < 1.2) e.pinT = 0;
       else if (e.pin && e.pfd[idx(tx, ty)] > 0) { field = e.pfd; gx = e.pin[0] + 0.5; gy = e.pin[1] + 0.5; }
     }
-    else {
+    else if (hidden) {
       // lost, it still comes to the edge of the shadow the runner hides in (or as near the runner as it can get)
       // and prowls along it, from one spot on that edge to another
       e.roamT = (e.roamT || 0) - dt;
