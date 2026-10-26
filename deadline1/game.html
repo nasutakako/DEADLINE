@@ -1787,8 +1787,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let shadeMap = null, shadeField = null, shadeKey = '';
   const shadeAt = (x, y) => !!shadeMap && x >= 0 && y >= 0 && x < COLS && y < ROWS && shadeMap[idx(Math.floor(x), Math.floor(y))] === 1;
   // the shadow oni walks anywhere, building shadows too, except into the shadow the runner hides in (shadeBan)
-  let shadeBan = null;
-  const shadePass = (x, y) => walk(x, y) && !(shadeBan && shadeBan.has(idx(x, y)));
+  let shadeBan = null, pinBan = null;
+  const shadePass = (x, y) => walk(x, y) && !(shadeBan && shadeBan.has(idx(x, y))) && !(pinBan && pinBan.has(idx(x, y)));
   function shadeBfs(out, sx, sy) {
     out.fill(-1); if (!shadePass(sx, sy)) return;
     const q = new Int32Array(COLS * ROWS); let h = 0, n = 0;
@@ -1798,9 +1798,27 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) { if (!shadePass(nx, ny) || out[idx(nx, ny)] >= 0) continue; out[idx(nx, ny)] = d; q[n++] = idx(nx, ny); }
     }
   }
+  // right after the split the shadow goes round to the far side of the runner, the way they are heading, so the oni
+  // behind and its shadow in front close on them from both sides (for this long, or until it gets there)
+  const PINCER_T = 5, PINCER_AHEAD = 3, PINCER_MULT = 1.15;
+  function pincerSpot(e) {
+    // ahead: the way the runner is going, or, standing still, the way it was going when the oni split
+    const sp = Math.hypot(P.mx || 0, P.my || 0);
+    if (sp > 1) e.pinDir = [P.mx / sp, P.my / sp];
+    const [hx, hy] = e.pinDir || [1, 0];
+    const ax = P.x + hx * PINCER_AHEAD, ay = P.y + hy * PINCER_AHEAD;
+    let best = null, bd = 1e9;
+    for (let y = Math.floor(ay) - 3; y <= Math.floor(ay) + 3; y++) for (let x = Math.floor(ax) - 3; x <= Math.floor(ax) + 3; x++) {
+      if (!shadePass(x, y)) continue;
+      const d = Math.hypot(x + 0.5 - ax, y + 0.5 - ay); if (d < bd) { bd = d; best = [x, y]; }
+    }
+    return best;
+  }
   function shadeSplit(o) {
     o.split = true;
-    const sh = Object.assign({}, o, { amb: false, shade: true, parent: o, bias: 1 - o.bias, x: o.x, y: o.y, vx: -o.vx, vy: -o.vy, stun: 0.25, born: t, fd: null, split: true });
+    const sh = Object.assign({}, o, { amb: false, shade: true, parent: o, bias: 1 - o.bias, x: o.x, y: o.y, vx: -o.vx, vy: -o.vy, stun: 0.25, born: t, fd: null, split: true, pinT: PINCER_T });
+    // (the side it closes from: the runner's heading, or straight on from the oni through the runner)
+    { const sp = Math.hypot(P.mx || 0, P.my || 0), dx = P.x - o.x, dy = P.y - o.y, dl = Math.hypot(dx, dy) || 1; sh.pinDir = sp > 1 ? [P.mx / sp, P.my / sp] : [dx / dl, dy / dl]; }
     enemies.push(sh); if (o.tut && tut) tut.oni.push(sh);
     for (let i = 0; i < 16; i++) { const a = Math.random() * Math.PI * 2, v = 1 + Math.random() * 3; sparks.push({ x: o.x, y: o.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: i % 2 ? '#2a1846' : '#f6e7a0' }); }
     tone(330, 0.2, 'sawtooth', 0.04, 110);
@@ -1844,6 +1862,22 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (key !== shadeKey) { shadeKey = key; shadeBfs(shadeField, Math.floor(P.x), Math.floor(P.y)); }
     }
     if (!hidden) { field = shadeField; e.roam = null; }
+    // the pincer: first round to the spot ahead of the runner
+    if (!hidden && e.pinT > 0) {
+      e.pinT -= dt; e.pinThink = (e.pinThink || 0) - dt;
+      if (e.pinThink <= 0 || !e.pin) {
+        e.pinThink = 0.3; e.pin = pincerSpot(e);
+        if (e.pin) {
+          // (the way round: never through the streets right by the runner, so it comes at them from the far side)
+          if (!e.pfd || e.pfd.length !== COLS * ROWS) e.pfd = new Int16Array(COLS * ROWS);
+          pinBan = new Set(); const rx = Math.floor(P.x), ry = Math.floor(P.y);
+          for (let y = ry - 2; y <= ry + 2; y++) for (let x = rx - 2; x <= rx + 2; x++) if (x >= 0 && y >= 0 && x < COLS && y < ROWS && Math.hypot(x - rx, y - ry) <= 1.6) pinBan.add(idx(x, y));
+          shadeBfs(e.pfd, e.pin[0], e.pin[1]); pinBan = null;
+        }
+      }
+      if (e.pin && Math.hypot(e.pin[0] + 0.5 - e.x, e.pin[1] + 0.5 - e.y) < 1.2) e.pinT = 0;
+      else if (e.pin && e.pfd[idx(tx, ty)] > 0) { field = e.pfd; gx = e.pin[0] + 0.5; gy = e.pin[1] + 0.5; }
+    }
     else {
       // lost, it still comes to the edge of the shadow the runner hides in (or as near the runner as it can get)
       // and prowls along it, from one spot on that edge to another
@@ -1865,7 +1899,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       field = e.fd; gx = e.roam[0] + 0.5; gy = e.roam[1] + 0.5;
     }
     const d = shadePass(tx, ty) ? field[idx(tx, ty)] : -1;
-    if (d > 0 && !(hidden ? false : Math.hypot(P.x - e.x, P.y - e.y) < 1.1)) {
+    if (d > 0 && !(hidden || field !== shadeField ? false : Math.hypot(P.x - e.x, P.y - e.y) < 1.1)) {
       let bd = d, bs = 1e9, bx = tx, by = ty;
       for (const [nx, ny] of [[tx + 1, ty], [tx - 1, ty], [tx, ty + 1], [tx, ty - 1]]) {
         if (!shadePass(nx, ny)) continue;
@@ -1877,7 +1911,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
     // (a black oni's shadow keeps its speed)
-    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1) * (hidden ? 0.6 : 1);
+    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1) * (hidden ? 0.6 : 1) * (field === e.pfd && e.pinT > 0 ? PINCER_MULT : 1);
     e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
     e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
     const ox = e.x, oy = e.y;
@@ -5235,6 +5269,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     k1: [
       { say: '影の街では、先回りする黄色い鬼が逃走者に近づくと、黒い影の鬼と分裂する。影の鬼は別の道から追ってくる', info: true },
+      { say: '分裂した影の鬼は、逃走者の進む先へ回り込み、黄色い鬼と挟み撃ちにしてくる', info: true },
       { btn: 'mine', say: '影の鬼に触れても確保される。本体を爆弾で倒すと、影の鬼も一緒に消える。倒してみよう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
       { say: '建物の影(暗いところ)に入ると、影の鬼は逃走者を見失う。影のまわりまでは来るが、中には入ってこない。影に1秒入ってみよう', set: tutShade, go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
