@@ -6,11 +6,13 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function okGame(g) { return g in ['deadline1', 'deadline2', 'deadline3d']; }
+    // the fixed boards, and the weekly ranking's (wk + the week's number, e.g. wk2964)
+    function okBoard(b) { return b in ['players', 'loop', 'daily1', 'daily2', 'daily3'] || b.matches('wk[0-9]{1,6}'); }
 
-    // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, loop DEADLINE1's 無限回路, daily1-3 the daily nights
+    // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, loop DEADLINE1's 無限回路, daily1-3 the daily nights, wk<n> the weekly ranking
     match /games/{game}/{board}/{uid} {
-      allow read: if okGame(game) && board in ['players', 'loop', 'daily1', 'daily2', 'daily3'];
-      allow create, update: if okGame(game) && board in ['players', 'loop', 'daily1', 'daily2', 'daily3'] && signedIn() && request.auth.uid == uid
+      allow read: if okGame(game) && okBoard(board);
+      allow create, update: if okGame(game) && okBoard(board) && signedIn() && request.auth.uid == uid
         && request.resource.data.keys().hasOnly(['name', 'key', 'best', 'at', 'title'])
         && request.resource.data.name is string
         && request.resource.data.name.size() >= 1 && request.resource.data.name.size() <= 20
@@ -22,7 +24,7 @@ service cloud.firestore {
         // the name on the record must be one this player owns
         && get(/databases/$(database)/documents/games/$(game)/names/$(request.resource.data.key)).data.owner == request.auth.uid;
       // a player can take their own record off (the name and ranking deletion in the game)
-      allow delete: if okGame(game) && board in ['players', 'loop', 'daily1', 'daily2', 'daily3'] && signedIn() && request.auth.uid == uid;
+      allow delete: if okGame(game) && okBoard(board) && signedIn() && request.auth.uid == uid;
     }
 
     // games/<game>/names/<key>: { owner, name } — one owner per name
