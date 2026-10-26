@@ -493,6 +493,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 @media (max-width: 520px) { #titleScreen .row .go { white-space: normal !important; font-size: 14px !important; padding: 10px 6px !important; word-break: keep-all; overflow-wrap: anywhere; } }
 #titleScreen .row .go { align-self: stretch; white-space: nowrap; }
+#titleScreen .go .locknote { display: block; margin-top: 3px; font-family: var(--f-body); font-size: 11px; font-weight: 700; letter-spacing: .02em; line-height: 1.3; white-space: normal; color: #b4bccd; }
+#titleScreen #rankPlayBtn { padding-left: 10px; padding-right: 10px; }
 #titleScreen .go.special { background: linear-gradient(135deg, #7a3cd8, #c43a8a); }
 #titleScreen .go.tutl { background: #3b4458; }
 /* the tutorial list: one heading per story */
@@ -975,6 +977,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const ok = rankOpen();
         b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
         b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
+        // locked: what opens it, small underneath
+        if (!ok) { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = `${STORY_NAMES[ROUTE[weekSkin()]]}のステージ3クリアで解放`; b.append(sm); }
         continue;
       }
       if (n === 4 && b.classList.contains('mrow')) {
@@ -3419,6 +3423,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     enemies = enemies.filter(e => !e.dead);
     if (P.blast) {
       P.blast = false;
+      if (state === 'play' && tut && P.inv <= 0) tutCaught();
       if (state === 'play' && !tut && P.inv <= 0) {
         if (P.barrier) { P.barrier = false; P.inv = INV_TIME; if (S3) S3.saves++; booms.push({ x: P.x, y: P.y, t: 0, barrier: true, fx: EQ('barrier') }); tone(1200, 0.3, 'triangle', 0.08, 300); }
         else {
@@ -3492,8 +3497,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
     }
     danger = clamp(1 - (nearestD - 0.6) / 3.4, 0, 1);
-    // the tutorial: nothing catches the runner
-    if (nearestD < CATCH && P.inv <= 0 && !tut) {
+    // in the tutorial a catch sends the runner back to the start of that practice step
+    if (nearestD < CATCH && P.inv <= 0 && tut) tutCaught();
+    else if (nearestD < CATCH && P.inv <= 0 && !tut) {
       if (P.barrier) {
         // the barrier takes the hit and blows away every oni touching it
         P.barrier = false; P.inv = INV_TIME; if (S3) S3.saves++;
@@ -5346,7 +5352,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tutGlow(st.btn);
     if (st.set) st.set();
   }
+  // caught in practice: a word, the step's oni cleared away, then the same step again from the start (as often as it takes)
+  function tutCaught() {
+    if (tut.redo > 0 || tut.ok > 0) return;
+    tut.redo = 1.3; P.inv = 1e9; tut.want = null;
+    enemies.length = 0; tut.oni = []; mines.length = 0;
+    for (const s of pending) dropWarn(s);
+    pending = [];
+    $('tutBar').classList.remove('ok'); $('tutSay').textContent = '捕まった! もう一度'; $('tutNext').hidden = true; tutGlow('');
+    shake = reduceMotion ? 0 : 0.2; tone(220, 0.25, 'sawtooth', 0.06, -80);
+  }
   function tutTick(dt) {
+    if (tut.redo > 0) { tut.redo -= dt; if (tut.redo <= 0) { tut.redo = 0; P.inv = 0.8; tut.i--; tutNext(); } return; }
     const st = tut.steps[tut.i];
     tut.wait += dt;
     tut.run += Math.hypot(P.x - tut.lx, P.y - tut.ly); tut.lx = P.x; tut.ly = P.y;
