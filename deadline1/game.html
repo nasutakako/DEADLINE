@@ -1658,7 +1658,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     sk_bluefire: { m: ['#d9f5ff', '#2b8cff', '#041a3d'], glow: '60,150,255', fx: 'fire' },
     sk_moon: { m: ['#fffbe8', '#cfd3e6', '#4a4f66'], glow: '255,250,220', fx: 'moon' },
   };
-  const shopData = () => (records.shop = Object.assign({ owned: [], eq: {} }, records.shop));
+  // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
+  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water'];
+  for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
+  const shopData = () => {
+    records.shop = Object.assign({ owned: [], eq: {} }, records.shop);
+    for (const k in records.shop.eq) if (SHOP_GONE.includes(records.shop.eq[k])) records.shop.eq[k] = '';
+    return records.shop;
+  };
   // stars: earned on the survival nights (★1 for each of the day's missions), spent on the items that only change the look.
   // Kept as totals earned and spent, so two saved copies merge by taking the larger of each
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
@@ -1767,7 +1774,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   $('spMisTog').addEventListener('click', () => { tap(); misOpen = !misOpen; misList(); });
   const MIS_HOST = () => matchMedia('(min-aspect-ratio: 5/4) and (pointer: coarse)').matches ? $('padInfo') : $('stage');
-  const EQ = k => { const s = records.shop; return (s && s.eq && s.eq[k]) || ''; };
+  const EQ = k => { const s = records.shop; const v = (s && s.eq && s.eq[k]) || ''; return SHOP_GONE.includes(v) ? '' : v; };
   // a story's stage 3 lends its prize for the run (帰り道: 九死に一生, 電脳の檻: the EMP bomb) where that slot is the standard one
   const trial = () => MAP_CHOICE && stageN === 3 && !rankRun && state !== 'title' ? ROUTE[mapSkin] : '';
   const bombFx = () => EQ('bomb') || (trial() === 'cyber' ? 'bomb_emp' : '');
