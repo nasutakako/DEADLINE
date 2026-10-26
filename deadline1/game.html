@@ -1906,6 +1906,16 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
       field = e.fd; gx = e.roam[0] + 0.5; gy = e.roam[1] + 0.5;
     }
+    // drawn to a decoy (the shadow dash's clone and the rest) just like the other oni: the way there, before anything else
+    if (e.lureT > 0) {
+      e.lureT -= dt; const lx = Math.floor(e.lureX), ly = Math.floor(e.lureY);
+      if (shadePass(lx, ly)) {
+        if (!e.lfd || e.lfd.length !== COLS * ROWS) e.lfd = new Int16Array(COLS * ROWS);
+        e.lthink = (e.lthink || 0) - dt;
+        if (e.lthink <= 0 || e.lkey !== lx + ',' + ly) { e.lthink = 0.15; e.lkey = lx + ',' + ly; shadeBfs(e.lfd, lx, ly); }
+        if (e.lfd[idx(tx, ty)] >= 0) { field = e.lfd; gx = e.lureX; gy = e.lureY; }
+      }
+    }
     const d = shadePass(tx, ty) ? field[idx(tx, ty)] : -1;
     if (d > 0 && !(hidden || field !== shadeField ? false : Math.hypot(P.x - e.x, P.y - e.y) < 1.1)) {
       let bd = d, bs = 1e9, bx = tx, by = ty;
@@ -3782,7 +3792,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // the oni closest on the runner's heels always takes the bait
     let first = null, fd = 1e9;
     for (const e of enemies) {
-      if (e.dead || e.shade || Math.hypot(e.x - c.x, e.y - c.y) > EL.lureR) continue;
+      if (e.dead || Math.hypot(e.x - c.x, e.y - c.y) > EL.lureR) continue;
       if (sight && !clearLine(e.x, e.y, c.x, c.y)) continue;
       seen.push(e); const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < fd) { fd = d; first = e; }
     }
