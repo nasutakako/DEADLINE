@@ -1800,7 +1800,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // right after the split the shadow goes round to the far side of the runner, the way they are heading, so the oni
   // behind and its shadow in front close on them from both sides (for this long, or until it gets there)
-  const PINCER_T = 5, PINCER_AHEAD = 3, PINCER_MULT = 1.15;
+  const PINCER_T = 5, PINCER_AHEAD = 3;
   function pincerSpot(e) {
     // ahead: the way the runner is going, or, standing still, the way it was going when the oni split
     const sp = Math.hypot(P.mx || 0, P.my || 0);
@@ -1910,8 +1910,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       gx = bx + 0.5; gy = by + 0.5;
     }
     const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
-    // (a black oni's shadow keeps its speed)
-    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1) * (hidden ? 0.6 : 1) * (field === e.pfd && e.pinT > 0 ? PINCER_MULT : 1);
+    // (every shadow oni, a black one's too, runs at a plain oni's speed)
+    const v = Math.min(es * e.var, runnerSpeed()) * (e.tut ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
     e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
     e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
     const ox = e.x, oy = e.y;
@@ -5275,7 +5275,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k3: [
-      { say: '月蝕の夜では、5分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する。黒い鬼の影は、黒い鬼と同じく逃走者より速い', info: true },
+      { say: '月蝕の夜では、5分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する', info: true },
       { say: '黒い鬼の影も、建物の影に隠れた逃走者は見失う。黒い鬼の影が来た。建物の影に1秒入ってやり過ごそう', set: () => tutShade(true), go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
