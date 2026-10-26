@@ -1998,7 +1998,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
     bs_fire: '加速中、通った場所に炎が1.2秒残る。触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     dash_ice: 'ダッシュした道に氷が2.4秒残る。氷を踏んだ鬼は1.6秒遅くなる。',
-    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼は逃走者へ戻る。',
+    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼はその場で立ち止まる。',
     dash_water: 'ダッシュした場所に水の分身が2.2秒残る。分身が見えた鬼の半分ほどがそちらへ向かう。',
   };
   let shopTab = 'fx', shopSel = null;
@@ -3894,8 +3894,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     elems = elems.filter(o => o.t < o.life + (o.delay > 0 ? o.delay : 0));
     // the oni drawn by a clone follow it while it lasts, then go back to the chase
     for (const e of enemies) if (e.slowT > 0 && e.slowSrc && !elems.includes(e.slowSrc)) { e.slowT = 0; e.slowSrc = null; }
-    // (one that has reached the clone sees it is only a shadow and goes back to the runner, instead of milling on it)
-    for (const e of enemies) if (e.decoy) { if ((e.decoyT != null && (e.decoyT -= dt) <= 0) || Math.hypot(e.x - e.decoy.x, e.y - e.decoy.y) < 0.6) { e.lureT = 0; e.decoy = null; e.decoyT = null; continue; } if (elems.includes(e.decoy)) { e.lureT = 0.1; e.lureX = e.decoy.x; e.lureY = e.decoy.y; } else e.decoy = null; }
+    // (one that has reached the clone stops on it and looks round until its time is up, instead of milling on it)
+    for (const e of enemies) if (e.decoy) {
+      if (e.decoyT != null && (e.decoyT -= dt) <= 0) { e.decoy = null; e.decoyT = null; e.decoyHold = null; continue; }
+      if (!elems.includes(e.decoy)) { e.decoy = null; e.decoyHold = null; continue; }
+      if (!e.decoyHold && Math.hypot(e.x - e.decoy.x, e.y - e.decoy.y) < 0.6) e.decoyHold = true;
+      // (held: it stays wherever it stands, even nudged by another oni, so it never tugs back and forth)
+      e.lureT = 0.1; if (e.decoyHold) { e.lureX = e.x; e.lureY = e.y; } else { e.lureX = e.decoy.x; e.lureY = e.decoy.y; }
+    }
   }
   // the map's edge as one loop: s runs clockwise from the top-left corner along the centre of the border tiles
   const perimLen = () => 2 * ((COLS - 1) + (ROWS - 1));
