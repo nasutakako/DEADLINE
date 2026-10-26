@@ -3147,7 +3147,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     level = 1 + Math.floor(t / LV_EVERY);
     // the stage's music gives way to the title music alone: at 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
-    if (!tut && t >= (stageN >= 3 ? 360 : 120) && (!bgm || bgm.song !== titleSong())) bgmStart(titleSong());
+    // (stage 3 walks the story's music first: stage 1's, stage 2's from 2:00, its own from 4:00)
+    if (!tut) { const s = playSong(); if (!bgm || bgm.song !== s) bgmStart(s); }
     // barrier + bomb at 2:00; in the endless stage 3 again every minute after that
     if (t >= (P.nextR ?? BARRIER_AT) && (stageN >= 3 || !P.gotBarrier)) {
       P.nextR = (P.nextR ?? BARRIER_AT) + 60;
@@ -4684,7 +4685,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     cdT -= dt;
     const el = $('countdown'), n = Math.ceil(cdT);
     if (cdT <= 0) {
-      el.hidden = true; state = 'play'; bgmStart(songFor(stageN));
+      el.hidden = true; state = 'play'; bgmStart(playSong());
       // the warning ran during the count: the first oni come out right on GO
       for (const p of pending) p.t = 0;
       tone(784, 0.1, 'square', 0.05); setTimeout(() => tone(1175, 0.22, 'square', 0.05), 90);
@@ -5075,6 +5076,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   };
   const songFor = n => (mapSkin === 'd2' ? SONGS2 : mapSkin === 'd3' ? SONGS3 : mapSkin === 'd4' ? SONGS4 : SONGS)[Math.min(3, Math.max(1, n))];
   const titleSong = () => mapSkin === 'd2' ? SONGS2.title : SONGS.title;
+  const playSong = () => t >= (stageN >= 3 ? 360 : 120) ? titleSong() : songFor(stageN === 3 ? 1 + Math.floor(t / 120) : stageN);
 
   // tutorial: "practice run" (112 BPM, D dorian). Bright but still electro: a tight kick on 1 and 3,
   // a rim on 2 and 4, a 16th shaker, a plucked bass and a bouncing arpeggio with a dotted echo;
