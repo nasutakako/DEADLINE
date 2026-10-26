@@ -1998,7 +1998,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
     bs_fire: '加速中、通った場所に炎が1.2秒残る。触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     dash_ice: 'ダッシュした道に氷が2.4秒残る。氷を踏んだ鬼は1.6秒遅くなる。',
-    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で2.2秒)。',
+    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼は逃走者へ戻る。',
     dash_water: 'ダッシュした場所に水の分身が2.2秒残る。分身が見えた鬼の半分ほどがそちらへ向かう。',
   };
   let shopTab = 'fx', shopSel = null;
@@ -3792,7 +3792,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     waterV: 7.5, waterT: 0.4,                  // 水圧爆弾 / 高圧水砲: push speed (tiles/s) and slide (about 1.5 tiles)
     iceLife: 2.4, iceGap: 0.35, slowT: 1.6, slowK: 0.55, blackSlowK: 0.75,   // 氷の残像 (the fast black oni slows less)
     trailGap: 0.12, trailLife: 1.2, trailMax: 40,                          // 火炎加速: at most one flame per 0.12 s
-    cloneLife: 2.2, mirrorLife: 2.2, lure: 0.5, ambLure: 0.25, lureR: 8,   // 影分身ダッシュ / 水鏡ダッシュ
+    cloneLife: 1.8, mirrorLife: 2.2, lure: 0.5, ambLure: 0.25, lureR: 8,   // 影分身ダッシュ / 水鏡ダッシュ
   };
   const EL_BOMB = { bomb_ice: 'ice', bomb_fire: 'fire', bomb_dark: 'dark', bomb_water: 'water' };
   const EL_ROCKET = { rk_ice: 'ice', rk_fire: 'fire', rk_hole: 'dark', rk_water: 'water' };
@@ -3894,7 +3894,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     elems = elems.filter(o => o.t < o.life + (o.delay > 0 ? o.delay : 0));
     // the oni drawn by a clone follow it while it lasts, then go back to the chase
     for (const e of enemies) if (e.slowT > 0 && e.slowSrc && !elems.includes(e.slowSrc)) { e.slowT = 0; e.slowSrc = null; }
-    for (const e of enemies) if (e.decoy) { if (e.decoyT != null && (e.decoyT -= dt) <= 0) { e.decoy = null; e.decoyT = null; continue; } if (elems.includes(e.decoy)) { e.lureT = 0.1; e.lureX = e.decoy.x; e.lureY = e.decoy.y; } else e.decoy = null; }
+    // (one that has reached the clone sees it is only a shadow and goes back to the runner, instead of milling on it)
+    for (const e of enemies) if (e.decoy) { if ((e.decoyT != null && (e.decoyT -= dt) <= 0) || Math.hypot(e.x - e.decoy.x, e.y - e.decoy.y) < 0.6) { e.lureT = 0; e.decoy = null; e.decoyT = null; continue; } if (elems.includes(e.decoy)) { e.lureT = 0.1; e.lureX = e.decoy.x; e.lureY = e.decoy.y; } else e.decoy = null; }
   }
   // the map's edge as one loop: s runs clockwise from the top-left corner along the centre of the border tiles
   const perimLen = () => 2 * ((COLS - 1) + (ROWS - 1));
@@ -5371,7 +5372,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
       { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
-      { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影は2秒ほどで消える', info: true },
+      { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影はすぐ消える', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     '3c': [
