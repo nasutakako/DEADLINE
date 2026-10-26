@@ -1668,7 +1668,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ['dash_petal', '桜吹雪', 200, '駆け抜けたあとに花びらが舞う', 'radial-gradient(circle at 40% 40%,#fff0f5,#ffb7d0 45%,#e2558a)'],
       ['dash_warp', '時空の裂け目', 500, '空間をゆがめて跳ぶ', 'radial-gradient(circle,#0a0018 30%,#7b3cff 55%,#3fe0ff 68%,rgba(0,0,0,0) 72%)'],
       ['dash_ice', '氷の残像', 500, '駆けた道が凍りつく', 'linear-gradient(90deg,rgba(140,235,255,.1),#8feaff 55%,#f2feff)'],
-      ['dash_shadow', '影分身ダッシュ', 500, '向いている方へ影の分身が走る', 'radial-gradient(circle,#1a0630 35%,#7a3cd8 62%,rgba(0,0,0,0) 72%)'],
+      ['dash_shadow', '影分身ダッシュ', 500, 'ダッシュした場所に影の分身が残る', 'radial-gradient(circle,#1a0630 35%,#7a3cd8 62%,rgba(0,0,0,0) 72%)'],
       ['dash_water', '水鏡ダッシュ', 500, '水の分身がその場に残る', 'radial-gradient(circle at 40% 35%,#e8f8ff,rgba(90,200,255,.7) 45%,rgba(22,80,200,.4) 70%)'] ] },
     { k: 'barrier', label: 'バリア', items: [
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
@@ -1996,7 +1996,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
     bs_fire: '加速中、通った場所に炎が1.2秒残る。触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     dash_ice: 'ダッシュした道に氷が2.4秒残る。氷を踏んだ鬼は1.6秒遅くなる。',
-    dash_shadow: 'ダッシュの瞬間、向いている方へ影の分身が走る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で2.2秒)。',
+    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で2.2秒)。',
     dash_water: 'ダッシュした場所に水の分身が2.2秒残る。分身が見えた鬼の半分ほどがそちらへ向かう。',
   };
   let shopTab = 'fx', shopSel = null;
@@ -3847,12 +3847,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function elemDash() {
     const k = dashFx();
     if (k === 'dash_shadow') {
-      // off the way the runner faces (if that is a wall: sideways, else straight back)
-      const tx = Math.floor(P.x), ty = Math.floor(P.y), ax = Math.abs(P.fx) >= Math.abs(P.fy);
-      const fwd = ax ? [Math.sign(P.fx) || 1, 0] : [0, Math.sign(P.fy) || 1];
-      const ways = [fwd].concat((ax ? [[0, 1], [0, -1]] : [[1, 0], [-1, 0]]).sort(() => Math.random() - 0.5), [[-fwd[0], -fwd[1]]]);
-      const w = ways.find(([dx, dy]) => walk(tx + dx, ty + dy)) || fwd;
-      elemLure(elemAdd({ k: 'clone', el: 'dark', x: tx + 0.5, y: ty + 0.5, dx: w[0], dy: w[1], sp: runnerSpeed() * DASH_MULT * 0.6, life: EL.cloneLife }), false);
+      // left standing where the runner pressed dash, while the runner dashes off
+      elemLure(elemAdd({ k: 'clone', el: 'dark', x: P.x, y: P.y, dx: 0, dy: 0, sp: 0, life: EL.cloneLife }), false);
     } else if (k === 'dash_water') elemLure(elemAdd({ k: 'clone', el: 'water', x: P.x, y: P.y, dx: 0, dy: 0, sp: 0, life: EL.mirrorLife }), true);
   }
   // about half the oni near the clone go after it (fewer of the yellow ones, which read the runner); the water clone
@@ -5372,7 +5368,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
-      { btn: 'dash', say: 'ダッシュの瞬間、向いている方へ影の分身が走り、近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 },
+      { btn: 'dash', say: 'ダッシュした瞬間、その場に影の分身が残り、近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     '3c': [
