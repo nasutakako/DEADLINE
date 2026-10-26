@@ -1928,8 +1928,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       gx = bx + 0.5; gy = by + 0.5;
     }
     const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
-    // (every shadow oni, a black one's too, runs at a plain oni's speed)
-    const v = Math.min(es * e.var, runnerSpeed()) * (e.tut ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
+    // (a shadow oni runs at its parent's speed: a plain oni's, a black one's as fast as the black one)
+    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
     e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
     e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
     const ox = e.x, oy = e.y;
