@@ -493,6 +493,28 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 @media (max-width: 520px) { #titleScreen .row .go { white-space: normal !important; font-size: 14px !important; padding: 10px 6px !important; word-break: keep-all; overflow-wrap: anywhere; } }
 #titleScreen .row .go { align-self: stretch; white-space: nowrap; }
+#titleScreen .gear { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 10px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+#titleScreen .gear svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
+#titleScreen .gear:hover, #titleScreen .gear:focus-visible { border-color: var(--lamp); color: var(--lamp); outline: none; }
+.setlist { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
+.setrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; text-align: left; color: inherit; font: inherit; }
+.setrow b { font-size: 15px; }
+.setrow small { grid-column: 1; font-size: 12px; line-height: 1.45; color: var(--muted); }
+.setrow .sw { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 48px; height: 28px; border-radius: 14px; background: #2a3142; transition: background .15s; }
+.setrow .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #c9cfdc; transition: transform .15s; }
+.setrow[aria-checked="true"] .sw { background: var(--runner); }
+.setrow[aria-checked="true"] .sw::after { transform: translateX(20px); background: #fff; }
+@media (prefers-reduced-motion: reduce) { .setrow .sw, .setrow .sw::after { transition: none; } }
+@media (max-height: 400px) { .setlist { gap: 6px; } .setrow { padding: 7px 12px; gap: 2px 12px; } .setrow b { font-size: 14px; } .setrow small { font-size: 11px; line-height: 1.35; } #setScreen h2 { font-size: 26px; } }
+/* 操作の左右交換: the stick on the right, the buttons and the time on the left (the title keeps its menu on the left) */
+body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "hud hud" "stage stage" "ctl sys"; }
+@media (min-aspect-ratio: 5/4) {
+  body.swap:not(.ontitle) { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "hud stage" "sys stage" "ctl stage"; }
+}
+@media (min-aspect-ratio: 5/4) and (pointer: coarse) {
+  body.swap:not(.ontitle) { grid-template-columns: var(--side) minmax(0, 1fr) var(--side); grid-template-areas: "hud stage pad" "sys stage pad" "ctl stage pad"; }
+}
 #titleScreen .go .locknote { display: block; margin-top: 3px; font-family: var(--f-body); font-size: 11px; font-weight: 700; letter-spacing: .02em; line-height: 1.3; white-space: normal; color: #b4bccd; }
 #titleScreen #rankPlayBtn { padding-left: 10px; padding-right: 10px; }
 #titleScreen .go.special { background: linear-gradient(135deg, #7a3cd8, #c43a8a); }
@@ -682,6 +704,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
 
   <div class="overlay" id="titleScreen">
+    <button class="gear" id="setBtn" type="button" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
     <div class="card">
       <h1>DEAD<span>LINE</span></h1>
       <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
@@ -710,6 +733,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <span class="label" id="titlesCount"></span>
       <ul class="titlelist" id="titlesList"></ul>
       <div class="row"><button class="ghost" id="titlesClose" type="button">閉じる</button></div>
+    </div>
+  </div>
+
+  <div class="overlay" id="setScreen" hidden>
+    <div class="card rankcard">
+      <h2>設定</h2>
+      <div class="setlist" id="setList"></div>
+      <div class="row"><button class="ghost" id="setClose" type="button">閉じる</button></div>
     </div>
   </div>
 
@@ -1065,7 +1096,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (r.parentNode !== recHome.parent) recHome.parent.insertBefore(r, recHome.next);
   }
   function placeWho() {
-    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('recScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden);
+    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('recScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('setScreen').hidden);
     if (padMQ.matches) { w.className = 'who'; if (w.parentNode !== $('pad')) $('pad').prepend(w); }
     else if (wideMQ.matches) { w.className = 'who float'; w.style.left = w.style.top = '14px'; if (w.parentNode !== $('stage')) $('stage').appendChild(w); }
     else { w.className = 'who inline'; w.style.left = w.style.top = ''; const c = ui.title.querySelector('.card'); if (w.parentNode !== c) c.prepend(w); }
@@ -2169,6 +2200,38 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     ui.title.hidden = true; $('equipScreen').hidden = false;
   }
+  // ---------- settings (the gear on the title): kept on this device ----------
+  const SET_KEY = REC_KEY + '-settings';
+  const SETS = [
+    ['swap', '操作の左右交換', '移動スティックを右側に、ダッシュ・爆弾・アイテムのボタンを左側にする'],
+    ['shake', '画面の揺れ', '爆発や確保のときに画面を揺らす'],
+    ['sound', 'サウンド', 'BGMと効果音を鳴らす'],
+  ];
+  const settings = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (_) {} return Object.assign({ swap: false, shake: true, sound: true }, v); })();
+  function applySettings() {
+    document.body.classList.toggle('swap', !!settings.swap);
+    const was = muted; muted = !settings.sound;
+    if (muted && !was) { try { bgmStop(); } catch (_) {} }
+    if (!muted && was && state === 'title') { try { initAudio(); bgmStart(SONGS.title); } catch (_) {} }
+    try { resize(); } catch (_) {}
+  }
+  function openSettings() {
+    ui.title.hidden = true; $('setScreen').hidden = false;
+    const box = $('setList'); box.textContent = '';
+    for (const [k, name, note] of SETS) {
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'setrow'; b.setAttribute('role', 'switch'); b.setAttribute('aria-checked', String(!!settings[k])); b.dataset.set = k;
+      const t = document.createElement('b'); t.textContent = name; const sm = document.createElement('small'); sm.textContent = note; const sw = document.createElement('i'); sw.className = 'sw';
+      b.append(t, sw, sm);
+      b.addEventListener('click', () => {
+        settings[k] = !settings[k]; b.setAttribute('aria-checked', String(settings[k]));
+        try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (_) {}
+        applySettings(); tap();
+      });
+      box.append(b);
+    }
+  }
+  $('setBtn').addEventListener('click', () => { tap(); openSettings(); });
+  $('setClose').addEventListener('click', () => closeOverlay('setScreen'));
   $('equipBtn').addEventListener('click', () => { tap(); openEquip(); });
   $('equipClose').addEventListener('click', () => closeOverlay('equipScreen'));
   $('shopClose').addEventListener('click', () => { shopSay(''); closeOverlay('shopScreen'); bgmStart(SONGS.title); updateLocks(); });
@@ -4260,7 +4323,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.fillStyle = '#0c0f16'; ctx.fillRect(0, 0, cv.width, cv.height);
     let sx = 0, sy = 0;
-    if (shake > 0) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
+    if (shake > 0 && settings.shake) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
     if (mapCache) ctx.drawImage(mapCache, Math.round((ox + sx) * dpr), Math.round((oy + sy) * dpr));
     // the title and the stand-by screens: the attract mode instead of the last game's leftovers
     if (demoOn()) { ctx.setTransform(T * dpr, 0, 0, T * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
@@ -4540,7 +4603,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
 
   // ---------- audio ----------
-  let ac = null, muted = false;
+  // (the saved settings: sound off keeps it all quiet, the swapped layout from the first frame)
+  let ac = null, muted = !settings.sound;
+  document.body.classList.toggle('swap', !!settings.swap);
   function initAudio() {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
@@ -5346,7 +5411,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('tutBar').classList.remove('ok');
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
     // lines break only after a 。 or 、, never a few characters off a word
-    $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
+    $('tutSay').innerHTML = (settings.swap ? st.say.replace('左半分', '右半分') : st.say).replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
     tutGlow(st.btn);
@@ -5877,8 +5942,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function padStart(e, el) {
     e.preventDefault();
     if (state !== 'play' || input.stick) return;
-    // left half of the screen only
-    if (e.clientX > innerWidth / 2) return;
+    // the stick's half of the screen only (the left, or the right with 操作の左右交換)
+    if (settings.swap ? e.clientX < innerWidth / 2 : e.clientX > innerWidth / 2) return;
     input.stick = { id: e.pointerId, pad: true, ox: e.clientX, oy: e.clientY, kx: 0, ky: 0, dx: 0, dy: 0 };
     pad.classList.add('on');
     try { el.setPointerCapture(e.pointerId); } catch (_) {}
