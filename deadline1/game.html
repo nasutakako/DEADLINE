@@ -693,7 +693,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="overlay" id="nameScreen" hidden>
     <div class="card">
       <h2 style="color: var(--lamp)">名前を登録</h2>
-      <p>ステージ3の逃走時間が世界ランキングに載る。ほかのプレイヤーと同じ名前は使えない。</p>
+      <p>週替わりランキングと生存課題の逃走時間が世界ランキングに載る。ほかのプレイヤーと同じ名前は使えない。</p>
       <input class="namein" id="nameIn" type="text" maxlength="10" autocomplete="off" spellcheck="false" placeholder="10文字まで" aria-label="プレイヤー名">
       <span class="nameerr" id="nameErr" role="status"></span>
       <div class="row"><button class="go" id="nameOk" type="button">登録</button><button class="ghost" id="nameCancel" type="button" hidden>やめる</button></div>
@@ -1219,7 +1219,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // stage 3 and the three daily nights, one tab each
     // the endless stage by its name alone (it needs no "ステージ3")
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
-    const boards = () => [['wk' + WEEK(), '週替わり ' + MAP_NAMES[weekSkin()][2], '今週'], ['players', endless(), endless()], ...(MAP_CHOICE ? [['loop', MAP_NAMES.d2[2], MAP_NAMES.d2[2]]] : []), ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    // this week's map (by its name) and the three survival nights
+    const boards = () => [['wk' + WEEK(), '週替わり ' + MAP_NAMES[weekSkin()][2], MAP_NAMES[weekSkin()][2] + '(今週)'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       for (const [id, , short] of boards()) {
@@ -1228,7 +1229,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         box.append(b);
       }
     }
-    async function openRank(board = 'players') {
+    async function openRank(board = 'wk' + WEEK()) {
       const list = $('rankList'), mine = $('rankMe'), info = boards().find(x => x[0] === board) || boards()[0];
       paintTabs(board); $('rankLabel').textContent = `${info[1]} ・ 逃走時間 上位100`;
       list.textContent = ''; mine.hidden = true;
