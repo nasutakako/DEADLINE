@@ -129,6 +129,8 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .tutbar button { font: inherit; font-size: 12px; font-weight: 800; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); cursor: pointer; touch-action: manipulation; }
 .tutbar button.go { background: var(--lamp); border-color: var(--lamp); color: #111; }
 .tutbar button[hidden] { display: none; }
+/* a narrow screen: the words take the whole width, the step count and the buttons go on a row under them */
+@media (max-width: 760px) { .tutbar { flex-wrap: wrap; row-gap: 6px; } .tutbar p { order: -1; flex: 1 1 100%; } .tutbar .trow { margin-left: auto; } }
 .alarmfx { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, rgba(255,30,30,0) 42%, rgba(255,30,30,.35) 75%, rgba(200,0,0,.75) 100%); }
 .stage { grid-area: stage; position: relative; min-height: 0; min-width: 0; border-radius: 8px; overflow: hidden; background: var(--night); touch-action: none; }
 #cv { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
@@ -5368,7 +5370,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
-      { btn: 'dash', say: 'ダッシュした瞬間、その場に影の分身が残り、近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 },
+      { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
+      { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影は2秒ほどで消える', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     '3c': [
