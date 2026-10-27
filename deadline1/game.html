@@ -1998,7 +1998,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
     bs_fire: '加速中、通った場所に炎が1.2秒残る。触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     dash_ice: 'ダッシュした道に氷が2.4秒残る。氷を踏んだ鬼は1.6秒遅くなる。',
-    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼はその場で立ち止まる。',
+    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼はその場で立ち止まる。黄色い鬼から分かれた影の鬼は、少し離れていても反応する。',
     dash_water: 'ダッシュした場所に水の分身が2.2秒残る。分身が見えた鬼の半分ほどがそちらへ向かう。',
   };
   let shopTab = 'fx', shopSel = null;
@@ -3867,9 +3867,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     // the closer to the runner, the longer it chases the decoy: the closest for the decoy's whole life, each next one
     // 60% as long (the yellow ones half that again), and one that would come back to the runner within 0.35 s not at all
-    seen.sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
-    // (a shadow oni a touch keener: 1.2 times as long, never past the clone's own life)
-    seen.forEach((e, i) => { const d = Math.min(c.life, c.life * Math.pow(0.6, i) * (e.amb && i ? 0.5 : 1) * (e.shade ? 1.2 : 1)); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
+    // The shadow oni hang back to close in from the other side, so they are ranked among themselves only: the nearest
+    // of them takes the bait as fully as the nearest oni does, from up to a building or two off (the lure radius)
+    const near = (a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y);
+    for (const list of [seen.filter(e => !e.shade).sort(near), seen.filter(e => e.shade).sort(near)])
+      list.forEach((e, i) => { const d = c.life * Math.pow(0.6, i) * (e.amb && i ? 0.5 : 1); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
   }
   function elemTick(dt) {
     // the boost's flames and the dash's ice, spaced out so they never pile up
@@ -5384,6 +5386,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
       { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
       { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影はすぐ消える', info: true },
+      { say: '黄色い鬼から分かれた影の鬼は、建物1つ分離れていても、影に反応する。挟み撃ちされそうなら、影を置いて引きつけよう', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     '3c': [
