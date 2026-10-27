@@ -933,7 +933,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <h3 class="tgrp" data-grp="shadow">影絵世界</h3>
         <button class="pick" data-tut="k1" type="button"><b>ステージ1 影の街</b><span><i>分裂する</i><i>黄色い鬼・</i><i>建物の影</i></span></button>
         <button class="pick" data-tut="k2" type="button"><b>ステージ2 黄昏通り</b><span><i>影分身ダッシュ</i></span></button>
-        <button class="pick" data-tut="k3" type="button"><b>ステージ3 月蝕の夜</b><span><i>黒い鬼も分裂・</i><i>6分30秒で出口</i></span></button>
+        <button class="pick" data-tut="k3" type="button"><b>ステージ3 月蝕の夜</b><span><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="fuse">爆心世界</h3>
         <button class="pick" data-tut="b1" type="button"><b>ステージ1 花火工場</b><span><i>自爆する鬼・</i><i>誘爆</i></span></button>
         <button class="pick" data-tut="3b" type="button"><b>ステージ3 花火の夜</b><span><i>韋駄天・</i><i>自爆1.5倍・</i><i>6分30秒で出口</i></span></button>
@@ -3655,7 +3655,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // 大爆発's shock wave: thrown out on a smooth slide that slows to a stop, then it eases back into the chase
       if (e.shade) { shadeStep(e, dt, es); continue; }
       // 影踏み: near the runner, the yellow oni splits off its shadow (not while it stands in a building's shadow)
-      if ((e.amb || (e.black && stageN === 3 && t >= 300)) && !e.split && shadowStory() && Math.hypot(P.x - e.x, P.y - e.y) < SPLIT_D) shadeSplit(e);
+      // (only the yellow one: a black one that split as well was too strong)
+      if (e.amb && !e.split && shadowStory() && Math.hypot(P.x - e.x, P.y - e.y) < SPLIT_D) shadeSplit(e);
       if (e.kbT > 0) { const u = Math.min(1, e.kbT / (e.kbT0 || KB_T)); e.vx = e.kbx * u; e.vy = e.kby * u; move(e, e.vx, e.vy, dt); e.kbT -= dt; continue; }
       const tx = Math.floor(e.x), ty = Math.floor(e.y);
       // the yellow oni cuts ahead while it is still some way off; up close it chases like the rest
@@ -5764,12 +5765,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     return false;
   }
   // the building-shadow practice: one shadow oni, on a street in the light a few tiles off
-  function tutShade(black) {
-    if (black !== true) black = false;
+  function tutShade() {
     tut.want = null; tut.hidT = null;
     let at = null; for (let k = 0; k < 30 && !at; k++) { const q = tutSpot(3, 6); if (!shadeAt(q.x, q.y)) at = q; }
     at = at || tutSpot(3, 6);
-    const sh = { x: at.x, y: at.y, r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 1, born: t, hp: 1, tough: false, armored: false, amb: false, black, stun: 0, shade: true, split: true, parent: null, tut: true };
+    const sh = { x: at.x, y: at.y, r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 1, born: t, hp: 1, tough: false, armored: false, amb: false, black: false, stun: 0, shade: true, split: true, parent: null, tut: true };
     enemies.push(sh); tut.oni = [sh];
   }
   const TUT = {
@@ -5830,8 +5830,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k3: [
-      { say: '月蝕の夜では、5分経過すると黒い鬼も、逃走者に近づいたときに影の鬼と分裂する', info: true },
-      { say: '黒い鬼の影も、建物の影に隠れた逃走者は見失う。黒い鬼の影が来た。建物の影に1秒入ってやり過ごそう', set: () => tutShade(true), go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
     k2: [
@@ -6879,7 +6877,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // the stand-by notes of stages 2 and 3, for the map picked
   function spText(n) {
-    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える。5分からは黒い鬼も分裂する' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
+    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
   }
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
