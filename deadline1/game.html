@@ -349,6 +349,9 @@ h2.clear { color: #5dff9e; }
 .mono { margin: 0; font-family: var(--f-say); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
 
 .ranktabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.rankmodes { display: flex; gap: 8px; }
+.rankmodes button { flex: 1 1 0; padding: 8px 6px; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 8px; background: var(--panel); color: var(--muted); font-family: var(--f-display); font-size: clamp(16px, 3.6vw, 22px); letter-spacing: .02em; cursor: pointer; white-space: nowrap; }
+.rankmodes button[aria-selected="true"] { color: var(--lamp); border-color: var(--lamp); background: rgba(255,207,90,.08); }
 .ranktabs button { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 6px 11px; font-weight: 700; font-size: 12px; white-space: nowrap; }
 .ranktabs button[aria-selected="true"] { color: var(--lamp); border-color: rgba(255,207,90,.6); background: rgba(255,207,90,.1); }
 
@@ -849,7 +852,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   <div class="overlay" id="rankScreen" hidden>
     <div class="card rankcard">
-      <h2>世界ランキング</h2>
+      <div class="rankmodes" role="tablist"><button type="button" id="rankModeW" role="tab" aria-selected="true">世界ランキング</button><button type="button" id="rankModeA" role="tab" aria-selected="false">歴代ランキング</button></div>
       <div class="ranktabs" id="rankTabs" role="tablist"></div>
       <span class="label" id="rankLabel">終わらない夜 ・ 逃走時間 上位100</span>
       <ol class="ranklist" id="rankList"></ol>
@@ -1100,6 +1103,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let rankRun = false;
   const WEEK = () => Math.floor((Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + 3) / 7);
   const weekSkin = () => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][WEEK() % 4] : 'd1';
+  // 歴代ランキング: the best weekly-ranking run ever on each map (at1-at4 for d1-d4)
+  const ALL_SKINS = ['d1', 'd2', 'd3', 'd4'], allKey = skin => 'at' + (ALL_SKINS.indexOf(skin) + 1);
   const recKey = n => n === 4 && daily ? daily.key : n === 3 && rankRun ? 'wk' + WEEK() : n === 3 && mapSkin === 'd2' ? 'n3' : n === 3 && mapSkin === 'd3' ? 'k3' : n === 3 && mapSkin === 'd4' ? 'b3' : n;
   const stageLabel = n => n === 4 && daily ? '生存課題 ' + daily.name : n === 3 && rankRun ? '週替わりランキング' : 'ステージ' + n;
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
@@ -1238,7 +1243,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
     async function syncDaily() {
       if (!db || !me || !me.name || !canWrite) return;
-      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }]) {
+      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ...(MAP_CHOICE ? ALL_SKINS.map(sk => ({ key: allKey(sk), board: allKey(sk) })) : [])]) {
         const b = bestOf(d.key); if (!(b > 0)) continue;
         let cur = boardDocs[d.board];
         if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
@@ -1346,7 +1351,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (!delArm) { delArm = true; b.textContent = '本当に削除する(元には戻せません)'; b.classList.add('arm'); err.textContent = '名前と、すべてのランキングの記録が消えます。'; return; }
       b.disabled = true; err.textContent = '削除中…';
       try {
-        for (const bd of ['players', 'loop', 'daily1', 'daily2', 'daily3', 'wk' + WEEK()]) { try { await db.doc(bd + '/' + uid).delete(); } catch (e) {} }
+        for (const bd of ['players', 'loop', 'daily1', 'daily2', 'daily3', 'wk' + WEEK(), 'at1', 'at2', 'at3', 'at4']) { try { await db.doc(bd + '/' + uid).delete(); } catch (e) {} }
         if (me && me.key) await db.doc('names/' + me.key).delete();
         me = null; for (const k in boardDocs) delete boardDocs[k];
         lsSet(NAME_LS, ''); lsSet(LATER_LS, '1');
@@ -1365,16 +1370,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
     // this week's map (by its name) and the three survival nights
     const boards = () => [['wk' + WEEK(), '週替わり ' + MAP_NAMES[weekSkin()][2], MAP_NAMES[weekSkin()][2] + '(今週)'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const allBoards = () => ALL_SKINS.map(sk => [allKey(sk), '歴代 ' + MAP_NAMES[sk][2], MAP_NAMES[sk][2]]);
+    const isAll = b => /^at[1-4]$/.test(b);
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
-      for (const [id, , short] of boards()) {
+      $('rankModeW').setAttribute('aria-selected', String(!isAll(cur))); $('rankModeA').setAttribute('aria-selected', String(isAll(cur)));
+      for (const [id, , short] of (isAll(cur) ? allBoards() : boards())) {
         const b = document.createElement('button'); b.type = 'button'; b.textContent = short; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', id === cur ? 'true' : 'false');
         b.addEventListener('click', () => { if (id !== cur) { tap(); openRank(id); } });
         box.append(b);
       }
     }
     async function openRank(board = 'wk' + WEEK()) {
-      const list = $('rankList'), mine = $('rankMe'), info = boards().find(x => x[0] === board) || boards()[0];
+      const list = $('rankList'), mine = $('rankMe'), info = [...boards(), ...allBoards()].find(x => x[0] === board) || boards()[0];
       paintTabs(board); $('rankLabel').textContent = `${info[1]} ・ 逃走時間 上位100`;
       list.textContent = ''; mine.hidden = true;
       const msg = t => { list.textContent = ''; const s = document.createElement('span'); s.className = 'msg'; s.textContent = t; list.appendChild(s); };
@@ -1414,6 +1422,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('recName').addEventListener('click', () => { tap(); $('recScreen').hidden = true; ui.title.hidden = false; openName(false); });
     $('rankBtn').addEventListener('click', () => { tap(); openRank('wk' + WEEK()); });
     $('rankClose').addEventListener('click', () => { tap(); $('rankScreen').hidden = true; ui.title.hidden = false; });
+    $('rankModeW').addEventListener('click', () => { if ($('rankModeW').getAttribute('aria-selected') !== 'true') { tap(); openRank('wk' + WEEK()); } });
+    // the all-time ranking opens on this week's map
+    $('rankModeA').addEventListener('click', () => { if ($('rankModeA').getAttribute('aria-selected') !== 'true') { tap(); openRank(allKey(weekSkin())); } });
     $('nameOk').addEventListener('click', claim);
     $('nameDel').addEventListener('click', () => { tap(); erase(); });
     // put off on the first visit: not asked again on this device; the name button on the title still opens it
@@ -3984,6 +3995,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (isNew) { best = total; saveBest(); }
     records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
+    if (stageN === 3 && rankRun && ALL_SKINS.includes(mapSkin)) addRecord(allKey(mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     // a survival night: the stars its missions paid
     misEnd();
