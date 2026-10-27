@@ -100,6 +100,8 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 /* ---- first-time tutorial ---- */
 .tutbar { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(94%, 680px); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 10px; background: rgba(8,10,16,.9); border: 1.5px solid var(--lamp); box-shadow: 0 6px 24px rgba(0,0,0,.5); color: var(--ink); }
 .tutbar[hidden] { display: none; }
+/* a practice step whose scene lies under the banner: the banner goes to the foot of the map */
+.tutbar.low { top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
 .go.tutlbtn { background: #3b4458; }
 /* map choice on the stand-by screens */
 .mapsel { display: flex; gap: 8px; }
@@ -2032,12 +2034,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!hidden && e.pinT > 0) {
       e.pinT -= dt; e.pinThink = (e.pinThink || 0) - dt;
       if (e.pinThink <= 0 || !e.pin) {
-        e.pinThink = 0.3; e.pin = pincerSpot(e);
+        e.pinThink = 0.3; e.pin = e.pinFix || pincerSpot(e);
         if (e.pin) {
           // (the way round: never through the streets right by the runner, so it comes at them from the far side)
           if (!e.pfd || e.pfd.length !== COLS * ROWS) e.pfd = new Int16Array(COLS * ROWS);
           pinBan = new Set(); const rx = Math.floor(P.x), ry = Math.floor(P.y);
           for (let y = ry - 2; y <= ry + 2; y++) for (let x = rx - 2; x <= rx + 2; x++) if (x >= 0 && y >= 0 && x < COLS && y < ROWS && Math.hypot(x - rx, y - ry) <= 1.6) pinBan.add(idx(x, y));
+          if (e.pinAvoid) for (const i of e.pinAvoid) pinBan.add(i);
           shadeBfs(e.pfd, e.pin[0], e.pin[1]); pinBan = null;
         }
       }
@@ -4216,7 +4219,27 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const EL_RGB = { ice: '150,235,255', fire: '255,110,40', dark: '150,90,255', water: '70,160,255' };
   // under the runner and the oni, so neither is ever hidden by them
   function drawElems(now) {
+    if (tut && tut.pinc && !tut.pinc.done) {
+      const sh = tut.pinc.sh;
+      if (sh && sh.pfd && sh.pin && sh.pinT > 0 && !sh.decoy) {
+        let cx = Math.floor(sh.x), cy = Math.floor(sh.y), d = sh.pfd[idx(cx, cy)];
+        ctx.save(); ctx.strokeStyle = 'rgba(200,170,255,0.75)'; ctx.lineWidth = 0.08; ctx.setLineDash([0.25, 0.2]); ctx.lineDashOffset = -now * 1.2; ctx.beginPath(); ctx.moveTo(cx + 0.5, cy + 0.5);
+        for (let n = 0; n < 80 && d > 0; n++) {
+          let moved = false;
+          for (const [nx, ny] of [[cx + 1, cy], [cx - 1, cy], [cx, cy + 1], [cx, cy - 1]]) if (nx >= 0 && ny >= 0 && nx < COLS && ny < ROWS && sh.pfd[idx(nx, ny)] === d - 1) { cx = nx; cy = ny; d--; moved = true; break; }
+          if (!moved) break; ctx.lineTo(cx + 0.5, cy + 0.5);
+        }
+        ctx.stroke(); ctx.restore();
+      }
+    }
     for (const o of elems) {
+      if (o.k === 'mark') {
+        // where to drop the shadow: a pulsing ring
+        const pu = 0.5 + 0.5 * Math.sin(now * 6);
+        ctx.strokeStyle = `rgba(255,207,90,${0.55 + 0.4 * pu})`; ctx.lineWidth = 0.08; ctx.beginPath(); ctx.arc(o.x, o.y, o.r * (0.85 + 0.15 * pu), 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = `rgba(255,207,90,${0.12 + 0.1 * pu})`; ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, Math.PI * 2); ctx.fill();
+        continue;
+      }
       if (o.delay > 0) continue;
       const k = Math.max(0, 1 - o.t / o.life);
       if (o.k === 'fire') {
@@ -5626,6 +5649,61 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const bx = b.left - c.left, by = b.top - c.top;
     return !(p.x > bx - m && p.x < bx + b.width + m && p.y > by - m && p.y < by + b.height + m);
   }
+  // the pincer practice (影ダッシュ): drop the shadow at the near corner, and the shadow oni comes down the side street
+  // to it instead of going round to cut in ahead
+  function tutPincer() {
+    tut.want = null; tut.pinc = null; elems = elems.filter(o => o.k !== 'mark');
+    // any way round: the runner's road along u, the side street off it along v; all of it in view, clear of the banner
+    const W = (x, y) => walk(Math.floor(x), Math.floor(y)), C = (x, y) => tutClear(x, y);
+    // (strict first: everything in view, with the banner at the top or else at the foot of the map; then a little
+    // looser, so some corner is always found)
+    let best = null;
+    for (let pass = 0; pass < 4 && !best; pass++) {
+    $('tutBar').classList.toggle('low', pass === 1);
+    for (let q = pass < 2 ? 0 : pass - 1, done = false; !done; done = true)
+    for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (const sgn of [1, -1]) {
+      const vx = -uy * sgn, vy = ux * sgn;
+      for (let jy = 0; jy < ROWS; jy++) for (let jx = 0; jx < COLS; jx++) {
+        const J = [jx + 0.5, jy + 0.5], at = (k, m = 0) => [J[0] + ux * k + vx * m, J[1] + uy * k + vy * m];
+        let run = true; for (let k = -4; k <= 5 && run; k++) run = W(...at(k));
+        if (!run || (q < 2 && (W(...at(-1, 1)) || W(...at(1, 1))))) continue;
+        let L = 0; while (L < 7 && W(...at(0, L + 1))) L++;
+        if (L < 2 || L > 6 || !W(...at(1, L)) || !W(...at(2, L))) continue;
+        if (q < 2 && (!C(...at(-2.5)) || !C(...J))) continue;
+        if (q < 1 && (!C(...at(0, L)) || !C(...at(-4.5)))) continue;
+        // (the runner's way to the corner in the light: in a building's shadow the shadow oni would lose them)
+        if (q < 2 && [-2.5, -1, 0].some(k => shadeAt(...at(k)))) continue;
+        let lit = 0; for (let k = -3; k <= 2; k++) if (!shadeAt(...at(k))) lit++;
+        const sc = lit + (C(...at(5)) ? 3 : 0) + (C(...at(3, L)) ? 2 : 0);
+        if (!best || sc > best.sc) best = { J, u: [ux, uy], v: [vx, vy], L, at, sc };
+      }
+    }
+    }
+    if (!best) { tutOni({}); return; }
+    const { J, u, L, at } = best;
+    [P.x, P.y] = at(-2.5); P.vx = P.vy = 0; [P.fx, P.fy] = u; P.hist = []; P.cd = 0; P.dashT = 0; tut.lx = P.x; tut.ly = P.y;
+    enemies.length = 0; pending.length = 0;
+    // (both wait, barely moving, till the runner sets off)
+    const mk = o => Object.assign({ r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 0.0001, born: t, hp: 1, tough: false, armored: false, amb: false, black: false, bomber: false, stun: 0, tut: true }, o);
+    const avoid = new Set(); for (let m = 0; m < L; m++) { const [x, y] = at(0, m); avoid.add(idx(Math.floor(x), Math.floor(y))); }
+    const [yx, yy] = at(-4.5), [hx, hy] = at(0, L), [px, py] = at(5);
+    const yl = mk({ x: yx, y: yy, amb: true, split: true });
+    const sh = mk({ x: hx, y: hy, shade: true, split: true, parent: null, pinT: 99, pinDir: u.slice(), pinFix: [Math.floor(px), Math.floor(py)], pinAvoid: avoid });
+    enemies.push(yl, sh); tut.oni = [yl, sh];
+    tut.pinc = { x: J[0], y: J[1], u, sh, frozen: true, t0: 0 };
+    elemAdd({ k: 'mark', x: J[0], y: J[1], r: 0.7, life: 1e9 }, 1);
+  }
+  // done: the shadow went down at the corner and the shadow oni is on its way to it
+  function tutPincerGo() {
+    const c = tut.pinc; if (!c) return false;
+    if (c.frozen && Math.hypot(P.vx, P.vy) > 1) { c.frozen = false; c.t0 = performance.now(); for (const e of tut.oni) e.var = 1; }
+    const cl = c.sh.decoy;
+    if (cl && Math.hypot(cl.x - c.x, cl.y - c.y) < 1.8) { c.sh.pinT = 0; c.done = true; elems = elems.filter(o => o.k !== 'mark'); return true; }
+    // past the corner without it, or too slow: again
+    const past = (P.x - c.x) * c.u[0] + (P.y - c.y) * c.u[1];
+    if (!c.frozen && (past > 2.5 || performance.now() - c.t0 > 6000)) tutCaught('光る角でダッシュして、影を置こう。もう一度');
+    return false;
+  }
   // the building-shadow practice: one shadow oni, on a street in the light a few tiles off
   function tutShade(black) {
     if (black !== true) black = false;
@@ -5701,7 +5779,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
       { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
       { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影はすぐ消える', info: true },
-      { say: '黄色い鬼から分かれた影の鬼は、建物1つ分離れていても、影に反応する。挟み撃ちされそうなら、影を置いて引きつけよう', info: true },
+      { say: '黄色い鬼から分かれた影の鬼は先回りして、行く手に回り込んでくる(点線のルート)。このままだと挟み撃ちになる', info: true, set: tutPincer },
+      { btn: 'dash', say: '影の鬼は建物1つ分離れていても影に反応する。光る角に向かって走り、角でダッシュして影を置こう', set: tutPincer, go: tutPincerGo },
+      { say: '影の鬼は脇道を下りて影に向かい、回り込めなくなった。挟まれそうなときは、手前の道に影を置こう', info: true, set: () => { P.inv = 1e9; } },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     '3c': [
@@ -5737,7 +5817,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tut.i++;
     const st = tut.steps[tut.i];
     tut.wait = 0; tut.ok = 0; tut.refill = false; tut.s0 = P.stock;
-    $('tutBar').classList.remove('ok');
+    $('tutBar').classList.remove('ok', 'low');
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
     // lines break only after a 。 or 、, never a few characters off a word
     $('tutSay').innerHTML = (stickRight() ? st.say.replace('左半分', '右半分') : st.say).replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
@@ -5747,13 +5827,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (st.set) st.set();
   }
   // caught in practice: a word, the step's oni cleared away, then the same step again from the start (as often as it takes)
-  function tutCaught() {
+  function tutCaught(msg) {
     if (tut.redo > 0 || tut.ok > 0) return;
+    elems = elems.filter(o => o.k !== 'mark'); tut.pinc = null;
     tut.redo = 1.3; P.inv = 1e9; tut.want = null;
     enemies.length = 0; tut.oni = []; mines.length = 0;
     for (const s of pending) dropWarn(s);
     pending = [];
-    $('tutBar').classList.remove('ok'); $('tutSay').textContent = '捕まった! もう一度'; $('tutNext').hidden = true; tutGlow('');
+    $('tutBar').classList.remove('ok'); $('tutSay').textContent = typeof msg === 'string' ? msg : '捕まった! もう一度'; $('tutNext').hidden = true; tutGlow('');
     shake = reduceMotion ? 0 : 0.2; tone(220, 0.25, 'sawtooth', 0.06, -80);
   }
   function tutTick(dt) {
