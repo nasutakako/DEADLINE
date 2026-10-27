@@ -5811,14 +5811,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
       { pit: true, say: '一度使った落とし穴は45秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
       { pit: true, say: '自分が落とし穴に落ちても確保になるので注意', info: true },
-      { tail: true, say: '6分からは、黒い鬼と先回りの鬼(黄色)が必ず1体ずついる。倒しても、次に出てくる鬼でまた補充される', info: true },
       { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは6分30秒で出口が開く。週替わりランキングは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
     ],
     '3h': [
       { say: '夢路世界のステージ3では、スキル「九死に一生」が特別に使える。ダッシュの10回に1回、通常の1.5倍の距離を走る', info: true },
       { btn: 'dash', say: 'ダッシュしてみよう。いまは必ず発動する。光の尾が大きくなれば九死に一生', set: () => { tut.luckNext = true; tut.lucky = false; }, go: () => tut.lucky },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { tail: true, say: '6分からは、黒い鬼と先回りの鬼(黄色)が必ず1体ずついる。倒しても、次に出てくる鬼でまた補充される', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
     ],
     '3b': [
@@ -5826,7 +5824,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
       { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、韋駄天で一気に離れよう', info: true },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { tail: true, say: '6分からは、黒い鬼と先回りの鬼(黄色)が必ず1体ずついる。倒しても、次に出てくる鬼でまた補充される', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
@@ -5843,7 +5840,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     k3: [
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { tail: true, say: '6分からは、黒い鬼と先回りの鬼(黄色)が必ず1体ずついる。倒しても、次に出てくる鬼でまた補充される', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
     // 電脳都市 and 縁日通り: no new rule of their own, only the stage's times (and stage 2's lessons, the first time)
@@ -5868,7 +5864,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'mine', say: '鬼が来る。「今!」の合図を待とう', set: tutEmp, go: tutEmpGo },
       { say: '1体は爆発で倒れ、もう1体は残った電気で怯んだ。怯んでいる間に、ワープポイントに入ろう', set: () => { tut.warped = false; for (const q of warps) q.cool = 0; }, go: () => tut.warped },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { tail: true, say: '6分からは、黒い鬼と先回りの鬼(黄色)が必ず1体ずついる。倒しても、次に出てくる鬼でまた補充される', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
     ],
   };
@@ -6009,7 +6004,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       '使えるようになった落とし穴はふたが光る',
       '2分から毎分補給。偶数分はバリア+爆弾2、奇数分は爆弾2',
       '時間が経つほど鬼の出方が変化する',
-      '6分からは黒い鬼と先回りの鬼が必ず1体ずついる',
     ],
   };
   let lastTip = '';
@@ -6917,7 +6911,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // the stand-by notes of stages 2 and 3, for the map picked
   function spText(n) {
-    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・6分からは黒い鬼と先回りの鬼が必ず1体ずついる\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・6分からは黒い鬼と先回りの鬼が必ず1体ずついる') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
+    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分経過でバリアと爆弾1個が支給される\n・2分30秒で出口が開くと鬼の数が増え、中には自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
   }
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
@@ -6926,7 +6920,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
     $('spKicker').textContent = `RANKING ${mapName(3)}`;
-    $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}${MAP_CHOICE ? '(' + STORY_NAMES[ROUTE[mapSkin]] + ')' : ''}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・6分からは黒い鬼と先回りの鬼が必ず1体ずついる\n補給アイテムを1つ選ぶと始まる。`;
+    $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}${MAP_CHOICE ? '(' + STORY_NAMES[ROUTE[mapSkin]] + ')' : ''}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
     fitStandby();
