@@ -5711,23 +5711,32 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function tutEmp() {
     tut.want = null; tut.emp = null;
     const W = (x, y) => walk(Math.floor(x), Math.floor(y));
+    // the runner on a street tile by a warp point (on it, or up to 2 tiles off), the oni coming down a straight street
+    // from there: 7 tiles of it if the map has them, else 5, the oni starting a little nearer
     let best = null;
-    for (const w of warps) for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const at = k => [w.x + ux * k, w.y + uy * k];
-      let run = true; for (let k = 1; k <= 8 && run; k++) run = W(...at(k));
-      if (!run) continue;
-      const sc = (tutClear(...at(1.5)) ? 4 : 0) + (tutClear(w.x, w.y) ? 3 : 0) + (tutClear(...at(6)) ? 2 : 0) + (tutClear(...at(7.5)) ? 1 : 0);
-      if (!best || sc > best.sc) best = { w, at, u: [ux, uy], sc };
+    for (const need of [7, 5]) {
+      if (best) break;
+      for (const w of warps) for (let ry = Math.floor(w.y) - 2; ry <= Math.floor(w.y) + 2; ry++) for (let rx = Math.floor(w.x) - 2; rx <= Math.floor(w.x) + 2; rx++) {
+        const off = Math.abs(rx - Math.floor(w.x)) + Math.abs(ry - Math.floor(w.y));
+        if (off < 1 || off > 2 || !walk(rx, ry)) continue;
+        for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const at = k => [rx + 0.5 + ux * k, ry + 0.5 + uy * k];
+          let run = true; for (let k = 1; k <= need && run; k++) run = W(...at(k)) && Math.hypot(at(k)[0] - w.x, at(k)[1] - w.y) > 0.6;
+          if (!run) continue;
+          const sc = (off === 1 ? 2 : 0) + (tutClear(...at(0)) ? 4 : 0) + (tutClear(w.x, w.y) ? 3 : 0) + (tutClear(...at(need - 2)) ? 2 : 0) + (tutClear(...at(need - 0.5)) ? 1 : 0);
+          if (!best || sc > best.sc) best = { w, at, u: [ux, uy], sc, far: need === 7 ? 5.5 : 4.2 };
+        }
+      }
     }
     if (!best) { tut.refill = true; tutOni({}); return; }
-    const { w, at, u } = best;
+    const { w, at, u, far } = best;
     for (const q of warps) { q.cool = 0; q.flash = 0; }
-    [P.x, P.y] = at(1.5); P.vx = P.vy = 0; P.fx = -u[0]; P.fy = -u[1]; P.hist = []; P.cd = 0; P.warpT = 0; P.warpAway = null; tut.lx = P.x; tut.ly = P.y;
+    [P.x, P.y] = at(0); P.vx = P.vy = 0; P.fx = u[0]; P.fy = u[1]; P.hist = []; P.cd = 0; P.warpT = 0; P.warpAway = null; tut.lx = P.x; tut.ly = P.y;
     enemies.length = 0; pending.length = 0; mines.length = 0; P.stock = Math.max(P.stock, 1); tut.refill = true;
     // (they wait, barely moving, till the step that sends them)
-    const mk = k => { const [x, y] = at(1.5 + k); return { x, y, r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 0.0001, born: t, hp: 1, tough: false, armored: false, amb: false, black: false, bomber: false, stun: 0, tut: true }; };
+    const mk = k => { const [x, y] = at(k); return { x, y, r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 0.0001, born: t, hp: 1, tough: false, armored: false, amb: false, black: false, bomber: false, stun: 0, tut: true }; };
     // (a tile apart: when it goes off the second is just outside the blast and runs into the charge at once)
-    const a = mk(6), b = mk(7);
+    const a = mk(far), b = mk(far + 1);
     enemies.push(a, b); tut.oni = [a, b];
     tut.emp = { w, a, b, phase: 'wait' };
   }
@@ -5747,8 +5756,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (mines.length) { c.phase = 'boom'; c.t0 = t; for (const e of tut.oni) e.var = 1; tutGlow(''); }
       return false;
     }
-    // the blast has gone off: the first one down, the second dazed by the charge (held a little longer, for the warp)
-    if (c.b.stun > 0 && !c.b.dead) c.b.stun = Math.max(c.b.stun, 1.6);
+    // the blast has gone off: the first one down, the second dazed by the charge (and kept dazed for the rest of the
+    // practice, so the way to the warp point is free)
+    if (c.b.stun > 0 && !c.b.dead) c.b.stun = 1e9;
     if (c.a.dead && !c.b.dead && c.b.stun > 0) return true;
     if (t - c.t0 > FUSE + 1.2) tutCaught('「今!」で足元に置こう。もう一度');
     return false;
