@@ -1663,13 +1663,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ['rk_hole', 'ブラックホール砲', 500, '着弾点に重力の渦', 'radial-gradient(circle,#000 30%,#3a0a6a 55%,#c08cff 75%,rgba(0,0,0,0) 80%)'],
       ['rk_water', '高圧水砲', 500, '水流で鬼を押し流す', 'linear-gradient(90deg,#04163a,#2a8cff 45%,#e8f8ff 55%,#2a8cff 65%,#04163a)'] ] },
     { k: 'boost', label: '3秒加速', items: [
-      ['bs_after', '残像', 500, '走ったあとに分身が残る', 'linear-gradient(90deg,rgba(143,233,255,.08),rgba(143,233,255,.35),#8fe9ff)'],
+      ['bs_ice', '氷のエフェクト', 500, '冷気をまとって走る', 'linear-gradient(135deg,#f2feff,#8feaff 40%,#2a6fd0)'],
       ['bs_thunder', '雷のエフェクト', 500, '稲妻をまとって走る', 'linear-gradient(135deg,#fffbd0,#ffd23f 40%,#5a6bff)'],
       ['bs_fire', '火炎加速', 500, '走ったあとに炎が走る', 'linear-gradient(90deg,rgba(255,90,30,.1),#ff6a1a 50%,#ffe08a)'] ] },
     { k: 'dash', label: 'ダッシュ', items: [
       ['dash_petal', '桜吹雪', 200, '駆け抜けたあとに花びらが舞う', 'radial-gradient(circle at 40% 40%,#fff0f5,#ffb7d0 45%,#e2558a)'],
       ['dash_warp', '時空の裂け目', 500, '空間をゆがめて跳ぶ', 'radial-gradient(circle,#0a0018 30%,#7b3cff 55%,#3fe0ff 68%,rgba(0,0,0,0) 72%)'],
-      ['dash_ice', '氷の残像', 500, '駆けた道が凍りつく', 'linear-gradient(90deg,rgba(140,235,255,.1),#8feaff 55%,#f2feff)'],
+      ['dash_frost', '氷華ダッシュ', 500, '駆け抜けたあとに氷の結晶がきらめく', 'radial-gradient(circle at 40% 35%,#ffffff,#bff4ff 40%,#3fb8e8 75%,#0a3a52)'],
+      ['dash_bolt', '雷光ダッシュ', 500, '駆け抜けたあとに稲妻が走る', 'linear-gradient(135deg,#fffbd0,#ffe35a 40%,#7a6bff)'],
       ['dash_shadow', '影分身ダッシュ', 500, 'ダッシュした場所に影の分身が残る', 'radial-gradient(circle,#1a0630 35%,#7a3cd8 62%,rgba(0,0,0,0) 72%)'],
       ['dash_water', '水鏡ダッシュ', 500, '水の分身がその場に残る', 'radial-gradient(circle at 40% 35%,#e8f8ff,rgba(90,200,255,.7) 45%,rgba(22,80,200,.4) 70%)'] ] },
     { k: 'barrier', label: 'バリア', items: [
@@ -1696,7 +1697,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     sk_moon: { m: ['#fffbe8', '#cfd3e6', '#4a4f66'], glow: '255,250,220', fx: 'moon' },
   };
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
-  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water'];
+  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice'];
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   const shopData = () => {
     records.shop = Object.assign({ owned: [], eq: {} }, records.shop);
@@ -1714,7 +1715,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function starChime() {
     for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
   }
-  const starPrice = it => Math.round(it.price / 4);   // 200円 -> ★50, 500円 -> ★125
+  // looks only: 200円 -> ★50, 500円 -> ★125; with an effect: ★400
+  const STAR_FX = 400;
+  const starPrice = it => SHOP_FX[it.id] ? STAR_FX : Math.round(it.price / 4);
 
   // ---------- today's missions (the survival nights): ten a day, easiest first, three on show at a time, ★1 each ----------
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
@@ -1988,6 +1991,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     dash_warp: 'ダッシュで進む距離が通常の1.2倍になる。',
     bs_after: '加速中、通った場所に残像が残る。近くの鬼は一瞬、本人ではなく残像のほうへ引き寄せられる。',
     bs_thunder: '加速中、通った場所に雷が少しのあいだ残る。そこを通った鬼は怯んで動けなくなる。',
+    bs_ice: '加速中、通った場所に冷気が少しのあいだ残る。そこを通った鬼は凍って動けなくなる。',
     bomb_ice: '爆発はいつもどおり。その外側(範囲の1.6倍まで)にいた鬼を0.8秒凍らせて止める。壁の向こうには届かない。',
     bomb_fire: '爆発はいつもどおり。爆心に炎が1秒残り、触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     bomb_dark: '爆発はいつもどおり。その外側(範囲の1.6倍まで)にいた鬼を0.5秒縛って止める。壁の向こうには届かない。',
@@ -2039,7 +2043,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile' + (have ? ' owned' : '') + (on ? ' on' : '') + (sel ? ' sel' : '');
         const s = document.createElement('span'); s.className = 'sw'; shopSwatch(s, it.id, it.sw, cat.k);
         const n = document.createElement('b'); n.textContent = it.name;
-        const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = !it.id ? '無料' : have ? '所持' : SHOP_FX[it.id] ? it.price + '円' : '★' + starPrice(it);
+        const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = !it.id ? '無料' : have ? '所持' : '★' + starPrice(it);
         b.append(s, n, pr);
         if (SHOP_FX[it.id]) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = '効果'; b.append(t); }
         b.addEventListener('click', () => { tap(); shopSel = it; openShop(); });
@@ -2107,7 +2111,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
-    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★は見た目だけが変わるアイテムとの交換に使える(★50・★125)。生存課題のミッションでも毎日10個まで集められる。'));
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(見た目だけ★50・★125、効果つき★400)。生存課題のミッションでも毎日10個まで集められる。'));
     const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
     btn.addEventListener('click', async () => {
       tap(); btn.disabled = true;
@@ -2131,7 +2135,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const price = mk('div', 'price');
     if (!it.id) price.textContent = '無料';
     else if (have) price.textContent = '所持しています';
-    else if (SHOP_FX[it.id]) { if (Store.live()) price.textContent = Store.price(PRODUCT.item(it.id)) || it.price + '円'; else price.append(mk('s', null, it.price + '円'), document.createTextNode('いまは無料')); }
     else price.textContent = `★${starPrice(it)} で交換（所持 ★${starHave()}）`;
     head.append(mk('div', 'cat', it.cat.label), mk('h3', null, it.name), price);
     big.append(sw, head);
@@ -2150,16 +2153,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     fx.append(mk('span', null, SHOP_FX[it.id] ? '効果' : '効果なし'), mk('p', null, SHOP_FX[it.id] || '見た目だけが変わる。遊び方への影響はない。'));
     const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
     btn.type = 'button';
-    const cost = !have && !SHOP_FX[it.id] ? starPrice(it) : 0, short = cost > starHave();
+    const cost = !have && it.id ? starPrice(it) : 0, short = cost > starHave();
     btn.textContent = on ? '装備中' : have ? (it.id ? '装備する' : '標準に戻す') : cost ? (short ? `★があと${cost - starHave()}個たりない` : `★${cost}で交換して装備`) : Store.live() ? `${Store.price(PRODUCT.item(it.id)) || it.price + '円'}で購入して装備` : '無料で手に入れて装備（テスト中）';
     btn.disabled = on || (cost > 0 && short);
     btn.addEventListener('click', async () => {
       tap();
-      if (it.id && !shopData().owned.includes(it.id) && !cost) {   // an item priced in 円: bought through the store (free while testing)
-        btn.disabled = true;
-        const r = await Store.buy(PRODUCT.item(it.id));
-        if (!r.ok) { btn.disabled = false; shopSay(r.msg || ''); return; }
-      }
       const s2 = shopData();
       if (it.id && !s2.owned.includes(it.id)) { if (cost) starW().s += cost; s2.owned.push(it.id); }
       s2.eq[it.cat.k] = it.id; saveRecords(); openShop(); shopSay('');
@@ -3926,9 +3924,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function shopFx(dt) {
     // lightning left behind and the electric bomb's leftover charge
     if (P.boostT > 0 && EQ('boost') === 'bs_thunder' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'thunder', hit: new Set() }); }
+    if (P.boostT > 0 && EQ('boost') === 'bs_ice' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'frost', hit: new Set() }); }
     for (const z of zaps) {
       z.t += dt;
-      for (const e of enemies) if (!z.hit.has(e) && Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.r * 0.5) { z.hit.add(e); daze(e); }
+      for (const e of enemies) if (!z.hit.has(e) && Math.hypot(e.x - z.x, e.y - z.y) < z.r + e.r * 0.5) { z.hit.add(e); z.kind === 'frost' ? hold(e, 0.9, 'ice') : daze(e); }
     }
     zaps = zaps.filter(z => z.t < z.life);
     // plasma round the edge: two heads leave the point nearest the hit and meet on the far side in 1.2 sec
@@ -4020,6 +4019,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         ctx.fillStyle = `rgba(80,170,255,${0.22 * k})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, Math.PI * 2); ctx.fill();
         ctx.strokeStyle = `rgba(200,240,255,${0.9 * k})`; ctx.lineWidth = 0.04;
         for (let i = 0; i < 4; i++) { const a = Math.random() * 6.28, b = a + 1 + Math.random() * 2; bolt(z.x + Math.cos(a) * z.r * Math.random(), z.y + Math.sin(a) * z.r * Math.random(), z.x + Math.cos(b) * z.r, z.y + Math.sin(b) * z.r, 5, 0.25); }
+      } else if (z.kind === 'frost') {
+        // a breath of frost on the street, a crystal glinting in it now and then
+        ctx.fillStyle = `rgba(160,235,255,${0.2 * k})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * 0.8, 0, Math.PI * 2); ctx.fill();
+        if (Math.random() < 0.5) { const a = Math.random() * 1.05; ctx.strokeStyle = `rgba(235,252,255,${0.9 * k})`; ctx.lineWidth = 0.03; flake(z.x + Math.cos(a * 6) * 0.2, z.y + Math.sin(a * 6) * 0.2, 0.16, a); }
       } else {
         ctx.fillStyle = `rgba(255,230,90,${0.18 * k})`; ctx.beginPath(); ctx.arc(z.x, z.y, z.r * 0.8, 0, Math.PI * 2); ctx.fill();
         if (Math.random() < 0.5) { const a = Math.random() * 6.28; ctx.strokeStyle = `rgba(255,245,170,${0.9 * k})`; ctx.lineWidth = 0.035; bolt(z.x - Math.cos(a) * 0.4, z.y - Math.sin(a) * 0.4, z.x + Math.cos(a) * 0.4, z.y + Math.sin(a) * 0.4, 4, 0.2); }
@@ -4097,6 +4100,23 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // afterimages: faded copies of the runner itself
       ctx.globalAlpha = q.a * 0.32; metalBall(q.x, q.y, P.r, runnerLook(now).m); ctx.globalAlpha = 1; return;
     }
+    if (q.boost && EQ('boost') === 'bs_ice') {
+      ctx.fillStyle = `rgba(190,245,255,${q.a * 0.55})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.35 * q.a, 0, Math.PI * 2); ctx.fill(); return;
+    }
+    if (!q.boost && dashFx() === 'dash_frost') {
+      // ice crystals left behind, glinting as they fade
+      const sd = Math.abs(Math.sin(q.x * 12.9898 + q.y * 78.233)) % 1;
+      ctx.fillStyle = `rgba(160,235,255,${q.a * 0.22})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.85, 0, Math.PI * 2); ctx.fill();
+      if (sd > 0.45) { ctx.strokeStyle = `rgba(235,252,255,${q.a * 0.95})`; ctx.lineWidth = 0.03; flake(q.x + (sd - 0.7) * 0.5, q.y + (0.5 - sd) * 0.4, 0.1 + 0.08 * sd, sd * 3); }
+      return;
+    }
+    if (!q.boost && dashFx() === 'dash_bolt') {
+      // a crackle of lightning left behind
+      const sd = Math.abs(Math.sin(q.x * 12.9898 + q.y * 78.233)) % 1;
+      ctx.fillStyle = `rgba(255,236,120,${q.a * 0.25})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.8, 0, Math.PI * 2); ctx.fill();
+      if (sd > 0.5) { const a = sd * 6.28; ctx.strokeStyle = `rgba(255,245,170,${q.a * 0.95})`; ctx.lineWidth = 0.035; bolt(q.x - Math.cos(a) * 0.3, q.y - Math.sin(a) * 0.3, q.x + Math.cos(a) * 0.3, q.y + Math.sin(a) * 0.3, 4, 0.18); }
+      return;
+    }
     if (q.boost && EQ('boost') === 'bs_thunder') {
       ctx.fillStyle = `rgba(255,236,120,${q.a * 0.55})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.35 * q.a, 0, Math.PI * 2); ctx.fill(); return;
     }
@@ -4120,8 +4140,23 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     ctx.fillStyle = q.boost ? `rgba(255,179,71,${q.a * 0.4})` : `rgba(143,233,255,${q.a * 0.35})`; ctx.beginPath(); ctx.arc(q.x, q.y, P.r * 0.9, 0, Math.PI * 2); ctx.fill();
   }
-  // lightning around the runner while the thunder boost runs
+  // a six-armed ice crystal
+  function flake(x, y, r, a) {
+    ctx.beginPath();
+    for (let i = 0; i < 3; i++) { const q = a + i * Math.PI / 3, c = Math.cos(q) * r, d = Math.sin(q) * r; ctx.moveTo(x - c, y - d); ctx.lineTo(x + c, y + d); }
+    ctx.stroke();
+  }
+  // lightning around the runner while the thunder boost runs (frost while the ice one does)
   function thunderAura(now) {
+    if (P.boostT > 0 && EQ('boost') === 'bs_ice') {
+      ctx.save(); ctx.shadowColor = '#8feaff'; ctx.shadowBlur = 10; ctx.lineCap = 'round';
+      for (let i = 0; i < 4; i++) {
+        const a = now * 2.5 + i * Math.PI / 2, l = P.r + 0.2 + 0.08 * Math.sin(now * 9 + i);
+        ctx.strokeStyle = i % 2 ? 'rgba(190,245,255,0.85)' : 'rgba(255,255,255,0.95)'; ctx.lineWidth = 0.035;
+        flake(P.x + Math.cos(a) * l, P.y + Math.sin(a) * l, 0.11, a);
+      }
+      ctx.restore(); ctx.lineCap = 'butt'; return;
+    }
     if (!(P.boostT > 0) || EQ('boost') !== 'bs_thunder') return;
     ctx.save(); ctx.shadowColor = '#ffe35a'; ctx.shadowBlur = 10; ctx.lineCap = 'round';
     for (let i = 0; i < 3; i++) {
