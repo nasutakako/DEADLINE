@@ -6259,11 +6259,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (input.stick && input.stick.pad && e.pointerId === input.stick.id) input.stick = null;
     if (!input.stick || !input.stick.pad) padReset();
   };
+  const touchX = e => {
+    const t = e.target;
+    if (t && t.getBoundingClientRect && typeof e.offsetX === 'number' && t.offsetWidth) { const r = t.getBoundingClientRect(); return r.left + e.offsetX * r.width / t.offsetWidth; }
+    return e.clientX;
+  };
   function padStart(e, el) {
     e.preventDefault();
     if (state !== 'play' || input.stick) return;
-    // the stick's half of the screen only (the left, or the right with 操作の左右交換)
-    if (settings.swap ? e.clientX < innerWidth / 2 : e.clientX > innerWidth / 2) return;
+    // the stick's half of the screen only (the left, or the right with 操作の左右交換). A touch on the stick's own
+    // column always counts; elsewhere the side is read from where the touch lies in the element it landed on, which
+    // stays right even where a browser hands a rotated or scaled page the touch's raw position
+    if (!pad.contains(e.target) && settings.swap !== (touchX(e) > innerWidth / 2)) return;
     input.stick = { id: e.pointerId, pad: true, ox: e.clientX, oy: e.clientY, kx: 0, ky: 0, dx: 0, dy: 0 };
     pad.classList.add('on');
     try { el.setPointerCapture(e.pointerId); } catch (_) {}
