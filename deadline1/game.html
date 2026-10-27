@@ -536,18 +536,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .setlist { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
 .setrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .setrow b { font-size: 15px; }
-.setorder { display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
-.setorder .ordhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.setorder .ordhead b { font-size: 15px; }
-.setorder small { font-size: 12px; line-height: 1.45; color: var(--muted); }
-.ordrows { display: flex; flex-direction: column; gap: 5px; }
-.ordrow { display: grid; grid-template-columns: 22px minmax(0, 1fr) 40px 40px; align-items: center; gap: 8px; padding: 5px 6px 5px 10px; border-radius: 6px; background: rgba(255,255,255,.04); }
-.ordrow .no { font-family: var(--f-num); font-weight: 700; color: var(--muted); }
-.ordrow b { font-size: 14px; }
-.ordrow button, .ordreset { height: 32px; border-radius: 6px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
-.ordreset { padding: 0 12px; font-size: 12px; }
-.ordrow button:disabled { opacity: .3; cursor: default; }
-.ordedit { height: 36px; border-radius: 6px; border: 1px solid var(--lamp); background: rgba(255,207,90,.12); color: var(--lamp); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+.setrow .go2 { grid-column: 2; grid-row: 1 / span 2; font-style: normal; font-size: 26px; line-height: 1; color: var(--lamp); padding: 0 4px; }
 /* the layout editor: the play screen with its controls marked, a panel in the middle of the map */
 .layedit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; width: min(300px, 92%); display: flex; flex-direction: column; align-items: center; gap: 7px;
   padding: 12px; border: 1px solid var(--lamp); border-radius: 10px; background: rgba(10,12,18,.9); box-shadow: 0 8px 30px rgba(0,0,0,.5); }
@@ -570,10 +559,10 @@ body.laymode .laysel { outline: 3px solid var(--lamp) !important; }
 .setrow[aria-checked="true"] .sw { background: var(--runner); }
 .setrow[aria-checked="true"] .sw::after { transform: translateX(20px); background: #fff; }
 @media (prefers-reduced-motion: reduce) { .setrow .sw, .setrow .sw::after { transition: none; } }
-/* a short screen: no notes under the switches, and the three buttons of ボタン配置 side by side, so it all fits */
-@media (max-height: 420px) { .setrow small, .setorder small { display: none; } .ordrows { flex-direction: row; } .ordrow { flex: 1 1 0; grid-template-columns: 14px minmax(0, 1fr) 28px 28px; gap: 4px; padding: 3px 4px 3px 8px; } .ordrow b { font-size: 12.5px; white-space: nowrap; } }
-@media (max-height: 340px) { #setScreen .card { gap: 5px; } #setScreen h2 { font-size: 21px; } #setScreen .setrow { padding: 3px 12px; min-height: 0; } #setScreen .setrow .sw { transform: scale(.85); } #setScreen .setlist { gap: 5px; } .setorder { padding: 5px 10px !important; } #setScreen .ghost { padding: 7px 16px; } }
-@media (max-height: 400px) { .setorder { padding: 7px 12px; gap: 4px; } .ordrow button, .ordreset { height: 28px; } .setlist { gap: 6px; } .setrow { padding: 7px 12px; gap: 2px 12px; } .setrow b { font-size: 14px; } .setrow small { font-size: 11px; line-height: 1.35; } #setScreen h2 { font-size: 26px; } }
+/* a short screen: no notes under the switches, so it all fits */
+@media (max-height: 420px) { .setrow small { display: none; } }
+@media (max-height: 340px) { #setScreen .card { gap: 5px; } #setScreen h2 { font-size: 21px; } #setScreen .setrow { padding: 3px 12px; min-height: 0; } #setScreen .setrow .sw { transform: scale(.85); } #setScreen .setlist { gap: 5px; } #setScreen .ghost { padding: 7px 16px; } }
+@media (max-height: 400px) { .setlist { gap: 6px; } .setrow { padding: 7px 12px; gap: 2px 12px; } .setrow b { font-size: 14px; } .setrow small { font-size: 11px; line-height: 1.35; } #setScreen h2 { font-size: 26px; } }
 /* 操作の左右交換: the stick on the right, the buttons and the time on the left (the title keeps its menu on the left) */
 body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "hud hud" "stage stage" "ctl sys"; }
 @media (min-aspect-ratio: 5/4) {
@@ -2384,27 +2373,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ['sound', 'サウンド', 'BGMと効果音を鳴らす'],
   ];
   const settings = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (_) {} return Object.assign({ swap: false, shake: true, sound: true }, v); })();
-  // ボタン配置: the order of the three action buttons (top to bottom; left to right when the screen stands up)
-  const BTN_ORDER = ['item', 'mine', 'dash'], BTN_NAME = { item: 'アイテム', mine: '爆弾', dash: 'ダッシュ' };
-  if (!Array.isArray(settings.order) || settings.order.length !== 3 || !BTN_ORDER.every(k => settings.order.includes(k))) settings.order = BTN_ORDER.slice();
-  const applyOrder = () => settings.order.forEach((k, i) => { const b = { item: ui.item, mine: ui.mine, dash: ui.dash }[k]; if (b) b.style.order = i; });
+  delete settings.order;   // (the old order-only ボタン配置 is gone)
   const setSave = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (_) {} };
-  function orderRows(box) {
-    box.textContent = '';
-    settings.order.forEach((k, i) => {
-      const row = document.createElement('div'); row.className = 'ordrow';
-      const no = document.createElement('span'); no.className = 'no'; no.textContent = i + 1;
-      const nm = document.createElement('b'); nm.textContent = BTN_NAME[k];
-      row.append(no, nm);
-      for (const [d, lab, aria] of [[-1, '▲', '上へ'], [1, '▼', '下へ']]) {
-        const bt = document.createElement('button'); bt.type = 'button'; bt.textContent = lab; bt.setAttribute('aria-label', BTN_NAME[k] + 'を' + aria);
-        const j = i + d; bt.disabled = j < 0 || j > 2;
-        bt.addEventListener('click', () => { tap(); const o = settings.order; [o[i], o[j]] = [o[j], o[i]]; setSave(); applyOrder(); orderRows(box); });
-        row.append(bt);
-      }
-      box.append(row);
-    });
-  }
   function applySettings() {
     document.body.classList.toggle('swap', !!settings.swap);
     const was = muted; muted = !settings.sound;
@@ -2425,17 +2395,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       });
       box.append(b);
     }
-    // ボタン配置
-    const sec = document.createElement('div'); sec.className = 'setorder';
-    const h = document.createElement('div'); h.className = 'ordhead';
-    const ht = document.createElement('b'); ht.textContent = 'ボタン配置';
-    const reset = document.createElement('button'); reset.type = 'button'; reset.className = 'ordreset'; reset.textContent = '元に戻す';
-    const note = document.createElement('small'); note.textContent = '右側のボタンの並び順(上から。縦画面では左から)';
-    const rows = document.createElement('div'); rows.className = 'ordrows';
-    reset.addEventListener('click', () => { tap(); settings.order = BTN_ORDER.slice(); setSave(); applyOrder(); orderRows(rows); });
-    const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'ordedit'; edit.textContent = 'プレイ画面で位置と大きさを調整する';
-    edit.addEventListener('click', () => { tap(); layOpen(); });
-    h.append(ht, reset); sec.append(h, note, rows, edit); box.append(sec); orderRows(rows);
+    // ボタン配置: opens the play screen to place and size the controls
+    const lay = document.createElement('button'); lay.type = 'button'; lay.className = 'setrow setlay';
+    const lt = document.createElement('b'); lt.textContent = 'ボタン配置'; const la = document.createElement('i'); la.className = 'go2'; la.textContent = '›';
+    const ln = document.createElement('small'); ln.textContent = 'プレイ画面でボタンとスティックの位置・大きさを調整する';
+    lay.append(lt, la, ln); lay.addEventListener('click', () => { tap(); layOpen(); });
+    box.append(lay);
   }
   // ---------- the layout editor: each control nudged (dx, dy in px) and sized (60%-160%), kept wholly on screen ----------
   const LAY_KEYS = ['item', 'mine', 'dash', 'pad'], LAY_NAME = { item: 'アイテム', mine: '爆弾', dash: 'ダッシュ', pad: '移動スティック' };
@@ -4951,7 +4916,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // (the saved settings: sound off keeps it all quiet, the swapped layout from the first frame)
   let ac = null, muted = !settings.sound;
   document.body.classList.toggle('swap', !!settings.swap);
-  applyOrder(); applyLay();
+  applyLay();
   function initAudio() {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
