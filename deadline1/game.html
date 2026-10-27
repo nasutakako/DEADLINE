@@ -495,6 +495,40 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 @media (max-width: 520px) { #titleScreen .row .go { white-space: normal !important; font-size: 14px !important; padding: 10px 6px !important; word-break: keep-all; overflow-wrap: anywhere; } }
 #titleScreen .row .go { align-self: stretch; white-space: nowrap; }
+#titleScreen .lifepill { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 60px; z-index: 3; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px;
+  border: 1px solid var(--line); border-radius: 21px; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; font: inherit; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.lifepill .hearts, .lifebig { color: var(--oni); letter-spacing: .04em; white-space: nowrap; }
+.lifepill .hearts { font-size: 17px; line-height: 1; }
+.lifepill .hearts i, .lifebig i { font-style: normal; color: #3a4152; }
+.lifepill small { font-size: 11px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.6em; }
+.lifepill b { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--oni); color: #fff; font-size: 16px; }
+.lifeov { z-index: 30; }
+.lifemsg { margin: 0; color: var(--lamp); font-weight: 700; }
+.lifemsg:empty { display: none; }
+.lifebig { font-size: 34px; line-height: 1; }
+.lifebig em { font-style: normal; font-size: 16px; color: var(--ink); margin-left: 6px; vertical-align: middle; }
+.lifeacts { display: flex; flex-direction: column; gap: 8px; }
+.lifeact { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.lifeact b { font-size: 15px; }
+.lifeact small { font-size: 11.5px; color: var(--muted); }
+.lifeact.line { background: #06c755; border-color: #06c755; color: #fff; }
+.lifeact.line small { color: rgba(255,255,255,.85); }
+.lifeact:disabled { opacity: .45; cursor: default; }
+.adov .card { align-items: center; }
+.adbox { width: min(100%, 320px); aspect-ratio: 16 / 9; display: grid; place-content: center; gap: 6px; text-align: center; border: 1px dashed var(--muted); border-radius: 8px; background: #11151f; }
+.adbox b { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--oni); }
+.adbox span { font-size: 12px; color: var(--muted); }
+@media (max-height: 400px) { .lifebig { font-size: 26px; } #lifeScreen .card { gap: 6px; } .lifeacts { flex-direction: row; } .lifeact { flex: 1 1 0; padding: 7px 10px; } .lifeact b { font-size: 13.5px; } #lifeScreen h2 { font-size: 24px; } }
+/* a narrow title: the hearts stand in a column under the gear, and the title keeps clear of that column */
+@media (max-width: 760px) {
+  #titleScreen .lifepill { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 50px); right: 10px; width: 42px; height: auto; flex-direction: column; gap: 4px; padding: 8px 0 6px; border-radius: 21px; }
+  #titleScreen .lifepill .hearts { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 15px; }
+  #titleScreen .lifepill .hearts i { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+  #titleScreen .lifepill .hearts em { font-size: 10px; margin: 0; color: var(--ink); font-style: normal; }
+  #titleScreen .lifepill small { min-width: 0; font-size: 9.5px; letter-spacing: -.02em; }
+  #titleScreen .lifepill b { width: 26px; height: 26px; font-size: 15px; }
+  #titleScreen > .card { padding-right: 48px; }
+}
 #titleScreen .gear { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 10px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
   border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 #titleScreen .gear svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
@@ -706,6 +740,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
 
   <div class="overlay" id="titleScreen">
+    <button class="lifepill" id="lifeBtn" type="button" aria-label="遊べる回数"><span class="hearts" id="lifeHearts"></span><small id="lifeNext"></small><b>＋</b></button>
     <button class="gear" id="setBtn" type="button" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
     <div class="card">
       <h1>DEAD<span>LINE</span></h1>
@@ -892,6 +927,26 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <span class="kicker">PAUSE</span>
       <h1>一時停止中</h1>
       <div class="row"><button class="go" id="resumeBtn" type="button">再開</button><button class="ghost" id="quitBtn" type="button">タイトルへ</button></div>
+    </div>
+  </div>
+  <div class="overlay lifeov" id="lifeScreen" hidden>
+    <div class="card rankcard">
+      <h2>遊べる回数</h2>
+      <p class="lifemsg" id="lifeMsg"></p>
+      <div class="lifebig" id="lifeBig"></div>
+      <span class="label" id="lifeRule"></span>
+      <div class="lifeacts">
+        <button class="lifeact ad" id="lifeAd" type="button"><b>広告を見て 1回復</b><small>約5秒の広告を最後まで見る</small></button>
+        <button class="lifeact line" id="lifeLine" type="button"><b>LINEで友達を招待して 3回復</b><small id="lifeLineSub">1日1回まで</small></button>
+      </div>
+      <div class="row"><button class="ghost" id="lifeClose" type="button">閉じる</button></div>
+    </div>
+  </div>
+  <div class="overlay lifeov adov" id="adScreen" hidden>
+    <div class="card">
+      <span class="label">広告(サンプル)</span>
+      <div class="adbox" id="adBox"><b>DEADLINE</b><span>ここに広告が入ります</span></div>
+      <button class="ghost" id="adClose" type="button" disabled>あと5秒</button>
     </div>
   </div>
 </main>
@@ -2200,6 +2255,63 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     ui.title.hidden = true; $('equipScreen').hidden = false;
   }
+  // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 15 minutes, one more for
+  // watching an ad, three for inviting friends on LINE (once a day). Kept on this device. ----------
+  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 15 * 60 * 1000, AD_SEC = 5, INVITE_N = 3;
+  const lifeData = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIFE_KEY)); } catch (_) {} return Object.assign({ n: LIFE_MAX, at: Date.now(), inv: '' }, v || {}); })();
+  const lifeSave = () => { try { localStorage.setItem(LIFE_KEY, JSON.stringify(lifeData)); } catch (_) {} };
+  // the time recovery: one per 15 minutes while below 3 (what was earned on top of 3 is kept)
+  function lifeNow() {
+    const now = Date.now();
+    if (lifeData.n >= LIFE_MAX) lifeData.at = now;
+    else { const k = Math.floor((now - lifeData.at) / LIFE_EVERY); if (k > 0) { lifeData.n = Math.min(LIFE_MAX, lifeData.n + k); lifeData.at = lifeData.n >= LIFE_MAX ? now : lifeData.at + k * LIFE_EVERY; lifeSave(); } }
+    return lifeData.n;
+  }
+  const lifeLeft = () => lifeData.n >= LIFE_MAX ? 0 : LIFE_EVERY - (Date.now() - lifeData.at);
+  const lifeClock = ms => { const s = Math.max(0, Math.ceil(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+  const lifeHearts = n => '♥'.repeat(Math.min(n, LIFE_MAX)) + '<i>' + '♥'.repeat(Math.max(0, LIFE_MAX - n)) + '</i>' + (n > LIFE_MAX ? `<em>+${n - LIFE_MAX}</em>` : '');
+  const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  function lifeRender() {
+    const n = lifeNow();
+    $('lifeHearts').innerHTML = lifeHearts(n);
+    $('lifeNext').textContent = n >= LIFE_MAX ? (n > LIFE_MAX ? '+' + (n - LIFE_MAX) : '満タン') : lifeClock(lifeLeft());
+    if ($('lifeScreen').hidden) return;
+    $('lifeBig').innerHTML = lifeHearts(n);
+    $('lifeRule').textContent = n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
+    $('lifeAd').disabled = n >= LIFE_MAX;
+    const used = lifeData.inv === todayKey();
+    $('lifeLine').disabled = used; $('lifeLineSub').textContent = used ? '今日はもう招待した(明日また使える)' : '1日1回まで';
+  }
+  function lifeGive(k) { lifeNow(); const was = lifeData.n; lifeData.n += k; if (was >= LIFE_MAX) lifeData.at = Date.now(); lifeSave(); lifeRender(); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); }
+  // a run starts: one play used (the tutorial list's replays are free); none left: the recovery screen instead
+  function lifeUse() {
+    if (lifeNow() <= 0) { lifeOpen('遊べる回数がありません。回復してから遊ぼう'); return false; }
+    if (lifeData.n >= LIFE_MAX) lifeData.at = Date.now();
+    lifeData.n--; lifeSave(); lifeRender(); return true;
+  }
+  function lifeOpen(msg) { $('lifeMsg').textContent = msg || ''; $('lifeScreen').hidden = false; lifeRender(); }
+  $('lifeBtn').addEventListener('click', () => { tap(); lifeOpen(''); });
+  $('lifeClose').addEventListener('click', () => { tap(); $('lifeScreen').hidden = true; });
+  // the ad (a sample screen for now: a real ad network, AdMob in the app or a rewarded web ad, goes in its place)
+  let adTimer = 0;
+  $('lifeAd').addEventListener('click', () => {
+    if (lifeNow() >= LIFE_MAX) return;
+    tap(); $('adScreen').hidden = false; const btn = $('adClose'); btn.disabled = true;
+    let left = AD_SEC; btn.textContent = `あと${left}秒`;
+    clearInterval(adTimer); adTimer = setInterval(() => { left--; if (left > 0) btn.textContent = `あと${left}秒`; else { clearInterval(adTimer); btn.disabled = false; btn.textContent = '閉じて1回復'; } }, 1000);
+  });
+  $('adClose').addEventListener('click', () => { if ($('adClose').disabled) return; $('adScreen').hidden = true; lifeGive(1); $('lifeMsg').textContent = '1回復した!'; });
+  // LINE: the share sheet with an invitation; back from it, three plays (once a day)
+  $('lifeLine').addEventListener('click', () => {
+    if (lifeData.inv === todayKey()) return;
+    tap();
+    const text = `鬼から逃げ切れ。逃走アクション「DEADLINE」で一緒に遊ぼう!\n${SHARE_URL}`;
+    try { window.open('https://line.me/R/share?text=' + encodeURIComponent(text), '_blank', 'noopener'); } catch (_) {}
+    lifeData.inv = todayKey(); lifeGive(INVITE_N); $('lifeMsg').textContent = '招待ありがとう! 3回復した';
+  });
+  setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
+  lifeRender();
+
   // ---------- settings (the gear on the title): kept on this device ----------
   const SET_KEY = REC_KEY + '-settings';
   const SETS = [
@@ -5695,6 +5807,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   // ---------- flow control ----------
   function start(n = 1, item, skin) {
+    if (!tutReplay && !lifeUse()) return;
     misEnd(); mapSkin = skin || (n === 3 && rankRun ? weekSkin() : n <= 3 ? mapPick(n) : 'd1');
     initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
