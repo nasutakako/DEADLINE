@@ -547,6 +547,23 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .ordrow button, .ordreset { height: 32px; border-radius: 6px; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--ink); font: inherit; font-size: 13px; cursor: pointer; }
 .ordreset { padding: 0 12px; font-size: 12px; }
 .ordrow button:disabled { opacity: .3; cursor: default; }
+.ordedit { height: 36px; border-radius: 6px; border: 1px solid var(--lamp); background: rgba(255,207,90,.12); color: var(--lamp); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+/* the layout editor: the play screen with its controls marked, a panel in the middle of the map */
+.layedit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; width: min(300px, 92%); display: flex; flex-direction: column; align-items: center; gap: 7px;
+  padding: 12px; border: 1px solid var(--lamp); border-radius: 10px; background: rgba(10,12,18,.9); box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+.layedit[hidden] { display: none; }
+.layedit .lehead { font-size: 14px; color: var(--lamp); }
+.layedit .lesel { font-size: 12px; color: var(--ink); text-align: center; line-height: 1.4; }
+.layedit button { height: 34px; min-width: 40px; padding: 0 10px; border-radius: 6px; border: 1px solid var(--line); background: rgba(255,255,255,.07); color: var(--ink); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; touch-action: manipulation; }
+.layedit button:disabled { opacity: .35; cursor: default; }
+.layedit button.go { width: 100%; background: var(--lamp); border-color: var(--lamp); color: #111; }
+.lepad { display: grid; grid-template-columns: 44px 44px 44px; grid-template-areas: ". u ." "l . r" ". d ."; gap: 3px; }
+.lepad [data-mv="0,-1"] { grid-area: u; } .lepad [data-mv="-1,0"] { grid-area: l; } .lepad [data-mv="1,0"] { grid-area: r; } .lepad [data-mv="0,1"] { grid-area: d; }
+.lerow { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
+.lerow span { min-width: 3.4em; text-align: center; font-family: var(--f-num); font-weight: 700; }
+body.laymode .act, body.laymode .padbase { outline: 2px dashed rgba(255,207,90,.6); outline-offset: 2px; cursor: move; }
+body.laymode .laysel { outline: 3px solid var(--lamp) !important; }
+@media (max-height: 400px) { .layedit { gap: 4px; padding: 8px 10px; } .layedit button { height: 28px; } .lepad { grid-template-columns: 38px 38px 38px; } .layedit .lesel { font-size: 11px; } }
 .setrow small { grid-column: 1; font-size: 12px; line-height: 1.45; color: var(--muted); }
 .setrow .sw { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 48px; height: 28px; border-radius: 14px; background: #2a3142; transition: background .15s; }
 .setrow .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #c9cfdc; transition: transform .15s; }
@@ -787,6 +804,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     </div>
   </div>
 
+  <div class="layedit" id="layEdit" hidden>
+    <b class="lehead">ボタン配置の調整</b>
+    <span class="lesel" id="leSel">動かしたいボタンをタップ(ドラッグでも動かせる)</span>
+    <div class="lepad">
+      <button type="button" data-mv="0,-1" aria-label="上へ">▲</button>
+      <button type="button" data-mv="-1,0" aria-label="左へ">◀</button><button type="button" data-mv="1,0" aria-label="右へ">▶</button>
+      <button type="button" data-mv="0,1" aria-label="下へ">▼</button>
+    </div>
+    <div class="lerow"><button type="button" id="leSmall">小さく</button><span id="leSize">100%</span><button type="button" id="leBig">大きく</button></div>
+    <div class="lerow"><button type="button" id="leOne">この項目を戻す</button><button type="button" id="leAll">全部戻す</button></div>
+    <button type="button" class="go" id="leDone">完了</button>
+  </div>
   <div class="overlay" id="setScreen" hidden>
     <div class="card rankcard">
       <h2>設定</h2>
@@ -2404,8 +2433,77 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const note = document.createElement('small'); note.textContent = '右側のボタンの並び順(上から。縦画面では左から)';
     const rows = document.createElement('div'); rows.className = 'ordrows';
     reset.addEventListener('click', () => { tap(); settings.order = BTN_ORDER.slice(); setSave(); applyOrder(); orderRows(rows); });
-    h.append(ht, reset); sec.append(h, note, rows); box.append(sec); orderRows(rows);
+    const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'ordedit'; edit.textContent = 'プレイ画面で位置と大きさを調整する';
+    edit.addEventListener('click', () => { tap(); layOpen(); });
+    h.append(ht, reset); sec.append(h, note, rows, edit); box.append(sec); orderRows(rows);
   }
+  // ---------- the layout editor: each control nudged (dx, dy in px) and sized (60%-160%), kept wholly on screen ----------
+  const LAY_KEYS = ['item', 'mine', 'dash', 'pad'], LAY_NAME = { item: 'アイテム', mine: '爆弾', dash: 'ダッシュ', pad: '移動スティック' };
+  const layEl = k => k === 'pad' ? document.querySelector('#pad .padbase') : ui[k];
+  if (!settings.lay || typeof settings.lay !== 'object') settings.lay = {};
+  const layOf = k => (settings.lay[k] = Object.assign({ x: 0, y: 0, s: 1 }, settings.lay[k]));
+  function layPut(k) {
+    const el = layEl(k); if (!el) return;
+    const L = settings.lay[k];
+    el.style.transform = L && (L.x || L.y || L.s !== 1) ? `translate(${L.x}px, ${L.y}px) scale(${L.s})` : '';
+  }
+  // (pulled back inside the window if a nudge or a resize took it past the edge)
+  function layKeep(k) {
+    const el = layEl(k), L = settings.lay[k]; if (!el || !L || !el.offsetParent) return;
+    const r = el.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+    if (r.left < 0) L.x -= r.left; else if (r.right > W) L.x -= r.right - W;
+    if (r.top < 0) L.y -= r.top; else if (r.bottom > H) L.y -= r.bottom - H;
+    L.x = Math.round(L.x); L.y = Math.round(L.y); layPut(k);
+  }
+  const applyLay = () => { for (const k of LAY_KEYS) layPut(k); };
+  let laySel = null, layDrag = null;
+  function laySelect(k) {
+    laySel = k; for (const q of LAY_KEYS) { const el = layEl(q); if (el) el.classList.toggle('laysel', q === k); }
+    $('leSel').textContent = k ? `選択中: ${LAY_NAME[k]}` : '動かしたいボタンをタップ(ドラッグでも動かせる)';
+    for (const b of document.querySelectorAll('#layEdit [data-mv], #leSmall, #leBig, #leOne')) b.disabled = !k;
+    $('leSize').textContent = k ? Math.round(layOf(k).s * 100) + '%' : '-';
+  }
+  function layMove(dx, dy) { if (!laySel) return; const L = layOf(laySel); L.x += dx; L.y += dy; layPut(laySel); layKeep(laySel); setSave(); }
+  function laySize(d) { if (!laySel) return; const L = layOf(laySel); L.s = Math.round(Math.min(1.6, Math.max(0.6, L.s + d)) * 100) / 100; layPut(laySel); layKeep(laySel); setSave(); laySelect(laySel); }
+  function layOpen() {
+    $('setScreen').hidden = true; state = 'layout';
+    document.body.classList.add('laymode'); document.body.classList.remove('ontitle'); $('who').hidden = true;
+    $('layEdit').hidden = false; laySelect(null);
+    try { resize(); } catch (_) {}
+  }
+  function layClose() {
+    for (const q of LAY_KEYS) { const el = layEl(q); if (el) el.classList.remove('laysel'); }
+    document.body.classList.remove('laymode'); $('layEdit').hidden = true; layDrag = null;
+    state = 'title'; document.body.classList.add('ontitle'); openSettings(); $('setScreen').hidden = false;
+    try { resize(); } catch (_) {}
+  }
+  // in the editor a touch on a control picks it (and drags it) instead of pressing it
+  addEventListener('pointerdown', e => {
+    if (state !== 'layout') return;
+    const k = LAY_KEYS.find(q => { const el = layEl(q); return el && el.offsetParent && el.contains(e.target); });
+    if (!k) return;
+    e.preventDefault(); e.stopPropagation(); laySelect(k);
+    layDrag = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  }, true);
+  addEventListener('pointermove', e => {
+    if (state !== 'layout' || !layDrag || e.pointerId !== layDrag.id) return;
+    e.preventDefault(); e.stopPropagation();
+    layMove(Math.round(e.clientX - layDrag.x), Math.round(e.clientY - layDrag.y)); layDrag.x = e.clientX; layDrag.y = e.clientY;
+  }, true);
+  for (const ev of ['pointerup', 'pointercancel']) addEventListener(ev, e => { if (layDrag && e.pointerId === layDrag.id) layDrag = null; }, true);
+  // the arrows: a nudge of 4px, held down it keeps going
+  for (const b of document.querySelectorAll('#layEdit [data-mv]')) {
+    const [dx, dy] = b.dataset.mv.split(',').map(Number); let rep = 0, wait = 0;
+    const stop = () => { clearTimeout(wait); clearInterval(rep); };
+    b.addEventListener('pointerdown', e => { e.preventDefault(); layMove(dx * 4, dy * 4); stop(); wait = setTimeout(() => { rep = setInterval(() => layMove(dx * 4, dy * 4), 50); }, 300); });
+    for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) b.addEventListener(ev, stop);
+  }
+  $('leSmall').addEventListener('click', () => { tap(); laySize(-0.05); });
+  $('leBig').addEventListener('click', () => { tap(); laySize(0.05); });
+  $('leOne').addEventListener('click', () => { tap(); if (laySel) { delete settings.lay[laySel]; layPut(laySel); setSave(); laySelect(laySel); } });
+  $('leAll').addEventListener('click', () => { tap(); settings.lay = {}; applyLay(); setSave(); laySelect(laySel); });
+  $('leDone').addEventListener('click', () => { tap(); layClose(); });
+  addEventListener('resize', () => { for (const k of LAY_KEYS) if (settings.lay[k]) layKeep(k); });
   $('setBtn').addEventListener('click', () => { tap(); openSettings(); });
   $('setClose').addEventListener('click', () => closeOverlay('setScreen'));
   $('equipBtn').addEventListener('click', () => { tap(); openEquip(); });
@@ -4853,7 +4951,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // (the saved settings: sound off keeps it all quiet, the swapped layout from the first frame)
   let ac = null, muted = !settings.sound;
   document.body.classList.toggle('swap', !!settings.swap);
-  applyOrder();
+  applyOrder(); applyLay();
   function initAudio() {
     if (ac) { if (ac.state === 'suspended') ac.resume(); return; }
     try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { ac = null; }
@@ -5919,7 +6017,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // (now and then the runner drops a bomb, dashes, or uses an item, drawn the way the game draws them)
   let demo = null;
   // the title and the stand-by screens run it
-  const demoOn = () => state === 'title' || state === 'brief' || state === 'startpick';
+  const demoOn = () => state === 'title' || state === 'brief' || state === 'startpick' || state === 'layout';
   // the chase keeps to the middle of the map, the part the slow zoom always shows and the name column does not cover
   // (its edges are on streets, every 4th tile, so the edge of the area is a road round it, not a dead end)
   // (on a stand-by screen nothing zooms or covers the map's edge: the chase has all of it)
