@@ -1022,6 +1022,22 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       localStorage.setItem(REC_KEY, JSON.stringify(records)); localStorage.setItem(FRESH_KEY, '1');
     }
   } catch (e) {}
+  // the shop starts over, once on every device: nothing bought is owned or worn any more (the stars stay, and so do the
+  // stories' prizes: 九死に一生, 電磁爆弾 and 韋駄天 for the stories cleared)
+  const SHOP_RESET_KEY = REC_KEY + '-shopreset1';
+  let shopReset = false;
+  const shopRestart = r => {
+    const mc = r.mclear || {}, won = { skill_luck: !!mc.h3 || ((r.stages || {})[3] || []).some(x => x.escaped), bomb_emp: !!mc['3'], skill_idaten: !!mc.b3 };
+    const owned = ((r.shop && r.shop.owned) || []).filter(id => won[id]), eq = {};
+    for (const [k, id] of Object.entries((r.shop && r.shop.eq) || {})) if (owned.includes(id)) eq[k] = id;
+    r.shop = { owned, eq };
+  };
+  try {
+    if (!localStorage.getItem(SHOP_RESET_KEY)) {
+      shopReset = true; shopRestart(records);
+      localStorage.setItem(REC_KEY, JSON.stringify(records)); localStorage.setItem(SHOP_RESET_KEY, '1');
+    }
+  } catch (e) {}
   let recDoc = null, stageKillStart = 0;
   const TOP_N = 5;
   // escapes rank above captures; faster escapes first, then longer survivals
@@ -1140,6 +1156,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
       if (freshStart) { freshen(records); best = 0; saveRecords(); }
+      if (shopReset) { shopRestart(records); saveRecords(); }
       if (records.bestTime > best) best = records.bestTime;
       renderRecords(); Rank.sync();
     } catch (e) { recDoc = null; }
