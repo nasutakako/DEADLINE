@@ -102,6 +102,11 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .tutbar[hidden] { display: none; }
 /* a practice step whose scene lies under the banner: the banner goes to the foot of the map */
 .tutbar.low { top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+/* or in the middle, when the scene lies at the top and the foot of the map */
+.tutbar.mid { top: 50%; transform: translate(-50%, -50%); }
+/* a small screen where the banner would still cover the scene: a smaller banner */
+.tutbar.tight { padding: 5px 8px 5px 10px; gap: 6px; }
+.tutbar.tight p { font-size: 11px; line-height: 1.3; }
 .go.tutlbtn { background: #3b4458; }
 /* map choice on the stand-by screens */
 .mapsel { display: flex; gap: 8px; }
@@ -5780,7 +5785,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const TUT = {
     w: [
       { warp: true, say: '隔離区画にはワープポイントがある。乗って0.3秒待つと、もう1つのワープポイントに飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
-      { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
+      { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', set: tutWarpBar, go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
     ],
     1: [
@@ -5814,13 +5819,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     '3h': [
       { say: '夢路世界のステージ3では、スキル「九死に一生」が特別に使える。ダッシュの10回に1回、通常の1.5倍の距離を走る', info: true },
       { btn: 'dash', say: 'ダッシュしてみよう。いまは必ず発動する。光の尾が大きくなれば九死に一生', set: () => { tut.luckNext = true; tut.lucky = false; }, go: () => tut.lucky },
-      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
+      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
     ],
     '3b': [
       { say: '花火の夜では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は3.5秒で戻る(2回分で7秒)', info: true },
       { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
       { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、韋駄天で一気に離れよう', info: true },
-      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
+      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
       { say: '花火工場には、自爆する橙色の鬼がいる。逃走者より少し速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
@@ -5835,7 +5842,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k3: [
-      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
+      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
     ],
     // 電脳都市 and 縁日通り: no new rule of their own, only the stage's times (and stage 2's lessons, the first time)
     c2: [
@@ -5858,7 +5866,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: 'ワープポイントのそばで、鬼を2体引きつけよう。「今!」の合図が出たら、足元に電磁爆弾を置く', info: true, set: tutEmp },
       { btn: 'mine', say: '鬼が来る。「今!」の合図を待とう', set: tutEmp, go: tutEmpGo },
       { say: '1体は爆発で倒れ、もう1体は残った電気で怯んだ。怯んでいる間に、ワープポイントに入ろう', set: () => { tut.warped = false; for (const q of warps) q.cool = 0; }, go: () => tut.warped },
-      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
+      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
+      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
     ],
   };
   function tutBegin() {
@@ -5868,13 +5877,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const tk = tutKey(stageN);
     // a story's stage 3 teaches the pits too, before its last word, the first time
     let steps = TUT[tk];
-    const pre = { '3h': 3, '3c': 3, '3b': 3, k3: 3, k1: 1, k2: 2, b1: 1, c2: 2, b2: 2 }[tk], last = steps[steps.length - 1];
+    const pre = { '3h': 3, '3c': 3, '3b': 3, k3: 3, k1: 1, k2: 2, b1: 1, c2: 2, b2: 2 }[tk], last = steps.filter(x => x.tail || x.end);
     let preDone = false;
     if (pre) {
       const want = tutReplay === tk ? tk === '3h' : !tutSeen()[pre];
       const add = want ? TUT[pre].filter(x => pre === 3 ? x.pit : !x.end) : [];
       preDone = add.length > 0;
-      steps = pre === 3 ? [...steps.slice(0, -1), ...add, last] : [...add, ...steps];
+      steps = pre === 3 ? [...steps.filter(x => !x.tail && !x.end), ...add, ...last] : [...add, ...steps];
     }
     tut = { n: tk, pre: preDone ? pre : 0, i: -1, steps: steps.filter(s => (!s.pit || hole) && (!s.warp || warps.length === 2)), hole, oni: [], run: 0, lx: P.x, ly: P.y };
     for (const s of pending) dropWarn(s);
@@ -5888,7 +5897,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tut.i++;
     const st = tut.steps[tut.i];
     tut.wait = 0; tut.ok = 0; tut.refill = false; tut.s0 = P.stock;
-    $('tutBar').classList.remove('ok', 'low');
+    $('tutBar').classList.remove('ok', 'low', 'mid', 'tight');
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
     // lines break only after a 。 or 、, never a few characters off a word
     $('tutSay').innerHTML = (stickRight() ? st.say.replace('左半分', '右半分') : st.say).replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
@@ -6039,12 +6048,28 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
   // a street tile on the far side of the pit from the runner, so the oni crosses it on its way
   // the warp tutorial: the runner starts two tiles from the warp point lower on the map (clear of the banner)
+  // the banner at the top, or at the foot or the middle of the map if that keeps more of the two warp points in sight
+  // (on a small screen where none does, a smaller banner)
+  function tutWarpBar() {
+    const bar = $('tutBar'), seen = () => warps.filter(q => tutClear(q.x, q.y)).length;
+    let best = null;
+    for (const tight of [false, true]) for (const at of ['', 'low', 'mid']) {
+      bar.classList.toggle('tight', tight); bar.classList.toggle('low', at === 'low'); bar.classList.toggle('mid', at === 'mid');
+      const n = seen(); if (!best || n > best.n) best = { n, tight, at };
+      if (n === 2) return;
+    }
+    bar.classList.toggle('tight', best.tight); bar.classList.toggle('low', best.at === 'low'); bar.classList.toggle('mid', best.at === 'mid');
+  }
   function tutWarpPlace() {
-    const w = warps[0].y >= warps[1].y ? warps[0] : warps[1];
+    tutWarpBar();
+    const lower = warps[0].y >= warps[1].y ? warps[0] : warps[1], w = tutClear(lower.x, lower.y) ? lower : warps.find(q => tutClear(q.x, q.y)) || lower;
     let at = { x: w.x, y: w.y };
     for (const [dx, dy] of [[0, 2], [2, 0], [-2, 0], [0, -2], [0, 1], [1, 0], [-1, 0], [0, -1]]) {
       const x = Math.floor(w.x) + dx, y = Math.floor(w.y) + dy;
-      if (x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1 && !warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1)) { at = { x: x + 0.5, y: y + 0.5 }; break; }
+      if (x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] !== 1 && !warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1)) {
+        const q = { x: x + 0.5, y: y + 0.5 }; if (at.x === w.x && at.y === w.y) at = q;   // the first street tile, kept if none is in sight
+        if (tutClear(q.x, q.y)) { at = q; break; }
+      }
     }
     P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; for (const q of warps) { q.cool = 0; q.flash = 0; } tut.lx = P.x; tut.ly = P.y;
   }
