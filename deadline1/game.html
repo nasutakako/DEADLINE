@@ -5728,7 +5728,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('tutBar').classList.remove('ok');
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
     // lines break only after a 。 or 、, never a few characters off a word
-    $('tutSay').innerHTML = (settings.swap ? st.say.replace('左半分', '右半分') : st.say).replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
+    $('tutSay').innerHTML = (stickRight() ? st.say.replace('左半分', '右半分') : st.say).replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
     tutGlow(st.btn);
@@ -6259,6 +6259,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (input.stick && input.stick.pad && e.pointerId === input.stick.id) input.stick = null;
     if (!input.stick || !input.stick.pad) padReset();
   };
+  // which half the stick works in: the half its ring stands in (moved there by 操作の左右交換 or by ボタン配置)
+  const stickRight = () => { const b = pad.querySelector('.padbase'), r = b && b.getBoundingClientRect(); return r && r.width ? r.left + r.width / 2 > innerWidth / 2 : !!settings.swap; };
   const touchX = e => {
     const t = e.target;
     if (t && t.getBoundingClientRect && typeof e.offsetX === 'number' && t.offsetWidth) { const r = t.getBoundingClientRect(); return r.left + e.offsetX * r.width / t.offsetWidth; }
@@ -6267,10 +6269,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function padStart(e, el) {
     e.preventDefault();
     if (state !== 'play' || input.stick) return;
-    // the stick's half of the screen only (the left, or the right with 操作の左右交換). A touch on the stick's own
-    // column always counts; elsewhere the side is read from where the touch lies in the element it landed on, which
+    // the stick's half of the screen only (the half its ring stands in). A touch on the ring itself always counts; elsewhere the side is read from where the touch lies in the element it landed on, which
     // stays right even where a browser hands a rotated or scaled page the touch's raw position
-    if (!pad.contains(e.target) && settings.swap !== (touchX(e) > innerWidth / 2)) return;
+    if (!padBase.contains(e.target) && stickRight() !== (touchX(e) > innerWidth / 2)) return;
     input.stick = { id: e.pointerId, pad: true, ox: e.clientX, oy: e.clientY, kx: 0, ky: 0, dx: 0, dy: 0 };
     pad.classList.add('on');
     try { el.setPointerCapture(e.pointerId); } catch (_) {}
