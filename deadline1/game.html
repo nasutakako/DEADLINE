@@ -929,6 +929,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="pick" data-tut="3h" type="button"><b>ステージ3 終わらない夜</b><span><i>九死に一生・</i><i>落とし穴・</i><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="cyber">電脳世界</h3>
         <button class="pick" data-tut="w" type="button"><b>ステージ1 隔離区画</b><span><i>ワープポイント</i></span></button>
+        <button class="pick" data-tut="c2" type="button"><b>ステージ2 電脳都市</b><span><i>補給・</i><i>出口の時間</i></span></button>
         <button class="pick" data-tut="3c" type="button"><b>ステージ3 無限回路</b><span><i>電磁爆弾・</i><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="shadow">影絵世界</h3>
         <button class="pick" data-tut="k1" type="button"><b>ステージ1 影の街</b><span><i>分裂する</i><i>黄色い鬼・</i><i>建物の影</i></span></button>
@@ -936,6 +937,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="pick" data-tut="k3" type="button"><b>ステージ3 月蝕の夜</b><span><i>6分30秒で出口</i></span></button>
         <h3 class="tgrp" data-grp="fuse">爆心世界</h3>
         <button class="pick" data-tut="b1" type="button"><b>ステージ1 花火工場</b><span><i>自爆する鬼・</i><i>誘爆</i></span></button>
+        <button class="pick" data-tut="b2" type="button"><b>ステージ2 縁日通り</b><span><i>補給・</i><i>出口の時間</i></span></button>
         <button class="pick" data-tut="3b" type="button"><b>ステージ3 花火の夜</b><span><i>韋駄天・</i><i>自爆1.5倍・</i><i>6分30秒で出口</i></span></button>
       </div>
       <div class="row"><button class="ghost" id="tutBackBtn" type="button">タイトルへ</button></div>
@@ -1212,7 +1214,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (r.parentNode !== recHome.parent) recHome.parent.insertBefore(r, recHome.next);
   }
   function placeWho() {
-    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('recScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('setScreen').hidden);
+    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('recScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('setScreen').hidden || !$('tutScreen').hidden);
     if (padMQ.matches) { w.className = 'who'; if (w.parentNode !== $('pad')) $('pad').prepend(w); }
     else if (wideMQ.matches) { w.className = 'who float'; w.style.left = w.style.top = '14px'; if (w.parentNode !== $('stage')) $('stage').appendChild(w); }
     else { w.className = 'who inline'; w.style.left = w.style.top = ''; const c = ui.title.querySelector('.card'); if (w.parentNode !== c) c.prepend(w); }
@@ -5636,7 +5638,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
   // the tutorial a stage starts with: its own, or on 隔離区画 the warp points ('w')
   // (the DEADLINE2 maps: only 隔離区画 has one, the warp points; 電脳都市 and 無限回路 bring nothing new)
-  const tutKeyOf = n => mapSkin === 'd4' ? (n === 1 ? 'b1' : n) : mapSkin === 'd3' ? (n <= 3 ? 'k' + n : n) : mapSkin === 'd2' ? (n === 1 ? 'w' : null) : n;
+  const tutKeyOf = n => mapSkin === 'd4' ? (n === 1 ? 'b1' : n === 2 ? 'b2' : n) : mapSkin === 'd3' ? (n <= 3 ? 'k' + n : n) : mapSkin === 'd2' ? (n === 1 ? 'w' : n === 2 ? 'c2' : null) : n;
   // a story's stage 3 has its own: its prize, then the pits (if not seen yet), then the way out at 6:30
   const tutKey = n => n === 3 && MAP_CHOICE && !rankRun && tutReplay !== 3 && ROUTE[mapSkin] !== 'shadow' ? ({ home: '3h', cyber: '3c', fuse: '3b' })[ROUTE[mapSkin]] : tutKeyOf(n);
   const tutNeed = n => { const k = tutKey(n); return k != null && (k === 'w' || (n >= 1 && n <= 3)) && (tutReplay === k || !tutSeen()[k]); };
@@ -5776,7 +5778,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     w: [
       { warp: true, say: '隔離区画にはワープポイントがある。乗って0.3秒待つと、もう1つのワープポイントに飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
       { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
-      { say: '2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
+      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
     ],
     1: [
       { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
@@ -5809,13 +5811,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     '3h': [
       { say: '夢路世界のステージ3では、スキル「九死に一生」が特別に使える。ダッシュの10回に1回、通常の1.5倍の距離を走る', info: true },
       { btn: 'dash', say: 'ダッシュしてみよう。いまは必ず発動する。光の尾が大きくなれば九死に一生', set: () => { tut.luckNext = true; tut.lucky = false; }, go: () => tut.lucky },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
+      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
     ],
     '3b': [
       { say: '花火の夜では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は3.5秒で戻る(2回分で7秒)', info: true },
       { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
       { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、韋駄天で一気に離れよう', info: true },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
+      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
       { say: '花火工場には、自爆する橙色の鬼がいる。逃走者より少し速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
@@ -5830,7 +5832,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     k3: [
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
+      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
+    ],
+    // 電脳都市 and 縁日通り: no new rule of their own, only the stage's times (and stage 2's lessons, the first time)
+    c2: [
+      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
+    ],
+    b2: [
+      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開くと鬼が増え、黒い鬼も現れる', end: true },
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
@@ -5846,7 +5855,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: 'ワープポイントのそばで、鬼を2体引きつけよう。「今!」の合図が出たら、足元に電磁爆弾を置く', info: true, set: tutEmp },
       { btn: 'mine', say: '鬼が来る。「今!」の合図を待とう', set: tutEmp, go: tutEmpGo },
       { say: '1体は爆発で倒れ、もう1体は残った電気で怯んだ。怯んでいる間に、ワープポイントに入ろう', set: () => { tut.warped = false; for (const q of warps) q.cool = 0; }, go: () => tut.warped },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
+      { say: '2分から毎分補給が届く(偶数分はバリア+爆弾2、奇数分は爆弾2)。6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
     ],
   };
   function tutBegin() {
@@ -5856,7 +5865,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const tk = tutKey(stageN);
     // a story's stage 3 teaches the pits too, before its last word, the first time
     let steps = TUT[tk];
-    const pre = { '3h': 3, '3c': 3, '3b': 3, k3: 3, k1: 1, k2: 2, b1: 1 }[tk], last = steps[steps.length - 1];
+    const pre = { '3h': 3, '3c': 3, '3b': 3, k3: 3, k1: 1, k2: 2, b1: 1, c2: 2, b2: 2 }[tk], last = steps[steps.length - 1];
     let preDone = false;
     if (pre) {
       const want = tutReplay === tk ? tk === '3h' : !tutSeen()[pre];
@@ -5934,14 +5943,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item]]) if (b) b.classList.toggle('tutglow', on.includes(k));
   }
   const tutQuit = () => { tutGlow(''); tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
-  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; for (const el of document.querySelectorAll('#tutPicks [data-tut="w"], #tutPicks [data-tut="3c"], #tutPicks [data-tut^="k"], #tutPicks [data-tut="b1"], #tutPicks [data-tut="3b"], #tutPicks [data-grp]')) el.hidden = !MAP_CHOICE; }
+  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; for (const el of document.querySelectorAll('#tutPicks [data-tut="w"], #tutPicks [data-tut="3c"], #tutPicks [data-tut^="k"], #tutPicks [data-tut="b1"], #tutPicks [data-tut="b2"], #tutPicks [data-tut="c2"], #tutPicks [data-tut="3b"], #tutPicks [data-grp]')) el.hidden = !MAP_CHOICE; }
   $('tutListBtn').addEventListener('click', () => { tap(); openTutList(); });
   $('tutBackBtn').addEventListener('click', () => { tap(); toTitle(); });
   for (const b of document.querySelectorAll('#tutPicks .pick')) b.addEventListener('click', () => {
     if (state !== 'tutlist') return;
     tap(); $('tutScreen').hidden = true; const k = b.dataset.tut; rankRun = false;
     if (k === '3h' || k === '3c' || k === '3b') { tutReplay = k; start(3, undefined, Object.keys(ROUTE).find(sk => ROUTE[sk] === ({ '3h': 'home', '3c': 'cyber', '3b': 'fuse' })[k])); return; }
-    if (k === 'k1' || k === 'k2' || k === 'k3' || k === 'b1') { tutReplay = k; start(+k[1], undefined, k[0] === 'b' ? 'd4' : 'd3'); return; }
+    if (['k1', 'k2', 'k3', 'b1', 'b2', 'c2'].includes(k)) { tutReplay = k; start(+k[1], undefined, k[0] === 'b' ? 'd4' : k[0] === 'c' ? 'd2' : 'd3'); return; }
     tutReplay = k === 'w' ? 'w' : +k; start(k === 'w' ? 1 : +k, undefined, k === 'w' ? 'd2' : 'd1');
   });
   // touch-down and the click that may follow it count once
