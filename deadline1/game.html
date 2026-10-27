@@ -5704,6 +5704,55 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!c.frozen && (past > 2.5 || performance.now() - c.t0 > 6000)) tutCaught('光る角でダッシュして、影を置こう。もう一度');
     return false;
   }
+  // the electric bomb practice: by a warp point, two oni coming up the street one behind the other. At 「今!」 the bomb
+  // goes down underfoot: the first is caught in the blast, the second runs into the charge left behind and is dazed,
+  // and while it is the runner gets away through the warp point
+  const EMP_NOW = 4.0;   // how far off the first oni is at 「今!」 (it is inside the blast, not yet on the runner, when it goes off)
+  function tutEmp() {
+    tut.want = null; tut.emp = null;
+    const W = (x, y) => walk(Math.floor(x), Math.floor(y));
+    let best = null;
+    for (const w of warps) for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const at = k => [w.x + ux * k, w.y + uy * k];
+      let run = true; for (let k = 1; k <= 8 && run; k++) run = W(...at(k));
+      if (!run) continue;
+      const sc = (tutClear(...at(1.5)) ? 4 : 0) + (tutClear(w.x, w.y) ? 3 : 0) + (tutClear(...at(6)) ? 2 : 0) + (tutClear(...at(7.5)) ? 1 : 0);
+      if (!best || sc > best.sc) best = { w, at, u: [ux, uy], sc };
+    }
+    if (!best) { tut.refill = true; tutOni({}); return; }
+    const { w, at, u } = best;
+    for (const q of warps) { q.cool = 0; q.flash = 0; }
+    [P.x, P.y] = at(1.5); P.vx = P.vy = 0; P.fx = -u[0]; P.fy = -u[1]; P.hist = []; P.cd = 0; P.warpT = 0; P.warpAway = null; tut.lx = P.x; tut.ly = P.y;
+    enemies.length = 0; pending.length = 0; mines.length = 0; P.stock = Math.max(P.stock, 1); tut.refill = true;
+    // (they wait, barely moving, till the step that sends them)
+    const mk = k => { const [x, y] = at(1.5 + k); return { x, y, r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 0.0001, born: t, hp: 1, tough: false, armored: false, amb: false, black: false, bomber: false, stun: 0, tut: true }; };
+    // (a tile apart: when it goes off the second is just outside the blast and runs into the charge at once)
+    const a = mk(6), b = mk(7);
+    enemies.push(a, b); tut.oni = [a, b];
+    tut.emp = { w, a, b, phase: 'wait' };
+  }
+  function tutEmpGo() {
+    const c = tut.emp; if (!c) return tutDown();
+    if (c.phase === 'wait') { c.phase = 'come'; for (const e of tut.oni) e.var = 1; }
+    if (c.phase === 'come') {
+      if (mines.length) { tutCaught('「今!」の合図まで待ってから置こう。もう一度'); return false; }
+      if (Math.hypot(c.a.x - P.x, c.a.y - P.y) <= EMP_NOW) {
+        // 「今!」: they hold still till the bomb is down
+        c.phase = 'now'; for (const e of tut.oni) { e.var = 0.0001; e.vx = e.vy = 0; }
+        $('tutSay').textContent = '今! 爆弾を置こう'; tutGlow('mine'); tone(1320, 0.12, 'square', 0.05);
+      }
+      return false;
+    }
+    if (c.phase === 'now') {
+      if (mines.length) { c.phase = 'boom'; c.t0 = t; for (const e of tut.oni) e.var = 1; tutGlow(''); }
+      return false;
+    }
+    // the blast has gone off: the first one down, the second dazed by the charge (held a little longer, for the warp)
+    if (c.b.stun > 0 && !c.b.dead) c.b.stun = Math.max(c.b.stun, 1.6);
+    if (c.a.dead && !c.b.dead && c.b.stun > 0) return true;
+    if (t - c.t0 > FUSE + 1.2) tutCaught('「今!」で足元に置こう。もう一度');
+    return false;
+  }
   // the building-shadow practice: one shadow oni, on a street in the light a few tiles off
   function tutShade(black) {
     if (black !== true) black = false;
@@ -5786,7 +5835,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     '3c': [
       { say: '電脳世界のステージ3では、電磁爆弾が特別に使える。爆発のあと電気が残り、触れた鬼は怯んで動けなくなる', info: true },
-      { btn: 'mine', say: '電磁爆弾で鬼を倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
+      { say: 'ワープポイントのそばで、鬼を2体引きつけよう。「今!」の合図が出たら、足元に電磁爆弾を置く', info: true, set: tutEmp },
+      { btn: 'mine', say: '鬼が来る。「今!」の合図を待とう', set: tutEmp, go: tutEmpGo },
+      { say: '1体は爆発で倒れ、もう1体は残った電気で怯んだ。怯んでいる間に、ワープポイントに入ろう', set: () => { tut.warped = false; for (const q of warps) q.cool = 0; }, go: () => tut.warped },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると電磁爆弾を獲得できる', end: true },
     ],
   };
