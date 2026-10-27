@@ -1648,12 +1648,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // [id, name, price (yen), what it looks like, swatch]
   const SHOP = [
     { k: 'bomb', label: '爆弾', items: [
-      ['bomb_emp', '青い電磁爆弾', 500, '青い稲妻を散らして弾ける', 'radial-gradient(circle at 40% 35%,#bff3ff,#2a6fd0 45%,#0a1d3d)'],
-      ['bomb_grav', '黒い重力爆弾', 500, 'まわりを吸い込む黒い渦', 'radial-gradient(circle,#000 35%,#5a22c8 62%,#c9a8ff)'],
+      ['bomb_emp', '電磁爆弾', 500, '青い稲妻を散らして弾ける', 'radial-gradient(circle at 40% 35%,#bff3ff,#2a6fd0 45%,#0a1d3d)'],
+      ['bomb_grav', '重力爆弾', 500, 'まわりを吸い込む黒い渦', 'radial-gradient(circle,#000 35%,#5a22c8 62%,#c9a8ff)'],
       ['bomb_big', '大爆発', 500, '巨大な火球と二重の衝撃波。波に当たった鬼は少し吹き飛ぶ', 'radial-gradient(circle at 45% 40%,#fff6c8,#ffb030 30%,#ff4a12 58%,#3a0800)'],
       ['bomb_ice', '氷結爆弾', 500, '青白い冷気で凍らせる', 'radial-gradient(circle at 40% 35%,#f2feff,#8feaff 40%,#1a7fa8 72%,#05222e)'],
       ['bomb_fire', '炎熱爆弾', 500, '爆心に炎が燃え残る', 'radial-gradient(circle at 45% 40%,#fff3c0,#ff9a2a 35%,#ff3b1a 65%,#3a0600)'],
-      ['bomb_dark', '影縛り爆弾', 500, '黒紫の影が鬼を縛る', 'radial-gradient(circle,#05000d 30%,#4a1a8a 60%,#b58cff 85%)'],
+      ['bomb_hole', 'ブラックホール爆弾', 500, '黒い渦がまわりの鬼を吸い寄せる', 'radial-gradient(circle,#000 30%,#3a0a6a 55%,#c08cff 75%,rgba(0,0,0,0) 80%)'],
       ['bomb_water', '水圧爆弾', 500, '水の衝撃波で押し返す', 'radial-gradient(circle at 40% 35%,#e8f8ff,#5ac8ff 40%,#1650c8 75%,#04163a)'] ] },
     { k: 'rocket', label: 'ランチャー', items: [
       ['rk_laser', 'レーザー砲', 200, '通路を貫く赤い光線', 'linear-gradient(90deg,#3a0010,#ff2d55 45%,#fff 55%,#ff2d55 65%,#3a0010)'],
@@ -1697,7 +1697,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     sk_moon: { m: ['#fffbe8', '#cfd3e6', '#4a4f66'], glow: '255,250,220', fx: 'moon' },
   };
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
-  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice'];
+  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark'];
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   const shopData = () => {
     records.shop = Object.assign({ owned: [], eq: {} }, records.shop);
@@ -1994,9 +1994,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     bs_ice: '加速中、通った場所に冷気が少しのあいだ残る。そこを通った鬼は凍って動けなくなる。',
     bomb_ice: '爆発はいつもどおり。その外側(範囲の1.6倍まで)にいた鬼を0.8秒凍らせて止める。壁の向こうには届かない。',
     bomb_fire: '爆発はいつもどおり。爆心に炎が1秒残り、触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
-    bomb_dark: '爆発はいつもどおり。その外側(範囲の1.6倍まで)にいた鬼を0.5秒縛って止める。壁の向こうには届かない。',
+    bomb_hole: '置いてから爆発するまで、まわり(3マス)の鬼を爆弾のほうへ引き寄せる。爆発の範囲は通常の爆弾と同じ。壁の向こうの鬼は引き寄せない。',
     bomb_water: '爆発はいつもどおり。その外側(範囲の1.6倍まで)にいた鬼を水圧で外へ押し返す。壁は越えない。',
-    rk_ice: '鬼は倒さない。通路を飛ぶ弾が、通り道の鬼をすべて1.2秒凍らせる。',
+    rk_ice: '通常のランチャーと同じく、通り道と着弾点の鬼を倒す。着弾点のまわり(2マス)にいた鬼は1.2秒凍る。',
     rk_fire: '鬼は倒さない。最初の鬼か壁で着弾し、そこから前へ炎が最大4マス走る。炎に触れた鬼は怯む。',
     rk_hole: '鬼は倒さない。最初の鬼か壁で着弾し、重力の渦が2.2秒、まわりの鬼を中心へ引き寄せる。',
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
@@ -3527,6 +3527,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (m.gone) continue;
       const before = Math.ceil(m.fuse);
       m.fuse -= dt;
+      if (m.fx === 'bomb_hole') for (const e of enemies) if (!e.dead && !(e.stun > 0) && Math.hypot(e.x - m.x, e.y - m.y) < HOLE_PULL && clearLine(e.x, e.y, m.x, m.y)) { e.lureT = 0.1; e.lureX = m.x; e.lureY = m.y; }
       if (m.fuse <= 0) explode(m);
       else if (Math.ceil(m.fuse) !== before) tone(1250, 0.05, 'square', 0.03);
     }
@@ -3769,7 +3770,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   // ---------- what the shop's items do ----------
   let zaps = [], perim = null, decoys = [];
-  const GRAV_R = 1.2, WARP_DASH = 1.2;
+  const GRAV_R = 1.2, WARP_DASH = 1.2, HOLE_PULL = 3;
   // the shock wave's throw: starting speed (tiles/s) and how long the slide lasts (about a tile per wave)
   const KB_V = 6.5, KB_T = 0.35;
   const blastR = fx => fx === 'bomb_grav' ? BLAST * GRAV_R : BLAST;
@@ -3785,7 +3786,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     armour: 0.5,               // an armoured (barrier) oni takes this share of a hold or a push
     fireR: 1.0, fireLife: 1.0, // 炎熱爆弾: the fire left at the centre
     fireImm: 2.0,              // fire dazes the same oni at most once in this many seconds
-    iceShot: 1.2,              // 氷結砲: seconds frozen for each oni on the line
+    iceShot: 1.2, iceShotR: 2, // 氷結砲: seconds frozen, and the reach of the freeze round where it lands
     flameLen: 4, flameLife: 1.4,               // 火炎砲: tiles the fire runs on from where it lands, and its life
     holeR: 2.8, holeLife: 2.2,                 // ブラックホール砲: reach and life of the pull
     waterV: 7.5, waterT: 0.4,                  // 水圧爆弾 / 高圧水砲: push speed (tiles/s) and slide (about 1.5 tiles)
@@ -3842,6 +3843,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         elemAdd({ k: 'fire', x, y, r: 0.55, life: EL.flameLife, delay: s * 0.06 });
       }
     } else if (el === 'dark') elemAdd({ k: 'hole', x: r.x, y: r.y, r: EL.holeR, life: EL.holeLife });
+    else if (el === 'ice') {
+      // the freeze round where it lands: every oni left standing near it is frozen for a moment
+      elemAdd({ k: 'burst', el, x: r.x, y: r.y, r: EL.iceShotR, life: 0.5 });
+      for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < EL.iceShotR + e.r * 0.5 && clearLine(r.x, r.y, e.x, e.y)) hold(e, EL.iceShot, 'ice');
+    }
     else elemAdd({ k: 'burst', el, x: r.x, y: r.y, r: 0.9, life: 0.4 });
   }
   // the dash: a clone (shadow or water) and who follows it
@@ -4203,13 +4209,25 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       : fx === 'bomb_grav' ? { area: '70,20,120', ring: 'rgba(170,110,255,0.55)', body: '#07060c', fuse: '#a678ff', on: '#efe2ff', off: '#3a1f66' }
       : fx === 'bomb_ice' ? { area: '120,220,255', ring: 'rgba(170,240,255,0.55)', body: '#0e3442', fuse: '#8fefff', on: '#f0fdff', off: '#1d5a6a' }
       : fx === 'bomb_fire' ? { area: '255,100,30', ring: 'rgba(255,140,60,0.55)', body: '#3a0d04', fuse: '#ff8a2a', on: '#fff1c4', off: '#7a2a10' }
-      : fx === 'bomb_dark' ? { area: '80,20,140', ring: 'rgba(170,110,255,0.55)', body: '#0a0414', fuse: '#b58cff', on: '#efe2ff', off: '#3a1f66' }
+      : fx === 'bomb_hole' ? { area: '60,10,110', ring: 'rgba(190,140,255,0.6)', body: '#000000', fuse: '#c08cff', on: '#f3e8ff', off: '#3a1470' }
       : fx === 'bomb_water' ? { area: '60,150,255', ring: 'rgba(120,190,255,0.55)', body: '#0a2350', fuse: '#5ac8ff', on: '#e8f8ff', off: '#1d4f8a' }
       : { area: '255,120,60', ring: 'rgba(255,207,90,0.45)', body: '#3a3f4d', fuse: '#ffcf5a', on: '#ff3b30', off: '#7a1d18' };
     ctx.fillStyle = `rgba(${C.area},${0.06 + 0.1 * (1 - k)})`;
     ctx.beginPath(); ctx.arc(m.x, m.y, BR, 0, Math.PI * 2); ctx.fill();
     ctx.strokeStyle = C.ring; ctx.lineWidth = 0.04; ctx.setLineDash([0.15, 0.12]); if (fx === 'bomb_grav') ctx.lineDashOffset = now * 0.8;
     ctx.beginPath(); ctx.arc(m.x, m.y, BR, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+    if (fx === 'bomb_hole') {
+      // the pull: a faint ring at its reach and arms spiralling in to a black core
+      ctx.strokeStyle = `rgba(190,140,255,${0.18 + 0.2 * (1 - k)})`; ctx.lineWidth = 0.035; ctx.setLineDash([0.1, 0.16]); ctx.lineDashOffset = -now * 1.5;
+      ctx.beginPath(); ctx.arc(m.x, m.y, HOLE_PULL, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
+      for (let i = 0; i < 4; i++) {
+        const a0 = now * 3 + i * Math.PI / 2; ctx.strokeStyle = `rgba(200,160,255,${0.45 + 0.3 * (1 - k)})`; ctx.lineWidth = 0.05; ctx.beginPath();
+        for (let j = 0; j <= 12; j++) { const f = j / 12, rr = HOLE_PULL * (1 - f) * 0.9 + 0.25, a = a0 + f * 2.4; j ? ctx.lineTo(m.x + Math.cos(a) * rr, m.y + Math.sin(a) * rr) : ctx.moveTo(m.x + Math.cos(a) * rr, m.y + Math.sin(a) * rr); }
+        ctx.stroke();
+      }
+      const g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 0.9); g.addColorStop(0, 'rgba(0,0,0,0.9)'); g.addColorStop(0.5, 'rgba(40,6,80,0.5)'); g.addColorStop(1, 'rgba(120,60,220,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(m.x, m.y, 0.9, 0, Math.PI * 2); ctx.fill();
+    }
     if (fx === 'bomb_grav') {
       // a slow whirl pulling in
       ctx.strokeStyle = `rgba(160,100,255,${0.25 + 0.25 * (1 - k)})`; ctx.lineWidth = 0.04;
@@ -4253,7 +4271,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       for (let i = 0; i < 7; i++) { const a = i * Math.PI * 2 / 7 + b.x; bolt(b.x, b.y, b.x + Math.cos(a) * BR * (0.4 + k * 0.7), b.y + Math.sin(a) * BR * (0.4 + k * 0.7), 5, 0.25); }
       return;
     }
-    if (fx === 'bomb_grav') {
+    if (fx === 'bomb_grav' || fx === 'bomb_hole') {
       // it falls inward: a ring closing on a black core
       ctx.fillStyle = `rgba(8,0,18,${0.75 * (1 - k)})`; ctx.beginPath(); ctx.arc(b.x, b.y, BR * (0.85 - k * 0.5), 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = `rgba(170,110,255,${1 - k})`; ctx.lineWidth = 0.14 * (1 - k * 0.5);
@@ -5309,14 +5327,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const step = Math.min(r.left, ROCKET_SPEED * dt);
       r.x += r.dx * step; r.y += r.dy * step; r.left -= step; r.t += dt;
       // everything it passes through goes, armoured or not
-      for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 0.62) { if (r.el) { elemRocketHit(r, e); continue; } e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
+      for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 0.62) { if (r.el && r.el !== 'ice') { elemRocketHit(r, e); continue; } e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
       if (Math.random() < 0.7) sparks.push({ x: r.x - r.dx * 0.3, y: r.y - r.dy * 0.3, vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5, a: 0.6, c: r.el ? EL_COL[r.el][Math.random() < 0.5 ? 0 : 1] : Math.random() < 0.5 ? '#8a8f99' : '#ff9a3c' });
-      if (r.left <= 1e-4 && r.el) { r.done = true; elemRocketLand(r); tone(r.el === 'water' ? 300 : 160, 0.35, 'triangle', 0.07, 60); noise(0.2, 0.06); continue; }
+      if (r.left <= 1e-4 && r.el && r.el !== 'ice') { r.done = true; elemRocketLand(r); tone(r.el === 'water' ? 300 : 160, 0.35, 'triangle', 0.07, 60); noise(0.2, 0.06); continue; }
       if (r.left <= 1e-4) {
         r.done = true;
         for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 1.0) { e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
         booms.push({ x: r.x, y: r.y, t: 0, fx: r.fx });
         if (r.fx === 'rk_plasma') startPerim(r.x, r.y);
+        if (r.el === 'ice') elemRocketLand(r);
         for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5; sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#ffcf5a' : '#ff6a3d' }); }
         shake = reduceMotion ? 0 : Math.max(shake, 0.22); tone(90, 0.4, 'sawtooth', 0.1, 30); noise(0.3, 0.1);
       }
