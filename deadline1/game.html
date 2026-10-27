@@ -1966,7 +1966,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
     // (a shadow oni runs at its parent's speed: a plain oni's, a black one's as fast as the black one)
-    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
+    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed())) * (e.slowT > 0 ? e.slowK : 1);
     e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
     e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
     const ox = e.x, oy = e.y;
@@ -3168,7 +3168,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // stages 1 and 2, once the exit is open: 5 a wave (+1 every 30 s) on stage 1, 7 a wave (+1 every 15 s) on stage 2
   const spawnBatch = () => stageN < 3 && exitOpen ? (stageN === 1 ? 5 + Math.floor((t - alarmAt) / 30) : 7 + Math.floor((t - alarmAt) / 15)) : stageN >= 3 ? (t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3) : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   // stage 3 starts at the stage 2 speed
-  const enemySpeed = () => Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
+  // (the tutorial: the oni at stage 3's opening speed, whatever stage it is taught on)
+  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(ENEMY_MAX, ENEMY_BASE + ENEMY_STEP * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
@@ -3464,7 +3465,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
       // (a bomber runs between the plain oni and the black one: a little faster than the runner)
-      const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? runnerSpeed() * bomberMult() : Math.min(es * e.var, runnerSpeed())) * (e.tut && !e.black ? 0.6 : 1) * (e.slowT > 0 ? e.slowK : 1);
+      const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? runnerSpeed() * bomberMult() : Math.min(es * e.var, runnerSpeed())) * (e.slowT > 0 ? e.slowK : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
       move(e, e.vx, e.vy, dt);
@@ -3867,7 +3868,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // the closer to the runner, the longer it chases the decoy: the closest for the decoy's whole life, each next one
     // 60% as long (the yellow ones half that again), and one that would come back to the runner within 0.35 s not at all
     seen.sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y));
-    seen.forEach((e, i) => { const d = c.life * Math.pow(0.6, i) * (e.amb && i ? 0.5 : 1); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
+    // (a shadow oni a touch keener: 1.2 times as long, never past the clone's own life)
+    seen.forEach((e, i) => { const d = Math.min(c.life, c.life * Math.pow(0.6, i) * (e.amb && i ? 0.5 : 1) * (e.shade ? 1.2 : 1)); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
   }
   function elemTick(dt) {
     // the boost's flames and the dash's ice, spaced out so they never pile up
@@ -5327,7 +5329,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'dash', say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
       { btn: 'mine', say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
-      { btn: 'mine', say: '黄色い鬼は先回りする。フェイントで急に向きを変えて引きつけ、爆弾で倒そう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
+      { say: '黄色い鬼は先回りする。走っている向きの少し先を読んで、行く手に回り込んでくる。後ろより前に注意', info: true },
+      { say: '攻略1: 急に向きを変える。黄色い鬼は行き先を読み直すまで一瞬迷う。曲がり角で切り返すと振り切りやすい', info: true },
+      { say: '攻略2: 脇道に一瞬入ってすぐ戻る。黄色い鬼は脇道の向こうへ回り込むので、そのすきに元の道を逃げる', info: true },
+      { btn: 'mine', say: '攻略3: 立ち止まると、黄色い鬼はまっすぐ向かってくる。止まって爆弾を置き、近づいたら離れて倒そう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
@@ -5494,6 +5499,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       'ダッシュは一度使うと3.5秒使えない',
       '爆弾は置いて1秒後に爆発する。近くの爆弾にも連鎖する',
       '黄色い鬼は先回りしてくる。急に向きを変えるとだませる',
+      '黄色い鬼は、脇道に一瞬入ってすぐ戻ると、脇道の向こうへ回り込む',
+      '黄色い鬼の前で立ち止まると、まっすぐ向かってくる。爆弾を置いて待とう',
       '黄色い箱を拾うと爆弾が増える。持てるのは3個まで',
     ],
     1: [
