@@ -1952,7 +1952,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const fuseStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'fuse' && stageN <= 3 && !daily && state !== 'title';
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
   // (on 花火の夜 its blast is half as wide again as a bomb's)
-  const bomberMult = () => (1 + BLACK_MULT) / 2;
+  // (faster than the black oni)
+  const bomberMult = () => BLACK_MULT + 0.07;
   const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
   const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 2, 3];
   // 影踏み: a yellow oni within this distance of the runner splits off its shadow oni (once)
@@ -3512,12 +3513,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
     if (stageN === 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
-    // from 4:00 there are always at least two barrier oni about, and from 6:00 at least one black and one yellow:
+    // from 4:00 there are always at least two barrier oni about, and from 6:00 at least one black and one yellow
+    // (and on 花火の夜 from 8:00, at least one bomber):
     // if a kind is short (counting the map and the oni already warned), the next wave makes up the shortfall
     // (two barrier oni at once when there are none). Stomping a "!" still cancels it, and the wave after makes up again.
     if (stageN === 3 && t >= 240 && pending.length) {
-      const free = pending.filter(p => !p.black && !p.tough && !p.amb).sort(() => Math.random() - 0.5);
-      for (const k of t >= 360 ? ['black', 'tough', 'amb'] : ['tough']) {
+      const free = pending.filter(p => !p.black && !p.tough && !p.amb && !p.bomber).sort(() => Math.random() - 0.5);
+      for (const k of t >= 360 ? ['black', 'tough', 'amb', ...(t >= 480 && fuseStory() ? ['bomber'] : [])] : ['tough']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
         for (let n = (k === 'tough' ? 2 : 1) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
       }
@@ -3630,7 +3632,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // a practice oni is exactly the kind the tutorial asked for
-      let bomber = fuseStory() && !black && !tough && !amb && enemies.filter(o => o.bomber).length < BOMBER_MAX[Math.min(3, stageN) - 1] && Math.random() < BOMBER_RATE[Math.min(3, stageN) - 1];
+      let bomber = !!s.bomber || fuseStory() && !black && !tough && !amb && enemies.filter(o => o.bomber).length < BOMBER_MAX[Math.min(3, stageN) - 1] && Math.random() < BOMBER_RATE[Math.min(3, stageN) - 1];
       if (s.tut) { black = !!s.black; tough = !!s.tough; amb = !!s.amb; bomber = !!s.bomber; }
       if (tough) toughWave = true;
       enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
@@ -3724,7 +3726,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         }
       }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
-      // (a bomber runs between the plain oni and the black one: a little faster than the runner)
+      // (a bomber runs faster still than the black one)
       const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? runnerSpeed() * bomberMult() : Math.min(es * e.var, runnerSpeed())) * (e.slowT > 0 ? e.slowK : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
@@ -5828,7 +5830,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
-      { say: '花火工場には、自爆する橙色の鬼がいる。逃走者より少し速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
+      { say: '花火工場には、自爆する橙色の鬼がいる。黒い鬼よりも速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。巻き込まれると確保', info: true },
       { btn: 'mine', say: '点滅する前に爆弾で倒すか、点滅したら円の外へ逃げよう。自爆では他の鬼は倒れないが、爆弾で倒すと誘爆して、まわりの鬼も吹き飛ぶ', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
       { say: '2分経過でバリアと爆弾1個が支給される。バリアは自爆も1回防ぐ。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
