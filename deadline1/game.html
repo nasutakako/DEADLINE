@@ -122,6 +122,7 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .mapcard .thumb .story { position: absolute; left: 0; right: 0; bottom: 0; padding: 1px 0; background: rgba(0,0,0,.72); color: #c4c8d2; font-size: 9px; line-height: 1.2; font-weight: 700; letter-spacing: .04em; text-align: center; white-space: nowrap; }
 .mapcard small:not(.story) { grid-column: 2 / 4; }
 .mapcard small.prize { color: var(--muted); white-space: normal; line-height: 1.2; }
+.mapcard small.mclr { justify-self: start; margin-top: 2px; padding: 1px 8px 2px; border-radius: 4px; border: 1.5px solid #5dff9e; color: #5dff9e; background: rgba(93,255,158,.1); font-family: var(--f-display); font-size: 12px; letter-spacing: .14em; line-height: 1.3; text-shadow: 0 0 8px rgba(93,255,158,.55); }
 .mapcard.locked .thumb { filter: grayscale(1) brightness(.5); }
 @media (max-height: 460px) { .mapcard .thumb { width: 60px; height: 38px; } .mapcard { padding: 4px 6px; } }
 #tutPicks .pick b { color: var(--lamp); }
@@ -3847,7 +3848,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('cKills').textContent = kills + '体';
     $('cTotal').textContent = total.toFixed(1) + '秒';
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
-    if (mapSkin in MCLEAR && (mapSkin !== 'd1' || stageN === 3)) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
+    if (mapSkin in MCLEAR) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
     const crank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
     mono('cMono', stageN, 'clear');
     showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
@@ -6100,6 +6101,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // a story is done once its stage 3 is escaped (帰り道's from before its own mark, by its stage 3 escapes)
   const storyDone = skin => !!(records.mclear || {})[MCLEAR[skin] + 3] || (skin === 'd1' && (records.stages[3] || []).some(r => r.escaped));
   const mapOpen = (n, skin = 'd2') => n === 1 ? storyDone(PREV_STORY[skin]) : !!(records.mclear || {})[MCLEAR[skin] + (n - 1)];
+  // a map already escaped (地下/夜の街 from before their own mark: only 帰り道 was open then)
+  const mapCleared = (n, skin) => !!(records.mclear || {})[MCLEAR[skin] + n] || (skin === 'd1' && (n === 3 ? storyDone('d1') : !!(records.cleared || {})[n]));
   const MAP_LOCKS = { d2: ['夢路世界をクリアで解放', '隔離区画をクリアで解放', '電脳都市をクリアで解放'], d3: ['電脳世界をクリアで解放', '影の街をクリアで解放', '黄昏通りをクリアで解放'], d4: ['影絵世界をクリアで解放', '花火工場をクリアで解放', '縁日通りをクリアで解放'] };
   const mapPicks = () => { try { return JSON.parse(localStorage.getItem(MAP_KEY)) || {}; } catch (_) { return {}; } };
   const mapPick = n => { const k = mapPicks()[n]; return MAP_CHOICE && n >= 1 && n <= 3 && k in MCLEAR && mapOpen(n, k) ? k : 'd1'; };
@@ -6121,7 +6124,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const nm = document.createElement('b'); nm.textContent = (lock ? '🔒 ' : '') + mapName(n, skin);
       const sn = document.createElement('span'); sn.className = 'story'; sn.textContent = STORY_NAMES[ROUTE[skin]]; im.append(sn);
       b.append(im, nm);
-      { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? MAP_LOCKS[skin][n - 1] : n < 3 ? `クリアでステージ${n + 1} ${MAP_NAMES[skin][n]}解放` : STORY_NOTE[ROUTE[skin]]; b.append(sub); }
+      if (!lock && mapCleared(n, skin)) { const sub = document.createElement('small'); sub.className = 'mclr'; sub.textContent = 'CLEAR'; b.append(sub); b.classList.add('done'); }
+      else { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? MAP_LOCKS[skin][n - 1] : n < 3 ? `クリアでステージ${n + 1} ${MAP_NAMES[skin][n]}解放` : STORY_NOTE[ROUTE[skin]]; b.append(sub); }
       b.setAttribute('aria-pressed', String(on));
       b.addEventListener('click', () => { if (lock) { lockedTap(n === 1 ? 1 : n); return; } if (!on) { tap(); mapChoose(n, skin); if (n === 1) $('briefKicker').textContent = 'STAGE 1 ' + mapName(1); else $('spKicker').textContent = `STAGE ${n} ${mapName(n)}`; } });
       box.append(b);
@@ -7003,6 +7007,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   requestAnimationFrame(frame);
 })();
 </script>
+
 
 </body>
 </html>
