@@ -2508,7 +2508,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
 
   // ---------- map ----------
-  let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [], yagura = null;
+  let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [], yagura = null, riverOn = false, bridges = [];
   // open-air plazas in the city: lone ones are basketball courts or lawns, two side by side make a football
   // pitch whose goals are solid. goalT marks the tiles the goals stand on so the oni path round them
   const PITCHES = true;
@@ -2563,12 +2563,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       while (pl.length < 3 && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
       while (pl.length > 5) fill(pl.pop(), 1);
     }
+    // 花火の夜: a river along the top: the far bank's road (row 0), the water (rows 1-2), the grass bank (row 3),
+    // and three road bridges across, on streets spread over the width
+    riverOn = mapSkin === 'd4' && stageN === 3 && !daily; bridges = [];
+    if (riverOn) {
+      for (let x = 0; x < COLS; x++) { grid[idx(x, 0)] = 0; grid[idx(x, 1)] = grid[idx(x, 2)] = 1; grid[idx(x, 3)] = 0; }
+      for (const f of [0.2, 0.5, 0.8]) { const bx = Math.round(COLS * f / 4) * 4; bridges.push(bx); grid[idx(bx, 1)] = grid[idx(bx, 2)] = 0; }
+    }
     // stage 3: a pit in the middle of every open plaza; oni that step in fall
     holes = [];
     if (stageN >= 3) {
       const open = (bx, by) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 2) return false; return true; };
       const blocks = [];
-      for (let by = 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) blocks.push([bx, by]);
+      for (let by = riverOn ? 5 : 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) blocks.push([bx, by]);
       let plazas = blocks.filter(([bx, by]) => open(bx, by));
       // always at least two pits
       const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
@@ -2596,10 +2603,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
     }
     yagura = null;
+    // 縁日通り: the yagura, a block's size, on the map's middle tile, in an open square two tiles wide all round it
     if (mapSkin === 'd4' && stageN === 2 && !daily) {
-      const cx = Math.floor(COLS / 2 / 4) * 4, cy = Math.floor(ROWS / 2 / 4) * 4;
-      for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) grid[idx(x, y)] = Math.abs(x - cx) <= 2 && Math.abs(y - cy) <= 2 ? 1 : 0;
-      yagura = { x: cx - 2, y: cy - 2 };
+      const cx = (COLS - 1) / 2, cy = (ROWS - 1) / 2;
+      for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) grid[idx(x, y)] = Math.abs(x - cx) <= 1 && Math.abs(y - cy) <= 1 ? 1 : 0;
+      yagura = { x: cx - 1, y: cy - 1 };
     }
     courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS);
     if (PITCHES && mapSkin === 'd1' && stageN >= 2) {
@@ -2831,8 +2839,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const G = [[78, 77, 74], [84, 72, 62], [62, 58, 74]][n - 1];
     const rgb = (k, d) => `rgb(${k[0] + d},${k[1] + d},${k[2] + d})`;
     m.fillStyle = rgb(G, -14); m.fillRect(0, 0, COLS, ROWS);
-    // stage 2: the yagura stands on the full block nearest the middle
-    const yag = n === 2 && yagura ? [yagura.x, yagura.y] : null, YS = 5;
+    // stage 2: the yagura in the middle
+    const yag = n === 2 && yagura ? [yagura.x, yagura.y] : null, YS = 3;
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const v = grid[idx(x, y)];
       if (v === 1) continue;
@@ -2902,17 +2910,17 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       for (const [ax, ay, dx, dy] of [[0, 0, -1, -1], [E, 0, 1, -1], [0, E, -1, 1], [E, E, 1, 1]]) for (const f of [0.45, 0.85]) { m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(bx + ax + dx * f, by + ay + dy * f, 0.08, 0.1, 0, 0, 7); m.fill(); }
       // the red and white curtain round its foot
       m.fillStyle = '#2a1712'; m.fillRect(bx, by, E, E);
-      const seg = 0.25, w = 0.34;
+      const seg = 0.25, w = 0.28;
       for (let k = 0; k < E / seg; k++) { m.fillStyle = k % 2 ? '#f4eee2' : '#d0281e';
         m.fillRect(bx + k * seg, by, seg, w); m.fillRect(bx + k * seg, by + E - w, seg, w); m.fillRect(bx, by + k * seg, w, seg); m.fillRect(bx + E - w, by + k * seg, w, seg); }
       // the tower's roof: a square on posts, its ridges to the corners
-      const r0 = 0.9, r1 = E - 0.9;
+      const r0 = 0.6, r1 = E - 0.6;
       m.fillStyle = '#5a2a1a'; m.fillRect(bx + r0, by + r0, r1 - r0, r1 - r0);
       m.strokeStyle = 'rgba(255,220,170,0.45)'; m.lineWidth = 0.06; m.beginPath(); m.moveTo(bx + r0, by + r0); m.lineTo(bx + r1, by + r1); m.moveTo(bx + r1, by + r0); m.lineTo(bx + r0, by + r1); m.stroke();
       m.strokeStyle = '#d0281e'; m.lineWidth = 0.08; m.strokeRect(bx + r0, by + r0, r1 - r0, r1 - r0);
       // a drum on top, and lanterns at the roof's corners
-      m.fillStyle = '#8a4a20'; m.beginPath(); m.arc(cx, cy, 0.42, 0, 7); m.fill(); m.fillStyle = '#e8d2a0'; m.beginPath(); m.arc(cx, cy, 0.31, 0, 7); m.fill();
-      m.strokeStyle = '#8a4a20'; m.lineWidth = 0.04; m.beginPath(); m.arc(cx, cy, 0.18, 0, 7); m.stroke();
+      m.fillStyle = '#8a4a20'; m.beginPath(); m.arc(cx, cy, 0.3, 0, 7); m.fill(); m.fillStyle = '#e8d2a0'; m.beginPath(); m.arc(cx, cy, 0.22, 0, 7); m.fill();
+      m.strokeStyle = '#8a4a20'; m.lineWidth = 0.03; m.beginPath(); m.arc(cx, cy, 0.13, 0, 7); m.stroke();
       for (const [ax, ay] of [[r0, r0], [r1, r0], [r0, r1], [r1, r1]]) { const g = m.createRadialGradient(bx + ax, by + ay, 0, bx + ax, by + ay, 0.7); g.addColorStop(0, 'rgba(255,120,60,0.45)'); g.addColorStop(1, 'rgba(255,120,60,0)'); m.fillStyle = g; m.fillRect(bx + ax - 0.7, by + ay - 0.7, 1.4, 1.4); m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(bx + ax, by + ay, 0.12, 0.15, 0, 0, 7); m.fill(); }
     }
     for (const [wx, wy] of windows) { if (n === 2) continue; m.fillStyle = rnd() < 0.4 ? 'rgba(255,190,110,0.6)' : 'rgba(0,0,0,0.5)'; m.fillRect(wx, wy, 0.08, 0.08); }
@@ -2962,9 +2970,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     m.setLineDash([]);
     // roofs: a shadow, the roof, a lighter parapet; stalls on the street side throwing light out (warm, or lantern red)
     m.fillStyle = 'rgba(0,0,0,0.5)';
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1) m.fillRect(x + 0.14, y + 0.16, 1, 1);
+    const roof = (x, y) => grid[idx(x, y)] === 1 && !(riverOn && y < 3);
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (roof(x, y)) m.fillRect(x + 0.14, y + 0.16, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-      if (grid[idx(x, y)] !== 1) continue;
+      if (!roof(x, y)) continue;
       const l = 14 + blockShade[idx(x, y)] * 7;
       m.fillStyle = `hsl(258, 16%, ${l}%)`; m.fillRect(x, y, 1.002, 1.002);
       m.fillStyle = `hsl(258, 14%, ${l + 9}%)`;
@@ -2989,18 +2998,37 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     m.fillStyle = 'rgba(4,3,16,0.5)'; m.fillRect(0, 0, COLS, ROWS);
     m.fillStyle = 'rgba(160,150,190,0.08)';
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 0) m.fillRect(x, y, 1, 1);
-    // the plazas: grass with picnic sheets spread for the show (the middle kept clear, where a pit may be)
-    const SHEETS = ['#2f6fd0', '#3a86e0', '#d0508a', '#e0b030', '#3aa860'];
-    for (let by = 1; by < ROWS - 2; by += 4) for (let bx = 1; bx < COLS - 2; bx += 4) {
-      if (grid[idx(bx + 1, by + 1)] !== 2) continue;
-      m.fillStyle = '#1d2a22'; m.fillRect(bx, by, 3, 3);
-      for (const [sx, sy] of [[0.15, 0.15], [1.7, 0.2], [0.2, 1.75], [1.75, 1.7], [0.95, 0.12], [0.12, 0.95], [1.9, 1.0], [1.0, 1.95]]) {
-        if (rnd() < 0.3) continue;
-        const w = 0.7 + rnd() * 0.3, h = 0.6 + rnd() * 0.3;
-        m.save(); m.translate(bx + sx + w / 2, by + sy + h / 2); m.rotate((rnd() - 0.5) * 0.4);
-        m.fillStyle = SHEETS[Math.floor(rnd() * SHEETS.length)]; m.globalAlpha = 0.42; m.fillRect(-w / 2, -h / 2, w, h);
-        m.globalAlpha = 1; m.strokeStyle = 'rgba(255,255,255,0.12)'; m.lineWidth = 0.02; m.strokeRect(-w / 2, -h / 2, w, h);
-        m.restore();
+    // the plazas: dark grass
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 2) { m.fillStyle = '#1d2a22'; m.fillRect(x, y, 1, 1); }
+    // the river along the top: dark water catching the fireworks, the grass bank below it
+    if (riverOn) {
+      const g = m.createLinearGradient(0, 1, 0, 3); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
+      m.fillStyle = g; m.fillRect(0, 1, COLS, 2);
+      m.strokeStyle = 'rgba(160,190,255,0.14)'; m.lineWidth = 0.03; m.beginPath();
+      for (let k = 0; k < COLS * 2; k++) { const x = rnd() * COLS, y = 1.15 + rnd() * 1.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
+      m.stroke();
+      // the fireworks overhead, broken up on the water
+      const FWC = ['255,90,80', '255,210,90', '120,200,255', '200,120,255', '120,255,170'];
+      for (let k = 0; k < Math.round(COLS / 4); k++) {
+        const x = rnd() * COLS, c = FWC[Math.floor(rnd() * FWC.length)], gl = m.createRadialGradient(x, 2, 0, x, 2, 1.4);
+        gl.addColorStop(0, `rgba(${c},0.22)`); gl.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gl; m.fillRect(x - 1.4, 1, 2.8, 2);
+        m.fillStyle = `rgba(${c},0.5)`;
+        for (let j = 0; j < 6; j++) m.fillRect(x - 0.25 + rnd() * 0.5, 1.15 + j * 0.28, 0.12 + rnd() * 0.25, 0.04);
+      }
+      m.fillStyle = 'rgba(190,210,255,0.3)'; m.fillRect(0, 2.94, COLS, 0.06); m.fillRect(0, 1, COLS, 0.05);
+      // the bridges: a deck of road over the water, railings either side
+      for (const bx of bridges) {
+        m.fillStyle = 'rgba(0,0,0,0.45)'; m.fillRect(bx + 0.12, 1.1, 1, 2);
+        m.fillStyle = '#3a3746'; m.fillRect(bx, 1, 1, 2);
+        m.strokeStyle = 'rgba(230,220,180,0.3)'; m.lineWidth = 0.035; m.setLineDash([0.26, 0.24]); m.beginPath(); m.moveTo(bx + 0.5, 1); m.lineTo(bx + 0.5, 3); m.stroke(); m.setLineDash([]);
+        m.fillStyle = '#b8b0a0'; m.fillRect(bx - 0.04, 1, 0.08, 2); m.fillRect(bx + 0.96, 1, 0.08, 2);
+        m.fillStyle = 'rgba(0,0,0,0.35)'; for (let k = 0; k < 8; k++) { m.fillRect(bx - 0.06, 1.1 + k * 0.25, 0.12, 0.04); m.fillRect(bx + 0.94, 1.1 + k * 0.25, 0.12, 0.04); }
+      }
+      for (let x = 0; x < COLS; x++) {
+        m.fillStyle = `rgb(${26 + rnd() * 5},${38 + rnd() * 6},${30 + rnd() * 5})`; m.fillRect(x, 3, 1, 1);
+        m.strokeStyle = 'rgba(90,140,90,0.35)'; m.lineWidth = 0.025; m.beginPath();
+        for (let k = 0; k < 5; k++) { const gx = x + rnd(), gy = 3.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
+        m.stroke();
       }
     }
     // zebra crossings
@@ -3022,12 +3050,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // now and then the burst itself, its streaks faint on the ground
       if (rnd() < 0.4) { m.strokeStyle = `rgba(${c},0.2)`; m.lineWidth = 0.03; m.beginPath(); for (let j = 0; j < 16; j++) { const a = j / 16 * Math.PI * 2; m.moveTo(x + Math.cos(a) * r * 0.3, y + Math.sin(a) * r * 0.3); m.lineTo(x + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8); } m.stroke(); }
     }
-    const lantern = [];
-    for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 4 === 2) lantern.push([x + 0.5, y + 0.14]);
-    for (let x = 0; x < COLS; x += 4) for (let y = 0; y < ROWS; y++) if (walk(x, y) && y % 4 === 2) lantern.push([x + 0.86, y + 0.5]);
-    for (const [lx, ly] of lantern) pool(lx, ly, 1.1, '255,110,70', 0.26);
     m.restore();
-    for (const [lx, ly] of lantern) { m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(lx, ly, 0.09, 0.12, 0, 0, 7); m.fill(); m.fillStyle = 'rgba(255,230,180,0.85)'; m.fillRect(lx - 0.02, ly - 0.05, 0.04, 0.1); }
+    // paper lanterns strung down the streets, as on 縁日通り
+    for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) {
+      if (!walk(x, y) || (x % 2)) continue;
+      const lx = x + 0.5, ly = y + 0.18;
+      const g = m.createRadialGradient(lx, ly, 0, lx, ly, 0.7); g.addColorStop(0, 'rgba(255,90,50,0.3)'); g.addColorStop(1, 'rgba(255,90,50,0)');
+      m.fillStyle = g; m.fillRect(lx - 0.7, ly - 0.7, 1.4, 1.4);
+      m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(lx, ly, 0.09, 0.12, 0, 0, 7); m.fill();
+      m.fillStyle = 'rgba(255,230,180,0.8)'; m.fillRect(lx - 0.02, ly - 0.05, 0.04, 0.1);
+    }
+    m.strokeStyle = 'rgba(30,20,20,0.6)'; m.lineWidth = 0.015; m.beginPath();
+    for (let y = 0; y < ROWS; y += 4) { m.moveTo(0, y + 0.1); m.lineTo(COLS, y + 0.1); }
+    m.stroke();
     m.strokeStyle = 'rgba(255,90,52,0.55)'; m.lineWidth = 0.06; m.strokeRect(0.04, 0.04, COLS - 0.08, ROWS - 0.08);
   }
 
@@ -3521,7 +3556,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     placeWho(); pickDims(); genMap(); resize();
     flowKey = -1;
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
-    P = { x: sx + 0.5, y: sy + (yagura ? 3.5 : 0.5), r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
+    P = { x: (yagura ? yagura.x + 1 : sx) + 0.5, y: yagura ? yagura.y + 4.5 : sy + 0.5, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = [];
     t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
