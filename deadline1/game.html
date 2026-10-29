@@ -196,6 +196,17 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .dash::after { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: calc(var(--p, 1) * 100%); background: var(--runner); }
 .mine { border: 1px solid var(--lamp); color: var(--lamp); }
 .itemb { border: 1px solid #c792ff; color: #d9b3ff; }
+/* the items: three buttons of their own (3秒加速, バリア, ランチャー) stacked where the item button was; each can be
+   moved and sized on its own in ボタン配置. The words shrink to fit the button, however small it is made */
+.act.itemgrp { padding: 0; gap: 4px; flex-direction: column; justify-content: stretch; align-items: stretch; overflow: visible; border: 0; background: none; }
+.it3 { flex: 1 1 0; min-height: 0; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 0 9px; border: 1px solid currentColor; border-radius: 8px; background: var(--panel); font: inherit; font-weight: 700; line-height: 1; container-type: size; cursor: pointer; touch-action: none; }
+.it3 i { font-style: normal; white-space: nowrap; font-size: min(13px, 11cqw, 52cqh); }
+.it3 b { font-family: var(--f-num); font-size: min(14px, 11cqw, 56cqh); }
+.it3.boost { color: #ffb347; } .it3.barrier { color: var(--runner); } .it3.launcher { color: #d9b3ff; }
+.it3.none { opacity: .35; }
+.it3:active { background: rgba(255,255,255,.08); }
+.act.itemgrp.tutglow { animation: none; } .act.itemgrp.tutglow .it3 { animation: tutblink-i .8s step-end infinite; }
+.it3.laysel { outline: 2px dashed var(--lamp); outline-offset: 2px; }
 .picks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .pick { text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); min-width: 0; }
 .pick:hover, .pick:focus-visible { border-color: #5dff9e; }
@@ -597,7 +608,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lepad [data-mv="0,-1"] { grid-area: u; } .lepad [data-mv="-1,0"] { grid-area: l; } .lepad [data-mv="1,0"] { grid-area: r; } .lepad [data-mv="0,1"] { grid-area: d; }
 .lerow { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; }
 .lerow span { min-width: 3.4em; text-align: center; font-family: var(--f-num); font-weight: 700; }
-body.laymode .act, body.laymode .padbase { outline: 2px dashed rgba(255,207,90,.6); outline-offset: 2px; cursor: move; }
+body.laymode .act:not(.itemgrp), body.laymode .it3, body.laymode .padbase { outline: 2px dashed rgba(255,207,90,.6); outline-offset: 2px; cursor: move; }
 body.laymode .laysel { outline: 3px solid var(--lamp) !important; }
 @media (max-height: 400px) { .layedit { gap: 4px; padding: 8px 10px; } .layedit button { height: 28px; } .lepad { grid-template-columns: 38px 38px 38px; } .layedit .lesel { font-size: 11px; } }
 .setrow small { grid-column: 1; font-size: 12px; line-height: 1.45; color: var(--muted); }
@@ -1048,7 +1059,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <button class="btn" id="pauseBtn" type="button">停止</button>
 </nav>
 <footer class="controls">
-  <button class="act itemb" id="itemBtn" type="button" aria-disabled="true">アイテム<small id="itemName">なし</small></button>
+  <div class="act itemb itemgrp" id="itemBtn" aria-disabled="true"><small id="itemName" hidden></small><button class="it3 boost" data-k="boost" type="button"><i>加速</i><b>0</b></button><button class="it3 barrier" data-k="barrier" type="button"><i>バリア</i><b>0</b></button><button class="it3 launcher" data-k="launcher" type="button"><i>ランチャー</i><b>0</b></button></div>
   <button class="act mine" id="mineBtn" type="button">爆弾 <span id="mineCount">×1</span></button>
   <button class="act dash" id="dashBtn" type="button">ダッシュ</button>
 </footer>
@@ -2541,8 +2552,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     box.append(lay);
   }
   // ---------- the layout editor: each control nudged (dx, dy in px) and sized (60%-160%), kept wholly on screen ----------
-  const LAY_KEYS = ['item', 'mine', 'dash', 'pad'], LAY_NAME = { item: 'アイテム', mine: '爆弾', dash: 'ダッシュ', pad: '移動スティック' };
-  const layEl = k => k === 'pad' ? document.querySelector('#pad .padbase') : ui[k];
+  // (the three item buttons each on their own; 'item', the three together, is still applied for a layout kept from before)
+  const LAY_KEYS = ['it_boost', 'it_barrier', 'it_launcher', 'mine', 'dash', 'pad'], LAY_NAME = { item: 'アイテム', it_boost: '3秒加速', it_barrier: 'バリア', it_launcher: 'ランチャー', mine: '爆弾', dash: 'ダッシュ', pad: '移動スティック' };
+  const layEl = k => k === 'pad' ? document.querySelector('#pad .padbase') : k.startsWith('it_') ? ui.item.querySelector(`.it3[data-k="${k.slice(3)}"]`) : ui[k];
   if (!settings.lay || typeof settings.lay !== 'object') settings.lay = {};
   const layOf = k => (settings.lay[k] = Object.assign({ x: 0, y: 0, s: 1 }, settings.lay[k]));
   function layPut(k) {
@@ -2558,7 +2570,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (r.top < 0) L.y -= r.top; else if (r.bottom > H) L.y -= r.bottom - H;
     L.x = Math.round(L.x); L.y = Math.round(L.y); layPut(k);
   }
-  const applyLay = () => { for (const k of LAY_KEYS) layPut(k); };
+  const applyLay = () => { for (const k of [...LAY_KEYS, 'item']) layPut(k); };
   let laySel = null, layDrag = null;
   function laySelect(k) {
     laySel = k; for (const q of LAY_KEYS) { const el = layEl(q); if (el) el.classList.toggle('laysel', q === k); }
@@ -4179,11 +4191,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tutNeed(stageN) ? tutBegin() : startCount();
   }
 
-  function useItem() {
+  // an item from the bag: the kind asked for (the item button's row), or the first one in it (the key)
+  function useItem(kind) {
     if (state !== 'play' || !bag.length) return;
-    const it = bag[0];
+    const at = kind ? bag.indexOf(kind) : 0; if (at < 0) return;
+    const it = bag[at];
     if (it === 'barrier' && P.barrier) return;
-    bag.shift(); if (S3) S3.items++;
+    bag.splice(at, 1); if (S3) S3.items++;
     if (it === 'boost') { P.boostT = BOOST_TIME; tone(700, 0.25, 'sawtooth', 0.05, 1400); }
     else if (it === 'barrier') { P.barrier = true; tone(660, 0.12, 'triangle', 0.06, 1320); }
     else {
@@ -5277,7 +5291,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
     const SN = sN === 4 && daily ? '生存課題 ' + daily.name : sN === 3 && rankRun ? `ランキング ${mapName(3)}` : `ステージ${sN} ${mapName(sN)}`;
-    ui.itemName.textContent = bag.length ? ITEM_NAMES[bag[0]] + (bag.length > 1 ? ` +${bag.length - 1}` : '') : 'なし';
+    for (const el of ui.item.querySelectorAll('.it3')) { const n = bag.filter(k => k === el.dataset.k).length; el.querySelector('b').textContent = n; el.classList.toggle('none', !n); }
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' ? 'false' : 'true');
     if (playing && P) {
       const toB = BARRIER_AT - t, toE = exitAt() - t;
@@ -6151,7 +6165,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
-      { btn: 'item', say: 'アイテムボタンで補給アイテム(3秒加速・バリア・ランチャー)を使う。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
+      { btn: 'item', say: 'アイテムボタンは3段(3秒加速・バリア・ランチャー)。押した段のアイテムを使う。3秒加速を使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
       { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = Math.max(e.stun || 0, 3); }, go: tutDown },
@@ -6744,6 +6758,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (e.code === 'Enter' && (state === 'brief' || state === 'over')) start();
     if (state === 'clear' || state === 'startpick') { const k = { Digit1: 'boost', Digit2: 'barrier', Digit3: 'launcher' }[e.code]; if (k) state === 'clear' ? nextStage(k) : start(pendingStart, k); }
     if (e.code === 'KeyQ' || e.code === 'KeyR') useItem();
+    if (state === 'play') { const k = { Digit1: 'boost', Digit2: 'barrier', Digit3: 'launcher' }[e.code]; if (k) useItem(k); }
     if (e.code === 'KeyP' || e.code === 'Escape') setPause(state === 'play');
   });
   addEventListener('keyup', e => input.keys.delete(e.code));
@@ -7313,8 +7328,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('spBackBtn').addEventListener('click', () => { tap(); toTitle(); });
   for (const b of document.querySelectorAll('#clearPicks .pick')) b.addEventListener('click', () => (tap(), nextStage(b.dataset.item)));
   for (const b of document.querySelectorAll('#startPicks .pick')) b.addEventListener('click', () => { if (state === 'startpick') tap(), start(pendingStart, b.dataset.item); });
-  ui.item.addEventListener('pointerdown', e => { e.preventDefault(); useItem(); });
-  ui.item.addEventListener('click', e => { if (e.detail === 0) useItem(); });
+  // the row under the finger (by its height on the button, so the edges between rows still count)
+  for (const b of ui.item.querySelectorAll('.it3')) {
+    b.addEventListener('pointerdown', e => { e.preventDefault(); useItem(b.dataset.k); });
+    b.addEventListener('click', e => { if (e.detail === 0) useItem(b.dataset.k); });
+  }
   $('resumeBtn').addEventListener('click', () => { if (state === 'pause') tap(); setPause(false); });
   // the stop button answers on touch-down, so it works with a thumb still on the stick
   // (a second finger's tap never becomes a click on phones)
