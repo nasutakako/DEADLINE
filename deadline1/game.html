@@ -1072,6 +1072,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
+  const RK_DROP_AT = 420, RK_DROP_P = 0.15;   // the weekly ranking's launcher: from 7:00, one chance in about seven each time a box comes
   const STICK_R = 34;
   // the exit opens at 2:30 on stage 1, 4:30 on stage 2 (stage 3: STORY_EXIT)
   const BARRIER_AT = 120, EXIT_AT = 150, EXIT_AT2 = 270, INV_TIME = 1.5;
@@ -3804,7 +3805,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
     // items: mines lying in the street
     if (t >= nextItem) {
-      if (items.length < 1) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t }); }
+      if (!items.some(it => !it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t }); }
+      // the weekly ranking, from 7:00: now and then a launcher lies in the street too
+      if (stageN === 3 && rankRun && t >= RK_DROP_AT && !items.some(it => it.rk) && Math.random() < RK_DROP_P) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
       nextItem = t + ITEM_EVERY;
     }
 
@@ -3873,8 +3876,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     if (exitOpen && hasKey && P.x > COLS - 0.5 && Math.abs(P.y - (exitY + 0.5)) < 0.55) { stageClear(); return; }
 
-    for (const it of items) if (Math.hypot(it.x - P.x, it.y - P.y) < 0.6 && P.stock < MINE_MAX) {
-      it.taken = true; P.stock++; tone(990, 0.08, 'square', 0.04); setTimeout(() => tone(1320, 0.1, 'square', 0.04), 70);
+    for (const it of items) if (Math.hypot(it.x - P.x, it.y - P.y) < 0.6 && (it.rk || P.stock < MINE_MAX)) {
+      it.taken = true;
+      if (it.rk) { bag.push('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
+      P.stock++; tone(990, 0.08, 'square', 0.04); setTimeout(() => tone(1320, 0.1, 'square', 0.04), 70);
     }
     items = items.filter(it => !it.taken && t - it.born < ITEM_LIFE);
 
@@ -5069,6 +5074,21 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // blink during the last 3 seconds before it disappears
       if (ITEM_LIFE - (t - it.born) < 3 && Math.sin(now * 18) < 0) continue;
       const bob = Math.sin(now * 4 + it.x) * 0.05;
+      if (it.rk) {
+        // a launcher in a ring, the size of the bomb box
+        const y = it.y + bob, gl = ctx.createRadialGradient(it.x, y, 0, it.x, y, 0.8);
+        gl.addColorStop(0, 'rgba(199,146,255,0.4)'); gl.addColorStop(1, 'rgba(199,146,255,0)');
+        ctx.fillStyle = gl; ctx.fillRect(it.x - 0.8, y - 0.8, 1.6, 1.6);
+        ctx.fillStyle = '#1b1430'; ctx.beginPath(); ctx.arc(it.x, y, 0.27, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#c792ff'; ctx.lineWidth = 0.05; ctx.stroke();
+        ctx.save(); ctx.translate(it.x, y); ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = '#ffcf5a'; ctx.beginPath(); ctx.moveTo(-0.13, -0.035); ctx.lineTo(-0.2, 0); ctx.lineTo(-0.13, 0.035); ctx.fill();
+        ctx.fillStyle = '#d9dce3'; ctx.fillRect(-0.13, -0.045, 0.2, 0.09);
+        ctx.fillStyle = '#ff3b30'; ctx.beginPath(); ctx.moveTo(0.07, -0.045); ctx.lineTo(0.16, 0); ctx.lineTo(0.07, 0.045); ctx.fill();
+        ctx.fillStyle = '#7a808c'; ctx.fillRect(-0.14, -0.075, 0.05, 0.15);
+        ctx.restore();
+        continue;
+      }
       const g = ctx.createRadialGradient(it.x, it.y, 0, it.x, it.y, 0.8);
       g.addColorStop(0, 'rgba(255,207,90,0.35)'); g.addColorStop(1, 'rgba(255,207,90,0)');
       ctx.fillStyle = g; ctx.fillRect(it.x - 0.8, it.y - 0.8, 1.6, 1.6);
