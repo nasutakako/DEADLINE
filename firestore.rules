@@ -42,6 +42,17 @@ service cloud.firestore {
       allow delete: if okGame(game) && signedIn() && resource.data.owner == request.auth.uid;
     }
 
+    // games/<game>/refs/<uid>: { by, at } — a new player who came by a friend's LINE invitation, written once by
+    // that new player; the friend who sent it reads the ones naming them (★5 each in the game)
+    match /games/{game}/refs/{uid} {
+      allow create: if okGame(game) && signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['by', 'at'])
+        && request.resource.data.by is string && request.resource.data.by.size() >= 1 && request.resource.data.by.size() <= 128
+        && request.resource.data.by != uid
+        && request.resource.data.at is string;
+      allow read: if okGame(game) && signedIn() && resource.data.by == request.auth.uid;
+    }
+
     // games/<game>/data/users/<uid>/...: each player's own high scores, private
     match /games/{game}/data/users/{uid}/{doc} {
       allow read, write: if okGame(game) && signedIn() && request.auth.uid == uid;

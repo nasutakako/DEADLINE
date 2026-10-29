@@ -272,7 +272,14 @@ h2.clear { color: #5dff9e; }
 .ranklist li, .rankme { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; padding: 6px 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .ranklist li:last-child { border-bottom: 0; }
 .ranklist .no, .rankme .no { font-family: var(--f-num); font-weight: 700; color: var(--muted); text-align: right; }
-.ranklist li:nth-child(-n+3) .no { color: var(--lamp); }
+/* 1st-3rd: gold, silver and bronze */
+.ranklist li.r1, .rankme.r1 { background: linear-gradient(90deg, rgba(255,207,90,.2), rgba(255,207,90,.03)); }
+.ranklist li.r2, .rankme.r2 { background: linear-gradient(90deg, rgba(200,210,225,.18), rgba(200,210,225,.03)); }
+.ranklist li.r3, .rankme.r3 { background: linear-gradient(90deg, rgba(214,140,80,.2), rgba(214,140,80,.03)); }
+.ranklist li.r1 .no, .ranklist li.r1 .tm { color: #ffcf5a; } .ranklist li.r2 .no, .ranklist li.r2 .tm { color: #d6dde8; } .ranklist li.r3 .no, .ranklist li.r3 .tm { color: #e09a62; }
+.ranklist li.r1 .no::before, .ranklist li.r2 .no::before, .ranklist li.r3 .no::before { content: '●'; margin-right: 3px; font-size: 10px; vertical-align: 1px; }
+/* the developer's own record */
+.devb { display: inline-block; margin-left: 6px; padding: 0 5px; border-radius: 4px; border: 1px solid #c792ff; color: #d9b3ff; font-size: 10px; font-weight: 700; line-height: 1.5; vertical-align: 1px; }
 .ranklist .nm, .rankme .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ranklist .tm, .rankme .tm { font-family: var(--f-num); font-variant-numeric: tabular-nums; }
 .ranklist li.me, .rankme { background: rgba(143,233,255,.12); color: var(--runner); }
@@ -518,18 +525,24 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifemsg:empty { display: none; }
 .lifebig { font-size: 34px; line-height: 1; }
 .lifebig em { font-style: normal; font-size: 16px; color: var(--ink); margin-left: 6px; vertical-align: middle; }
-.lifeacts { display: flex; flex-direction: column; gap: 8px; }
+.lifeacts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.lifeacts > [hidden] { display: none; }
 .lifeact { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .lifeact b { font-size: 15px; }
 .lifeact small { font-size: 11.5px; color: var(--muted); }
 .lifeact.line { background: #06c755; border-color: #06c755; color: #fff; }
+.lifeact.ad3 { border-color: rgba(255,207,90,.55); background: rgba(255,207,90,.08); }
+.lifeact.ad3 b { color: var(--lamp); }
+.lifeact.pass { border-color: #c792ff; background: linear-gradient(135deg, rgba(199,146,255,.22), rgba(199,146,255,.05)); }
+.lifeact.pass b { color: #e2c8ff; }
+.lifebig.inf, .lifepill .hearts.inf { color: #d9b3ff; }
 .lifeact.line small { color: rgba(255,255,255,.85); }
 .lifeact:disabled { opacity: .45; cursor: default; }
 .adov .card { align-items: center; }
 .adbox { width: min(100%, 320px); aspect-ratio: 16 / 9; display: grid; place-content: center; gap: 6px; text-align: center; border: 1px dashed var(--muted); border-radius: 8px; background: #11151f; }
 .adbox b { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--oni); }
 .adbox span { font-size: 12px; color: var(--muted); }
-@media (max-height: 400px) { .lifebig { font-size: 26px; } #lifeScreen .card { gap: 6px; } .lifeacts { flex-direction: row; } .lifeact { flex: 1 1 0; padding: 7px 10px; } .lifeact b { font-size: 13.5px; } #lifeScreen h2 { font-size: 24px; } }
+@media (max-height: 400px) { .lifebig { font-size: 26px; } #lifeScreen .card { gap: 6px; } .lifeact { padding: 7px 10px; } .lifeact b { font-size: 13.5px; } #lifeScreen h2 { font-size: 24px; } }
 /* a narrow title: the hearts stand in a column under the gear, and the title keeps clear of that column */
 @media (max-width: 760px) {
   #titleScreen .lifepill { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 50px); right: 10px; width: 42px; height: auto; flex-direction: column; gap: 4px; padding: 8px 0 6px; border-radius: 21px; }
@@ -981,17 +994,20 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <div class="lifebig" id="lifeBig"></div>
       <span class="label" id="lifeRule"></span>
       <div class="lifeacts">
-        <button class="lifeact ad" id="lifeAd" type="button"><b>広告を見て 1回復</b><small>約5秒の広告を最後まで見る</small></button>
-        <button class="lifeact line" id="lifeLine" type="button"><b>LINEで友達を招待して 3回復</b><small id="lifeLineSub">1日1回まで</small></button>
+        <button class="lifeact ad" id="lifeAd" type="button"><b>広告を見て 1回復</b><small>広告を1本、最後まで見る</small></button>
+        <button class="lifeact ad3" id="lifeAd3" type="button"><b>広告を2本見て 3回復</b><small>続けて2本見るとおまけで1回分多い</small></button>
+        <button class="lifeact pass" id="lifePass" type="button"><b>無制限パス</b><small id="lifePassSub">遊べる回数を気にせず、何回でも遊べる(買い切り)</small></button>
+        <button class="lifeact line" id="lifeLine" type="button"><b>LINEで友達を招待</b><small id="lifeLineSub">招待した友達が初めて遊ぶと、1人につき★5もらえる</small></button>
       </div>
       <div class="row"><button class="ghost" id="lifeClose" type="button">閉じる</button></div>
     </div>
   </div>
   <div class="overlay lifeov adov" id="adScreen" hidden>
     <div class="card">
-      <span class="label">広告(サンプル)</span>
+      <span class="label" id="adLabel">広告(サンプル)</span>
       <div class="adbox" id="adBox"><b>DEADLINE</b><span>ここに広告が入ります</span></div>
       <button class="ghost" id="adClose" type="button" disabled>あと5秒</button>
+      <button class="ghost" id="adStop" type="button" hidden>ここでやめる(1回復)</button>
     </div>
   </div>
 </main>
@@ -1201,7 +1217,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const d = snap.data() || {};
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
-          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), refGot: [...new Set([...(records.refGot || []), ...(d.refGot || [])])], s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
@@ -1370,9 +1386,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       finally { b.disabled = false; delArm = false; b.classList.remove('arm'); b.textContent = '名前とランキングの記録を削除'; }
     }
     const fmt = s => fmtTime(+s || 0);
+    // the developer's ranking names (their keys in names/): their records carry the 開発者 mark
+    const DEV_KEYS = ['n6e61737574616b616b6f'];   // nasutakako
     function row(no, p, mine) {
-      const li = document.createElement('li'); if (mine) li.className = 'me';
+      const li = document.createElement('li'); li.className = [mine ? 'me' : '', no >= 1 && no <= 3 ? 'r' + no : ''].join(' ').trim();
       for (const [c, v] of [['no', no + '位'], ['nm', p.name || '???'], ['tt', p.title || ''], ['tm', fmt(p.best)]]) { const s = document.createElement('span'); s.className = c; s.textContent = v; li.appendChild(s); }
+      // the developer's own record, played like anyone's, marked as such
+      if (DEV_KEYS.includes(p.key)) { const b = document.createElement('span'); b.className = 'devb'; b.textContent = '開発者'; li.querySelector('.nm').appendChild(b); }
       return li;
     }
     // stage 3 and the three daily nights, one tab each
@@ -2335,8 +2355,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; $('equipScreen').hidden = false;
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 15 minutes, one more for
-  // watching an ad, three for inviting friends on LINE (once a day). Kept on this device. ----------
-  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 15 * 60 * 1000, AD_SEC = 5, INVITE_N = 3;
+  // watching an ad, three for two ads in a row. The 無制限パス (bought once) does away with the count. Kept on this
+  // device. Inviting friends on LINE gives ★5 for each one who comes and plays (see the invitations below) ----------
+  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 15 * 60 * 1000, AD_SEC = 5, INVITE_STAR = 5;
+  const PASS_ID = 'pass_unlimited', PASS_YEN = 480;
+  const passOn = () => shopData().owned.includes(PASS_ID);
+  // a first visit (nothing kept here yet): an invitation it came by is credited to whoever sent it
+  const lifeFirst = (() => { try { return !localStorage.getItem(LIFE_KEY) && !(records.plays > 0) && !Object.keys(records.stages || {}).length; } catch (_) { return false; } })();
   const lifeData = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIFE_KEY)); } catch (_) {} return Object.assign({ n: LIFE_MAX, at: Date.now(), inv: '' }, v || {}); })();
   const lifeSave = () => { try { localStorage.setItem(LIFE_KEY, JSON.stringify(lifeData)); } catch (_) {} };
   // the time recovery: one per 15 minutes while below 3 (what was earned on top of 3 is kept)
@@ -2352,19 +2377,22 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const lifeHearts = n => '<span>♥</span>'.repeat(Math.min(n, LIFE_MAX)) + '<i>♥</i>'.repeat(Math.max(0, LIFE_MAX - n)) + (n > LIFE_MAX ? `<em>+${n - LIFE_MAX}</em>` : '');
   const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
   function lifeRender() {
-    const n = lifeNow();
-    $('lifeHearts').innerHTML = lifeHearts(n);
-    $('lifeNext').textContent = n >= LIFE_MAX ? (n > LIFE_MAX ? '+' + (n - LIFE_MAX) : '満タン') : lifeClock(lifeLeft());
+    const n = lifeNow(), pass = passOn();
+    $('lifeHearts').innerHTML = pass ? '∞' : lifeHearts(n); $('lifeHearts').classList.toggle('inf', pass);
+    $('lifeNext').textContent = pass ? '無制限' : n >= LIFE_MAX ? (n > LIFE_MAX ? '+' + (n - LIFE_MAX) : '満タン') : lifeClock(lifeLeft());
     if ($('lifeScreen').hidden) return;
-    $('lifeBig').innerHTML = lifeHearts(n);
-    $('lifeRule').textContent = n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
-    $('lifeAd').disabled = n >= LIFE_MAX;
-    const used = lifeData.inv === todayKey();
-    $('lifeLine').disabled = used; $('lifeLineSub').textContent = used ? '今日はもう招待した(明日また使える)' : '1日1回まで';
+    $('lifeBig').innerHTML = pass ? '∞' : lifeHearts(n); $('lifeBig').classList.toggle('inf', pass);
+    $('lifeRule').textContent = pass ? '無制限パスで、何回でも遊べる' : n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
+    $('lifeAd').hidden = $('lifeAd3').hidden = pass;
+    $('lifeAd').disabled = $('lifeAd3').disabled = n >= LIFE_MAX;
+    $('lifePass').disabled = pass;
+    const pp = Store.price(PRODUCT.item(PASS_ID));
+    $('lifePass').querySelector('b').textContent = pass ? '無制限パス(購入済み)' : `無制限パス ${Store.live() ? pp || PASS_YEN + '円' : PASS_YEN + '円(いまは無料)'}`;
   }
   function lifeGive(k) { lifeNow(); const was = lifeData.n; lifeData.n += k; if (was >= LIFE_MAX) lifeData.at = Date.now(); lifeSave(); lifeRender(); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); }
   // a run starts: one play used (the tutorial list's replays are free); none left: the recovery screen instead
   function lifeUse() {
+    if (passOn()) return true;
     if (lifeNow() <= 0) { lifeOpen('遊べる回数がありません。回復してから遊ぼう'); return false; }
     if (lifeData.n >= LIFE_MAX) lifeData.at = Date.now();
     lifeData.n--; lifeSave(); lifeRender(); return true;
@@ -2372,23 +2400,72 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function lifeOpen(msg) { $('lifeMsg').textContent = msg || ''; $('lifeScreen').hidden = false; lifeRender(); }
   $('lifeBtn').addEventListener('click', () => { tap(); lifeOpen(''); });
   $('lifeClose').addEventListener('click', () => { tap(); $('lifeScreen').hidden = true; });
-  // the ad (a sample screen for now: a real ad network, AdMob in the app or a rewarded web ad, goes in its place)
-  let adTimer = 0;
-  $('lifeAd').addEventListener('click', () => {
-    if (lifeNow() >= LIFE_MAX) return;
-    tap(); $('adScreen').hidden = false; const btn = $('adClose'); btn.disabled = true;
+  // the ads (a sample screen for now: a real rewarded ad, AdMob in the app or a rewarded web ad, goes in its place).
+  // One ad gives one back; 広告を2本 plays two in a row and gives three (the second asked for, never forced: stopping
+  // after the first still gives that one)
+  let adTimer = 0, adRun = null;
+  function adPlay() {
+    const btn = $('adClose'), more = adRun.of > 1;
+    $('adScreen').hidden = false; btn.disabled = true;
+    $('adLabel').textContent = more ? `広告(サンプル) ${adRun.n + 1}/${adRun.of}` : '広告(サンプル)';
     let left = AD_SEC; btn.textContent = `あと${left}秒`;
-    clearInterval(adTimer); adTimer = setInterval(() => { left--; if (left > 0) btn.textContent = `あと${left}秒`; else { clearInterval(adTimer); btn.disabled = false; btn.textContent = '閉じて1回復'; } }, 1000);
+    clearInterval(adTimer); adTimer = setInterval(() => {
+      left--; if (left > 0) { btn.textContent = `あと${left}秒`; return; }
+      clearInterval(adTimer); btn.disabled = false; adRun.n++;
+      btn.textContent = adRun.n < adRun.of ? 'もう1本見る(続けて見ると3回復)' : `閉じて${adRun.of > 1 ? 3 : 1}回復`;
+      $('adStop').hidden = !(adRun.n < adRun.of);
+    }, 1000);
+  }
+  function adStart(of) {
+    if (passOn() || lifeNow() >= LIFE_MAX) return;
+    tap(); adRun = { n: 0, of }; $('adStop').hidden = true; adPlay();
+  }
+  $('lifeAd').addEventListener('click', () => adStart(1));
+  $('lifeAd3').addEventListener('click', () => adStart(2));
+  $('adClose').addEventListener('click', () => {
+    if ($('adClose').disabled || !adRun) return;
+    if (adRun.n < adRun.of) { tap(); adPlay(); return; }
+    const k = adRun.of > 1 ? 3 : 1; adRun = null;
+    $('adScreen').hidden = true; lifeGive(k); $('lifeMsg').textContent = `${k}回復した!`;
   });
-  $('adClose').addEventListener('click', () => { if ($('adClose').disabled) return; $('adScreen').hidden = true; lifeGive(1); $('lifeMsg').textContent = '1回復した!'; });
-  // LINE: the share sheet with an invitation; back from it, three plays (once a day)
+  // stopping between the two: the one watched still counts
+  $('adStop').addEventListener('click', () => { if (!adRun) return; adRun = null; clearInterval(adTimer); $('adScreen').hidden = true; lifeGive(1); $('lifeMsg').textContent = '1回復した!'; });
+  // the 無制限パス: bought once (free while testing), restorable with the shop's 購入を復元
+  $('lifePass').addEventListener('click', async () => {
+    if (passOn()) return;
+    tap(); $('lifePass').disabled = true;
+    const r = await Store.buy(PRODUCT.item(PASS_ID));
+    if (!r.ok) { $('lifePass').disabled = false; $('lifeMsg').textContent = r.msg || ''; return; }
+    shopData().owned.push(PASS_ID); saveRecords(); lifeRender(); $('lifeMsg').textContent = '無制限パスを手に入れた! 何回でも遊べる';
+    tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); setTimeout(() => tone(1760, 0.2, 'triangle', 0.05), 170);
+  });
+  // LINE: the invitation carries this player's id; a friend who opens it and plays for the first time is written down
+  // (refs/<their id> = { by: this player }), and each one found here gives ★5, once
+  let refUid = null;
+  const refUrl = () => SHARE_URL + (refUid ? '?ref=' + encodeURIComponent(refUid) : '');
   $('lifeLine').addEventListener('click', () => {
-    if (lifeData.inv === todayKey()) return;
     tap();
-    const text = `鬼から逃げ切れ。逃走アクション「DEADLINE」で一緒に遊ぼう!\n${SHARE_URL}`;
+    const text = `鬼から逃げ切れ。逃走アクション「DEADLINE」で一緒に遊ぼう!\n${refUrl()}`;
     try { window.open('https://line.me/R/share?text=' + encodeURIComponent(text), '_blank', 'noopener'); } catch (_) {}
-    lifeData.inv = todayKey(); lifeGive(INVITE_N); $('lifeMsg').textContent = '招待ありがとう! 3回復した';
+    $('lifeMsg').textContent = refUid ? '招待した友達が初めて遊ぶと、★5が届く' : '';
   });
+  async function refSync() {
+    try {
+      if (!window.claude || !window.claude.use) return;
+      const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
+      if (!db || !user) return;
+      const uid = await user.id(); if (!uid) return; refUid = uid;
+      // came by an invitation, on a first visit: say who sent it (once; never oneself)
+      let by = null; try { by = new URLSearchParams(location.search).get('ref'); } catch (_) {}
+      if (lifeFirst && by && by !== uid && by.length <= 128) { try { await db.doc('refs/' + uid).set({ by, at: new Date().toISOString() }); } catch (_) {} }
+      // friends this player brought in: ★5 for each not yet counted
+      const q = await db.collection('refs').where('by', '==', uid).orderBy('by').limit(200).get();
+      const got = records.refGot = records.refGot || []; let n = 0;
+      for (const d of q.docs) if (!got.includes(d.id)) { got.push(d.id); n++; }
+      if (n) { starW().e += n * INVITE_STAR; saveRecords(); $('lifeMsg').textContent = `招待した友達${n}人が遊んでくれた! ★${n * INVITE_STAR}`; lifeOpen($('lifeMsg').textContent); }
+    } catch (_) {}
+  }
+  lifeSave(); refSync();
   setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
   lifeRender();
 
