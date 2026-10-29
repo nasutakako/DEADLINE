@@ -2747,6 +2747,16 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
+  // 生存課題: a map drawn at random from the ones open (any story's stage 1, 2 or 3), rolled on each stand-by screen;
+  // the map is drawn and laid out as that stage, the night itself runs as 生存課題
+  let dailyLook = null;
+  const mapStage = () => stageN === 4 && daily && dailyLook ? dailyLook.n : stageN;
+  function rollDailyMap() {
+    const all = [];
+    for (const skin of MAP_CHOICE ? ALL_SKINS : ['d1']) for (const n of [1, 2, 3]) if (skin === 'd1' || mapOpen(n, skin)) all.push({ skin, n });
+    dailyLook = all[Math.floor(Math.random() * all.length)];
+    return dailyLook;
+  }
   function genMap() {
     grid = new Uint8Array(COLS * ROWS);           // 0 road, 1 building, 2 plaza
     blockShade = new Float32Array(COLS * ROWS);
@@ -2781,7 +2791,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     // 花火の夜: a river along the top: the far bank's road (row 0), the water (rows 1-2), the grass bank (row 3),
     // and three road bridges across, on streets spread over the width
-    riverOn = mapSkin === 'd4' && stageN === 3 && !daily; bridges = [];
+    riverOn = mapSkin === 'd4' && mapStage() === 3; bridges = [];
     if (riverOn) {
       for (let x = 0; x < COLS; x++) { grid[idx(x, 0)] = 0; grid[idx(x, 1)] = grid[idx(x, 2)] = 1; grid[idx(x, 3)] = 0; }
       for (const f of [0.2, 0.5, 0.8]) { const bx = Math.round(COLS * f / 4) * 4; bridges.push(bx); grid[idx(bx, 1)] = grid[idx(bx, 2)] = 0; }
@@ -2820,13 +2830,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     yagura = null;
     // 縁日通り: the yagura, a block's size, on the map's middle tile, in an open square two tiles wide all round it
-    if (mapSkin === 'd4' && stageN === 2 && !daily) {
+    if (mapSkin === 'd4' && mapStage() === 2) {
       const cx = (COLS - 1) / 2, cy = (ROWS - 1) / 2;
       for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) grid[idx(x, y)] = Math.abs(x - cx) <= 1 && Math.abs(y - cy) <= 1 ? 1 : 0;
       yagura = { x: cx - 1, y: cy - 1 };
     }
     courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS);
-    if (PITCHES && mapSkin === 'd1' && stageN >= 2) {
+    if (PITCHES && mapSkin === 'd1' && mapStage() >= 2) {
       const isPl = (bx, by) => { if (bx + 3 > COLS || by + 3 > ROWS) return false; for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 2) return false; return true; };
       const used = new Set();
       for (let by = 1; by < ROWS - 2; by += 4) for (let bx = 1; bx < COLS - 2; bx += 4) {
@@ -2863,7 +2873,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     shadeMap = null; shadeKey = '';
     if (mapSkin === 'd3') {
       shadeMap = new Uint8Array(COLS * ROWS);
-      const S = SHADE_LEN[Math.min(3, Math.max(1, stageN)) - 1], sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
+      const S = SHADE_LEN[Math.min(3, Math.max(1, mapStage())) - 1], sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
       for (let by = 1; by < ROWS - 1; by += 4) for (let bx = 1; bx < COLS - 1; bx += 4) {
         if (Math.random() >= 0.36) continue;
         for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] === 1) shadeMap[idx(x, y)] = 2;   // a tall block
@@ -2914,10 +2924,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     mapCache.height = Math.max(1, Math.round(ROWS * T * dpr));
     const m = mapCache.getContext('2d');
     m.scale(T * dpr, T * dpr);
-    if (mapSkin === 'd2') { if (stageN === 1) renderVault(m); else renderNeon(m); return; }
+    if (mapSkin === 'd2') { if (mapStage() === 1) renderVault(m); else renderNeon(m); return; }
     if (mapSkin === 'd3') { renderShadow(m); return; }
     if (mapSkin === 'd4') { renderFest(m); return; }
-    if (stageN === 1) { renderIndoor(m); return; }
+    if (mapStage() === 1) { renderIndoor(m); return; }
     renderNight(m);
   }
   // ---- the DEADLINE2 maps (隔離区画 / 電脳都市 / 無限回路), playable here as a choice ----
@@ -2927,7 +2937,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // buildings as black slabs outlined in light, dot-matrix plazas, glows at the crossings.
   function renderNeon(m) {
     const rnd = mapRnd();
-    const A = stageN >= 3 ? [255, 43, 214] : [0, 229, 255], B = stageN >= 3 ? [255, 70, 70] : [255, 43, 214];
+    const A = mapStage() >= 3 ? [255, 43, 214] : [0, 229, 255], B = mapStage() >= 3 ? [255, 70, 70] : [255, 43, 214];
     const c = (k, a) => `rgba(${k[0]},${k[1]},${k[2]},${a})`;
     m.fillStyle = '#070a14'; m.fillRect(0, 0, COLS, ROWS);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -2990,7 +3000,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { ground: [58, 56, 72], plaza: [44, 42, 58], light: [200, 190, 255], len: 0.8 },
       { ground: [74, 56, 58], plaza: [58, 44, 48], light: [255, 162, 98], len: 1.35 },
       { ground: [44, 32, 40], plaza: [34, 24, 30], light: [255, 76, 64], len: 1 },
-    ][Math.min(3, Math.max(1, stageN)) - 1];
+    ][Math.min(3, Math.max(1, mapStage())) - 1];
     const c = (k, a) => `rgba(${k[0]},${k[1]},${k[2]},${a})`, rgb = (k, d) => `rgb(${k[0] + d},${k[1] + d},${k[2] + d})`;
     m.fillStyle = rgb(L.ground, -30); m.fillRect(0, 0, COLS, ROWS);
     // flagstones; the plazas paved in rings
@@ -3050,8 +3060,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // stage 2 the fair street (stone paving, stalls under striped awnings, strings of red paper lanterns), stage 3 the
   // river bank under the show (dark ground lit by great faint bursts of colour, the launch site in the plazas) ----
   function renderFest(m) {
-    if (stageN >= 3) { renderHanabi(m); return; }
-    const rnd = mapRnd(), n = Math.min(3, Math.max(1, stageN));
+    if (mapStage() >= 3) { renderHanabi(m); return; }
+    const rnd = mapRnd(), n = Math.min(3, Math.max(1, mapStage()));
     const G = [[78, 77, 74], [84, 72, 62], [62, 58, 74]][n - 1];
     const rgb = (k, d) => `rgb(${k[0] + d},${k[1] + d},${k[2] + d})`;
     m.fillStyle = rgb(G, -14); m.fillRect(0, 0, COLS, ROWS);
@@ -3357,7 +3367,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     m.setLineDash([]);
     // buildings: shadow, roof, parapet, a little rooftop kit
-    const hue = STAGE_HUES[(stageN - 1) % STAGE_HUES.length];
+    const hue = STAGE_HUES[(mapStage() - 1) % STAGE_HUES.length];
     m.fillStyle = 'rgba(0,0,0,0.5)';
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1) m.fillRect(x + 0.14, y + 0.16, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
@@ -6003,7 +6013,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     2: { bpm: 128, vol: 0.75, step: stepFair, setup: b => cyberFx(b, 60 / 128 * 0.75, 0.3, 1.8) },
     3: { bpm: 100, vol: 0.52, step: stepShow, setup: b => cyberFx(b, 60 / 100 * 0.75, 0.35, 3) },
   };
-  const songFor = n => (mapSkin === 'd2' ? SONGS2 : mapSkin === 'd3' ? SONGS3 : mapSkin === 'd4' ? SONGS4 : SONGS)[Math.min(3, Math.max(1, n))];
+  // (生存課題 plays the music of the map it drew)
+  const songFor = n => (mapSkin === 'd2' ? SONGS2 : mapSkin === 'd3' ? SONGS3 : mapSkin === 'd4' ? SONGS4 : SONGS)[Math.min(3, Math.max(1, n === 4 && daily && dailyLook ? dailyLook.n : n))];
   const titleSong = () => mapSkin === 'd2' ? SONGS2.title : SONGS.title;
   const playSong = () => t >= (stageN >= 3 ? 360 : stageN === 2 ? 240 : 120) ? titleSong() : songFor(stageN === 3 ? 1 + Math.floor(t / 120) : stageN);
 
@@ -6147,7 +6158,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const tutSeen = () => { try { return JSON.parse(localStorage.getItem(TUT_KEY)) || {}; } catch (_) { return {}; } };
   // the tutorial a stage starts with: its own, or on 隔離区画 the warp points ('w')
   // (the DEADLINE2 maps: only 隔離区画 has one, the warp points; 電脳都市 and 無限回路 bring nothing new)
-  const tutKeyOf = n => mapSkin === 'd4' ? (n === 1 ? 'b1' : n === 2 ? 'b2' : n) : mapSkin === 'd3' ? (n <= 3 ? 'k' + n : n) : mapSkin === 'd2' ? (n === 1 ? 'w' : n === 2 ? 'c2' : null) : n;
+  const tutKeyOf = n => n === 4 ? n : mapSkin === 'd4' ? (n === 1 ? 'b1' : n === 2 ? 'b2' : n) : mapSkin === 'd3' ? (n <= 3 ? 'k' + n : n) : mapSkin === 'd2' ? (n === 1 ? 'w' : n === 2 ? 'c2' : null) : n;
   // a story's stage 3 has its own: its prize, then the pits (if not seen yet), then the way out at 6:30
   const tutKey = n => n === 3 && MAP_CHOICE && !rankRun && tutReplay !== 3 && ROUTE[mapSkin] !== 'shadow' ? ({ home: '3h', cyber: '3c', fuse: '3b' })[ROUTE[mapSkin]] : tutKeyOf(n);
   const tutNeed = n => { const k = tutKey(n); return k != null && (k === 'w' || (n >= 1 && n <= 3)) && (tutReplay === k || !tutSeen()[k]); };
@@ -6642,7 +6653,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // ---------- flow control ----------
   function start(n = 1, item, skin) {
     if (!tutReplay && !lifeUse()) return;
-    misEnd(); mapSkin = skin || (n === 3 && rankRun ? weekSkin() : n <= 3 ? mapPick(n) : 'd1');
+    misEnd(); mapSkin = skin || (n === 3 && rankRun ? weekSkin() : n <= 3 ? mapPick(n) : n === 4 && dailyLook ? dailyLook.skin : 'd1');
     initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     newGame(n, item);
@@ -7396,7 +7407,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // stages 1-3 tell the story in order, each kind on its own count (kept on this device); the daily nights pick at random
     // the first time a stage opens (or the first night of 生存課題): a line of its own, once, before the stage's story
     if (kind === 'standby') {
-      const first = typeof k === 'number' ? m && m.first : mapSkin === 'd1' && MONO.dfirst;
+      const first = typeof k === 'number' ? m && m.first : (MAP_CHOICE || mapSkin === 'd1') && MONO.dfirst;
       const fk = (typeof k === 'number' ? (mapSkin === 'd2' ? 'm' : mapSkin === 'd3' ? 'k' : mapSkin === 'd4' ? 'b' : 's') + k : 'daily') + 'first';
       let at = {}; try { at = JSON.parse(localStorage.getItem(REC_KEY + '-story') || '{}') || {}; } catch (e) {}
       if (first && !at[fk]) { at[fk] = 1; try { localStorage.setItem(REC_KEY + '-story', JSON.stringify(at)); } catch (e) {} return first; }
@@ -7418,7 +7429,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
-      $('spKicker').textContent = `生存課題 ${daily.name}`;
+      mapSkin = rollDailyMap().skin; bgmStart(songFor(dailyLook.n)); previewMap(4, true);
+      $('spKicker').textContent = `生存課題 ${daily.name} ・ ${mapName(dailyLook.n)}`;
       $('spMsg').textContent = `出口なし。捕まるまで逃げ続ける生存課題。\n・疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場(今日は${daily.name})\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n補給アイテムを1つ選ぶと始まる。`;
       $('spMaps').hidden = true; bestLine('spBest', 4);
       $('startPickScreen').hidden = false;
