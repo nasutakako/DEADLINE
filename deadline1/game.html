@@ -101,6 +101,7 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
    the name dropping in letter by letter, and an oni falling into place as the dot of the i ---- */
 .intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; align-content: center; gap: 12px; background: #07080d; overflow: hidden; cursor: pointer; animation: introOut .5s ease-in 4.1s forwards; }
 .intro[hidden] { display: none; }
+.intro:not(.play), .intro:not(.play) *, .intro:not(.play)::after { animation-play-state: paused !important; }
 .introline { position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px; background: var(--oni); box-shadow: 0 0 18px rgba(255,59,48,.9), 0 0 50px rgba(255,59,48,.5); transform-origin: left center; transform: scaleX(0); animation: introLine .55s cubic-bezier(.7,0,.3,1) .1s forwards, introLineGo .4s ease-in 2s forwards; }
 /* the chase: a runner and three oni along the line, left to right */
 .introchase { position: absolute; left: 0; right: 0; top: 50%; height: 0; }
@@ -2555,16 +2556,22 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
   lifeRender();
 
-  // ---------- the opening sting: every launch of the app, once a visit on the site; a tap skips it ----------
+  // ---------- the opening sting: every launch; it waits until the page is on screen and the fonts are in; a tap skips it ----------
   (() => {
-    const el = $('intro'); let seen = false;
-    try { seen = !window.DEADLINE_APP && sessionStorage.getItem(REC_KEY + '-intro') === '1'; sessionStorage.setItem(REC_KEY + '-intro', '1'); } catch (_) {}
-    if (seen) return;
+    const el = $('intro'); let started = false;
     el.hidden = false;
     const done = () => { if (!el.hidden) el.hidden = true; };
+    const go = () => {
+      if (started || document.visibilityState === 'hidden') return;
+      started = true; document.removeEventListener('visibilitychange', go);
+      requestAnimationFrame(() => requestAnimationFrame(() => { el.classList.add('play'); setTimeout(done, 5200); }));
+    };
     el.addEventListener('animationend', e => { if (e.animationName === 'introOut') done(); });
     el.addEventListener('pointerdown', e => { e.preventDefault(); done(); });
-    setTimeout(done, 5200);
+    document.addEventListener('visibilitychange', go);
+    const fonts = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+    Promise.race([fonts, new Promise(r => setTimeout(r, 1500))]).then(go);
+    setTimeout(() => { if (!started) done(); }, 15000);
   })();
 
   // ---------- settings (the gear on the title): kept on this device ----------
