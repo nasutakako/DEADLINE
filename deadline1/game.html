@@ -552,6 +552,14 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifepill small { font-size: 11px; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 2.6em; }
 .lifepill b { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--oni); color: #fff; font-size: 16px; }
 .lifeov { z-index: 30; }
+/* the weekly ranking's stage details */
+.rinfobody { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 12px; align-content: start; padding-right: 4px; overscroll-behavior: contain; }
+.rinfobody h3 { margin: 0 0 4px; font-size: 13px; letter-spacing: .08em; color: var(--lamp); }
+.rinfobody ul { margin: 0; padding-left: 1.2em; display: grid; gap: 3px; font-size: 13px; line-height: 1.5; }
+.rinfobody table { border-collapse: collapse; font-size: 13px; }
+.rinfobody td, .rinfobody th { padding: 3px 12px 3px 0; text-align: left; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.rinfobody th { color: var(--muted); font-weight: 500; }
+.rinfobody .note { font-size: 11.5px; color: var(--muted); }
 .lifemsg { margin: 0; color: var(--lamp); font-weight: 700; }
 .lifemsg:empty { display: none; }
 .lifebig { font-size: 34px; line-height: 1; }
@@ -1016,7 +1024,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
         <button class="pick launcher" data-item="launcher" type="button"><b>3 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
-      <div class="row"><button class="ghost" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row"><button class="ghost" id="spBackBtn" type="button">タイトルへ</button><button class="ghost" id="spInfoBtn" type="button" hidden>詳細</button></div>
     </div>
   </div>
 
@@ -1025,6 +1033,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <span class="kicker">PAUSE</span>
       <h1>一時停止中</h1>
       <div class="row"><button class="go" id="resumeBtn" type="button">再開</button><button class="ghost" id="quitBtn" type="button">タイトルへ</button></div>
+    </div>
+  </div>
+  <div class="overlay lifeov" id="rankInfoScreen" hidden>
+    <div class="card rankcard rinfo">
+      <h2>ステージの詳細</h2>
+      <div class="rinfobody" id="rankInfoBody"></div>
+      <div class="row"><button class="ghost" id="rankInfoClose" type="button">閉じる</button></div>
     </div>
   </div>
   <div class="overlay lifeov" id="lifeScreen" hidden>
@@ -7275,6 +7290,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function begin(n) {
     tap(); daily = null; rankRun = false;
     if (n < 2) { start(n); return; }
+    $('spInfoBtn').hidden = true;
     pendingStart = n; state = 'startpick'; mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
@@ -7299,9 +7315,30 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function spText(n) {
     $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される\n・4分から鬼が増え、4分30秒で出口が開くと自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
   }
+  // the weekly ranking's details: what comes when, from the game's own numbers
+  function rankInfo() {
+    const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
+    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', 6], ['7:00', 7], ['10:00', 8], ['11:00', 9], ['12:00', 10]];
+    const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
+      cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。乗って0.3秒でもう一方へ飛ぶ。一度使うと1分30秒使えない'],
+      shadow: ['落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
+      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する。爆発の範囲は爆弾の1.5倍', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
+    $('rankInfoBody').innerHTML = `
+      <section><h3>週替わりランキング ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(3秒加速・バリア・ランチャー)を1つ選んで始まる'])}</section>
+      <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
+      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, `ランチャー: ${RK_DROP_AT / 60}分から、爆弾の箱が出るときにまれに(約${Math.round(RK_DROP_P * 100)}%)一緒に落ちる`, '鬼を40体倒すごとに、3秒加速かランチャーが届く'])}</section>
+      <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
+        ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなり、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分から: 出てくる鬼のほとんどがバリア鬼になる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
+      <section><h3>このマップ</h3>${li(own)}</section>
+      <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
+    $('rankInfoScreen').hidden = false;
+  }
+  $('spInfoBtn').addEventListener('click', () => { tap(); rankInfo(); });
+  $('rankInfoClose').addEventListener('click', () => { tap(); $('rankInfoScreen').hidden = true; });
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
-    tap(); daily = null; rankRun = true;
+    tap(); daily = null; rankRun = true; $('spInfoBtn').hidden = false;
     pendingStart = 3; state = 'startpick'; mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
