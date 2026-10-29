@@ -185,7 +185,15 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .kicker { font-size: 12px; letter-spacing: .2em; color: var(--oni); font-weight: 700; }
 h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; line-height: 1.05; text-wrap: balance; }
 h1 { font-size: clamp(34px, 9vw, 60px); letter-spacing: .02em; }
-h1 span { color: var(--oni); }
+h1 span { color: var(--oni); white-space: nowrap; }
+/* the title's i: a red stem and, for its dot, an oni bobbing and looking about */
+h1 .tstem { position: relative; display: inline-block; width: .3em; height: .72em; margin: 0 .04em; vertical-align: baseline; font-weight: inherit; }
+h1 .tbar { position: absolute; left: .045em; right: .045em; bottom: 0; height: .72em; border-radius: .04em; background: var(--oni); }
+h1 .tdot { position: absolute; left: 50%; bottom: .8em; width: .3em; height: .3em; margin-left: -.15em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffc0b8, #d8251a 55%, #3a0402); box-shadow: 0 0 .25em rgba(255,59,48,.65); animation: tdotBob 2.4s ease-in-out infinite; }
+h1 .teye { position: absolute; top: 34%; left: 50%; width: 26%; height: 26%; border-radius: 50%; background: #0c0f16; animation: tdotLook 6s steps(1) infinite; }
+@keyframes tdotBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-.04em); } }
+@keyframes tdotLook { 0%, 40% { left: 50%; } 42%, 55% { left: 22%; } 57%, 80% { left: 50%; } 82%, 92% { left: 40%; top: 50%; } 94%, 100% { left: 50%; top: 34%; } }
+@media (prefers-reduced-motion: reduce) { h1 .tdot, h1 .teye { animation: none; } }
 h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .card p { margin: 0; line-height: 1.65; font-size: 14px; }
 .rules { display: grid; grid-template-columns: auto 1fr; gap: 5px 12px; font-size: 13px; color: var(--muted); margin: 0; }
@@ -860,7 +868,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     <button class="lifepill" id="lifeBtn" type="button" aria-label="遊べる回数"><span class="hearts" id="lifeHearts"></span><small id="lifeNext"></small><b>＋</b></button>
     <button class="gear" id="setBtn" type="button" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
     <div class="card">
-      <h1>DEAD<span>LINE</span></h1>
+      <h1 aria-label="DEADLINE">DEAD<span>L<b class="tstem" aria-hidden="true"><i class="tbar"></i><i class="tdot"><i class="teye"></i></i></b>NE</span></h1>
       <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
