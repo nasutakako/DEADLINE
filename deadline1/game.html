@@ -2507,7 +2507,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
 
   // ---------- map ----------
-  let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [];
+  let COLS = 17, ROWS = 17, grid, dist, mapCache = null, blockShade, windows = [], yagura = null;
   // open-air plazas in the city: lone ones are basketball courts or lawns, two side by side make a football
   // pitch whose goals are solid. goalT marks the tiles the goals stand on so the oni path round them
   const PITCHES = true;
@@ -2593,6 +2593,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
           holes = holes.filter(h => h.i !== idx(nx + 1, ny + 1));
         }
       }
+    }
+    yagura = null;
+    if (mapSkin === 'd4' && stageN === 2 && !daily) {
+      const cx = Math.floor(COLS / 2 / 4) * 4, cy = Math.floor(ROWS / 2 / 4) * 4;
+      for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) grid[idx(x, y)] = Math.abs(x - cx) <= 2 && Math.abs(y - cy) <= 2 ? 1 : 0;
+      yagura = { x: cx - 2, y: cy - 2 };
     }
     courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS);
     if (PITCHES && mapSkin === 'd1' && stageN >= 2) {
@@ -2820,9 +2826,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // river bank under the show (dark ground lit by great faint bursts of colour, the launch site in the plazas) ----
   function renderFest(m) {
     const rnd = mapRnd(), n = Math.min(3, Math.max(1, stageN));
-    const G = [[50, 46, 44], [56, 44, 38], [62, 58, 74]][n - 1];
+    const G = [[78, 77, 74], [84, 72, 62], [62, 58, 74]][n - 1];
     const rgb = (k, d) => `rgb(${k[0] + d},${k[1] + d},${k[2] + d})`;
     m.fillStyle = rgb(G, -14); m.fillRect(0, 0, COLS, ROWS);
+    // stage 2: the yagura stands on the full block nearest the middle
+    const yag = n === 2 && yagura ? [yagura.x, yagura.y] : null, YS = 5;
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const v = grid[idx(x, y)];
       if (v === 1) continue;
@@ -2855,20 +2863,21 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const sh = blockShade[idx(x, y)];
       if (n === 1) {
         // a warehouse roof: corrugated, hazard stripes where it meets the street
-        m.fillStyle = `rgb(${62 + sh * 14},${48 + sh * 10},${38 + sh * 6})`; m.fillRect(x, y, 1.002, 1.002);
-        m.strokeStyle = 'rgba(0,0,0,0.25)'; m.lineWidth = 0.025; m.beginPath(); for (let k = 1; k < 5; k++) { m.moveTo(x, y + k / 5); m.lineTo(x + 1, y + k / 5); } m.stroke();
+        m.fillStyle = `rgb(${30 + sh * 10},${26 + sh * 7},${24 + sh * 5})`; m.fillRect(x, y, 1.002, 1.002);
+        m.strokeStyle = 'rgba(255,255,255,0.04)'; m.lineWidth = 0.03; m.beginPath(); for (let k = 1; k < 4; k++) { m.moveTo(x, y + k / 4); m.lineTo(x + 1, y + k / 4); } m.stroke();
+        m.fillStyle = 'rgba(232,179,32,0.85)';
         for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
           if (!walk(x + dx, y + dy)) continue;
-          m.save(); m.beginPath(); if (dy) m.rect(x, dy < 0 ? y : y + 0.88, 1, 0.12); else m.rect(dx < 0 ? x : x + 0.88, y, 0.12, 1); m.clip();
-          for (let k = -2; k < 6; k++) { m.fillStyle = k % 2 ? '#141414' : '#e8b320'; m.beginPath(); m.moveTo(x + k * 0.2, y); m.lineTo(x + k * 0.2 + 0.1, y); m.lineTo(x + k * 0.2 + 1.1, y + 1); m.lineTo(x + k * 0.2 + 1, y + 1); m.fill(); }
-          m.restore();
+          if (dy) m.fillRect(x, dy < 0 ? y : y + 0.94, 1, 0.06); else m.fillRect(dx < 0 ? x : x + 0.94, y, 0.06, 1);
         }
       } else if (n === 2) {
         // a stall: dark wood, a red and white awning on the street side
-        m.fillStyle = `rgb(${40 + sh * 10},${28 + sh * 8},${24 + sh * 6})`; m.fillRect(x, y, 1.002, 1.002);
+        if (yag && x >= yag[0] && x < yag[0] + YS && y >= yag[1] && y < yag[1] + YS) continue;
+        m.fillStyle = `rgb(${34 + sh * 8},${24 + sh * 6},${22 + sh * 5})`; m.fillRect(x, y, 1.002, 1.002);
+        m.fillStyle = sh < 0.5 ? 'rgba(150,50,40,0.8)' : 'rgba(60,70,120,0.8)';
         for (const [dx, dy] of [[0, -1], [0, 1], [-1, 0], [1, 0]]) {
           if (!walk(x + dx, y + dy)) continue;
-          for (let k = 0; k < 4; k++) { m.fillStyle = k % 2 ? '#f2ece0' : '#c8281e'; if (dy) m.fillRect(x + k * 0.25, dy < 0 ? y : y + 0.78, 0.25, 0.22); else m.fillRect(dx < 0 ? x : x + 0.78, y + k * 0.25, 0.22, 0.25); }
+          if (dy) m.fillRect(x, dy < 0 ? y : y + 0.92, 1, 0.08); else m.fillRect(dx < 0 ? x : x + 0.92, y, 0.08, 1);
         }
       } else {
         // a dark block standing out of the lit ground: a drop shadow down-right, a rim of firework light round it
@@ -2881,6 +2890,28 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         if (walk(x + 1, y)) { m.fillStyle = 'rgba(160,140,255,0.35)'; m.fillRect(x + 0.95, y, 0.05, 1); }
         if (walk(x, y + 1)) { m.fillStyle = 'rgba(160,140,255,0.35)'; m.fillRect(x, y + 0.95, 1, 0.05); }
       }
+    }
+    if (yag) {
+      const [bx, by] = yag, cx = bx + YS / 2, cy = by + YS / 2, E = YS;
+      // lantern strings from its corners out over the square
+      m.strokeStyle = 'rgba(40,20,16,0.7)'; m.lineWidth = 0.02; m.beginPath();
+      for (const [ax, ay, dx, dy] of [[0, 0, -1, -1], [E, 0, 1, -1], [0, E, -1, 1], [E, E, 1, 1]]) { m.moveTo(bx + ax, by + ay); m.lineTo(bx + ax + dx * 0.9, by + ay + dy * 0.9); }
+      m.stroke();
+      for (const [ax, ay, dx, dy] of [[0, 0, -1, -1], [E, 0, 1, -1], [0, E, -1, 1], [E, E, 1, 1]]) for (const f of [0.45, 0.85]) { m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(bx + ax + dx * f, by + ay + dy * f, 0.08, 0.1, 0, 0, 7); m.fill(); }
+      // the red and white curtain round its foot
+      m.fillStyle = '#2a1712'; m.fillRect(bx, by, E, E);
+      const seg = 0.25, w = 0.34;
+      for (let k = 0; k < E / seg; k++) { m.fillStyle = k % 2 ? '#f4eee2' : '#d0281e';
+        m.fillRect(bx + k * seg, by, seg, w); m.fillRect(bx + k * seg, by + E - w, seg, w); m.fillRect(bx, by + k * seg, w, seg); m.fillRect(bx + E - w, by + k * seg, w, seg); }
+      // the tower's roof: a square on posts, its ridges to the corners
+      const r0 = 0.9, r1 = E - 0.9;
+      m.fillStyle = '#5a2a1a'; m.fillRect(bx + r0, by + r0, r1 - r0, r1 - r0);
+      m.strokeStyle = 'rgba(255,220,170,0.45)'; m.lineWidth = 0.06; m.beginPath(); m.moveTo(bx + r0, by + r0); m.lineTo(bx + r1, by + r1); m.moveTo(bx + r1, by + r0); m.lineTo(bx + r0, by + r1); m.stroke();
+      m.strokeStyle = '#d0281e'; m.lineWidth = 0.08; m.strokeRect(bx + r0, by + r0, r1 - r0, r1 - r0);
+      // a drum on top, and lanterns at the roof's corners
+      m.fillStyle = '#8a4a20'; m.beginPath(); m.arc(cx, cy, 0.42, 0, 7); m.fill(); m.fillStyle = '#e8d2a0'; m.beginPath(); m.arc(cx, cy, 0.31, 0, 7); m.fill();
+      m.strokeStyle = '#8a4a20'; m.lineWidth = 0.04; m.beginPath(); m.arc(cx, cy, 0.18, 0, 7); m.stroke();
+      for (const [ax, ay] of [[r0, r0], [r1, r0], [r0, r1], [r1, r1]]) { const g = m.createRadialGradient(bx + ax, by + ay, 0, bx + ax, by + ay, 0.7); g.addColorStop(0, 'rgba(255,120,60,0.45)'); g.addColorStop(1, 'rgba(255,120,60,0)'); m.fillStyle = g; m.fillRect(bx + ax - 0.7, by + ay - 0.7, 1.4, 1.4); m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(bx + ax, by + ay, 0.12, 0.15, 0, 0, 7); m.fill(); }
     }
     for (const [wx, wy] of windows) { if (n === 2) continue; m.fillStyle = rnd() < 0.4 ? 'rgba(255,190,110,0.6)' : 'rgba(0,0,0,0.5)'; m.fillRect(wx, wy, 0.08, 0.08); }
     // light: work lamps at the crossings (stage 1), strings of paper lanterns down the streets (stages 2 and 3)
@@ -3396,7 +3427,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     placeWho(); pickDims(); genMap(); resize();
     flowKey = -1;
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
-    P = { x: sx + 0.5, y: sy + 0.5, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
+    P = { x: sx + 0.5, y: sy + (yagura ? 3.5 : 0.5), r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = [];
     t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
