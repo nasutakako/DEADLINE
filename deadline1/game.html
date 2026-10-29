@@ -1070,7 +1070,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const ENEMY_STEP = 0.26;
   const ENEMY_MAX = 6.0;
   const LV_EVERY = 20;
-  const DASH_MULT = 2.0, DASH_TIME = 0.38, DASH_CD = 3.5;
+  const DASH_MULT = 2.0, DASH_TIME = 0.38, DASH_CD = 5;
   // the skill 九死に一生: one dash in ten runs 1.5 times as far
   const LUCK_P = 0.1, LUCK_MULT = 1.5;
   const R_PLAYER = 0.3, R_ENEMY = 0.3, CATCH = 0.55;
@@ -2379,7 +2379,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
-  const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は3.5秒で戻る(2回分で7秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュの10回に1回、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
+  const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュの10回に1回、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
   const EQUIP_TABS = [['item', 'アイテム', ['rocket', 'boost', 'barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']], ['skill', 'スキル', ['skill']]];
   let equipTab = 'item';
   function openEquip() {
@@ -3822,7 +3822,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // player
     const [ix, iy] = readInput();
     P.cd = Math.max(0, P.cd - dt);
-    // 韋駄天: one dash comes back every 3.5 s until both are back (the dash button's ring shows the next one)
+    // 韋駄天: one dash comes back every 5 s until both are back (the dash button's ring shows the next one)
     if (skillOn('skill_idaten')) {
       if (P.dashN == null) P.dashN = IDATEN_N;
       if (P.dashN < IDATEN_N) { P.chargeT -= dt; if (P.chargeT <= 0) { P.dashN++; P.chargeT = P.dashN < IDATEN_N ? DASH_CD : 0; } }
@@ -6198,7 +6198,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
     ],
     '3b': [
-      { say: '花火の夜では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は3.5秒で戻る(2回分で7秒)', info: true },
+      { say: '花火の夜では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', info: true },
       { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
       { say: '花火の夜の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、韋駄天で一気に離れよう', info: true },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
@@ -6353,7 +6353,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const TIPS = {
     all: [
       '「!」が出た場所を先に踏むと、その鬼は出てこない',
-      'ダッシュは一度使うと3.5秒使えない',
+      'ダッシュは一度使うと5秒使えない',
       '爆弾は置いて1秒後に爆発する。近くの爆弾にも連鎖する',
       '黄色い鬼は先回りしてくる。急に向きを変えるとだませる',
       '黄色い鬼は、脇道に一瞬入ってすぐ戻ると、脇道の向こうへ回り込む',
