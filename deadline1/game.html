@@ -4092,9 +4092,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // Further away they take the shortest way to the runner.
       const dRun = Math.hypot(P.x - e.x, P.y - e.y), close = dRun < 1.1;
       if (e.lag == null) e.lag = 0.3 + Math.random() * 0.18;
-      // (a bomber never trails: a beat behind, it would sit at the runner's back at the runner's own speed and hold
-      // up the chase. It runs straight at the runner)
-      const trail = !amb && !close && dRun < 6 && !e.bomber;
+      // (a bomber or a black oni never trails: a beat behind, it would sit at the runner's back at the runner's own
+      // speed and hold up the chase, its extra speed wasted. It runs straight at the runner)
+      const trail = !amb && !close && dRun < 6 && !e.bomber && !e.black;
       const T = trail ? trailAt(e.lag) : null;
       const sight = trail && clearLine(e.x, e.y, T.x, T.y);
       e.think = (e.think || 0) - dt;
