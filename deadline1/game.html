@@ -450,6 +450,14 @@ body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
 /* the title screen: the name column runs to the bottom and the high scores fill what is left */
 body.ontitle .pad { padding-bottom: 8px; }
 body.ontitle .pad .who { flex: 1 1 auto; }
+/* on the title the menu's rows share out the side panel's height, so no gap is left under the last one */
+body.ontitle .pad .who .menu { flex: 1 1 auto; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
+@media (min-height: 361px) {
+  body.ontitle .pad .who .mrow { grid-template-columns: 26px minmax(0, 1fr); gap: 6px; }
+  body.ontitle .pad .who .mrow .ic { width: 26px; height: 26px; border-radius: 7px; }
+  body.ontitle .pad .who .mrow .ic svg { width: 17px; height: 17px; }
+  body.ontitle .pad .who .mrow b { font-size: min(15px, calc((100cqw - 54px) / 4.2)); }
+}
 body.ontitle .pad .who .records { flex: 1 1 auto; }
 /* the how-to: a rule wraps without leaving a few characters alone on a line */
 .rules dd { text-wrap: pretty; }
