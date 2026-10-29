@@ -6112,7 +6112,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = Math.max(e.stun || 0, 3); }, go: tutDown },
       { btn: 'dash mine', say: '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、3秒加速かランチャーが届く', info: true },
-      { say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される。4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
+      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
     ],
     3: [
       { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
@@ -6152,10 +6153,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     // 電脳都市 and 縁日通り: no new rule of their own, only the stage's times (and stage 2's lessons, the first time)
     c2: [
-      { say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される。4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
+      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
     ],
     b2: [
-      { say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される。4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
+      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
@@ -6164,7 +6167,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '黄色い鬼から分かれた影の鬼は先回りして、行く手に回り込んでくる(点線のルート)。このままだと挟み撃ちになる', info: true, set: tutPincer },
       { btn: 'dash', say: '影の鬼は建物1つ分離れていても影に反応する。光る角に向かって走り、角でダッシュして影を置こう', set: tutPincer, go: tutPincerGo },
       { say: '影の鬼は脇道を下りて影に向かい、回り込めなくなった。挟まれそうなときは、手前の道に影を置こう', info: true, set: () => { P.inv = 1e9; } },
-      { say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される。4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
+      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
     ],
     '3c': [
       { say: '電脳世界のステージ3では、電磁爆弾が特別に使える。爆発のあと電気が残り、触れた鬼は怯んで動けなくなる', info: true },
@@ -6186,7 +6190,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     let preDone = false;
     if (pre) {
       const want = tutReplay === tk ? tk === '3h' : !tutSeen()[pre];
-      const add = want ? TUT[pre].filter(x => pre === 3 ? x.pit : !x.end) : [];
+      const add = want ? TUT[pre].filter(x => pre === 3 ? x.pit : !x.end && !x.tail) : [];
       preDone = add.length > 0;
       steps = pre === 3 ? [...steps.filter(x => !x.tail && !x.end), ...add, ...last] : [...add, ...steps];
     }
