@@ -586,6 +586,14 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifeov { z-index: 30; }
 /* the weekly ranking's stage details */
 .rinfobody { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 12px; align-content: start; padding-right: 4px; overscroll-behavior: contain; }
+.rankprize { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--lamp); }
+.rankprize[hidden] { display: none; }
+.rankprize .ghost { flex: 0 0 auto; padding: 5px 12px; font-size: 12px; }
+.rkprize { max-width: 420px; }
+.rkplist { list-style: none; margin: 0; padding: 8px 12px; display: grid; gap: 4px; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.25); max-height: 40vh; overflow-y: auto; }
+.rkplist li { display: grid; grid-template-columns: 1fr auto 4em; gap: 12px; font-size: 14px; font-variant-numeric: tabular-nums; }
+.rkplist b { color: var(--lamp); text-align: right; }
+.rkptotal { margin: 0; font-weight: 800; color: var(--lamp); }
 .rinfobody h3 { margin: 0 0 4px; font-size: 13px; letter-spacing: .08em; color: var(--lamp); }
 .rinfobody ul { margin: 0; padding-left: 1.2em; display: grid; gap: 3px; font-size: 13px; line-height: 1.5; }
 .rinfobody table { border-collapse: collapse; font-size: 13px; }
@@ -951,6 +959,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <div class="rankmodes" role="tablist"><button type="button" id="rankModeW" role="tab" aria-selected="true">世界ランキング</button><button type="button" id="rankModeA" role="tab" aria-selected="false">歴代ランキング</button></div>
       <div class="ranktabs" id="rankTabs" role="tablist"></div>
       <span class="label" id="rankLabel">終わらない夜 ・ 逃走時間 上位100</span>
+      <div class="rankprize" id="rankPrize" hidden><span>週の終わりの順位で★がもらえる(最大★40)</span><button class="ghost" id="rankPrizeBtn" type="button">報酬詳細</button></div>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
       <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
@@ -1066,9 +1075,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <div class="row"><button class="go" id="resumeBtn" type="button">再開</button><button class="ghost" id="quitBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
+  <div class="overlay lifeov" id="rkPrizeScreen" hidden>
+    <div class="card rkprize">
+      <span class="kicker">RANKING REWARD</span>
+      <h2>ランキング報酬</h2>
+      <p>週替わりランキングの結果が出ました。</p>
+      <ol class="rkplist" id="rkPrizeBody"></ol>
+      <p class="rkptotal" id="rkPrizeTotal"></p>
+      <div class="row"><button class="go" id="rkPrizeOk" type="button">受け取る</button></div>
+    </div>
+  </div>
   <div class="overlay lifeov" id="rankInfoScreen" hidden>
     <div class="card rankcard rinfo">
-      <h2>ステージの詳細</h2>
+      <h2 id="rankInfoTitle">ステージの詳細</h2>
       <div class="rinfobody" id="rankInfoBody"></div>
       <div class="row"><button class="ghost" id="rankInfoClose" type="button">閉じる</button></div>
     </div>
@@ -1195,7 +1214,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       localStorage.setItem(REC_KEY, JSON.stringify(records)); localStorage.setItem(SHOP_RESET_KEY, '1');
     }
   } catch (e) {}
-  let recDoc = null, stageKillStart = 0;
+  let recDoc = null, stageKillStart = 0, recReady = false;
   const TOP_N = 5;
   // escapes rank above captures; faster escapes first, then longer survivals
   // the score is the time you stayed free: longer is better, escaped or caught alike
@@ -1290,7 +1309,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   async function saveRecords() {
     try { localStorage.setItem(REC_KEY, JSON.stringify(records)); } catch (e) {}
-    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {} }); } catch (e) {} }
+    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {}, rkPaid: records.rkPaid || 0 }); } catch (e) {} }
   }
   // records this stage's result; returns its rank (1-3) within that stage, or 0
   function addRecord(n, rec) {
@@ -1312,7 +1331,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const d = snap.data() || {};
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
-          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), rkPaid: Math.max(records.rkPaid || 0, d.rkPaid || 0) || records.rkPaid, shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
@@ -1321,6 +1340,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (records.bestTime > best) best = records.bestTime;
       renderRecords(); Rank.sync();
     } catch (e) { recDoc = null; }
+    finally { recReady = true; setTimeout(() => { try { Rank.prizeCheck(); } catch (_) {} }, 0); }
   })();
   const padMQ = matchMedia('(min-aspect-ratio: 5/4) and (pointer: coarse)'), wideMQ = matchMedia('(min-aspect-ratio: 5/4)');
   // the high scores ride in the name column whenever it is a side column; back in the card otherwise
@@ -1419,11 +1439,55 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         if (me && me.name) lsSet(NAME_LS, me.name);
         else if (canWrite && lsGet(NAME_LS)) await reclaim(lsGet(NAME_LS));
       } catch (e) { db = null; }
-      ready = true; paint(); sync();
+      ready = true; paint(); sync(); prizeCheck();
       onTitle();
     }
+    // the weekly ranking's prize: once a week is over, where this player ended it (their record on that week's board
+    // against everyone's), paid in stars. Weeks are paid in order, each once (records.rkPaid: the last week paid, kept
+    // with the records so two devices don't both pay); a week whose rank can't be read for now waits for the next launch
+    let prizeBusy = false, prizeShow = null;
+    async function prizeCheck() {
+      if (prizeBusy || !ready || !recReady) return;
+      prizeBusy = true;
+      try {
+        const now = WEEK();
+        if (records.rkPaid == null) { records.rkPaid = now - 1; saveRecords(); }   // (from the week this came in)
+        const weeks = Object.keys(records.stages || {}).map(k => /^wk(\d+)$/.exec(k)).filter(Boolean).map(m => +m[1])
+          .filter(w => w < now && w > records.rkPaid && (records.stages['wk' + w] || []).some(r => r.time > 0)).sort((a, b) => a - b);
+        const got = [];
+        for (const w of weeks) {
+          let rank = 0;
+          if (db && me && me.name) {
+            try {
+              const s = await db.doc('wk' + w + '/' + uid).get(), mine = s.exists ? s.data() : null;
+              if (mine && mine.best > 0) rank = (await db.collection('wk' + w).where('best', '>', mine.best).limit(1000).get()).size + 1;
+            } catch (e) { break; }
+          }
+          got.push({ w, rank, stars: rankPrize(rank) });
+        }
+        if (!got.length) return;
+        records.rkPaid = got[got.length - 1].w; starW().e += got.reduce((a, g) => a + g.stars, 0); saveRecords();
+        prizeShow = got; prizeOpen();
+      } finally { prizeBusy = false; }
+    }
+    // shown over the title (held back while another screen is up)
+    function prizeOpen() {
+      if (!prizeShow || ui.title.hidden || !$('nameScreen').hidden || !$('intro').hidden) return;
+      const days = w => { const d = new Date((w * 7 - 3) * 86400e3), e = new Date((w * 7 + 3) * 86400e3); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}〜${e.getUTCMonth() + 1}/${e.getUTCDate()}`; };
+      const box = $('rkPrizeBody'); box.textContent = '';
+      for (const g of prizeShow) {
+        const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('span'), c = document.createElement('b');
+        a.textContent = days(g.w) + 'の週'; b.textContent = g.rank ? g.rank + '位' : '順位外'; c.textContent = '★' + g.stars;
+        li.append(a, b, c); box.append(li);
+      }
+      $('rkPrizeTotal').textContent = `★ +${prizeShow.reduce((a, g) => a + g.stars, 0)} ・ 所持 ★${starHave()}`;
+      prizeShow = null; $('rkPrizeScreen').hidden = false;
+      tone(1568, 0.07, 'triangle', 0.05); setTimeout(() => tone(2093, 0.14, 'triangle', 0.05), 90);
+    }
+    $('rkPrizeOk').addEventListener('click', () => { tap(); $('rkPrizeScreen').hidden = true; updateLocks(); });
     // first visit: ask for a name as soon as the title is up
     function onTitle() {
+      prizeOpen();
       if (ready && db && canWrite && !(me && me.name) && !asked && !lsGet(LATER_LS) && !ui.title.hidden) { asked = true; openName(true); }
     }
     function openName(first) {
@@ -1508,6 +1572,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     async function openRank(board = 'wk' + WEEK()) {
       const list = $('rankList'), mine = $('rankMe'), info = [...boards(), ...allBoards()].find(x => x[0] === board) || boards()[0];
       paintTabs(board); $('rankLabel').textContent = `${info[1]} ・ 逃走時間 上位100`;
+      $('rankPrize').hidden = !/^wk\d+$/.test(board);
       list.textContent = ''; mine.hidden = true;
       const msg = t => { list.textContent = ''; const s = document.createElement('span'); s.className = 'msg'; s.textContent = t; list.appendChild(s); };
       ui.title.hidden = true; $('rankScreen').hidden = false;
@@ -1558,7 +1623,16 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       .observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
     $('who').hidden = ui.title.hidden;
     init();
-    return { sync, paint };
+    // where this player stands on this week's board now (0: not on it)
+    async function weekRank() {
+      if (!db || !me || !me.name) return 0;
+      try {
+        const s = await db.doc('wk' + WEEK() + '/' + uid).get(), mine = s.exists ? s.data() : null;
+        if (!(mine && mine.best > 0)) return 0;
+        return (await db.collection('wk' + WEEK()).where('best', '>', mine.best).limit(1000).get()).size + 1;
+      } catch (e) { return 0; }
+    }
+    return { sync, paint, prizeCheck, prizeOpen, weekRank, named: () => !!(me && me.name) };
   })();
   // ---------- titles: earned from how a stage went (any stage); one is worn over your name and in the world ranking ----------
   // [id, name, how to earn, test(run, totals, owned count)]. Roughly easy to hard.
@@ -1949,17 +2023,20 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
   const mergeStar = (a, b) => ({ e: Math.max((a && a.e) || 0, (b && b.e) || 0), s: Math.max((a && a.s) || 0, (b && b.s) || 0) });
-  // the weekly ranking pays stars by the minute: ★1 a minute up to 5 minutes, ★2 a minute after that
-  const rankStars = sec => { const m = Math.floor(sec / 60); return m <= 5 ? m : 5 + (m - 5) * 2; };
-  // the result screen's stars: how many this run earned (-1: neither a survival night nor the ranking), and their glints
+  // the weekly ranking pays once a week, by where the week ended: 1位 ★40 ... 100位以内 ★10, below that ★5 (for anyone
+  // who ran it that week at all, named or not). Paid on the first launch after the week is over
+  const RANK_PRIZE = [[1, 40], [2, 36], [3, 33], [5, 30], [10, 25], [20, 20], [50, 15], [100, 10]], RANK_PRIZE_LOW = 5;
+  const rankPrize = rank => { if (rank >= 1) for (const [r, n] of RANK_PRIZE) if (rank <= r) return n; return RANK_PRIZE_LOW; };
+  // the result screen's stars: how many this night earned (-1: not a survival night), and their glints
   let starGot = -1;
   const STAR_SHOW = 10, STAR_GAP = 0.28;
   function starChime() {
     for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
   }
-  // looks only: 200円 -> ★50, 500円 -> ★125; with an effect: ★400
-  const STAR_FX = 400;
-  const starPrice = it => SHOP_FX[it.id] ? STAR_FX : Math.round(it.price / 4);
+  // looks only: 200円 -> ★100, 500円 -> ★250. With an effect, by how much it does: ★600 for the ones on the items
+  // (launcher, jump), ★650 for the middling bomb and launcher ones, ★725 for the strong ones on every bomb or dash
+  const STAR_FX = 600, STAR_FX_PRICE = { bomb_emp: 650, rk_plasma: 650, bomb_grav: 725, bomb_ice: 725, dash_warp: 725, dash_shadow: 725 };
+  const starPrice = it => SHOP_FX[it.id] ? STAR_FX_PRICE[it.id] || STAR_FX : Math.round(it.price / 2);
 
   // ---------- today's missions (the survival nights): ten a day, easiest first, three on show at a time, ★1 each ----------
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
@@ -2329,7 +2406,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       saveRecords(); openShop(); shopSay(n ? `${n}個のアイテムを復元しました` : '復元するアイテムはありませんでした');
     } catch (e) { shopSay('復元できませんでした。通信状態を確認してね'); }
   });
-  // ★ in packs (4円 a star, like the items: 200円 = ★50); free while testing
+  // ★ in packs (4円 a star); free while testing
   const STAR_PACKS = [50, 100, 250, 500, 750, 1000].map(n => ({ pack: n, yen: n * 4 }));
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
@@ -2356,7 +2433,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
-    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(見た目だけ★50・★125、効果つき★400)。生存課題のミッションでも毎日10個まで集められる。'));
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(見た目だけ★100・★250、効果つき★600〜★725)。生存課題のミッション(毎日10個まで)・週替わりランキングの報酬・共有でも集められる。'));
     const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
     btn.addEventListener('click', async () => {
       tap(); btn.disabled = true;
@@ -2542,7 +2619,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const fresh = el.cloneNode(true);   // a clean copy restarts every animation from zero
       el.replaceWith(fresh); el = fresh;
       el.classList.remove('play'); el.hidden = false;
-      const done = () => { if (run === live && !el.hidden) el.hidden = true; };
+      const done = () => { if (run === live && !el.hidden) { el.hidden = true; try { Rank.prizeOpen(); } catch (_) {} } };
       el.addEventListener('animationend', e => { if (e.animationName === 'introOut') done(); });
       el.addEventListener('pointerdown', e => { e.preventDefault(); done(); });
       let shown = !('IntersectionObserver' in window), ready = false, started = false;
@@ -4444,19 +4521,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (stageN >= 3) Rank.sync();
     // a survival night: the stars its missions paid
     misEnd();
-    const rankPay = stageN === 3 && rankRun ? rankStars(t) : -1;
-    if (rankPay > 0) { starW().e += rankPay; saveRecords(); }
-    { const got = stageN === 4 ? misGot : Math.max(0, rankPay); $('rStars').hidden = stageN !== 4 && rankPay < 0;
-      starGot = stageN === 4 || rankPay >= 0 ? got : -1;
+    { const got = stageN === 4 ? misGot : 0; $('rStars').hidden = stageN !== 4;
+      starGot = stageN === 4 ? got : -1;
       const row = $('rStarRow'); row.textContent = '';
       // one star per mission, landing one after another once the screen is up
       for (let i = 0; i < Math.min(got, STAR_SHOW); i++) { const e = document.createElement('i'); e.style.animationDelay = (0.25 + i * STAR_GAP) + 's'; row.append(e); }
       if (got > STAR_SHOW) { const e = document.createElement('b'); e.textContent = '+' + (got - STAR_SHOW); e.style.animationDelay = (0.25 + STAR_SHOW * STAR_GAP) + 's'; row.append(e); }
       const tx = $('rStarTxt'); tx.style.animationDelay = (0.35 + Math.min(got, STAR_SHOW + 1) * STAR_GAP) + 's';
       const left = MIS_POOL.length - misState().done.length;
-      if (rankPay >= 0) { const m = Math.floor(t / 60), next = rankStars((m + 1) * 60) - rankPay;
-        tx.textContent = (got ? `ランキング報酬 ★ +${got}(${m}分逃走)` : 'ランキング報酬: 1分逃げると★1') + ` ・ 所持 ★${starHave()} ・ あと1分で★+${next}`; }
-      else tx.textContent = (got ? `ミッション達成 ★ +${got}` : left ? 'ミッションを達成すると★1' : '今日のミッションはすべて達成') + ` ・ 所持 ★${starHave()}` + (got && left ? ` ・ 残り${left}個` : ''); }
+      tx.textContent = (got ? `ミッション達成 ★ +${got}` : left ? 'ミッションを達成すると★1' : '今日のミッションはすべて達成') + ` ・ 所持 ★${starHave()}` + (got && left ? ` ・ 残り${left}個` : ''); }
     $('rScoreLabel').textContent = `${stageLabel(stageN)} 逃走時間`;
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
@@ -7460,7 +7533,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する。爆発の範囲は爆弾の1.5倍', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>週替わりランキング ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(ハイジャンプ・バリア・ランチャー)を1つ選んで始まる'])}</section>
-      <section><h3>報酬(★)</h3>${li(['1回ごとに、逃げた時間で★がもらえる(1分刻み)', '5分までは1分ごとに★1、5分からは1分ごとに★2'])}<table><tr><th>逃走時間</th><th>★</th></tr>${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(m => `<tr><td>${m}分〜</td><td>★${rankStars(m * 60)}</td></tr>`).join('')}<tr><td>11分〜</td><td>以降1分ごとに★+2</td></tr></table></section>
+      <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに最初に開いたとき)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, `ランチャー: ${RK_DROP_AT / 60}分から、爆弾の箱が出るときにまれに(約${Math.round(RK_DROP_P * 100)}%)一緒に落ちる`, '鬼を40体倒すごとに、ハイジャンプかランチャーが届く'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
@@ -7468,9 +7541,26 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分から: 出てくる鬼のほとんどがバリア鬼になる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li(own)}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
-    $('rankInfoScreen').hidden = false;
+    $('rankInfoTitle').textContent = 'ステージの詳細'; $('rankInfoScreen').hidden = false;
   }
   $('spInfoBtn').addEventListener('click', () => { tap(); rankInfo(); });
+  // the weekly ranking's prize in full: how it's paid, the table, and what this week would pay as things stand
+  async function rankPrizeInfo() {
+    const li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
+    const rows = RANK_PRIZE.map(([r, n], i) => [r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位', n]).concat([['101位以下', RANK_PRIZE_LOW]]);
+    const played = (records.stages['wk' + WEEK()] || []).some(r => r.time > 0);
+    const body = $('rankInfoBody');
+    const paint = rank => {
+      const now = rank ? `今週の今の順位: ${rank}位 → このままなら★${rankPrize(rank)}` : played ? `今週は${Rank.named() ? 'まだランキングに載っていない' : '名前が未登録'}ので、このままなら★${RANK_PRIZE_LOW}` : `今週はまだ遊んでいない(1回遊べば★${RANK_PRIZE_LOW}以上)`;
+      body.innerHTML = `
+      <section><h3>今週(${MAP_NAMES[weekSkin()][2]})</h3>${li([now])}</section>
+      <section><h3>もらえる★</h3><table><tr><th>週の最終順位</th><th>★</th></tr>${rows.map(([a, n]) => `<tr><td>${a}</td><td>★${n}</td></tr>`).join('')}</table></section>
+      <section><h3>しくみ</h3>${li(['週替わりランキングは毎週月曜に始まり、日曜の終わりに締め切り(日本時間)', '週が終わったあと、最初にゲームを開いたときに★を受け取る(開かなかった週の分もまとめて)', '順位は名前を登録してランキングに載った、その週の最高記録で決まる。同じタイムは同じ順位', `101位以下・名前が未登録でも、その週に1回遊べば★${RANK_PRIZE_LOW}`, 'その週に一度も遊ばなければ報酬はなし'])}</section>`;
+    };
+    paint(0); $('rankInfoTitle').textContent = 'ランキング報酬'; $('rankInfoScreen').hidden = false;
+    const r = await Rank.weekRank(); if (r && !$('rankInfoScreen').hidden && $('rankInfoTitle').textContent === 'ランキング報酬') paint(r);
+  }
+  $('rankPrizeBtn').addEventListener('click', () => { tap(); rankPrizeInfo(); });
   $('rankInfoClose').addEventListener('click', () => { tap(); $('rankInfoScreen').hidden = true; });
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
@@ -7479,7 +7569,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
     $('spKicker').textContent = `RANKING ${mapName(3)}`; bestLine('spBest', 3);
-    $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}${MAP_CHOICE ? '(' + STORY_NAMES[ROUTE[mapSkin]] + ')' : ''}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 1分逃げるごとに★1、5分からは1分ごとに★2\n補給アイテムを1つ選ぶと始まる。`;
+    $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}${MAP_CHOICE ? '(' + STORY_NAMES[ROUTE[mapSkin]] + ')' : ''}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
     fitStandby();
