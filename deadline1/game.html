@@ -97,6 +97,24 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,59,48,.85); animation: cdpop .9s ease-out both; }
 @keyframes cdpop { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .countdown { animation: none; } }
+/* ---- the opening sting ---- */
+.intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; align-content: center; gap: 10px; background: #07080d; overflow: hidden; cursor: pointer; animation: introOut .45s ease-in 2.25s forwards; }
+.intro[hidden] { display: none; }
+.introline { position: absolute; left: 0; right: 0; top: 50%; height: 3px; margin-top: -1.5px; background: var(--oni); box-shadow: 0 0 18px rgba(255,59,48,.9), 0 0 50px rgba(255,59,48,.5); transform-origin: left center; transform: scaleX(0); animation: introLine .5s cubic-bezier(.7,0,.3,1) .1s forwards, introLineGo .35s ease-in .95s forwards; }
+.introlog { position: relative; font-family: var(--f-display); font-size: clamp(48px, 13vmin, 120px); letter-spacing: .04em; line-height: 1; color: #fff; display: flex; }
+.introlog b { font-weight: 400; opacity: 0; transform: translateY(14px); animation: introIn .4s cubic-bezier(.2,1.4,.4,1) forwards; }
+.introlog b:first-child { animation-delay: .75s; }
+.introlog b.red { color: var(--oni); text-shadow: 0 0 24px rgba(255,59,48,.7); animation: introIn .4s cubic-bezier(.2,1.4,.4,1) .9s forwards, introFlick 1.2s steps(1) 1.3s; }
+.introsub { font-family: var(--f-say); font-size: clamp(13px, 3vmin, 18px); letter-spacing: .5em; color: var(--muted); opacity: 0; animation: introFade .5s ease-out 1.35s forwards; }
+.intro::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at center, rgba(255,30,30,0) 45%, rgba(255,30,30,.28) 100%); opacity: 0; animation: introSiren 1s ease-in-out 1.1s 2; }
+@keyframes introLine { to { transform: scaleX(1); } }
+@keyframes introLineGo { to { transform: scaleX(1) scaleY(0); opacity: 0; } }
+@keyframes introIn { to { opacity: 1; transform: none; } }
+@keyframes introFade { to { opacity: 1; } }
+@keyframes introFlick { 0% { opacity: 1; } 8% { opacity: .2; } 12% { opacity: 1; } 40% { opacity: .5; } 44% { opacity: 1; } }
+@keyframes introSiren { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+@keyframes introOut { to { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .intro, .intro * , .intro::after { animation-duration: .01s !important; animation-delay: 0s !important; } .intro { animation: introOut .3s ease-in 1.2s forwards !important; } }
 /* ---- first-time tutorial ---- */
 .tutbar { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(94%, 680px); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 10px; background: rgba(8,10,16,.9); border: 1.5px solid var(--lamp); box-shadow: 0 6px 24px rgba(0,0,0,.5); color: var(--ink); }
 .tutbar[hidden] { display: none; }
@@ -378,6 +396,11 @@ h2.clear { color: #5dff9e; }
 /* the daily challenge sits under the ranking button in the name column */
 .dailybtn { border: 1px solid rgba(143,233,255,.55); background: rgba(143,233,255,.08); color: var(--runner); border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; line-height: 1.3; text-align: center; white-space: pre-line; }
 .dailybtn.locked { opacity: .5; }
+/* the result's share buttons: a slim row of their own under the main ones */
+.sharerow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.sharerow .ghost.share { padding: 6px 12px; font-size: 13px; }
+.sharestar { font-size: 12px; font-weight: 700; color: var(--lamp); }
+.sharestar:empty { display: none; }
 .ghost.share { display: inline-flex; align-items: center; justify-content: center; gap: 6px; color: inherit; text-decoration: none; }
 /* a short landscape screen: the three result buttons sit on one line */
 @media (max-height: 460px) { #overScreen .row > *, #clearScreen .row > * { padding-left: 14px; padding-right: 14px; } }
@@ -629,6 +652,8 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 .shophead .shopnote { white-space: normal; overflow: visible; font-size: 11px; line-height: 1.3; }
 /* six rows (another's 記憶 too): the live lines step aside on a short screen */
 @media (max-height: 520px) { .menu:has(.mrow:nth-child(6)) .mrow { padding-top: 5px; padding-bottom: 5px; } .menu:has(.mrow:nth-child(6)) .mrow:not(.daily) small { display: none; } }
+/* the smallest phones on their side (six rows and the player card): tighter still */
+@media (max-height: 360px) { .menu { gap: 4px; } .menu .mrow { padding-top: 3px; padding-bottom: 3px; } .mrow .ic { width: 20px; height: 20px; } .mrow b { font-size: 12px; } .mrow.daily small { display: none; } .idcard { padding: 5px 9px 6px; gap: 1px; } .idcard .whoname { font-size: 13px; } .who { gap: 5px; } }
 /* the high-score box is gone from the title: the player's name opens the records */
 #records { display: none !important; }
 /* the equip screen */
@@ -777,6 +802,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="padbase"><div class="padknob" id="padKnob"></div></div>
 </div>
 
+<div class="intro" id="intro" hidden aria-hidden="true">
+  <div class="introline"></div>
+  <div class="introlog"><b>DEAD</b><b class="red">LINE</b></div>
+  <div class="introsub">鬼から逃げ切れ</div>
+</div>
 <main class="stage" id="stage">
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
@@ -897,7 +927,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       </div>
       <p id="rMsg"></p>
       <div class="award" id="rTitles" hidden></div>
-      <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button><button class="ghost share" id="rShare" type="button">Xでシェア</button><button class="ghost share" id="rInsta" type="button">Instagramでシェア</button></div>
+      <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button></div>
+      <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="rShare" type="button">X</button><button class="ghost share" id="rInsta" type="button">Instagram</button><button class="ghost share" id="rLine" type="button">LINE</button><span class="sharestar" id="rShareStar"></span></div>
     </div>
   </div>
 
@@ -915,7 +946,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       </div>
       <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。爆弾とアイテムは持ち越し。</p>
       <div class="award" id="cTitles" hidden></div>
-      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button><button class="ghost share" id="cShare" type="button">Xでシェア</button><button class="ghost share" id="cInsta" type="button">Instagramでシェア</button></div>
+      <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button></div>
+      <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="cShare" type="button">X</button><button class="ghost share" id="cInsta" type="button">Instagram</button><button class="ghost share" id="cLine" type="button">LINE</button><span class="sharestar" id="cShareStar"></span></div>
       <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
       <div class="picks" id="clearPicks">
         <button class="pick boost" data-item="boost" type="button"><b>1 ・ 3秒加速</b><span><i>3秒間だけ</i><i>足が速くなる</i></span></button>
@@ -997,7 +1029,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="lifeact ad" id="lifeAd" type="button"><b>広告を見て 1回復</b><small>広告を1本、最後まで見る</small></button>
         <button class="lifeact ad3" id="lifeAd3" type="button"><b>広告を2本見て 3回復</b><small>続けて2本見るとおまけで1回分多い</small></button>
         <button class="lifeact pass" id="lifePass" type="button"><b>無制限パス</b><small id="lifePassSub">遊べる回数を気にせず、何回でも遊べる(買い切り)</small></button>
-        <button class="lifeact line" id="lifeLine" type="button"><b>LINEで友達を招待</b><small id="lifeLineSub">招待した友達が初めて遊ぶと、1人につき★5もらえる</small></button>
       </div>
       <div class="row"><button class="ghost" id="lifeClose" type="button">閉じる</button></div>
     </div>
@@ -1218,7 +1249,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const d = snap.data() || {};
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
-          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), refGot: [...new Set([...(records.refGot || []), ...(d.refGot || [])])], s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
@@ -1684,6 +1715,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // made when the result screen opens, so the tap can hand it straight to the share sheet
   const SHARE = { kind: '', file: null, url: '' };
   function prepShare(kind) {
+    shareStarLine();
     try {
       const c = drawCard(kind); SHARE.kind = kind; SHARE.file = null;
       if (SHARE.url) URL.revokeObjectURL(SHARE.url);
@@ -1734,9 +1766,20 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     topLoc().href = app;
     setTimeout(() => { document.removeEventListener('visibilitychange', off); if (!left && !document.hidden) topLoc().href = web; }, 2500);
   }
+  // the first share of the day (X, Instagram or LINE alike) gives ★5
+  const SHARE_STAR = 5, shareDayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
+  const shareStarLeft = () => records.shareDay !== shareDayKey();
+  function shareStarLine() { for (const id of ['rShareStar', 'cShareStar']) { const el = $(id); if (el) el.textContent = shareStarLeft() ? `今日はじめてのシェアで★${SHARE_STAR}` : ''; } }
+  function shareStar() {
+    if (!shareStarLeft()) return;
+    records.shareDay = shareDayKey(); starW().e += SHARE_STAR; saveRecords(); shareStarLine();
+    setTimeout(() => shareToast(`シェアありがとう! ★${SHARE_STAR}`), 900);
+  }
   function shareTo(dest, kind) {
     tap(); if (SHARE.kind !== kind) prepShare(kind);
     const I = shareInfo(kind);
+    shareStar();
+    if (dest === 'line') { const u = 'https://line.me/R/share?text=' + encodeURIComponent(I.text); try { if (inFrame || !matchMedia('(pointer: coarse)').matches) window.open(u, '_blank', 'noopener'); else topLoc().href = u; } catch (_) {} return; }
     if (inFrame || !matchMedia('(pointer: coarse)').matches) { shareFallback(I, dest); return; }
     copyCard().then(ok => {
       if (ok) shareToast(dest === 'ig' ? '画像をコピーした。ストーリーで貼り付けてね' : '画像をコピーした。投稿画面に貼り付けてね');
@@ -1745,7 +1788,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         : openApp('twitter://post?message=' + encodeURIComponent(I.text), 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text)), ok ? 600 : 0);
     });
   }
-  for (const [id, dest, kind] of [['rShare', 'x', 'over'], ['cShare', 'x', 'clear'], ['rInsta', 'ig', 'over'], ['cInsta', 'ig', 'clear']])
+  for (const [id, dest, kind] of [['rShare', 'x', 'over'], ['cShare', 'x', 'clear'], ['rInsta', 'ig', 'over'], ['cInsta', 'ig', 'clear'], ['rLine', 'line', 'over'], ['cLine', 'line', 'clear']])
     $(id).addEventListener('click', () => shareTo(dest, kind));
   function paintTitle() {
     // titles owned but none ever chosen: wear the hardest one
@@ -2357,12 +2400,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 15 minutes, one more for
   // watching an ad, three for two ads in a row. The 無制限パス (bought once) does away with the count. Kept on this
-  // device. Inviting friends on LINE gives ★5 for each one who comes and plays (see the invitations below) ----------
-  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 15 * 60 * 1000, AD_SEC = 5, INVITE_STAR = 5;
+  // device. ----------
+  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 15 * 60 * 1000, AD_SEC = 5;
   const PASS_ID = 'pass_unlimited', PASS_YEN = 480;
   const passOn = () => shopData().owned.includes(PASS_ID);
-  // a first visit (nothing kept here yet): an invitation it came by is credited to whoever sent it
-  const lifeFirst = (() => { try { return !localStorage.getItem(LIFE_KEY) && !(records.plays > 0) && !Object.keys(records.stages || {}).length; } catch (_) { return false; } })();
   const lifeData = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIFE_KEY)); } catch (_) {} return Object.assign({ n: LIFE_MAX, at: Date.now(), inv: '' }, v || {}); })();
   const lifeSave = () => { try { localStorage.setItem(LIFE_KEY, JSON.stringify(lifeData)); } catch (_) {} };
   // the time recovery: one per 15 minutes while below 3 (what was earned on top of 3 is kept)
@@ -2440,43 +2481,20 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     shopData().owned.push(PASS_ID); saveRecords(); lifeRender(); $('lifeMsg').textContent = '無制限パスを手に入れた! 何回でも遊べる';
     tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); setTimeout(() => tone(1760, 0.2, 'triangle', 0.05), 170);
   });
-  // LINE: the invitation carries this player's id; a friend who opens it and plays for the first time is written down
-  // (refs/<their id> = { by: this player }), and each one found here gives ★5, once
-  let refUid = null, refDb = null, refMe = null;
-  // the inviter of a first visit, kept until this player has started a run
-  const REF_LS = REC_KEY + '-ref', lsRef = v => { try { v ? localStorage.setItem(REF_LS, v) : localStorage.removeItem(REF_LS); } catch (_) {} };
-  async function refPlayed() {
-    let by = null; try { by = localStorage.getItem(REF_LS); } catch (_) {}
-    if (!by || !refDb || !refMe || !(records.plays > 0)) return;
-    try { await refDb.doc('refs/' + refMe).set({ by, at: new Date().toISOString() }); lsRef(''); } catch (_) {}
-  }
-  const refUrl = () => SHARE_URL + (refUid ? '?ref=' + encodeURIComponent(refUid) : '');
-  $('lifeLine').addEventListener('click', () => {
-    tap();
-    const text = `鬼から逃げ切れ。逃走アクション「DEADLINE」で一緒に遊ぼう!\n${refUrl()}`;
-    try { window.open('https://line.me/R/share?text=' + encodeURIComponent(text), '_blank', 'noopener'); } catch (_) {}
-    $('lifeMsg').textContent = refUid ? '招待した友達が初めて遊ぶと、★5が届く' : '';
-  });
-  async function refSync() {
-    try {
-      if (!window.claude || !window.claude.use) return;
-      const [db, user] = await Promise.all([window.claude.use('db'), window.claude.use('user')]);
-      if (!db || !user) return;
-      const uid = await user.id(); if (!uid) return; refUid = uid;
-      // came by an invitation, on a first visit: say who sent it (once; never oneself)
-      let by = null; try { by = new URLSearchParams(location.search).get('ref'); } catch (_) {}
-      if (lifeFirst && by && by !== uid && by.length <= 128) lsRef(by);
-      refDb = db; refMe = uid; refPlayed();
-      // friends this player brought in: ★5 for each not yet counted
-      const q = await db.collection('refs').where('by', '==', uid).orderBy('by').limit(200).get();
-      const got = records.refGot = records.refGot || []; let n = 0;
-      for (const d of q.docs) if (!got.includes(d.id)) { got.push(d.id); n++; }
-      if (n) { starW().e += n * INVITE_STAR; saveRecords(); $('lifeMsg').textContent = `招待した友達${n}人が遊んでくれた! ★${n * INVITE_STAR}`; lifeOpen($('lifeMsg').textContent); }
-    } catch (_) {}
-  }
-  lifeSave(); refSync();
   setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
   lifeRender();
+
+  // ---------- the opening sting: every launch of the app, once a visit on the site; a tap skips it ----------
+  (() => {
+    const el = $('intro'); let seen = false;
+    try { seen = !window.DEADLINE_APP && sessionStorage.getItem(REC_KEY + '-intro') === '1'; sessionStorage.setItem(REC_KEY + '-intro', '1'); } catch (_) {}
+    if (seen) return;
+    el.hidden = false;
+    const done = () => { if (!el.hidden) el.hidden = true; };
+    el.addEventListener('animationend', e => { if (e.animationName === 'introOut') done(); });
+    el.addEventListener('pointerdown', e => { e.preventDefault(); done(); });
+    setTimeout(done, 3200);
+  })();
 
   // ---------- settings (the gear on the title): kept on this device ----------
   const SET_KEY = REC_KEY + '-settings';
@@ -4266,7 +4284,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tone(220, 0.6, 'sawtooth', 0.09, 55);
     const isNew = total > best;
     if (isNew) { best = total; saveBest(); }
-    records.plays++; refPlayed();   // (a friend's invitation counts once a run has been played)
+    records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN === 3 && rankRun && ALL_SKINS.includes(mapSkin)) addRecord(allKey(mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
@@ -5854,7 +5872,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const titleMusic = () => {
     if (state !== 'title' && state !== 'startpick' && state !== 'brief') return;
     initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : !$('shopScreen').hidden ? SONGS.shop : SONGS.title);
-    if (ac) ac.resume().then(() => { const h = $('bgmHint'); if (h) h.hidden = ac.state === 'running'; }).catch(() => {});
+    if (ac) ac.resume().then(() => { const h = $('bgmHint'); if (h) h.hidden = ac.state === 'running' || !!window.DEADLINE_APP; }).catch(() => {});
   };
   // iPhone only unlocks audio on touchend / click, so listen to all of them
   for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'touchend', 'mousedown', 'click', 'keydown']) addEventListener(ev, titleMusic, true);
