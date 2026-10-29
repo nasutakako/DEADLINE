@@ -659,6 +659,11 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 .mapcard b { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
 .pick b { white-space: normal; word-break: keep-all; overflow-wrap: anywhere; line-height: 1.25; }
 .pick span i { word-break: keep-all; overflow-wrap: anywhere; }
+/* the item picks (start and next stage): the name always on one line, sized down to the card as on a narrow screen,
+   and the line under it the same size as there */
+:is(#startPicks, #clearPicks) .pick { container-type: inline-size; }
+:is(#startPicks, #clearPicks) .pick b { white-space: nowrap; font-size: min(15px, 9cqw); letter-spacing: 0; }
+:is(#startPicks, #clearPicks) .pick span { font-size: clamp(9px, 7.6cqw, 12px); }
 .mapcard b, .mapcard small.prize { word-break: keep-all; overflow-wrap: anywhere; }
 .mapcard small:not(.story) { white-space: normal; line-height: 1.2; word-break: keep-all; overflow-wrap: anywhere; }
 .mapsel:has(.mapcard:nth-child(4)) { gap: 6px; }
