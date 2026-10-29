@@ -1953,8 +1953,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const fuseStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'fuse' && stageN <= 3 && !daily && state !== 'title';
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
   // (on 花火の夜 its blast is half as wide again as a bomb's)
-  // (faster than the black oni)
-  const bomberMult = () => BLACK_MULT + 0.07;
+  // (well faster than the black oni: a bomber behind one catches it up and runs on ahead of it)
+  const bomberMult = () => BLACK_MULT + 0.27;
   const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
   const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 2, 3];
   // 影踏み: a yellow oni within this distance of the runner splits off its shadow oni (once)
