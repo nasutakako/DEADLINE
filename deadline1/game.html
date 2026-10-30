@@ -2800,7 +2800,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const fx = EQ('boost');
     if (fx === 'bs_thunder' || fx === 'bs_ice') {
       zaps.push({ x: P.x, y: P.y, r: 2, t: 0, life: 0.9, kind: fx === 'bs_ice' ? 'frost' : 'thunder', hit: new Set(), land: true });
-      if (fx === 'bs_thunder') { flash = Math.max(flash, 0.3); tone(90, 0.4, 'sawtooth', 0.08, 40); }
+      if (fx === 'bs_thunder') { flash = Math.max(flash, 0.3); tone(90, 0.4, 'sawtooth', 0.08, 40); sfx.thunder(); } else sfx.ice();
     }
     // 爆裂着地: a bomb's blast where it lands (the runner is never caught in its own)
     if (fx === 'bs_blast') explode({ x: P.x, y: P.y, fx: '' });
@@ -4233,7 +4233,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // 導火線: a bomber near the runner lights its fuse, blinks, and goes off
     for (const e of enemies) {
       if (!e.bomber || e.dead || air) continue;
-      if (e.fuseT == null && !(e.stun > 0) && !(e.hold > 0) && Math.hypot(P.x - e.x, P.y - e.y) < BOMBER_NEAR) { e.fuseT = BOMBER_FUSE; tone(1400, 0.06, 'square', 0.04); }
+      if (e.fuseT == null && !(e.stun > 0) && !(e.hold > 0) && Math.hypot(P.x - e.x, P.y - e.y) < BOMBER_NEAR) { e.fuseT = BOMBER_FUSE; tone(1400, 0.06, 'square', 0.04); if (stageN >= 3) sfx.whistle(BOMBER_FUSE); }
       if (e.fuseT != null) {
         const b4 = Math.ceil(e.fuseT * 4); e.fuseT -= dt;
         if (e.fuseT <= 0) bomberBlow(e, true);
@@ -4245,7 +4245,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       P.blast = false;
       if (state === 'play' && tut && P.inv <= 0) tutCaught();
       if (state === 'play' && !tut && P.inv <= 0) {
-        if (P.barrier) { P.barrier = false; P.inv = INV_TIME; P.saveT = INV_TIME; if (S3) S3.saves++; buzz('barrier'); booms.push({ x: P.x, y: P.y, t: 0, barrier: true, fx: EQ('barrier') }); tone(1200, 0.3, 'triangle', 0.08, 300); }
+        if (P.barrier) { P.barrier = false; P.inv = INV_TIME; P.saveT = INV_TIME; if (S3) S3.saves++; buzz('barrier'); barrierSfx(); booms.push({ x: P.x, y: P.y, t: 0, barrier: true, fx: EQ('barrier') }); tone(1200, 0.3, 'triangle', 0.08, 300); }
         else {
           caught();
           document.querySelector('#overScreen h2').textContent = '爆発';
@@ -4324,7 +4324,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (!air && nearestD < CATCH && P.inv <= 0 && !tut) {
       if (P.barrier) {
         // the barrier takes the hit and blows away every oni touching it
-        P.barrier = false; P.inv = INV_TIME; P.saveT = INV_TIME; if (S3) S3.saves++; buzz('barrier');
+        P.barrier = false; P.inv = INV_TIME; P.saveT = INV_TIME; if (S3) S3.saves++; buzz('barrier'); barrierSfx();
         for (const e of enemies) if (Math.hypot(e.x - P.x, e.y - P.y) < CATCH + 0.6) { e.dead = true; kills++; tally(e); }
         enemies = enemies.filter(e => !e.dead);
         booms.push({ x: P.x, y: P.y, t: 0, barrier: true, fx: EQ('barrier') });
@@ -4416,7 +4416,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (it === 'barrier') { P.barrier = true; tone(660, 0.12, 'triangle', 0.06, 1320); }
     else {
       rockets.push(fireRocket(P.fx, P.fy));
-      tone(520, 0.3, 'sawtooth', 0.06, 140); noise(0.2, 0.06);
+      if (EQ('rocket') === 'rk_laser') sfx.laser(); else { tone(520, 0.3, 'sawtooth', 0.06, 140); noise(0.2, 0.06); }
     }
   }
 
@@ -4425,6 +4425,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (mines.some(m => Math.hypot(m.x - P.x, m.y - P.y) < 0.5)) return;
     P.stock--; if (S3) S3.bombs++;
     mines.push({ x: P.x, y: P.y, fuse: FUSE, fx: bombFx() });
+    if (bombFx() === 'bomb_fw') sfx.whistle(FUSE);
     tone(330, 0.07, 'square', 0.05);
   }
 
@@ -4466,7 +4467,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       shake = reduceMotion ? 0 : Math.max(shake, 0.45); flash = Math.max(flash, 0.6); tone(55, 0.8, 'sawtooth', 0.12, 25); noise(0.6, 0.15);
     }
     elemBomb(m);
-    if (m.fx === 'bomb_emp') zaps.push({ x: m.x, y: m.y, r: 1.3, t: 0, life: 0.5, kind: 'emp', hit: new Set() });
+    if (m.fx === 'bomb_emp') { zaps.push({ x: m.x, y: m.y, r: 1.3, t: 0, life: 0.5, kind: 'emp', hit: new Set() }); sfx.emp(); }
+    if (m.fx === 'bomb_ice') sfx.ice();
+    if (m.fx === 'bomb_fw') sfx.firework();
   }
 
   // a bomber oni goes off: a bomb's blast where it stands. It takes the oni round it (and sets off other bombers and
@@ -4479,7 +4482,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (e.blown) return;
     e.blown = true; e.dead = true; e.fuseT = null;
     // on 花火の夜 a bomber goes up as a firework
-    if (stageN >= 3) { const cols = fwBoom(e.x, e.y, bomberR(), 2.4); for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: `rgb(${cols[i % 2]})` }); } }
+    if (stageN >= 3) { sfx.firework(); const cols = fwBoom(e.x, e.y, bomberR(), 2.4); for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: `rgb(${cols[i % 2]})` }); } }
     else booms.push({ x: e.x, y: e.y, t: 0, fx: '', r: bomberR() });
     if (stageN < 3) for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: ['#ffcf5a', '#ff6a3d', '#fff1c4'][i % 3] }); }
     shake = reduceMotion ? 0 : Math.max(shake, 0.3); flash = Math.max(flash, 0.35);
@@ -4720,6 +4723,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // lightning left behind and the electric bomb's leftover charge
     if (P.boostT > 0 && EQ('boost') === 'bs_thunder' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'thunder', hit: new Set() }); }
     if (P.boostT > 0 && EQ('boost') === 'bs_ice' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'frost', hit: new Set() }); }
+    // the jump looks in the air: a twinkle, a crackle or a tinkle now and then
+    if (P.jumpT > 0 && (P.sfT = (P.sfT || 0) - dt) <= 0) {
+      const k = EQ('boost'); P.sfT = 0.16 + Math.random() * 0.1;
+      if (k === 'bs_star') sfx.chime(0.5, 1); else if (k === 'bs_thunder') sfx.crackle(0.7); else if (k === 'bs_ice') sfx.tinkle();
+    }
     // in the air: きらめきスター sheds glitter, 爆裂着地 trails embers
     if (P.jumpT > 0 && (EQ('boost') === 'bs_star' || EQ('boost') === 'bs_blast') && (P.glT = (P.glT || 0) - dt) <= 0) {
       const star = EQ('boost') === 'bs_star'; P.glT = star ? 0.035 : 0.05;
@@ -5610,6 +5618,49 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const src = ac.createBufferSource(), g = ac.createGain();
     src.buffer = buf; g.gain.value = v; src.connect(g).connect(ac.destination); src.start();
   }
+  // ---------- the shop effects' own sounds (all made here, no sound files) ----------
+  // tn: a tone that starts after a delay; nz: a burst of filtered noise (band/high/lowpass) after a delay
+  function tn(f, d, type, v, slide, at = 0) {
+    if (!ac || muted) return;
+    const o = ac.createOscillator(), g = ac.createGain(), t0 = ac.currentTime + at;
+    o.type = type; o.frequency.setValueAtTime(f, t0); if (slide) o.frequency.exponentialRampToValueAtTime(slide, t0 + d);
+    g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v, t0 + 0.005); g.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+    o.connect(g).connect(ac.destination); o.start(t0); o.stop(t0 + d + 0.02);
+  }
+  function nz(d, v, kind, freq, q = 1, at = 0) {
+    if (!ac || muted) return;
+    const len = Math.max(1, Math.floor(ac.sampleRate * d)), buf = ac.createBuffer(1, len, ac.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 2;
+    const src = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain(), t0 = ac.currentTime + at;
+    fl.type = kind; fl.frequency.value = freq; fl.Q.value = q; src.buffer = buf; g.gain.value = v;
+    src.connect(fl).connect(g).connect(ac.destination); src.start(t0);
+  }
+  const sfx = {
+    // ice: a sharp crack, then a high glassy ring
+    ice(k = 1) { nz(0.06, 0.16 * k, 'highpass', 3500); nz(0.12, 0.08 * k, 'bandpass', 6000, 3, 0.03); tn(2637, 0.5, 'sine', 0.04 * k, 2489, 0.02); tn(3951, 0.35, 'sine', 0.025 * k, 0, 0.05); tn(5274, 0.25, 'sine', 0.015 * k, 0, 0.09); },
+    // a soft tinkle (the frost in the air)
+    tinkle() { tn(3136 + Math.random() * 1400, 0.18, 'sine', 0.012); },
+    // lightning: crackles, then the low rumble
+    thunder(k = 1) { for (let i = 0; i < 6; i++) nz(0.025, 0.2 * k, 'bandpass', 2500 + Math.random() * 3000, 2, i * 0.035 + Math.random() * 0.02); nz(0.9 * k, 0.22 * k, 'lowpass', 140, 1, 0.06); },
+    crackle(k = 1) { for (let i = 0; i < 3; i++) nz(0.02, 0.12 * k, 'bandpass', 3000 + Math.random() * 3000, 2, i * 0.04 + Math.random() * 0.02); },
+    // electricity: a buzzing hum with a fizz on top
+    emp(k = 1) { tn(110, 0.45 * k, 'sawtooth', 0.05, 70); tn(166, 0.4 * k, 'square', 0.025, 120); nz(0.4 * k, 0.07, 'highpass', 5000); for (let i = 0; i < 4; i++) nz(0.02, 0.08, 'bandpass', 4000, 3, i * 0.08); },
+    // a firework: the shell's whistle going up (over the fuse), then the boom and the stars crackling as they fall
+    whistle(d) { tn(500, d, 'sine', 0.03, 1900); },
+    firework() { nz(0.5, 0.25, 'lowpass', 300); tn(70, 0.6, 'sine', 0.1, 40); for (let i = 0; i < 16; i++) nz(0.015, 0.06 + Math.random() * 0.05, 'highpass', 4000, 1, 0.35 + Math.random() * 1.4); },
+    // sparkles: a few quick high chimes
+    chime(k = 1, n = 3) { for (let i = 0; i < n; i++) tn([2093, 2637, 3136, 3951, 4186][Math.floor(Math.random() * 5)], 0.2, 'sine', 0.03 * k, 0, i * 0.05); },
+    // the warp: a deep wobbling whoom
+    warp() { tn(220, 0.45, 'sine', 0.07, 55); tn(330, 0.4, 'triangle', 0.03, 82); nz(0.4, 0.06, 'bandpass', 600, 4); },
+    // the laser: a bright zap stretching out
+    laser() { tn(2400, 0.35, 'sawtooth', 0.035, 500); tn(1200, 0.4, 'square', 0.02, 300); nz(0.15, 0.05, 'highpass', 6000); },
+    // glass breaking: a crash and shards ringing
+    glass() { nz(0.18, 0.18, 'highpass', 2500); for (let i = 0; i < 7; i++) tn(2500 + Math.random() * 3500, 0.25 + Math.random() * 0.3, 'sine', 0.025, 0, Math.random() * 0.15); },
+  };
+  // the barrier breaking, as the worn barrier would sound
+  const barrierSfx = () => { const k = EQ('barrier'); if (k === 'br_glass') sfx.glass(); else if (k === 'br_emf') sfx.emp(0.8); };
+  // a dash's own sound, by its look
+  const dashSfx = () => { const k = dashFx(); if (k === 'dash_frost') sfx.ice(0.6); else if (k === 'dash_bolt') sfx.thunder(0.5); else if (k === 'dash_petal') sfx.chime(0.8, 4); else if (k === 'dash_warp') sfx.warp(); };
 
   // ---------- title music: an original dark electro loop, 124 BPM ----------
   let bgm = null;
@@ -6260,7 +6311,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         for (const e of enemies) if (!e.dead && Math.hypot(e.x - r.x, e.y - r.y) < 1.0) { e.dead = true; kills++; rocketKills++; tally(e); r.k = (r.k || 0) + 1; if (S3) S3.maxRocket = Math.max(S3.maxRocket, r.k); }
         booms.push({ x: r.x, y: r.y, t: 0, fx: r.fx });
         if (r.fx === 'rk_plasma') startPerim(r.x, r.y);
-        if (r.el === 'ice') elemRocketLand(r);
+        if (r.el === 'ice') { elemRocketLand(r); sfx.ice(); }
         for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5; sparks.push({ x: r.x, y: r.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#ffcf5a' : '#ff6a3d' }); }
         shake = reduceMotion ? 0 : Math.max(shake, 0.22); tone(90, 0.4, 'sawtooth', 0.1, 30); noise(0.3, 0.1);
       }
@@ -6802,7 +6853,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       tone(1175, 0.1, 'triangle', 0.05); setTimeout(() => tone(1568, 0.1, 'triangle', 0.05), 70); setTimeout(() => tone(2093, 0.22, 'triangle', 0.045), 140);
     }
     elemDash();
-    tone(880, 0.12, 'triangle', 0.05, 1500);
+    tone(880, 0.12, 'triangle', 0.05, 1500); dashSfx();
   }
 
   // ---------- the title's attract mode: a runner and a few oni running the night city behind the title ----------
