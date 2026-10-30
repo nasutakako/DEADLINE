@@ -4110,7 +4110,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // at a time; stage 3: at most one per wave but no limit on the map. Only one yellow oni at a time
       let black = !!s.black;
       let tough = !black && (!!s.tough || (stageN >= 2 && (stageN >= 3 ? !toughWave : !enemies.some(o => o.tough)) && Math.random() < baseRate));
-      let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : 1)));
+      // (the yellow one a little more often on stage 2, where no black oni comes before the exit opens: 12% -> 15% an oni)
+      let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : stageN === 2 ? 1.25 : 1)));
       // stage 3 from 8:00: the plain red oni and the barrier oni swap rates, so most newcomers wear a barrier
       // (several at once), a plain red one turns up at the barrier oni's old rate; the yellow rate stays
       if (stageN === 3 && t >= 480 && !black && !s.tough && !s.amb) {
