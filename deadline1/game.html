@@ -2145,7 +2145,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
   // (on 花火の夜 its blast is half as wide again as a bomb's)
   // (well faster than the black oni: a bomber behind one catches it up and runs on ahead of it)
-  const bomberMult = () => BLACK_MULT + 0.27;
+  const bomberMult = () => BLACK_MULT + 0.12;
+  // it speeds up with the other oni: half as fast again as a plain one, up to its top speed (above the runner's), so a
+  // stage opens with one the runner can outrun and it reaches its top speed as the oni get fast
+  const bomberSpeed = () => Math.min(runnerSpeed() * bomberMult(), enemySpeed() * 1.5);
+  // once its fuse is lit it all but stops where it is, so the runner who reacts gets clear of the blast
+  const BOMBER_LIT = 0.15;
   const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
   const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 2, 3];
   // 影踏み: a yellow oni within this distance of the runner splits off its shadow oni (once)
@@ -4220,7 +4225,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
       // (a bomber runs faster still than the black one)
       // (while the runner is up in a ハイジャンプ, every oni slows right down)
-      const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? runnerSpeed() * bomberMult() : Math.min(es * e.var, runnerSpeed())) * (e.slowT > 0 ? e.slowK : 1) * (air ? JUMP_ONI : 1);
+      const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? bomberSpeed() * (e.fuseT != null ? BOMBER_LIT : 1) : Math.min(es * e.var, runnerSpeed())) * (e.slowT > 0 ? e.slowK : 1) * (air ? JUMP_ONI : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
       move(e, e.vx, e.vy, dt);
