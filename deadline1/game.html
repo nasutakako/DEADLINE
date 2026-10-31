@@ -736,6 +736,8 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 @keyframes tutblink-w { 0% { box-shadow: 0 0 0 4px rgba(232,235,242,.7), 0 0 26px 8px rgba(232,235,242,.75); background-color: rgba(232,235,242,.3); border-color: #e8ebf2; } 50% { box-shadow: none; } }
 @keyframes tutblink-d { 0% { box-shadow: 0 0 0 4px rgba(143,233,255,.7), 0 0 26px 8px rgba(143,233,255,.75); background-color: rgba(143,233,255,.3); border-color: #8fe9ff; } 50% { box-shadow: none; } }
 @keyframes tutblink-m { 0% { box-shadow: 0 0 0 4px rgba(255,207,90,.7), 0 0 26px 8px rgba(255,207,90,.75); background-color: rgba(255,207,90,.3); border-color: #ffcf5a; } 50% { box-shadow: none; } }
+/* the control stick's ring, blinking like the buttons when a practice step is about it */
+.padbase.tutglow { animation: tutblink-d .8s step-end infinite; }
 @keyframes tutblink-i { 0% { box-shadow: 0 0 0 4px rgba(199,146,255,.7), 0 0 26px 8px rgba(199,146,255,.75); background-color: rgba(199,146,255,.3); border-color: #c792ff; } 50% { box-shadow: none; } }
 .stargain { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; }
 .stargain[hidden] { display: none; }
@@ -6531,7 +6533,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
     ],
     1: [
-      { say: '画面の左半分をなぞって走ってみよう', go: () => tut.run > 6 * TUT_U },
+      { btn: 'pad', say: 'コントロールスティックを動かして走ってみよう', go: () => tut.run > 6 * TUT_U },
       { btn: 'dash', say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
       { btn: 'mine', say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
@@ -6645,7 +6647,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('tutBar').classList.remove('ok', 'low', 'mid', 'tight');
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
     // lines break only after a 。 or 、, never a few characters off a word
-    $('tutSay').innerHTML = (stickRight() ? st.say.replace('左半分', '右半分') : st.say).replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
+    $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
     tutGlow(st.btn);
@@ -6697,7 +6699,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the buttons a step teaches ('dash', 'mine', 'item', space-separated) glow until it is done
   function tutGlow(which) {
     const on = String(which || '').split(' ');
-    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item]]) if (b) b.classList.toggle('tutglow', on.includes(k));
+    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item], ['pad', document.querySelector('#pad .padbase')]]) if (b) b.classList.toggle('tutglow', on.includes(k));
   }
   const tutQuit = () => { tutGlow(''); tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
   function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; for (const el of document.querySelectorAll('#tutPicks [data-tut="w"], #tutPicks [data-tut="3c"], #tutPicks [data-tut^="k"], #tutPicks [data-tut="b1"], #tutPicks [data-tut="b2"], #tutPicks [data-tut="c2"], #tutPicks [data-tut="3b"], #tutPicks [data-grp]')) el.hidden = !MAP_CHOICE; }
