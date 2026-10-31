@@ -1139,7 +1139,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const R_PLAYER = 0.3, R_ENEMY = 0.3, CATCH = 0.55;
   // dashing the moment the cooldown is up, a runner a tile and a half ahead is run down around the
   // 4th dash (about 10.5 sec); worked out by stepping the chase through dash, cooldown and catch distance
-  const BLACK_MULT = 1.13;   // the black oni (stage 3)
+  // the black oni (faster than the runner), set by the dash's recharge: a dash buys about as much of the wait for the
+  // next one as it did at 3.5 sec (1.13 then), so with 5 sec it is 1.09
+  const BLACK_MULT = 1.09;
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
@@ -2144,7 +2146,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
   // (on 花火の夜 its blast is half as wide again as a bomb's)
   // (well faster than the black oni: a bomber behind one catches it up and runs on ahead of it)
-  const bomberMult = () => BLACK_MULT + 0.12;
+  // (likewise matched to the 5-sec dash: 1.25 at 3.5 sec, 1.19 now; still faster than the black one)
+  const bomberMult = () => BLACK_MULT + 0.10;
   // it speeds up with the other oni: half as fast again as a plain one, up to its top speed (above the runner's), so a
   // stage opens with one the runner can outrun and it reaches its top speed as the oni get fast
   const bomberSpeed = () => Math.min(runnerSpeed() * bomberMult(), enemySpeed() * 1.5);
