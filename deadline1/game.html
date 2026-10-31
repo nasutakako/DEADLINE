@@ -6390,6 +6390,62 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tut.pinc = { x: J[0], y: J[1], u, sh, frozen: true, t0: 0 };
     elemAdd({ k: 'mark', x: J[0], y: J[1], r: 0.7, life: 1e9 }, 1);
   }
+  // the yellow oni's feint (夢路世界 stage 1): the runner on a street, the yellow oni abreast of them on the next street
+  // over, a building between; a side street off the runner's street on the far side, lit. The runner ducks into it and
+  // stops; the yellow oni, reading where they are going, swings round towards it; the runner steps back out and runs on,
+  // and the yellow oni is left behind
+  let FEINT_KY = -3;   // where the yellow oni starts along its street (from the side street)
+  function tutFeint() {
+    tut.want = null; tut.feint = null; elems = elems.filter(o => o.k !== 'mark');
+    const W = (x, y) => walk(Math.floor(x), Math.floor(y)), C = (x, y) => tutClear(x, y);
+    let best = null;
+    for (let pass = 0; pass < 3 && !best; pass++) {
+      $('tutBar').classList.toggle('low', pass === 1);
+      for (const [ux, uy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) for (const sgn of [1, -1]) {
+        const vx = -uy * sgn, vy = ux * sgn;
+        for (let jy = 0; jy < ROWS; jy++) for (let jx = 0; jx < COLS; jx++) {
+          const J = [jx + 0.5, jy + 0.5], at = (k, m = 0) => [J[0] + ux * k + vx * m, J[1] + uy * k + vy * m];
+          // the runner's street, straight from 4 back to 6 on; the yellow one's, 4 over, from 4 back to 1 on
+          let ok = true; for (let k = -4; k <= 6 && ok; k++) ok = W(...at(k)); if (!ok) continue;
+          for (let k = -4; k <= 1 && ok; k++) ok = W(...at(k, 4)); if (!ok) continue;
+          // the side street: a narrow way through the block at J, from the runner's street to the yellow oni's
+          if (!W(...at(0, 1)) || !W(...at(0, 2)) || !W(...at(0, 3)) || W(...at(-1, 1)) || W(...at(1, 1)) || W(...at(-1, 3)) || W(...at(1, 3))) continue;
+          if (pass < 2 && (!C(...at(-3)) || !C(...at(0, 1.5)) || !C(...at(FEINT_KY, 4)) || !C(...at(5)))) continue;
+          const sc = (C(...at(6)) ? 2 : 0) + (C(...at(1, 4)) ? 1 : 0) + (pass ? 0 : 3);
+          if (!best || sc > best.sc) best = { J, u: [ux, uy], v: [vx, vy], at, sc };
+        }
+      }
+    }
+    if (!best) { tutOni({ amb: true }); tut.feint = { none: true }; return; }
+    const { J, u, v, at } = best;
+    [P.x, P.y] = at(-3); P.vx = P.vy = 0; [P.fx, P.fy] = u; P.hist = []; P.cd = 0; P.dashT = 0; tut.lx = P.x; tut.ly = P.y;
+    enemies.length = 0; pending.length = 0;
+    const [yx, yy] = at(FEINT_KY, 4);
+    const yl = { x: yx, y: yy, r: R_ENEMY, vx: 0, vy: 0, bias: 0.5, var: 0.0001, born: t, hp: 1, tough: false, armored: false, amb: true, black: false, bomber: false, stun: 0, tut: true };
+    enemies.push(yl); tut.oni = [yl];
+    tut.feint = { J, u, v, yl, frozen: true, phase: 0, t0: 0 };
+    const [mx, my] = at(0, 1.2); elemAdd({ k: 'mark', x: mx, y: my, r: 0.6, life: 1e9 }, 1);
+  }
+  function tutFeintGo() {
+    const c = tut.feint; if (!c) return false;
+    if (c.none) return tutDown();
+    const along = (x, y) => (x - c.J[0]) * c.u[0] + (y - c.J[1]) * c.u[1], side = (x, y) => (x - c.J[0]) * c.v[0] + (y - c.J[1]) * c.v[1];
+    const now = performance.now();
+    if (c.frozen && Math.hypot(P.vx, P.vy) > 1) { c.frozen = false; c.t0 = now; c.yl.var = 1; }
+    // in the side street and stopped: now back out
+    if (c.phase === 0 && side(P.x, P.y) > 0.7 && Math.hypot(P.vx, P.vy) < 0.5) {
+      // (the practice gives a little time to read: the yellow oni comes on at 60% from here)
+      c.phase = 1; c.t1 = now; c.yl.var = 0.6; elems = elems.filter(o => o.k !== 'mark');
+      const [mx, my] = [c.J[0] + c.u[0] * 5, c.J[1] + c.u[1] * 5]; elemAdd({ k: 'mark', x: mx, y: my, r: 0.6, life: 1e9 }, 1);
+      $('tutSay').innerHTML = '<i>黄色い鬼が脇道に入ってくる。</i><i>元の道に戻って、光る方へ走り抜けよう</i>';
+    }
+    // back on the street, well past the corner, the yellow oni behind: done
+    if (c.phase === 1 && side(P.x, P.y) < 0.4 && along(P.x, P.y) > 4 && along(c.yl.x, c.yl.y) < along(P.x, P.y) - 1.5) { elems = elems.filter(o => o.k !== 'mark'); return true; }
+    // ran past the side street, or too slow: again
+    if (!c.frozen && c.phase === 0 && (along(P.x, P.y) > 1.5 || now - c.t0 > 7000)) tutCaught('光る脇道に入って、一度止まろう。もう一度');
+    if (c.phase === 1 && now - c.t1 > 7000) tutCaught('脇道から元の道に戻って、光る方へ走ろう。もう一度');
+    return false;
+  }
   // done: the shadow went down at the corner and the shadow oni is on its way to it
   function tutPincerGo() {
     const c = tut.pinc; if (!c) return false;
@@ -6479,10 +6535,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'dash', say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
       { btn: 'mine', say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
-      { say: '黄色い鬼は先回りする。走っている向きの少し先を読んで、行く手に回り込んでくる。後ろより前に注意', info: true },
-      { say: '攻略1: 急に向きを変える。黄色い鬼は行き先を読み直すまで一瞬迷う。曲がり角で切り返すと振り切りやすい', info: true },
-      { say: '攻略2: 脇道に一瞬入ってすぐ戻る。黄色い鬼は脇道の向こうへ回り込むので、そのすきに元の道を逃げる', info: true },
-      { btn: 'mine', say: '攻略3: 立ち止まると、黄色い鬼はまっすぐ向かってくる。止まって爆弾を置き、近づいたら離れて倒そう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
+      { say: '黄色い鬼は先回りする。逃走者の進む先を読んで、行く手に回り込んでくる', info: true },
+      { say: '建物の向こうの道を、黄色い鬼が並んで走る。光る脇道に入って止まり、黄色い鬼が入ってきたら元の道に戻ろう', set: tutFeint, go: tutFeintGo },
+      { say: '黄色い鬼は脇道に釣られて後ろに回った。脇道に入って止まり、元の道に戻るフェイントで振り切れる', info: true, set: () => { P.inv = 1e9; } },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
@@ -6494,7 +6549,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'dash mine', say: '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、ハイジャンプかランチャーが届く', info: true },
       { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     3: [
       { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
@@ -6535,11 +6590,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // 電脳都市 and 縁日通り: no new rule of their own, only the stage's times (and stage 2's lessons, the first time)
     c2: [
       { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     b2: [
       { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     k2: [
       { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
@@ -6549,7 +6604,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'dash', say: '影の鬼は建物1つ分離れていても影に反応する。光る角に向かって走り、角でダッシュして影を置こう', set: tutPincer, go: tutPincerGo },
       { say: '影の鬼は脇道を下りて影に向かい、回り込めなくなった。挟まれそうなときは、手前の道に影を置こう', info: true, set: () => { P.inv = 1e9; } },
       { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分から鬼が増え、4分30秒で出口が開くと黒い鬼も現れる', end: true },
+      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     '3c': [
       { say: '電脳世界のステージ3では、電磁爆弾が特別に使える。爆発のあと電気が残り、触れた鬼は怯んで動けなくなる', info: true },
