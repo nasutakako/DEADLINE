@@ -4237,7 +4237,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // 導火線: a bomber near the runner lights its fuse, blinks, and goes off
     for (const e of enemies) {
       if (!e.bomber || e.dead || air) continue;
-      if (e.fuseT == null && !(e.stun > 0) && !(e.hold > 0) && Math.hypot(P.x - e.x, P.y - e.y) < BOMBER_NEAR) { e.fuseT = BOMBER_FUSE; tone(1400, 0.06, 'square', 0.04); if (stageN >= 3) sfx.whistle(BOMBER_FUSE); }
+      if (e.fuseT == null && !(e.stun > 0) && !(e.hold > 0) && Math.hypot(P.x - e.x, P.y - e.y) < BOMBER_NEAR) { e.fuseT = BOMBER_FUSE; tone(1400, 0.06, 'square', 0.04); sfx.whistle(BOMBER_FUSE); }
       if (e.fuseT != null) {
         const b4 = Math.ceil(e.fuseT * 4); e.fuseT -= dt;
         if (e.fuseT <= 0) bomberBlow(e, true);
@@ -4485,10 +4485,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function bomberBlow(e, self) {
     if (e.blown) return;
     e.blown = true; e.dead = true; e.fuseT = null;
-    // on 花火の夜 a bomber goes up as a firework
-    if (stageN >= 3) { sfx.firework(); const cols = fwBoom(e.x, e.y, bomberR(), 2.4); for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: `rgb(${cols[i % 2]})` }); } }
-    else booms.push({ x: e.x, y: e.y, t: 0, fx: '', r: bomberR() });
-    if (stageN < 3) for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: ['#ffcf5a', '#ff6a3d', '#fff1c4'][i % 3] }); }
+    // a bomber goes up as a firework, on every stage of 爆心世界
+    { sfx.firework(); const cols = fwBoom(e.x, e.y, bomberR(), 2.4); for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 6; sparks.push({ x: e.x, y: e.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: `rgb(${cols[i % 2]})` }); } }
     shake = reduceMotion ? 0 : Math.max(shake, 0.3); flash = Math.max(flash, 0.35);
     tone(80, 0.5, 'sawtooth', 0.12, 28); noise(0.4, 0.13);
     // going off on its own it harms no oni; set off by the runner's blast it takes the oni round it with it
