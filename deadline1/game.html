@@ -1020,7 +1020,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <p class="mono" id="briefMono" hidden></p>
       <p id="briefMsg" style="white-space: pre-line">2分30秒経過すると出口が開く、鍵を拾って脱出しよう。
 出口が開くと鬼が増えるぞ。</p>
-      <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button></div>
+      <div class="row"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefBackBtn" type="button">タイトルへ</button><button class="ghost" id="briefInfoBtn" type="button">ステージ詳細</button></div>
     </div>
   </div>
 
@@ -1064,7 +1064,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="pick barrier" data-item="barrier" type="button"><b>2 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
         <button class="pick launcher" data-item="launcher" type="button"><b>3 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
-      <div class="row"><button class="ghost" id="spBackBtn" type="button">タイトルへ</button><button class="ghost" id="spInfoBtn" type="button" hidden>詳細</button></div>
+      <div class="row"><button class="ghost" id="spBackBtn" type="button">タイトルへ</button><button class="ghost" id="spInfoBtn" type="button">ステージ詳細</button></div>
     </div>
   </div>
 
@@ -1087,7 +1087,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   </div>
   <div class="overlay lifeov" id="rankInfoScreen" hidden>
     <div class="card rankcard rinfo">
-      <h2 id="rankInfoTitle">ステージの詳細</h2>
+      <h2 id="rankInfoTitle">ステージ詳細</h2>
       <div class="rinfobody" id="rankInfoBody"></div>
       <div class="row"><button class="ghost" id="rankInfoClose" type="button">閉じる</button></div>
     </div>
@@ -7597,7 +7597,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function begin(n) {
     tap(); daily = null; rankRun = false;
     if (n < 2) { start(n); return; }
-    $('spInfoBtn').hidden = true;
     pendingStart = n; state = 'startpick'; mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
@@ -7641,9 +7640,50 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分から: 出てくる鬼のほとんどがバリア鬼になる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li(own)}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
-    $('rankInfoTitle').textContent = 'ステージの詳細'; $('rankInfoScreen').hidden = false;
+    $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
   }
-  $('spInfoBtn').addEventListener('click', () => { tap(); rankInfo(); });
+  // a story stage's (or tonight's survival night's) details, the same way: from the game's own numbers, for the map picked
+  function stageInfo(n) {
+    const li = a => '<ul>' + a.filter(Boolean).map(x => `<li>${x}</li>`).join('') + '</ul>', sec = (h, a) => `<section><h3>${h}</h3>${li(a)}</section>`;
+    const route = MAP_CHOICE ? ROUTE[mapSkin] : 'home', ms = n === 4 ? (dailyLook ? dailyLook.n : 3) : n;
+    const tbl = rows => `<table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${rows.map(([a, k]) => `<tr><td>${a}〜</td><td>${k}</td></tr>`).join('')}</table>`;
+    const mmss = sec => `${Math.floor(sec / 60)}分${sec % 60 ? sec % 60 + '秒' : ''}`;
+    const prize = STORY_PRIZE[route];
+    const head = n === 4 ? `生存課題 ${daily ? daily.name : ''} ・ ${mapName(ms)}` : `ステージ${n} ${mapName(n)}${MAP_CHOICE ? '(' + STORY_NAMES[route] + ')' : ''}`;
+    const goal = n === 1 ? [`${mmss(EXIT_AT)}で右端に出口が開く。マップに落ちる鍵を拾って出口から脱出`, 'クリアでステージ2が解放']
+      : n === 2 ? [`${mmss(EXIT_AT2)}で右端に出口が開く。鍵を拾って出口から脱出`, 'クリアでステージ3が解放']
+      : n === 3 ? [`${mmss(STORY_EXIT)}で右端に出口が開く。鍵を拾って出口から脱出`, MAP_CHOICE ? 'クリアで' + (prize ? prize[2] + 'を獲得' : STORY_NOTE[route].replace(/^クリアで/, '')) : '']
+      : ['出口は開かない。捕まるまで逃げ続ける', '疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場', 'マップは解放済みのマップからランダムに選ばれる', '1日10個のミッションがあり、1つ達成ごとに★1'];
+    const supply = n === 1 ? ['2分: バリア + 爆弾1個'] : n === 2 ? ['2分: バリア + 爆弾1個', '3分: 爆弾2個', '4分: バリア + 爆弾2個'] : ['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個'];
+    const waves = n === 1 ? [['0:00', '1体'], ['0:40', '2体'], ['1:20', '3体'], [mmss(EXIT_AT).replace('分', ':').replace('秒', '') + ' (出口が開く)', '5体(以降30秒ごとに+1体)']]
+      : n === 2 ? [['0:00', '2体'], ['1:20', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']]
+      : [['0:00', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体'], ...(n === 4 ? [['7:00', '7体'], ['10:00', '8体'], ['11:00', '9体'], ['12:00', '10体']] : [])];
+    const kinds = n === 4 ? [daily ? daily.rule.split('\n')[0].replace(/^・/, '') : '']
+      : n === 1 ? ['ふつうの鬼(赤)がほとんど', '先回りの鬼(黄色): まれにまざる(約6%)。逃走者の行く先に回り込む']
+      : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
+      : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
+    const own = [];
+    if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
+    if (mapSkin === 'd2') own.push(`ワープポイントが2つ。乗って${WARP_HOLD}秒でもう一方へ飛ぶ。一度使うと${mmss(WARP_COOL)}使えない`);
+    if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
+    if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
+    if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', n >= 2 ? 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)' : '');
+    if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する。範囲は爆弾${n >= 3 ? 'の1.5倍' : 'と同じ'}`, '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
+    if (n === 3 && route === 'home') own.push('九死に一生が特別に使える(ダッシュがときどき1.5倍の距離になる)');
+    if (n === 3 && route === 'cyber') own.push('電磁爆弾が特別に使える');
+    if (n === 3 && route === 'fuse') own.push('韋駄天が特別に使える(ほかのスキルは使えない)');
+    $('rankInfoBody').innerHTML = `
+      ${sec(head, goal)}
+      ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
+      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, n >= 2 ? '鬼を40体倒すごとに、ハイジャンプかランチャーが届く' : ''])}
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      ${sec('鬼の種類', kinds)}
+      ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
+      <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
+    $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
+  }
+  $('spInfoBtn').addEventListener('click', () => { tap(); rankRun ? rankInfo() : stageInfo(pendingStart); });
+  $('briefInfoBtn').addEventListener('click', () => { tap(); stageInfo(1); });
   // the weekly ranking's prize in full: how it's paid, the table, and what this week would pay as things stand
   async function rankPrizeInfo() {
     const li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
@@ -7664,7 +7704,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('rankInfoClose').addEventListener('click', () => { tap(); $('rankInfoScreen').hidden = true; });
   // the weekly ranking: this week's map, stage 3 with no way out
   function beginRank() {
-    tap(); daily = null; rankRun = true; $('spInfoBtn').hidden = false;
+    tap(); daily = null; rankRun = true;
     pendingStart = 3; state = 'startpick'; mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
