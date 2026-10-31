@@ -189,7 +189,6 @@ h1, h2 { font-family: var(--f-display); font-weight: 400; margin: 0; line-height
 h1 { font-size: clamp(34px, 9vw, 60px); letter-spacing: .02em; }
 h1 span { color: var(--oni); white-space: nowrap; }
 /* the title's i: a red stem and, for its dot, an oni bobbing and looking about */
-#titleScreen h1 { cursor: pointer; }
 h1 .tstem { position: relative; display: inline-block; width: .3em; height: .75em; margin: 0 .04em; vertical-align: baseline; font-weight: inherit; }
 h1 .tbar { position: absolute; left: .045em; right: .045em; bottom: 0; height: .42em; border-radius: .04em; background: var(--oni); }
 h1 .tdot { position: absolute; left: 50%; bottom: .49em; width: .26em; height: .26em; margin-left: -.13em; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ffc0b8, #d8251a 55%, #3a0402); box-shadow: 0 0 .25em rgba(255,59,48,.65); animation: tdotBob 2.4s ease-in-out infinite; }
@@ -2616,7 +2615,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
   lifeRender();
 
-  // ---------- the opening sting: every launch, and again on a tap of the title. It holds still until the page is
+  // ---------- the opening sting: every launch. It holds still until the page is
   // really on screen (visible, laid out, scrolled into view) with its fonts in, so a slow viewer can't eat it; a tap skips it ----------
   const playIntro = (() => {
     let el = $('intro'), live = 0;
@@ -2643,7 +2642,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     };
   })();
   playIntro();
-  $('titleScreen').querySelector('h1').addEventListener('click', () => playIntro());
 
   // ---------- settings (the gear on the title): kept on this device ----------
   const SET_KEY = REC_KEY + '-settings';
