@@ -162,6 +162,10 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .mapcard.locked .thumb { filter: grayscale(1) brightness(.5); }
 @media (max-height: 460px) { .mapcard .thumb { width: 60px; height: 38px; } .mapcard { padding: 4px 6px; } }
 #tutPicks .pick b { color: var(--lamp); }
+#tutPicks .pick.locked { opacity: .5; cursor: not-allowed; }
+#tutPicks .pick.locked b { color: var(--muted); }
+#tutPicks .pick .locknote { font-size: 11px; color: var(--muted); }
+#tutPicks .pick .locknote[hidden] { display: none; }
 /* title on a short (landscape phone) screen: the stage buttons and the tutorial list two to a row, so all four fit */
 @media (max-height: 520px) { #titleScreen .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } #titleScreen .row .go { align-self: stretch; padding: 10px 8px; font-size: 15px; letter-spacing: .02em; white-space: nowrap; } }
 .tutbar .tstep { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--lamp); }
@@ -6702,11 +6706,24 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item], ['pad', document.querySelector('#pad .padbase')]]) if (b) b.classList.toggle('tutglow', on.includes(k));
   }
   const tutQuit = () => { tutGlow(''); tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
-  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; for (const el of document.querySelectorAll('#tutPicks [data-tut="w"], #tutPicks [data-tut="3c"], #tutPicks [data-tut^="k"], #tutPicks [data-tut="b1"], #tutPicks [data-tut="b2"], #tutPicks [data-tut="c2"], #tutPicks [data-tut="3b"], #tutPicks [data-grp]')) el.hidden = !MAP_CHOICE; }
+  // each practice and the stage it belongs to
+  const TUT_STAGE = { 1: ['d1', 1], 2: ['d1', 2], '3h': ['d1', 3], w: ['d2', 1], c2: ['d2', 2], '3c': ['d2', 3], k1: ['d3', 1], k2: ['d3', 2], k3: ['d3', 3], b1: ['d4', 1], b2: ['d4', 2], '3b': ['d4', 3] };
+  function openTutList() { state = 'tutlist'; ui.title.hidden = true; $('tutScreen').hidden = false; for (const el of document.querySelectorAll('#tutPicks [data-tut="w"], #tutPicks [data-tut="3c"], #tutPicks [data-tut^="k"], #tutPicks [data-tut="b1"], #tutPicks [data-tut="b2"], #tutPicks [data-tut="c2"], #tutPicks [data-tut="3b"], #tutPicks [data-grp]')) el.hidden = !MAP_CHOICE;
+    // a stage not yet opened: its practice locked too, with what opens it
+    for (const b of document.querySelectorAll('#tutPicks .pick')) {
+      const [skin, n] = TUT_STAGE[b.dataset.tut] || ['d1', 1], open = skin === 'd1' ? unlocked(n) : mapOpen(n, skin);
+      b.classList.toggle('locked', !open);
+      const nm = b.querySelector('b'); if (!nm.dataset.name) nm.dataset.name = nm.textContent;
+      nm.textContent = (open ? '' : '🔒 ') + nm.dataset.name;
+      let note = b.querySelector('small.locknote'); if (!note) { note = document.createElement('small'); note.className = 'locknote'; b.append(note); }
+      note.hidden = open; note.textContent = open ? '' : skin === 'd1' ? `ステージ${n - 1}をクリアで解放` : MAP_LOCKS[skin][n - 1];
+    }
+  }
   $('tutListBtn').addEventListener('click', () => { tap(); openTutList(); });
   $('tutBackBtn').addEventListener('click', () => { tap(); toTitle(); });
   for (const b of document.querySelectorAll('#tutPicks .pick')) b.addEventListener('click', () => {
     if (state !== 'tutlist') return;
+    if (b.classList.contains('locked')) { initAudio(); tone(196, 0.12, 'square', 0.04); setTimeout(() => tone(147, 0.16, 'square', 0.04), 90); if (b.animate) b.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)' }, { transform: 'translateX(6px)' }, { transform: 'translateX(0)' }], { duration: 260 }); return; }
     tap(); $('tutScreen').hidden = true; const k = b.dataset.tut; rankRun = false;
     if (k === '3h' || k === '3c' || k === '3b') { tutReplay = k; start(3, undefined, Object.keys(ROUTE).find(sk => ROUTE[sk] === ({ '3h': 'home', '3c': 'cyber', '3b': 'fuse' })[k])); return; }
     if (['k1', 'k2', 'k3', 'b1', 'b2', 'c2'].includes(k)) { tutReplay = k; start(+k[1], undefined, k[0] === 'b' ? 'd4' : k[0] === 'c' ? 'd2' : 'd3'); return; }
