@@ -2654,23 +2654,29 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     };
   })();
   playIntro();
-  // the title never runs under the hearts or the gear in the corner: where it would (a phone's own font sets it a
-  // little higher or wider), it comes down in size until it clears them by a few pixels
+  // the title never runs under the hearts or the gear in the corner (a phone's own fonts and safe areas can set them
+  // closer): the title keeps its size and place across, the whole card comes down below them, and what that costs at
+  // the foot comes out of the room under the stage buttons, then out of the buttons' height
   function fitTitleH1() {
-    const h1 = $('titleScreen').querySelector('h1'); if (!h1 || ui.title.hidden) return;
-    h1.style.fontSize = '';
+    const card = $('titleScreen').querySelector('.card'), h1 = card && card.querySelector('h1'); if (!h1 || ui.title.hidden) return;
+    const gos = [...card.querySelectorAll('.row .go')];
+    card.style.marginTop = card.style.marginBottom = ''; h1.style.fontSize = '';
+    for (const g of gos) g.style.paddingTop = g.style.paddingBottom = '';
     const others = [document.querySelector('#titleScreen .lifepill'), document.querySelector('#titleScreen .gear')];
-    for (let k = 0; k < 8; k++) {
-      const rg = document.createRange(); rg.selectNodeContents(h1); const a = rg.getBoundingClientRect();
-      let over = 0;
-      for (const el of others) {
-        const b = el && el.getBoundingClientRect(); if (!b || !b.width) continue;
-        if (a.left < b.right && b.left - 10 < a.right && a.top < b.bottom + 8 && b.top < a.bottom) over = Math.max(over, a.right - (b.left - 10));
-      }
-      if (over <= 0) return;
-      const fs = parseFloat(getComputedStyle(h1).fontSize), nf = Math.max(26, fs * (a.width - over) / a.width - 0.5);
-      if (nf >= fs) return;
-      h1.style.fontSize = nf + 'px';
+    // (the letters' top: the oni dot on the i stands level with the capitals)
+    const dot = h1.querySelector('.tdot'), top = dot ? dot.getBoundingClientRect().top : h1.getBoundingClientRect().top;
+    let need = 0;
+    for (const el of others) { const b = el && el.getBoundingClientRect(); if (b && b.width) need = Math.max(need, b.bottom + 10 - top); }
+    if (need <= 0) return;
+    // (positions on screen are scaled when the site turns the page; margins are in the page's own pixels)
+    const k = card.offsetHeight / card.getBoundingClientRect().height || 1;
+    const ov = $('titleScreen').getBoundingClientRect(), c = card.getBoundingClientRect(), pad = parseFloat(getComputedStyle($('titleScreen')).paddingTop) || 0;
+    card.style.marginTop = ((c.top - ov.top) * k - pad + need * k) + 'px'; card.style.marginBottom = '0px';
+    // too long now for the screen: the buttons give up some height (never below a slim 3px a side)
+    const over = (card.getBoundingClientRect().bottom - (Math.min(ov.bottom, innerHeight) - 6)) * k;
+    if (over > 0 && gos.length) {
+      const rows = new Set(gos.map(g => Math.round(g.getBoundingClientRect().top))).size || 1, per = over / rows / 2;
+      for (const g of gos) { const cs = getComputedStyle(g); g.style.paddingTop = Math.max(3, parseFloat(cs.paddingTop) - per) + 'px'; g.style.paddingBottom = Math.max(3, parseFloat(cs.paddingBottom) - per) + 'px'; }
     }
   }
   addEventListener('resize', fitTitleH1);
