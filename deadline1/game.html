@@ -2159,7 +2159,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // stage opens with one the runner can outrun and it reaches its top speed as the oni get fast
   const bomberSpeed = () => Math.min(runnerSpeed() * bomberMult(), enemySpeed() * 1.5);
   const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
-  const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 2, 3];
+  const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 1, 1];   // (never more than one on the map at a time)
   // 影踏み: a yellow oni within this distance of the runner splits off its shadow oni (once)
   const SPLIT_D = 4;
   // how far down-right the tall blocks' shadows reach on each stage (the low sun of 黄昏通り throws them longest)
