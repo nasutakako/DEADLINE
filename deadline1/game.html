@@ -2234,7 +2234,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // it speeds up with the other oni: half as fast again as a plain one, up to its top speed (above the runner's), so a
   // stage opens with one the runner can outrun and it reaches its top speed as the oni get fast
   const bomberSpeed = () => Math.min(runnerSpeed() * bomberMult(), enemySpeed() * 1.5);
-  const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1);
+  const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1.2);   // (stages 1 and 2: 1.2 times a bomb's; 花火の夜: 1.5 times)
   const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 1, 1];   // (never more than one on the map at a time)
   // once lit, a bomber slows to 0.8 of the runner's speed: running straight off gets clear, hesitating or a dead end doesn't
   const BOMBER_LIT = 0.8;
@@ -6859,7 +6859,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると韋駄天を獲得できる', end: true },
     ],
     b1: [
-      { say: '花火工場には、自爆する橙色の鬼がいる。黒い鬼よりも速い。近づくと点滅して、1秒後に爆弾と同じ大きさで爆発する。点滅中は足が遅くなる(逃走者の0.8倍)。巻き込まれると確保', info: true },
+      { say: '花火工場には、自爆する橙色の鬼がいる。黒い鬼よりも速い。近づくと点滅して、1秒後に爆弾の1.2倍の大きさで爆発する。点滅中は足が遅くなる(逃走者の0.8倍)。巻き込まれると確保', info: true },
       { btn: 'mine', say: '点滅する前に爆弾で倒すか、点滅したらすぐまっすぐ円の外へ逃げよう。自爆では他の鬼は倒れないが、爆弾で倒すと誘爆して、まわりの鬼も吹き飛ぶ', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
       { say: '2分経過でバリアと爆弾1個が支給される。バリアは自爆も1回防ぐ。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
@@ -8115,7 +8115,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。乗って0.3秒でもう一方へ飛ぶ。一度使うと1分30秒使えない'],
       shadow: ['落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
-      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.8倍の速さ)。爆発の範囲は爆弾の1.5倍', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
+      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.8倍の速さ)。爆発の範囲は爆弾の1.2倍(ステージ3は1.5倍)', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>週替わりランキング ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(ハイジャンプ・バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
@@ -8154,7 +8154,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
     if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', n >= 2 ? 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)' : '');
-    if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾${n >= 3 ? 'の1.5倍' : 'と同じ'}`, '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
+    if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾の${n >= 3 ? '1.5' : '1.2'}倍`, '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
     if (n === 3 && route === 'home') own.push('九死に一生が特別に使える(ダッシュがときどき1.5倍の距離になる)');
     if (n === 3 && route === 'cyber') own.push('電磁爆弾が特別に使える');
     if (n === 3 && route === 'fuse') own.push('韋駄天が特別に使える(ほかのスキルは使えない)');
