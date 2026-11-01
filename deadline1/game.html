@@ -6383,13 +6383,71 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
   }
   SONGS.memory = { bpm: 66, vol: 1, step: stepMemory, setup: setupMemory };
+  // ranking: "leaderboard" (128 BPM, E minor). A stadium-electro loop: four-on-the-floor kick, big claps,
+  // a pumping (sidechained-feel) saw chord stab, an offbeat bass and a bright brass-like hook that climbs
+  // like a scoreboard; a riser and a crash every eight bars. Em - C - G - D.
+  function setupArena(b) {
+    const d = ac.createDelay(1), fb = ac.createGain(), lp = ac.createBiquadFilter();
+    d.delayTime.value = 60 / 128 * 0.5; fb.gain.value = 0.28; lp.type = 'lowpass'; lp.frequency.value = 4200;
+    d.connect(lp).connect(fb).connect(d); lp.connect(b.out);
+    b.echo = d;
+  }
+  function stepArena(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 8;
+    const root = [40, 36, 43, 38][bar % 4], chord = [[0, 3, 7], [0, 4, 7], [0, 4, 7], [0, 4, 7]][bar % 4];
+    if (st % 4 === 0) voice({ f: 150, f2: 45, at, dec: 0.3, v: 0.85, att: 0.002 });
+    if (st === 4 || st === 12) { hiss({ at, dec: 0.16, v: 0.16, type: 'bandpass', f: 1500, q: 0.9 }); hiss({ at: at + 0.012, dec: 0.12, v: 0.09, type: 'bandpass', f: 2300, q: 1.1 }); }
+    if (st % 4 === 2) hiss({ at, dec: 0.07, v: 0.06, f: 8000 });
+    hiss({ at, dec: 0.02, v: 0.015, f: 11000 });
+    // offbeat bass, pumping
+    if (st % 4 === 2) voice({ type: 'sawtooth', f: midi(root - 12), at, dec: 0.18, v: 0.16, cut: 520, q: 5 });
+    // the stab: chords on the offbeats, ducked after each kick
+    if (st % 4 === 2 || st === 15) for (const c of chord) voice({ type: 'sawtooth', f: midi(root + 12 + c), at, dec: 0.16, v: 0.022, cut: 2400, det: c ? 7 : -7 });
+    // the hook from bar 3: a brassy square climbing through the chord
+    const hook = bar >= 2 ? { 0: 7, 3: 12, 6: 14, 8: 12, 10: 15, 12: 14, 14: 19 }[st] : null;
+    if (hook != null) { const f = midi(root + 24 + hook); voice({ type: 'square', f, at, dec: 0.22, v: 0.04, cut: 3000, att: 0.006 }); voice({ type: 'sawtooth', f: f / 2, at, dec: 0.22, v: 0.02, cut: 1600, to: bgm.echo }); }
+    if (bar === 7 && st === 0) hiss({ at, dec: 60 / 128 * 4, v: 0.06, type: 'bandpass', f: 500, f2: 7000, q: 1.4 });
+    if (bar === 0 && st === 0) hiss({ at, dec: 1.4, v: 0.08, f: 5000 });
+  }
+  SONGS.rank = { bpm: 128, vol: 0.8, step: stepArena, setup: setupArena };
+  // equip: "armory" (100 BPM, D minor). A quiet workshop groove: a muted kick, ticking metal hats,
+  // a rubbery synth bass, a glassy pluck arpeggio panned through a short echo and, now and then,
+  // the clank of a part locking into place. Dm7 - Bbmaj7 - Gm7 - A7sus.
+  function setupArmory(b) {
+    const d = ac.createDelay(1), fb = ac.createGain(), lp = ac.createBiquadFilter();
+    d.delayTime.value = 60 / 100 * 0.375; fb.gain.value = 0.35; lp.type = 'lowpass'; lp.frequency.value = 3200;
+    d.connect(lp).connect(fb).connect(d); lp.connect(b.out);
+    b.echo = d;
+  }
+  function stepArmory(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 8;
+    const root = [38, 46, 43, 45][bar % 4], chord = [[0, 3, 7, 10], [0, 4, 7, 11], [0, 3, 7, 10], [0, 5, 7, 10]][bar % 4];
+    if (st === 0 || st === 7 || st === 10) voice({ f: 110, f2: 46, at, dec: 0.24, v: 0.55, att: 0.003 });
+    if (st === 4 || st === 12) { voice({ type: 'square', f: 2200, at, dec: 0.025, v: 0.05, cut: 6000, att: 0.001 }); hiss({ at, dec: 0.06, v: 0.06, type: 'bandpass', f: 3400, q: 2 }); }
+    if (st % 2 === 0) voice({ type: 'square', f: 6400 + (st % 4 ? 0 : 900), at, dec: 0.018, v: 0.01, cut: 9000, att: 0.001 });
+    // rubbery bass
+    const bn = { 0: 0, 3: 0, 6: 12, 10: 7, 13: 10 }[st];
+    if (bn != null) voice({ type: 'sawtooth', f: midi(root - 12 + bn), at, dec: 0.2, v: 0.14, cut: 600, q: 8 });
+    // glassy pluck through the echo
+    if (st % 3 === 0) { const n = chord[(st / 3) % 4] + (bar >= 4 ? 12 : 0); voice({ type: 'triangle', f: midi(root + 24 + n), at, dec: 0.25, v: 0.035, att: 0.002, to: bgm.echo }); voice({ f: midi(root + 36 + n), at, dec: 0.12, v: 0.01, att: 0.001 }); }
+    // a soft pad under the second half
+    if (bar >= 4 && st === 0) for (const c of chord) voice({ type: 'triangle', f: midi(root + 12 + c), at, dec: 60 / 100 * 3.8, v: 0.012, att: 0.5, cut: 1500 });
+    // the clank of a part locking in, every other bar
+    if (bar % 2 === 1 && st === 14) { voice({ type: 'square', f: 1450, at, dec: 0.09, v: 0.025, cut: 4000, att: 0.001 }); voice({ type: 'square', f: 2170, at: at + 0.04, dec: 0.12, v: 0.018, cut: 5000, att: 0.001 }); hiss({ at, dec: 0.05, v: 0.05, type: 'bandpass', f: 5200, q: 3 }); }
+  }
+  SONGS.equip = { bpm: 100, vol: 0.9, step: stepArmory, setup: setupArmory };
+  // the title's side screens each have their own piece; this picks the one for whatever is open
+  const menuSong = () => !$('shopScreen').hidden ? SONGS.shop : !$('memoScreen').hidden ? SONGS.memory : !$('rankScreen').hidden ? SONGS.rank : !$('equipScreen').hidden ? SONGS.equip : SONGS.title;
+  // opening or closing one of them switches the music (only while on the title)
+  { const mo = new MutationObserver(() => { if (state === 'title' && ac && !muted) bgmStart(menuSong()); });
+    for (const id of ['rankScreen', 'equipScreen', 'memoScreen']) mo.observe($(id), { attributes: true, attributeFilter: ['hidden'] }); }
 
   // short click for menu buttons
   function tap() { initAudio(); tone(1175, 0.05, 'square', 0.045); setTimeout(() => tone(1568, 0.06, 'square', 0.035), 45); }
   // browsers only allow sound after a touch: the first tap on the title starts the music
   const titleMusic = () => {
     if (state !== 'title' && state !== 'startpick' && state !== 'brief') return;
-    initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : !$('shopScreen').hidden ? SONGS.shop : !$('memoScreen').hidden ? SONGS.memory : SONGS.title);
+    initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : menuSong());
     if (ac) ac.resume().then(() => { const h = $('bgmHint'); if (h) h.hidden = ac.state === 'running' || !!window.DEADLINE_APP; }).catch(() => {});
   };
   // iPhone only unlocks audio on touchend / click, so listen to all of them
