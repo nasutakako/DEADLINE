@@ -575,6 +575,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .mrow.shop { --c: #ff9bd6; }
 .mrow.shop small { color: var(--lamp); }
 .mrow.equip { --c: #8fe9ff; }
+.mrow.memo { --c: #d9b3ff; }
 .mrow.tuts { --c: #c792ff; }
 /* the title's six: two to a row (ステージ1 2 / ステージ3 スペシャル / ランキング チュートリアル一覧) */
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
@@ -590,6 +591,14 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifeov { z-index: 30; }
 /* the weekly ranking's stage details */
 .rinfobody { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 12px; align-content: start; padding-right: 4px; overscroll-behavior: contain; }
+.memohint { margin: 0; font-size: 12px; color: var(--muted); }
+.memobody h3 { margin: 0 0 6px; font-size: 14px; letter-spacing: .06em; color: #d9b3ff; }
+.memobody h4 { margin: 10px 0 4px; font-size: 12px; letter-spacing: .12em; color: var(--lamp); font-weight: 700; }
+.memobody ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.memobody li { font-size: 13px; line-height: 1.6; padding-left: 10px; border-left: 2px solid rgba(217,179,255,.35); }
+.memobody li small { display: block; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+.memobody li.unread { color: #4a5266; border-left-color: rgba(255,255,255,.08); }
+.memobody .memolock { margin: 0; font-size: 12px; color: var(--muted); }
 .rankprize { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--lamp); }
 .rankprize[hidden] { display: none; }
 .rankprize .ghost { flex: 0 0 auto; padding: 5px 12px; font-size: 12px; }
@@ -855,6 +864,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <button class="mrow rank" id="rankBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8M9 17h6"/></svg></i><span class="mt"><b>ランキング</b><small>今週の世界順位</small></span></button>
       <button class="mrow shop" id="shopBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><span class="mt"><b>ショップ</b><small id="mShopSub"></small></span></button>
       <button class="mrow equip" id="equipBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></i><span class="mt"><b>装備</b><small id="mEquipSub">付け替え</small></span></button>
+      <button class="mrow memo" id="memoBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5z"/><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19v-3"/><path d="M9 7.5h6"/></svg></i><span class="mt"><b>記憶</b><small id="mMemoSub">読んだ呟き</small></span></button>
     </div>
     <span class="whonote" id="whoNote" hidden></span>
   </div>
@@ -1089,6 +1099,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <ol class="rkplist" id="rkPrizeBody"></ol>
       <p class="rkptotal" id="rkPrizeTotal"></p>
       <div class="row"><button class="go" id="rkPrizeOk" type="button">受け取る</button></div>
+    </div>
+  </div>
+  <div class="overlay" id="memoScreen" hidden>
+    <div class="card rankcard rinfo memocard">
+      <span class="kicker">MEMORY</span>
+      <h2>記憶</h2>
+      <p class="memohint" id="memoHint">これまでに読んだ呟きを、物語の順に読み返せる。</p>
+      <div class="rinfobody memobody" id="memoBody"></div>
+      <div class="row"><button class="ghost" id="memoClose" type="button">閉じる</button></div>
     </div>
   </div>
   <div class="overlay lifeov" id="rankInfoScreen" hidden>
@@ -1358,7 +1377,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (r.parentNode !== recHome.parent) recHome.parent.insertBefore(r, recHome.next);
   }
   function placeWho() {
-    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('setScreen').hidden || !$('tutScreen').hidden);
+    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('memoScreen').hidden || !$('setScreen').hidden || !$('tutScreen').hidden);
     if (padMQ.matches) { w.className = 'who'; if (w.parentNode !== $('pad')) $('pad').prepend(w); }
     else if (wideMQ.matches) { w.className = 'who float'; w.style.left = w.style.top = '14px'; if (w.parentNode !== $('stage')) $('stage').appendChild(w); }
     else { w.className = 'who inline'; w.style.left = w.style.top = ''; const c = ui.title.querySelector('.card'); if (w.parentNode !== c) c.prepend(w); }
@@ -7766,6 +7785,53 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const s = monoText(n, kind);
     el.hidden = !s; el.textContent = s ? '「' + s + '」' : '';
   }
+  // 記憶: every line of the four stories in story order: the ones already read in full, the rest as ？？？ (read = what the
+  // stand-by and escape screens have shown on this device; the stories' own counts say how far each got)
+  const MEMO_WORLDS = [['d1', 's'], ['d2', 'm'], ['d3', 'k'], ['d4', 'b']];
+  const memoBook = sk => sk === 'd2' ? MONO2 : sk === 'd3' ? MONO3 : sk === 'd4' ? MONO4 : MONO;
+  function memoTally() {
+    let at = {}; try { at = JSON.parse(localStorage.getItem(REC_KEY + '-story') || '{}') || {}; } catch (e) {}
+    const out = [];
+    for (const [sk, p] of MEMO_WORLDS) {
+      if (!MAP_CHOICE && sk !== 'd1') continue;
+      const book = memoBook(sk), stages = [];
+      for (const n of [1, 2, 3]) {
+        const m = book[n], lines = [];
+        if (m.first) lines.push({ kind: 'はじまり', text: m.first, read: !!at[p + n + 'first'] });
+        for (const [kind, label] of [['standby', '出発前'], ['clear', '脱出']]) m[kind].forEach((text, i) => lines.push({ kind: label, text, read: (at[p + n + kind] | 0) > i }));
+        stages.push({ n, lines });
+      }
+      out.push({ sk, open: sk === 'd1' || mapOpen(1, sk), stages });
+    }
+    return out;
+  }
+  function memoCount() { let r = 0, a = 0; for (const w of memoTally()) for (const st of w.stages) for (const l of st.lines) { a++; if (l.read) r++; } return [r, a]; }
+  function openMemo() {
+    const box = $('memoBody'); box.textContent = '';
+    for (const w of memoTally()) {
+      const sec = document.createElement('section'), h = document.createElement('h3');
+      h.textContent = `第${STORY_NIGHT[ROUTE[w.sk]]}夜 ${STORY_NAMES[ROUTE[w.sk]]}`; sec.append(h);
+      if (!w.open) { const p = document.createElement('p'); p.className = 'memolock'; p.textContent = '🔒 まだ思い出せない'; sec.append(p); box.append(sec); continue; }
+      for (const st of w.stages) {
+        const h4 = document.createElement('h4'); h4.textContent = `STAGE ${st.n} ${MAP_NAMES[w.sk][st.n - 1]}`; sec.append(h4);
+        const ol = document.createElement('ol');
+        for (const l of st.lines) {
+          const li = document.createElement('li'), sm = document.createElement('small');
+          sm.textContent = l.kind; li.append(sm, l.read ? '「' + l.text + '」' : '？？？'); if (!l.read) li.className = 'unread';
+          ol.append(li);
+        }
+        sec.append(ol);
+      }
+      box.append(sec);
+    }
+    const [r, a] = memoCount(); $('memoHint').textContent = `これまでに読んだ呟きを、物語の順に読み返せる(${r}/${a})。`;
+    ui.title.hidden = true; $('memoScreen').hidden = false; box.scrollTop = 0;
+  }
+  $('memoBtn').addEventListener('click', () => { tap(); openMemo(); });
+  $('memoClose').addEventListener('click', () => { closeOverlay('memoScreen'); memoSub(); });
+  const memoSub = () => { try { const [r, a] = memoCount(); $('mMemoSub').textContent = `読んだ呟き ${r}/${a}`; } catch (e) {} };
+  new MutationObserver(() => { if (!ui.title.hidden) memoSub(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
+  memoSub();
   function monoText(n, kind) {
     const k = n === 4 && daily ? daily.key : Math.min(3, n), m = (n <= 3 && mapSkin === 'd2' ? MONO2 : n <= 3 && mapSkin === 'd3' ? MONO3 : n <= 3 && mapSkin === 'd4' ? MONO4 : MONO)[k], l = m && m[kind];
     // stages 1-3 tell the story in order, each kind on its own count (kept on this device); the daily nights pick at random
