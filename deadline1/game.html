@@ -2506,7 +2506,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
-  const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュの10回に1回、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
+  const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
   const EQUIP_TABS = [['item', 'アイテム', ['rocket', 'boost', 'barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']], ['skill', 'スキル', ['skill']]];
   let equipTab = 'item';
   function openEquip() {
@@ -6647,7 +6647,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(ハイジャンプ・バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('boost'); }, go: () => S3.items > 0 },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
-      { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = Math.max(e.stun || 0, 3); }, go: tutDown },
+      { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
       { btn: 'dash mine', say: '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を40体倒すごとに、ハイジャンプかランチャーが届く', info: true },
       { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
@@ -6661,7 +6661,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは6分30秒で出口が開く。週替わりランキングは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
     ],
     '3h': [
-      { say: '夢路世界のステージ3では、スキル「九死に一生」が特別に使える。ダッシュの10回に1回、通常の1.5倍の距離を走る', info: true },
+      { say: '夢路世界のステージ3では、スキル「九死に一生」が特別に使える。ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', info: true },
       { btn: 'dash', say: 'ダッシュしてみよう。いまは必ず発動する。光の尾が大きくなれば九死に一生', set: () => { tut.luckNext = true; tut.lucky = false; }, go: () => tut.lucky },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。クリアすると九死に一生を獲得できる', end: true },
