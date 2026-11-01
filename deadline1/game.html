@@ -6925,6 +6925,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the two stories, named under each map on the stand-by screens
   const ROUTE = { d1: 'home', d2: 'cyber', d3: 'shadow', d4: 'fuse' };
   const STORY_NAMES = { home: '夢路世界', cyber: '電脳世界', shadow: '影絵世界', fuse: '爆心世界' };
+  // the four stories are the four nights of one: the stand-by screens' heading carries which night it is
+  const STORY_NIGHT = { home: 1, cyber: 2, shadow: 3, fuse: 4 };
+  const stageKicker = n => `STAGE ${n} ` + (MAP_CHOICE ? `第${STORY_NIGHT[ROUTE[mapSkin]]}夜 ` : '') + mapName(n);
   // what clearing each story's stage 3 gives: [slot, item, name]
   const STORY_PRIZE = { home: ['skill', 'skill_luck', 'スキル「九死に一生」'], cyber: ['bomb', 'bomb_emp', '電磁爆弾'], fuse: ['skill', 'skill_idaten', 'スキル「韋駄天」'] };
   const STORY_NOTE = { home: 'クリアでスキル獲得', cyber: 'クリアで電磁爆弾獲得', shadow: 'クリアで爆心世界解放', fuse: 'クリアでスキル獲得' };
@@ -6946,6 +6949,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function mapChoose(n, skin) {
     const p = mapPicks(); p[n] = skin; try { localStorage.setItem(MAP_KEY, JSON.stringify(p)); } catch (_) {}
     mapSkin = mapPick(n); bgmStart(songFor(n)); mapRow(n); previewMap(n, true);
+    $(n === 1 ? 'briefKicker' : 'spKicker').textContent = stageKicker(n);
     if (n === 1) { bestLine('briefBest', 1); mono('briefMono', 1, 'standby'); fitBrief(); } else { spText(n); bestLine('spBest', n); mono('spMono', n, 'standby'); fitStandby(); }
   }
   // the two map cards on a stand-by screen
@@ -6963,7 +6967,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (!lock && mapCleared(n, skin)) { const sub = document.createElement('small'); sub.className = 'mclr'; sub.textContent = 'CLEAR'; b.append(sub); b.classList.add('done'); }
       else { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? MAP_LOCKS[skin][n - 1] : n < 3 ? `クリアでステージ${n + 1} ${MAP_NAMES[skin][n]}解放` : STORY_NOTE[ROUTE[skin]]; b.append(sub); }
       b.setAttribute('aria-pressed', String(on));
-      b.addEventListener('click', () => { if (lock) { lockedTap(n === 1 ? 1 : n); return; } if (!on) { tap(); mapChoose(n, skin); if (n === 1) $('briefKicker').textContent = 'STAGE 1 ' + mapName(1); else $('spKicker').textContent = `STAGE ${n} ${mapName(n)}`; } });
+      b.addEventListener('click', () => { if (lock) { lockedTap(n === 1 ? 1 : n); return; } if (!on) { tap(); mapChoose(n, skin); } });
       box.append(b);
     }
   }
@@ -7358,7 +7362,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   function showBrief() {
     tap(); state = 'brief'; rankRun = false; mapSkin = mapPick(1); bgmStart(songFor(1)); previewMap(1, true);
-    $('briefKicker').textContent = 'STAGE 1 ' + mapName(1); mapRow(1); bestLine('briefBest', 1);
+    $('briefKicker').textContent = stageKicker(1); mapRow(1); bestLine('briefBest', 1);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('briefScreen').hidden = false;
     mono('briefMono', 1, 'standby');
@@ -7757,7 +7761,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       return;
     }
     daily = null; $('spMis').hidden = true;
-    $('spKicker').textContent = `STAGE ${n} ${mapName(n)}`; mapRow(n);
+    $('spKicker').textContent = stageKicker(n); mapRow(n);
     spText(n); bestLine('spBest', n);
     $('startPickScreen').hidden = false;
     mono('spMono', n, 'standby');
