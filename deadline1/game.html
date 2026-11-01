@@ -658,6 +658,36 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 #titleScreen .gear svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
 #titleScreen .gear:hover, #titleScreen .gear:focus-visible { border-color: var(--lamp); color: var(--lamp); outline: none; }
+/* the mail: between the hearts and the gear */
+#titleScreen .mailbtn { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 60px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
+  border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+#titleScreen .mailbtn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
+#titleScreen .mailbtn:hover, #titleScreen .mailbtn:focus-visible { border-color: var(--lamp); color: var(--lamp); outline: none; }
+#titleScreen .mailbtn.has { border-color: color-mix(in srgb, var(--lamp) 60%, var(--line)); color: var(--lamp); }
+.mailbadge { position: absolute; top: -3px; right: -3px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--oni); color: #fff; font: 700 11px/18px system-ui, sans-serif; font-style: normal; text-align: center; box-shadow: 0 0 0 2px rgba(12, 15, 22, .9); }
+.mailbtn.ping { animation: mailping 1s ease-out 2; }
+@keyframes mailping { 0% { box-shadow: 0 0 0 0 rgba(255, 210, 90, .7); } 100% { box-shadow: 0 0 0 14px rgba(255, 210, 90, 0); } }
+#titleScreen .lifepill { right: 110px; }
+@media (max-width: 760px) {
+  #titleScreen .mailbtn { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 50px); right: 10px; }
+  #titleScreen .lifepill { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 100px); right: 10px; }
+}
+.memoprize { font-size: 11px; font-weight: 700; color: var(--lamp); padding: 2px 8px; border: 1px solid color-mix(in srgb, var(--lamp) 45%, transparent); border-radius: 10px; white-space: nowrap; }
+.memoprize.done { color: var(--muted); border-color: var(--line); }
+.memoprize.wait { color: #1a1408; background: var(--lamp); }
+.mailcard .memohead .kicker { margin-right: auto; }
+.mailcard .memohead .ghost { margin-left: 0; }
+.mailbody { gap: 6px; }
+.mailrow { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+.mailrow .mi { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 16px; font-weight: 700; color: #1a1408; background: var(--lamp); }
+.mailrow .mi.item { color: #fff; }
+.mailrow b { display: block; font-size: 13.5px; }
+.mailrow small { display: block; font-size: 11px; color: var(--muted); line-height: 1.45; }
+.mailrow .rw { color: var(--lamp); font-weight: 700; }
+.mailrow button { padding: 7px 12px; font-size: 13px; white-space: nowrap; }
+.mailrow.got { opacity: .5; }
+.mailrow.got button { pointer-events: none; }
+.mailempty { margin: 18px 0; text-align: center; color: var(--muted); font-size: 13px; }
 .setlist { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
 .setrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .setrow b { font-size: 15px; }
@@ -902,6 +932,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   <div class="overlay" id="titleScreen">
     <button class="lifepill" id="lifeBtn" type="button" aria-label="遊べる回数"><span class="hearts" id="lifeHearts"></span><small id="lifeNext"></small><b>＋</b></button>
+    <button class="mailbtn" id="mailBtn" type="button" aria-label="メール"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6.5L20.5 7"/></svg><i class="mailbadge" id="mailBadge" hidden></i></button>
     <button class="gear" id="setBtn" type="button" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
     <div class="card">
       <h1 aria-label="DEADLINE">DEAD<span>L<b class="tstem" aria-hidden="true"><i class="tbar"></i><i class="tdot"><i class="teye"></i></i></b>NE</span></h1>
@@ -1114,9 +1145,16 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   </div>
   <div class="overlay" id="memoScreen" hidden>
     <div class="card rankcard rinfo memocard">
-      <div class="memohead"><h2>記憶</h2><span class="kicker">MEMORY</span><button class="ghost" id="memoClose" type="button">閉じる</button></div>
+      <div class="memohead"><h2>記憶</h2><span class="kicker">MEMORY</span><span class="memoprize" id="memoPrize">コンプリートで★200</span><button class="ghost" id="memoClose" type="button">閉じる</button></div>
       <p class="memohint" id="memoHint">これまでに読んだ呟きを、物語の順に読み返せる。</p>
       <div class="rinfobody memobody" id="memoBody"></div>
+    </div>
+  </div>
+  <div class="overlay" id="mailScreen" hidden>
+    <div class="card rankcard rinfo memocard mailcard">
+      <div class="memohead"><h2>メール</h2><span class="kicker">MAIL</span><button class="ghost mailall" id="mailAll" type="button" hidden>まとめて受け取る</button><button class="ghost" id="mailClose" type="button">閉じる</button></div>
+      <p class="memohint" id="mailHint">ステージクリアの報酬、記憶コンプリートの報酬、週替わりランキングの報酬がここに届く。</p>
+      <div class="rinfobody mailbody" id="mailBody"></div>
     </div>
   </div>
   <div class="overlay lifeov" id="rankInfoScreen" hidden>
@@ -1346,7 +1384,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   async function saveRecords() {
     try { localStorage.setItem(REC_KEY, JSON.stringify(records)); } catch (e) {}
-    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {}, rkPaid: records.rkPaid || 0 }); } catch (e) {} }
+    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {}, rkPaid: records.rkPaid || 0, mail: records.mail || [] }); } catch (e) {} }
   }
   // records this stage's result; returns its rank (1-3) within that stage, or 0
   function addRecord(n, rec) {
@@ -1368,7 +1406,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const d = snap.data() || {};
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
-          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), rkPaid: Math.max(records.rkPaid || 0, d.rkPaid || 0) || records.rkPaid, shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), rkPaid: Math.max(records.rkPaid || 0, d.rkPaid || 0) || records.rkPaid, mail: mergeMail(records.mail, d.mail), shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
@@ -1388,7 +1426,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else if (r.parentNode !== recHome.parent) recHome.parent.insertBefore(r, recHome.next);
   }
   function placeWho() {
-    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('memoScreen').hidden || !$('setScreen').hidden || !$('tutScreen').hidden);
+    const w = $('who'); document.body.classList.toggle('ontitle', !ui.title.hidden || !$('nameScreen').hidden || !$('rankScreen').hidden || !$('titlesScreen').hidden || !$('shopScreen').hidden || !$('equipScreen').hidden || !$('memoScreen').hidden || !$('mailScreen').hidden || !$('setScreen').hidden || !$('tutScreen').hidden);
     if (padMQ.matches) { w.className = 'who'; if (w.parentNode !== $('pad')) $('pad').prepend(w); }
     else if (wideMQ.matches) { w.className = 'who float'; w.style.left = w.style.top = '14px'; if (w.parentNode !== $('stage')) $('stage').appendChild(w); }
     else { w.className = 'who inline'; w.style.left = w.style.top = ''; const c = ui.title.querySelector('.card'); if (w.parentNode !== c) c.prepend(w); }
@@ -1503,14 +1541,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
           got.push({ w, rank, stars: rankPrize(rank) });
         }
         if (!got.length) return;
-        records.rkPaid = got[got.length - 1].w; starW().e += got.reduce((a, g) => a + g.stars, 0); saveRecords();
-        prizeShow = got; prizeOpen();
+        records.rkPaid = got[got.length - 1].w;
+        for (const g of got) if (g.stars > 0) mailSend({ id: 'rk' + g.w, k: 'star', n: g.stars, t: '週替わりランキング報酬', b: `${weekDays(g.w)}の週 ・ ${g.rank ? g.rank + '位' : '順位外'}` }, true);
+        saveRecords(); mailPaint();
       } finally { prizeBusy = false; }
     }
     // shown over the title (held back while another screen is up)
     function prizeOpen() {
       if (!prizeShow || ui.title.hidden || !$('nameScreen').hidden || !$('intro').hidden) return;
-      const days = w => { const d = new Date((w * 7 - 3) * 86400e3), e = new Date((w * 7 + 3) * 86400e3); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}〜${e.getUTCMonth() + 1}/${e.getUTCDate()}`; };
+      const days = weekDays;
       const box = $('rkPrizeBody'); box.textContent = '';
       for (const g of prizeShow) {
         const li = document.createElement('li'), a = document.createElement('span'), b = document.createElement('span'), c = document.createElement('b');
@@ -2061,6 +2100,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // Kept as totals earned and spent, so two saved copies merge by taking the larger of each
   const starW = () => (records.star = Object.assign({ e: 0, s: 0 }, records.star));
   const starHave = () => Math.max(0, starW().e - starW().s);
+  // the mail on two devices: every letter either has, taken if either took it
+  const mergeMail = (a, b) => { const m = new Map(); for (const x of [...(b || []), ...(a || [])]) { const o = m.get(x.id); m.set(x.id, o ? Object.assign({}, o, x, { got: o.got || x.got }) : x); } return [...m.values()].sort((x, y) => (x.at || 0) - (y.at || 0)); };
   const mergeStar = (a, b) => ({ e: Math.max((a && a.e) || 0, (b && b.e) || 0), s: Math.max((a && a.s) || 0, (b && b.s) || 0) });
   // the weekly ranking pays once a week, by where the week ended: 1位 ★40 ... 100位以内 ★10, below that ★5 (for anyone
   // who ran it that week at all, named or not). Paid on the first launch after the week is over
@@ -2538,7 +2579,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     act.append(btn, mk('span', 'state', on ? 'いま使っている' : have ? '持っている' : 'まだ持っていない'));
     // a story's prize: also won by clearing that story's stage 3
     { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
-      if (r && !have) act.append(mk('span', 'state prize', `${STORY_NAMES[r]}のステージ3クリアで獲得`)); }
+      if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_NAMES[r]}のステージ3クリアで獲得`)); }
     box.append(big, ...(clip ? [clip] : []), look, fx, act);
     if (clip) clip.firstChild.play().catch(() => {});
   }
@@ -2570,10 +2611,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         b.addEventListener('click', () => { if (on) return; tap(); shopData().eq[slot] = id; saveRecords(); openEquip(); });
         list.append(b);
       }
-      if (MAP_CHOICE && slot === 'skill' && !sd.owned.includes('skill_luck')) list.append(mk('span', 'eqhint', '九死に一生は夢路世界のステージ3をクリアすると獲得できる'));
-      if (MAP_CHOICE && slot === 'skill' && !sd.owned.includes('skill_idaten')) list.append(mk('span', 'eqhint', '韋駄天は爆心世界のステージ3をクリアすると獲得できる'));
+      if (MAP_CHOICE && slot === 'skill' && !sd.owned.includes('skill_luck')) list.append(mk('span', 'eqhint', mailWaiting('skill_luck') ? '九死に一生は✉️(メール)に届いている。受け取ると装備できる' : '九死に一生は夢路世界のステージ3をクリアすると獲得できる'));
+      if (MAP_CHOICE && slot === 'skill' && !sd.owned.includes('skill_idaten')) list.append(mk('span', 'eqhint', mailWaiting('skill_idaten') ? '韋駄天は✉️(メール)に届いている。受け取ると装備できる' : '韋駄天は爆心世界のステージ3をクリアすると獲得できる'));
       if (MAP_CHOICE && slot === 'skill') list.append(mk('span', 'eqhint', '爆心世界のステージ3(花火の夜)では、装備に関係なく韋駄天だけが使える'));
-      if (MAP_CHOICE && slot === 'bomb' && !sd.owned.includes('bomb_emp')) list.append(mk('span', 'eqhint', '電磁爆弾は電脳世界のステージ3をクリアすると獲得できる'));
+      if (MAP_CHOICE && slot === 'bomb' && !sd.owned.includes('bomb_emp')) list.append(mk('span', 'eqhint', mailWaiting('bomb_emp') ? '電磁爆弾は✉️(メール)に届いている。受け取ると装備できる' : '電磁爆弾は電脳世界のステージ3をクリアすると獲得できる'));
       if (opts.length === 1 && slot !== 'skill') list.append(mk('span', 'eqhint', 'ショップで手に入れたものがここに並ぶ'));
     }
     ui.title.hidden = true; $('equipScreen').hidden = false;
@@ -2700,7 +2741,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const gos = [...card.querySelectorAll('.row .go')];
     card.style.marginTop = card.style.marginBottom = ''; h1.style.fontSize = '';
     for (const g of gos) g.style.paddingTop = g.style.paddingBottom = '';
-    const others = [document.querySelector('#titleScreen .lifepill'), document.querySelector('#titleScreen .gear')];
+    const others = [document.querySelector('#titleScreen .lifepill'), document.querySelector('#titleScreen .gear'), document.querySelector('#titleScreen .mailbtn')];
     // (the letters' top: the oni dot on the i stands level with the capitals)
     const dot = h1.querySelector('.tdot'), top = dot ? dot.getBoundingClientRect().top : h1.getBoundingClientRect().top;
     let need = 0;
@@ -4441,7 +4482,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('cMsg').classList.toggle('story', last && MAP_CHOICE);
     if (last && MAP_CHOICE) {
       const route = ROUTE[mapSkin], got = STORY_PRIZE[route] ? givePrize(route) : '';
-      $('cMsg').textContent = `${STORY_NAMES[route]} 完結。` + (got ? `${got}を獲得した。タイトルの「装備」で付け替えられる。` : 'もう一度挑むか、タイトルに戻るかを選べる。');
+      $('cMsg').textContent = `${STORY_NAMES[route]} 完結。` + (got ? `${got}を獲得した。タイトル右上の✉️(メール)から受け取って、「装備」で付け替えられる。` : 'もう一度挑むか、タイトルに戻るかを選べる。');
     }
     $('againBtn').textContent = `もう一度ステージ${stageN}`;
     $('cRank').textContent = rankText(stageN, crank);
@@ -4455,11 +4496,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the prize's name if it is new
   function givePrize(route) {
     const [slot, id, name] = STORY_PRIZE[route], sd = shopData();
-    const isNew = !sd.owned.includes(id);
-    if (isNew) sd.owned.push(id);
-    if (!sd.eq[slot]) sd.eq[slot] = id;
-    saveRecords();
-    return isNew ? name : '';
+    if (sd.owned.includes(id) || mailFind('prize-' + id)) return '';
+    mailSend({ id: 'prize-' + id, k: 'item', item: id, slot, n: 0, t: `${STORY_NAMES[route]} 完結の報酬`, b: name });
+    return name;
   }
   function nextStage(item) {
     if (state !== 'clear' || stageN >= 3) return;
@@ -7941,13 +7980,83 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
       box.append(sec);
     }
-    const [r, a] = memoCount(); $('memoHint').textContent = `これまでに読んだ呟きを、物語の順に読み返せる(${r}/${a})。`;
+    const [r, a] = memoCount(); $('memoHint').textContent = `これまでに読んだ呟きを、物語の順に読み返せる(${r}/${a})。`; memoPrizeCheck(r, a);
     ui.title.hidden = true; $('memoScreen').hidden = false; box.scrollTop = 0;
     try { initAudio(); bgmStart(SONGS.memory); } catch (e) {}
   }
   $('memoBtn').addEventListener('click', () => { tap(); openMemo(); });
   $('memoClose').addEventListener('click', () => { closeOverlay('memoScreen'); memoSub(); try { bgmStart(SONGS.title); } catch (e) {} });
-  const memoSub = () => { try { const [r, a] = memoCount(); $('mMemoSub').textContent = `読んだ呟き ${r}/${a}`; } catch (e) {} };
+  const memoSub = () => { try { const [r, a] = memoCount(); $('mMemoSub').textContent = `読んだ呟き ${r}/${a}`; memoPrizeCheck(r, a); } catch (e) {} };
+  // every whisper read: ★200, sent to the mail once
+  const MEMO_PRIZE = 200;
+  function memoPrizeCheck(r, a) {
+    if (a > 0 && r >= a && !mailFind('memo-all')) { mailSend({ id: 'memo-all', k: 'star', n: MEMO_PRIZE, t: '記憶コンプリート報酬', b: 'すべての呟きを思い出した' }, true); saveRecords(); mailPaint(); }
+    const el = $('memoPrize'), m = mailFind('memo-all'); if (!el) return;
+    el.textContent = !m ? `コンプリートで★${MEMO_PRIZE}` : m.got ? `コンプリート報酬 ★${MEMO_PRIZE} 受け取り済み` : `★${MEMO_PRIZE}が✉️に届いている`;
+    el.className = 'memoprize' + (!m ? '' : m.got ? ' done' : ' wait');
+  }
+
+  // ---------- the mail (the envelope on the title, between the hearts and the gear): rewards wait here until taken ----------
+  // records.mail: [{ id, k: 'star' | 'item', n (stars), item, slot, t (title), b (line), at, got }], kept with the records
+  function weekDays(w) { const d = new Date((w * 7 - 3) * 86400e3), e = new Date((w * 7 + 3) * 86400e3); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}〜${e.getUTCMonth() + 1}/${e.getUTCDate()}`; }
+  function mailList() { return (records.mail = Array.isArray(records.mail) ? records.mail : []); }
+  function mailFind(id) { return mailList().find(x => x.id === id); }
+  function mailWaiting(item) { return mailList().some(x => x.k === 'item' && x.item === item && !x.got); }
+  function mailSend(m, quiet) {
+    const L = mailList(); if (L.some(x => x.id === m.id)) return;
+    L.push(Object.assign({ at: Date.now(), got: false }, m));
+    // keep it short: only the latest 40 letters already taken stay
+    const taken = L.filter(x => x.got); if (taken.length > 40) records.mail = L.filter(x => !x.got || taken.indexOf(x) >= taken.length - 40);
+    if (!quiet) saveRecords();
+    mailPaint(true);
+  }
+  function mailTake(m) {
+    if (!m || m.got) return;
+    if (m.k === 'star') starW().e += m.n || 0;
+    else if (m.k === 'item') { const sd = shopData(); if (!sd.owned.includes(m.item)) sd.owned.push(m.item); if (m.slot && !sd.eq[m.slot]) sd.eq[m.slot] = m.item; }
+    m.got = true;
+  }
+  const mailItemName = m => (Object.values(STORY_PRIZE).find(x => x[1] === m.item) || [])[2] || m.b;
+  function mailPaint(ping) {
+    const n = mailList().filter(x => !x.got).length, bd = $('mailBadge'), bt = $('mailBtn');
+    if (bd) { bd.hidden = !n; bd.textContent = n > 99 ? '99+' : n; }
+    if (bt) { bt.classList.toggle('has', n > 0); bt.setAttribute('aria-label', n ? `メール(未受け取り${n}件)` : 'メール'); if (ping && n) { bt.classList.remove('ping'); void bt.offsetWidth; bt.classList.add('ping'); } }
+  }
+  function mailOpen() {
+    const box = $('mailBody'); box.textContent = '';
+    const L = mailList().slice().sort((a, b) => (a.got - b.got) || (b.at || 0) - (a.at || 0));
+    if (!L.length) { const p = document.createElement('p'); p.className = 'mailempty'; p.textContent = 'メールはまだ届いていない'; box.append(p); }
+    const fmt = t => { const d = new Date(t || 0); return `${d.getMonth() + 1}/${d.getDate()}`; };
+    for (const m of L) {
+      const row = document.createElement('div'); row.className = 'mailrow' + (m.got ? ' got' : '');
+      const ic = document.createElement('i'); ic.className = 'mi' + (m.k === 'item' ? ' item' : '');
+      if (m.k === 'item') { const it = (typeof SKILLS !== 'undefined' && SKILLS.find(x => x[0] === m.item)) || []; ic.style.background = it[3] || 'radial-gradient(circle at 40% 35%,#bff3ff,#2a6fd0 45%,#0a1d3d)'; ic.textContent = ''; } else ic.textContent = '★';
+      const tx = document.createElement('div'), b = document.createElement('b'), sm = document.createElement('small'), rw = document.createElement('span');
+      b.textContent = m.t; rw.className = 'rw'; rw.textContent = m.k === 'star' ? `★${m.n}` : mailItemName(m);
+      sm.append(rw, ` ・ ${m.k === 'star' ? m.b : '装備で付け替えられる'} ・ ${fmt(m.at)}`); tx.append(b, sm);
+      const go = document.createElement('button'); go.type = 'button'; go.className = m.got ? 'ghost' : 'go'; go.textContent = m.got ? '受け取り済み' : '受け取る';
+      go.addEventListener('click', () => { if (m.got) return; mailTake(m); saveRecords(); mailGot([m]); });
+      row.append(ic, tx, go); box.append(row);
+    }
+    const n = mailList().filter(x => !x.got).length;
+    $('mailAll').hidden = n < 2;
+    $('mailHint').textContent = n ? `未受け取り ${n}件 ・ 所持 ★${starHave()}` : `ステージクリアの報酬、記憶コンプリートの報酬、週替わりランキングの報酬がここに届く。所持 ★${starHave()}`;
+    mailPaint();
+  }
+  // what was just taken: a chime, and the list again
+  function mailGot(ms) {
+    tone(1568, 0.07, 'triangle', 0.05); setTimeout(() => tone(2093, 0.14, 'triangle', 0.05), 90);
+    const keep = $('mailBody').scrollTop; mailOpen(); $('mailBody').scrollTop = keep;
+    try { updateLocks(); } catch (e) {}
+    try { memoPrizeCheck(...memoCount()); } catch (e) {}
+    const st = ms.filter(m => m.k === 'star').reduce((a, m) => a + (m.n || 0), 0), its = ms.filter(m => m.k === 'item').map(mailItemName);
+    $('mailHint').textContent = `受け取った: ${[st ? '★' + st : '', ...its].filter(Boolean).join('、')} ・ 所持 ★${starHave()}`;
+  }
+  $('mailBtn').addEventListener('click', () => { tap(); mailOpen(); ui.title.hidden = true; $('mailScreen').hidden = false; $('mailBody').scrollTop = 0; });
+  $('mailClose').addEventListener('click', () => closeOverlay('mailScreen'));
+  $('mailAll').addEventListener('click', () => { const ms = mailList().filter(x => !x.got); ms.forEach(mailTake); saveRecords(); mailGot(ms); });
+  new MutationObserver(() => { if (!ui.title.hidden) mailPaint(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
+  mailPaint();
   new MutationObserver(() => { if (!ui.title.hidden) memoSub(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
   memoSub();
   function monoText(n, kind) {
@@ -8007,7 +8116,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する。爆発の範囲は爆弾の1.5倍', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>週替わりランキング ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(ハイジャンプ・バリア・ランチャー)を1つ選んで始まる'])}</section>
-      <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに最初に開いたとき)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
+      <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, `ランチャー: ${RK_DROP_AT / 60}分から、爆弾の箱が出るときにまれに(約${Math.round(RK_DROP_P * 100)}%)一緒に落ちる`, '鬼を40体倒すごとに、ハイジャンプかランチャーが届く'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
@@ -8070,7 +8179,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       body.innerHTML = `
       <section><h3>今週(${MAP_NAMES[weekSkin()][2]})</h3>${li([now])}</section>
       <section><h3>もらえる★</h3><table><tr><th>週の最終順位</th><th>★</th></tr>${rows.map(([a, n]) => `<tr><td>${a}</td><td>★${n}</td></tr>`).join('')}</table></section>
-      <section><h3>しくみ</h3>${li(['週替わりランキングは毎週月曜に始まり、日曜の終わりに締め切り(日本時間)', '週が終わったあと、最初にゲームを開いたときに★を受け取る(開かなかった週の分もまとめて)', '順位は名前を登録してランキングに載った、その週の最高記録で決まる。同じタイムは同じ順位', `101位以下・名前が未登録でも、その週に1回遊べば★${RANK_PRIZE_LOW}`, 'その週に一度も遊ばなければ報酬はなし'])}</section>`;
+      <section><h3>しくみ</h3>${li(['週替わりランキングは毎週月曜に始まり、日曜の終わりに締め切り(日本時間)', '週が終わったあと、最初にゲームを開いたときに★がタイトル右上の✉️(メール)に届く(開かなかった週の分もまとめて)', '順位は名前を登録してランキングに載った、その週の最高記録で決まる。同じタイムは同じ順位', `101位以下・名前が未登録でも、その週に1回遊べば★${RANK_PRIZE_LOW}`, 'その週に一度も遊ばなければ報酬はなし'])}</section>`;
     };
     paint(0); $('rankInfoTitle').textContent = 'ランキング報酬'; $('rankInfoScreen').hidden = false;
     const r = await Rank.weekRank(); if (r && !$('rankInfoScreen').hidden && $('rankInfoTitle').textContent === 'ランキング報酬') paint(r);
