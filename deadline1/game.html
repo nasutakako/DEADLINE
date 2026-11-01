@@ -2042,10 +2042,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function starChime() {
     for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
   }
-  // looks only: 200円 -> ★100, 500円 -> ★250. With an effect, by how much it does: ★600 for the ones on the items
-  // (launcher, jump), ★650 for the middling bomb and launcher ones, ★725 for the strong ones on every bomb or dash
-  const STAR_FX = 600, STAR_FX_PRICE = { bomb_emp: 650, rk_plasma: 650, bs_blast: 650, bomb_grav: 725, bomb_ice: 725, dash_warp: 725, dash_shadow: 725 };
-  const starPrice = it => SHOP_FX[it.id] ? STAR_FX_PRICE[it.id] || STAR_FX : Math.round(it.price / 2);
+  // each item's price in ★, set one by one (the skins not listed: 200円 -> ★100, 500円 -> ★250)
+  const STAR_PRICE = {
+    bomb_fw: 250, bomb_big: 500, bomb_emp: 500, bomb_ice: 500, bomb_grav: 750,
+    rk_laser: 250, rk_ice: 500, rk_plasma: 750,
+    bs_star: 250, bs_ice: 500, bs_thunder: 500, bs_blast: 750,
+    dash_petal: 100, dash_frost: 250, dash_bolt: 250, dash_shadow: 500, dash_warp: 750,
+    br_glass: 100, br_emf: 100,
+  };
+  const starPrice = it => STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : Math.round(it.price / 2);
 
   // ---------- today's missions (the survival nights): ten a day, easiest first, three on show at a time, ★1 each ----------
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
@@ -2449,7 +2454,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
-    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(見た目だけ★100・★250、効果つき★600〜★725)。生存課題のミッション(毎日10個まで)・週替わりランキングの報酬・共有でも集められる。'));
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(見た目だけ★100〜★250、効果つき★500〜★750)。生存課題のミッション(毎日10個まで)・週替わりランキングの報酬・共有でも集められる。'));
     const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
     btn.addEventListener('click', async () => {
       tap(); btn.disabled = true;
@@ -2501,6 +2506,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       s2.eq[it.cat.k] = it.id; saveRecords(); openShop(); shopSay('');
     });
     act.append(btn, mk('span', 'state', on ? 'いま使っている' : have ? '持っている' : 'まだ持っていない'));
+    // a story's prize: also won by clearing that story's stage 3
+    { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
+      if (r && !have) act.append(mk('span', 'state prize', `${STORY_NAMES[r]}のステージ3クリアで獲得`)); }
     box.append(big, ...(clip ? [clip] : []), look, fx, act);
     if (clip) clip.firstChild.play().catch(() => {});
   }
