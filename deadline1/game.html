@@ -6507,6 +6507,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // held in the side street's circle: no move but back towards the street (that lets go)
   let feintRead = false;
   function tutFeintLock() {
+    // (the shadow-dash practice's stop at the corner: no moving at all until the dash)
+    if (tut && tut.pinc && tut.pinc.lock) { P.vx = P.vy = 0; return [0, 0]; }
     const c = tut && tut.feint; if (!c || !c.lock || feintRead) return null;
     feintRead = true; const [ix, iy] = readInput(); feintRead = false;
     if (ix * -c.v[0] + iy * -c.v[1] > 0.4) { c.lock = false; return null; }
@@ -6544,6 +6546,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function tutPincerGo() {
     const c = tut.pinc; if (!c) return false;
     if (c.frozen && Math.hypot(P.vx, P.vy) > 1) { c.frozen = false; c.t0 = performance.now(); for (const e of tut.oni) e.var = 1; }
+    // at the lit corner: everything stops, and it is the dash button's turn (the dash goes on the way the runner came)
+    if (!c.frozen && !c.lock && !c.dashed && Math.hypot(P.x - c.x, P.y - c.y) < 0.55) {
+      [P.x, P.y] = [c.x, c.y]; P.vx = P.vy = 0; P.hist = []; c.lock = true;
+      $('tutSay').innerHTML = '<i>ここでダッシュ!</i><i>ダッシュボタンを押して、角に影を置こう</i>';
+    }
+    if (c.lock) { c.t0 = performance.now(); return false; }
     const cl = c.sh.decoy;
     if (cl && Math.hypot(cl.x - c.x, cl.y - c.y) < 1.8) { c.sh.pinT = 0; c.done = true; elems = elems.filter(o => o.k !== 'mark'); return true; }
     // past the corner without it, or too slow: again
@@ -6777,7 +6785,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (tut.ok > 0) { tut.ok -= dt; if (tut.ok <= 0) tutNext(); return; }
     // while the player reads (a step that only explains, waiting on 次へ) or stands held for the next move (the feint
     // practice's stop in the side street), the oni stand still too
-    if ((st.info && !st.end) || (tut.feint && tut.feint.lock)) for (const e of enemies) { e.hold = Math.max(e.hold || 0, 0.05); e.vx = e.vy = 0; }
+    if ((st.info && !st.end) || (tut.feint && tut.feint.lock) || (tut.pinc && tut.pinc.lock)) for (const e of enemies) { e.hold = Math.max(e.hold || 0, 0.05); e.vx = e.vy = 0; }
     if (st.go && st.go()) {
       tut.ok = 0.9; tut.want = null;
       $('tutBar').classList.add('ok'); $('tutSay').textContent = 'OK!'; $('tutNext').hidden = true; tutGlow('');
@@ -7012,6 +7020,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   function dash() {
     if (state !== 'play' || P.jumpT > 0) return;
+    // the shadow-dash practice held at its corner: this dash lets it go, on along the street
+    if (tut && tut.pinc && tut.pinc.lock) { tut.pinc.lock = false; tut.pinc.dashed = true; [P.fx, P.fy] = tut.pinc.u; P.cd = 0; }
     // 韋駄天: two dashes in hand, the next one as soon as this one ends; they come back one at a time (idatenTick)
     const ida = skillOn('skill_idaten');
     if (ida) {
