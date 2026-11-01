@@ -7914,6 +7914,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     el.style.whiteSpace = 'pre-line';
   }
   addEventListener('resize', () => { if (!$('startPickScreen').hidden) fitStandby(); });
+  // (the Japanese fonts arrive a few characters at a time, the first time they are shown: once more of them is in,
+  // the lines are measured again, or a line fitted with the stand-in font would wrap with the real one)
+  const refitStandby = () => { if (!$('startPickScreen').hidden) fitStandby(); if (!$('briefScreen').hidden) fitBrief(); };
+  if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refitStandby);
+  for (const id of ['startPickScreen', 'briefScreen']) new MutationObserver(() => { if (!$(id).hidden) { setTimeout(refitStandby, 300); setTimeout(refitStandby, 1200); } }).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
   $('startBtn').addEventListener('click', showBrief);
   $('briefGoBtn').addEventListener('click', () => { tap(); start(1); });
   $('briefBackBtn').addEventListener('click', () => { tap(); toTitle(); });
