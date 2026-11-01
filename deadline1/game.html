@@ -6410,32 +6410,36 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (bar === 0 && st === 0) hiss({ at, dec: 1.4, v: 0.08, f: 5000 });
   }
   SONGS.rank = { bpm: 128, vol: 0.8, step: stepArena, setup: setupArena };
-  // equip: "armory" (100 BPM, D minor). A quiet workshop groove: a muted kick, ticking metal hats,
-  // a rubbery synth bass, a glassy pluck arpeggio panned through a short echo and, now and then,
-  // the clank of a part locking into place. Dm7 - Bbmaj7 - Gm7 - A7sus.
-  function setupArmory(b) {
-    const d = ac.createDelay(1), fb = ac.createGain(), lp = ac.createBiquadFilter();
-    d.delayTime.value = 60 / 100 * 0.375; fb.gain.value = 0.35; lp.type = 'lowpass'; lp.frequency.value = 3200;
-    d.connect(lp).connect(fb).connect(d); lp.connect(b.out);
-    b.echo = d;
+  // equip: "before the night" (84 BPM, D minor). Quiet, serious preparation: a low drone and a dark pad
+  // in a wide hall, a clock ticking, a deep pulse on the bass like a slow heartbeat, a single low piano
+  // motif that repeats and tightens, and a cold string swell into every fourth bar. Dm - Bb - Gm - A.
+  function setupBriefing(b) {
+    const len = Math.floor(ac.sampleRate * 2.6), ir = ac.createBuffer(2, len, ac.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2); }
+    const cv = ac.createConvolver(), g = ac.createGain();
+    cv.buffer = ir; g.gain.value = 0.6; cv.connect(g).connect(b.out);
+    b.hall = cv;
   }
-  function stepArmory(s, at) {
-    const st = s % 16, bar = Math.floor(s / 16) % 8;
-    const root = [38, 46, 43, 45][bar % 4], chord = [[0, 3, 7, 10], [0, 4, 7, 11], [0, 3, 7, 10], [0, 5, 7, 10]][bar % 4];
-    if (st === 0 || st === 7 || st === 10) voice({ f: 110, f2: 46, at, dec: 0.24, v: 0.55, att: 0.003 });
-    if (st === 4 || st === 12) { voice({ type: 'square', f: 2200, at, dec: 0.025, v: 0.05, cut: 6000, att: 0.001 }); hiss({ at, dec: 0.06, v: 0.06, type: 'bandpass', f: 3400, q: 2 }); }
-    if (st % 2 === 0) voice({ type: 'square', f: 6400 + (st % 4 ? 0 : 900), at, dec: 0.018, v: 0.01, cut: 9000, att: 0.001 });
-    // rubbery bass
-    const bn = { 0: 0, 3: 0, 6: 12, 10: 7, 13: 10 }[st];
-    if (bn != null) voice({ type: 'sawtooth', f: midi(root - 12 + bn), at, dec: 0.2, v: 0.14, cut: 600, q: 8 });
-    // glassy pluck through the echo
-    if (st % 3 === 0) { const n = chord[(st / 3) % 4] + (bar >= 4 ? 12 : 0); voice({ type: 'triangle', f: midi(root + 24 + n), at, dec: 0.25, v: 0.035, att: 0.002, to: bgm.echo }); voice({ f: midi(root + 36 + n), at, dec: 0.12, v: 0.01, att: 0.001 }); }
-    // a soft pad under the second half
-    if (bar >= 4 && st === 0) for (const c of chord) voice({ type: 'triangle', f: midi(root + 12 + c), at, dec: 60 / 100 * 3.8, v: 0.012, att: 0.5, cut: 1500 });
-    // the clank of a part locking in, every other bar
-    if (bar % 2 === 1 && st === 14) { voice({ type: 'square', f: 1450, at, dec: 0.09, v: 0.025, cut: 4000, att: 0.001 }); voice({ type: 'square', f: 2170, at: at + 0.04, dec: 0.12, v: 0.018, cut: 5000, att: 0.001 }); hiss({ at, dec: 0.05, v: 0.05, type: 'bandpass', f: 5200, q: 3 }); }
+  function stepBriefing(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 8, BEAT = 60 / 84;
+    const root = [38, 34, 43, 45][bar % 4], chord = [[0, 3, 7], [0, 4, 7], [0, 3, 7], [0, 4, 7]][bar % 4];
+    // drone and pad, held for the bar
+    if (st === 0) {
+      voice({ type: 'sawtooth', f: midi(root - 12), at, dec: BEAT * 4.3, v: 0.05, att: 0.6, cut: 260 });
+      for (const c of chord) for (const det of [-6, 6]) voice({ type: 'sawtooth', f: midi(root + 12 + c), at, dec: BEAT * 4.4, v: 0.008, att: BEAT * 1.2, cut: 900, det, to: bgm.hall });
+    }
+    // the pulse: a deep thump on 1 and the "and" of 2, like a held breath
+    if (st === 0 || st === 6) voice({ f: 62, f2: 36, at, dec: 0.4, v: st ? 0.32 : 0.45, att: 0.004 });
+    // a clock: a dry tick on every beat, the tock a little lower
+    if (st % 4 === 0) voice({ type: 'square', f: st % 8 ? 1900 : 2300, at, dec: 0.02, v: 0.018, cut: 5000, att: 0.001 });
+    // a low piano motif, tighter in the second half
+    const mot = (bar < 4 ? { 0: 12, 6: 15, 10: 14 } : { 0: 12, 4: 15, 6: 14, 10: 12, 12: 10 })[st];
+    if (mot != null) { const f = midi(root + 12 + mot - (bar % 4 === 1 ? 4 : 0)); voice({ type: 'triangle', f, at, dec: 1.8, v: 0.06, att: 0.003, to: bgm.hall }); voice({ f: f * 2, at, dec: 0.6, v: 0.012, att: 0.002 }); }
+    // a cold string swell leading into each fourth bar
+    if (bar % 4 === 3 && st === 0) for (const c of [7, 12, 15]) voice({ type: 'sawtooth', f: midi(root + 12 + c), at, dec: BEAT * 4, v: 0.012, att: BEAT * 3.4, cut: 2200, vib: 2, to: bgm.hall });
+    if (bar === 7 && st === 8) hiss({ at, dec: BEAT * 2, v: 0.03, type: 'bandpass', f: 400, f2: 2400, q: 1.2 });
   }
-  SONGS.equip = { bpm: 100, vol: 0.9, step: stepArmory, setup: setupArmory };
+  SONGS.equip = { bpm: 84, vol: 1, step: stepBriefing, setup: setupBriefing };
   // the title's side screens each have their own piece; this picks the one for whatever is open
   const menuSong = () => !$('shopScreen').hidden ? SONGS.shop : !$('memoScreen').hidden ? SONGS.memory : !$('rankScreen').hidden ? SONGS.rank : !$('equipScreen').hidden ? SONGS.equip : SONGS.title;
   // opening or closing one of them switches the music (only while on the title)
