@@ -4165,7 +4165,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // a practice oni is exactly the kind the tutorial asked for
-      let bomber = !!s.bomber || fuseStory() && !black && !tough && !amb && enemies.filter(o => o.bomber).length < BOMBER_MAX[Math.min(3, stageN) - 1] && Math.random() < BOMBER_RATE[Math.min(3, stageN) - 1];
+      let bomber = !!s.bomber || fuseStory() && !black && !tough && !amb && enemies.filter(o => o.bomber).length + pending.filter(o => o !== s && o.bomber).length < BOMBER_MAX[Math.min(3, stageN) - 1] && Math.random() < BOMBER_RATE[Math.min(3, stageN) - 1];
       if (s.tut) { black = !!s.black; tough = !!s.tough; amb = !!s.amb; bomber = !!s.bomber; }
       if (tough) toughWave = true;
       enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
