@@ -633,7 +633,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   #titleScreen .lifepill small { min-width: 0; font-size: 9.5px; letter-spacing: -.02em; }
   #titleScreen .lifepill b { width: 26px; height: 26px; font-size: 15px; }
   #titleScreen > .card { padding-right: 48px; }
-  #titleScreen #rankPlayBtn { white-space: normal; font-size: 13px; letter-spacing: 0; line-height: 1.25; }
+  #titleScreen #rankPlayBtn { white-space: normal; line-height: 1.25; }
 }
 #titleScreen .gear { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 10px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
   border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
@@ -1258,15 +1258,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function rankOpen() { try { return storyDone(weekSkin()); } catch (e) { return false; } }
   function updateLocks() {
     const locked = [];
-    { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランキング ' + MAP_NAMES[weekSkin()][2]; }
+    { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランキング'; }
     for (const n of [2, 3, 4, 'rankPlay']) {
       const b = $(n === 'rankPlay' ? 'rankPlayBtn' : 'start' + n + 'Btn'); if (!b) continue;
       if (n === 'rankPlay') {
         const ok = rankOpen();
         b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
         b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
-        // locked: what opens it, small underneath
-        if (!ok) { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = `${STORY_NAMES[ROUTE[weekSkin()]]}のステージ3クリアで解放`; b.append(sm); }
+        // small underneath: this week's map, or (locked) what opens it (the map's name kept off the big line, which it crowded)
+        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${MAP_NAMES[weekSkin()][2]}` : `${STORY_NAMES[ROUTE[weekSkin()]]}のステージ3クリアで解放`; b.append(sm); }
         continue;
       }
       if (n === 4 && b.classList.contains('mrow')) {
