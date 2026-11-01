@@ -459,7 +459,8 @@ body.ontitle .pad .who .menu { flex: 1 1 auto; min-height: 0; grid-auto-rows: mi
   body.ontitle .pad .who .mrow { grid-template-columns: 26px minmax(0, 1fr); gap: 6px; }
   body.ontitle .pad .who .mrow .ic { width: 26px; height: 26px; border-radius: 7px; }
   body.ontitle .pad .who .mrow .ic svg { width: 17px; height: 17px; }
-  body.ontitle .pad .who .mrow b { font-size: min(15px, calc((100cqw - 54px) / 4.2)); }
+  /* (sized so the longest, ランキング's five, still has room before the frame; the shorter ones get more) */
+  body.ontitle .pad .who .mrow b { font-size: min(15px, calc((100cqw - 72px) / 5)); }
 }
 body.ontitle .pad .who .records { flex: 1 1 auto; }
 /* the how-to: a rule wraps without leaving a few characters alone on a line */
@@ -2653,6 +2654,29 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     };
   })();
   playIntro();
+  // the title never runs under the hearts or the gear in the corner: where it would (a phone's own font sets it a
+  // little higher or wider), it comes down in size until it clears them by a few pixels
+  function fitTitleH1() {
+    const h1 = $('titleScreen').querySelector('h1'); if (!h1 || ui.title.hidden) return;
+    h1.style.fontSize = '';
+    const others = [document.querySelector('#titleScreen .lifepill'), document.querySelector('#titleScreen .gear')];
+    for (let k = 0; k < 8; k++) {
+      const rg = document.createRange(); rg.selectNodeContents(h1); const a = rg.getBoundingClientRect();
+      let over = 0;
+      for (const el of others) {
+        const b = el && el.getBoundingClientRect(); if (!b || !b.width) continue;
+        if (a.left < b.right && b.left - 10 < a.right && a.top < b.bottom + 8 && b.top < a.bottom) over = Math.max(over, a.right - (b.left - 10));
+      }
+      if (over <= 0) return;
+      const fs = parseFloat(getComputedStyle(h1).fontSize), nf = Math.max(26, fs * (a.width - over) / a.width - 0.5);
+      if (nf >= fs) return;
+      h1.style.fontSize = nf + 'px';
+    }
+  }
+  addEventListener('resize', fitTitleH1);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitleH1);
+  new MutationObserver(fitTitleH1).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
+  setTimeout(fitTitleH1, 0);
 
   // ---------- settings (the gear on the title): kept on this device ----------
   const SET_KEY = REC_KEY + '-settings';
