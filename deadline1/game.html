@@ -594,12 +594,18 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifeov { z-index: 30; }
 /* the weekly ranking's stage details */
 .rinfobody { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: grid; gap: 12px; align-content: start; padding-right: 4px; overscroll-behavior: contain; }
-.memohint { margin: 0; font-size: 12px; color: var(--muted); }
-.memobody h3 { margin: 0 0 6px; font-size: 14px; letter-spacing: .06em; color: #d9b3ff; }
-.memobody h4 { margin: 10px 0 4px; font-size: 12px; letter-spacing: .12em; color: var(--lamp); font-weight: 700; }
-.memobody ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-.memobody li { font-size: 13px; line-height: 1.6; padding-left: 10px; border-left: 2px solid rgba(217,179,255,.35); }
-.memobody li small { display: block; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+.memohint { margin: 0; font-size: 11px; color: var(--muted); }
+.card.memocard { max-width: 680px; gap: 5px; }
+.memocard .memohead { display: flex; align-items: center; gap: 10px; }
+.memocard .memohead .ghost { margin-left: auto; padding: 5px 14px; font-size: 13px; }
+.memocard .memohead .kicker { margin: 0; }
+.memocard h2 { font-size: 18px; margin: 0; letter-spacing: .1em; color: #d9b3ff; }
+.memobody { gap: 8px; }
+.memobody h3 { margin: 0 0 3px; font-size: 13px; letter-spacing: .06em; color: #d9b3ff; }
+.memobody h4 { margin: 6px 0 3px; font-size: 11px; letter-spacing: .12em; color: var(--lamp); font-weight: 700; }
+.memobody ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; }
+.memobody li { display: grid; grid-template-columns: 3.4em minmax(0, 1fr); column-gap: 8px; align-items: start; font-size: 12.5px; line-height: 1.5; padding-left: 9px; border-left: 2px solid rgba(217,179,255,.35); }
+.memobody li small { display: block; padding-top: .25em; font-size: 9.5px; letter-spacing: .1em; color: var(--muted); }
 .memobody li.unread { color: #4a5266; border-left-color: rgba(255,255,255,.08); }
 .memobody .memolock { margin: 0; font-size: 12px; color: var(--muted); }
 .rankprize { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 12px; color: var(--lamp); }
@@ -802,12 +808,14 @@ body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
   body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
   body.ontitle .pad { grid-area: 1 / 1 / -1 / 2; z-index: 2; background: none; padding-top: 8px; }
-  body.ontitle #titleScreen { padding-left: calc(var(--side) + 16px); }
+  body.ontitle #titleScreen { padding-left: calc(var(--side) + 16px); -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(90deg, rgba(8, 10, 15, .12) 0, rgba(8, 10, 15, .18) calc(var(--side) + 4px), rgba(8, 10, 15, .5) calc(var(--side) + 70px)); }
   body.ontitle .pad { pointer-events: none; }
   body.ontitle .pad .who { pointer-events: auto; }
 }
-body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .8), rgba(16, 19, 28, .78) 70%); }
+body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .38); border-color: rgba(255, 255, 255, .16); }
+body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .45), rgba(16, 19, 28, .32) 70%); border-color: color-mix(in srgb, var(--runner) 40%, transparent); }
+body.ontitle .who .mrow b, body.ontitle .who .mrow small, body.ontitle .who .idcard { text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.6); }
+body.ontitle .who .mrow:hover { background: rgba(30, 36, 52, .55); }
 body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 /* a landscape phone: the stand-by screens fit without scrolling */
 @media (max-height: 520px) {
@@ -1106,11 +1114,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   </div>
   <div class="overlay" id="memoScreen" hidden>
     <div class="card rankcard rinfo memocard">
-      <span class="kicker">MEMORY</span>
-      <h2>記憶</h2>
+      <div class="memohead"><h2>記憶</h2><span class="kicker">MEMORY</span><button class="ghost" id="memoClose" type="button">閉じる</button></div>
       <p class="memohint" id="memoHint">これまでに読んだ呟きを、物語の順に読み返せる。</p>
       <div class="rinfobody memobody" id="memoBody"></div>
-      <div class="row"><button class="ghost" id="memoClose" type="button">閉じる</button></div>
     </div>
   </div>
   <div class="overlay lifeov" id="rankInfoScreen" hidden>
@@ -6333,13 +6339,57 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // two more pieces, the same in every DEADLINE: the tutorial's and the shop's
   SONGS.tut = { bpm: 112, vol: 0.85, step: stepPractice, setup: setupPractice };
   SONGS.shop = { bpm: 90, vol: 1, step: stepLounge, setup: setupLounge };
+  // memory: "what the light left" (66 BPM, A minor). A slow music box in a big hall, a warm pad
+  // breathing under it, a low heartbeat, tape hiss, and now and then a far-off firework, muffled.
+  // Am(add9) - Fmaj7 - C/G - E7sus, sixteen bars; the music box melody answers itself in the second half.
+  function setupMemory(b) {
+    const len = Math.floor(ac.sampleRate * 3.2), ir = ac.createBuffer(2, len, ac.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+    const cv = ac.createConvolver(), g = ac.createGain();
+    cv.buffer = ir; g.gain.value = 0.7; cv.connect(g).connect(b.out);
+    const d = ac.createDelay(2), fb = ac.createGain(), lp = ac.createBiquadFilter();
+    d.delayTime.value = 60 / 66 * 0.75; fb.gain.value = 0.38; lp.type = 'lowpass'; lp.frequency.value = 2600;
+    d.connect(lp).connect(fb).connect(d); lp.connect(cv);
+    b.hall = cv; b.echo = d;
+  }
+  function stepMemory(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 16, BEAT = 60 / 66;
+    const root = [45, 41, 43, 40][bar % 4];
+    const chord = [[0, 3, 7, 14], [0, 4, 7, 11], [0, 4, 7, 12], [0, 5, 7, 10]][bar % 4];
+    // the pad: a slow swell on each bar, two detuned voices
+    if (st === 0) for (const c of chord.slice(0, 3)) for (const det of [-5, 5]) voice({ type: 'triangle', f: midi(root + c), at, dec: BEAT * 4.4, v: 0.02, att: BEAT * 1.4, cut: 1300, det, to: bgm.hall });
+    // a low bass note, held
+    if (st === 0) voice({ f: midi(root - 12), at, dec: BEAT * 3.8, v: 0.11, att: 0.25, cut: 400 });
+    // a heartbeat, faint: lub-dub on beat one of odd bars
+    if (bar % 2 === 1 && (st === 0 || st === 2)) voice({ f: st ? 52 : 60, f2: 34, at, dec: 0.22, v: st ? 0.16 : 0.24, att: 0.006 });
+    // the music box: a broken chord in eighths, the melody on top from bar 5
+    if (st % 2 === 0) {
+      const arp = [0, 2, 1, 3, 2, 1, 3, 2][st / 2], n = root + 24 + chord[arp];
+      voice({ f: midi(n), at, dec: 1.1, v: 0.026, att: 0.002, to: bgm.echo });
+      voice({ f: midi(n) * 4.01, at, dec: 0.35, v: 0.005, att: 0.001, to: bgm.hall });
+    }
+    const MEL = [{ 0: 12, 6: 10, 8: 7, 12: 3 }, { 0: 7, 4: 4, 8: 11, 14: 12 }, { 0: 7, 6: 9, 8: 12, 12: 14 }, { 0: 12, 8: 11, 12: 8 }];
+    const m = bar >= 4 ? MEL[bar % 4][st] : null;
+    if (m != null) {
+      const f = midi(root + 36 + m - (bar >= 12 ? 0 : 12));
+      voice({ f, at, dec: 2.2, v: 0.04, att: 0.003, to: bgm.hall });
+      voice({ f: f * 3.01, at, dec: 0.5, v: 0.008, att: 0.002, to: bgm.echo });
+    }
+    // tape hiss, and a far-off firework (a thud, then a soft crackle) every eight bars
+    if (st === 0) hiss({ at, dec: BEAT * 4, v: 0.008, type: 'bandpass', f: 4500, q: 0.4 });
+    if (bar % 8 === 6 && st === 8) {
+      voice({ f: 70, f2: 38, at, dec: 1.2, v: 0.09, att: 0.01, to: bgm.hall });
+      for (let i = 0; i < 10; i++) hiss({ at: at + 0.3 + Math.random() * 1.6, dec: 0.02, v: 0.012 + Math.random() * 0.012, type: 'bandpass', f: 2200 + Math.random() * 1800, q: 1.5, to: bgm.hall });
+    }
+  }
+  SONGS.memory = { bpm: 66, vol: 1, step: stepMemory, setup: setupMemory };
 
   // short click for menu buttons
   function tap() { initAudio(); tone(1175, 0.05, 'square', 0.045); setTimeout(() => tone(1568, 0.06, 'square', 0.035), 45); }
   // browsers only allow sound after a touch: the first tap on the title starts the music
   const titleMusic = () => {
     if (state !== 'title' && state !== 'startpick' && state !== 'brief') return;
-    initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : !$('shopScreen').hidden ? SONGS.shop : SONGS.title);
+    initAudio(); bgmStart(state === 'brief' ? songFor(1) : state === 'startpick' ? songFor(pendingStart) : !$('shopScreen').hidden ? SONGS.shop : !$('memoScreen').hidden ? SONGS.memory : SONGS.title);
     if (ac) ac.resume().then(() => { const h = $('bgmHint'); if (h) h.hidden = ac.state === 'running' || !!window.DEADLINE_APP; }).catch(() => {});
   };
   // iPhone only unlocks audio on touchend / click, so listen to all of them
@@ -7831,9 +7881,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     const [r, a] = memoCount(); $('memoHint').textContent = `これまでに読んだ呟きを、物語の順に読み返せる(${r}/${a})。`;
     ui.title.hidden = true; $('memoScreen').hidden = false; box.scrollTop = 0;
+    try { initAudio(); bgmStart(SONGS.memory); } catch (e) {}
   }
   $('memoBtn').addEventListener('click', () => { tap(); openMemo(); });
-  $('memoClose').addEventListener('click', () => { closeOverlay('memoScreen'); memoSub(); });
+  $('memoClose').addEventListener('click', () => { closeOverlay('memoScreen'); memoSub(); try { bgmStart(SONGS.title); } catch (e) {} });
   const memoSub = () => { try { const [r, a] = memoCount(); $('mMemoSub').textContent = `読んだ呟き ${r}/${a}`; } catch (e) {} };
   new MutationObserver(() => { if (!ui.title.hidden) memoSub(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
   memoSub();
