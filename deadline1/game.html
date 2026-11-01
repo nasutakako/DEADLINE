@@ -6738,6 +6738,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
     tutGlow(st.btn);
+    // the closing words (supplies, the exit): the practice's oni are done with, and so is any cover from being caught
+    if (st.tail || st.end) { enemies.length = 0; tut.oni = []; tut.pinc = null; tut.feint = null; P.inv = 0; }
     if (st.set) st.set();
   }
   // caught in practice: a word, the step's oni cleared away, then the same step again from the start (as often as it takes)
@@ -6767,6 +6769,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // a practice oni stamped out before it came: send another
     if (tut.want && !tut.oni.length && !pending.some(s => s.tut)) tutOni(Object.assign({}, tut.want, { at: null }));
     if (tut.ok > 0) { tut.ok -= dt; if (tut.ok <= 0) tutNext(); return; }
+    // while the player reads (a step that only explains, waiting on 次へ) or stands held for the next move (the feint
+    // practice's stop in the side street), the oni stand still too
+    if ((st.info && !st.end) || (tut.feint && tut.feint.lock)) for (const e of enemies) { e.hold = Math.max(e.hold || 0, 0.05); e.vx = e.vy = 0; }
     if (st.go && st.go()) {
       tut.ok = 0.9; tut.want = null;
       $('tutBar').classList.add('ok'); $('tutSay').textContent = 'OK!'; $('tutNext').hidden = true; tutGlow('');
