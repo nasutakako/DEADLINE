@@ -3947,6 +3947,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
   function readInput() {
+    const fl = tutFeintLock(); if (fl) return fl;
     let ix = 0, iy = 0;
     const k = input.keys;
     if (k.has('ArrowLeft') || k.has('KeyA')) ix -= 1;
@@ -6497,6 +6498,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tut.feint = { J, u, v, yl, rd, frozen: true, phase: 0, t0: 0, q: best.q, edge: best.edge, end: best.end };
     const [mx, my] = at(0, 1.2); elemAdd({ k: 'mark', x: mx, y: my, r: 0.6, life: 1e9 }, 1);
   }
+  // held in the side street's circle: no move but back towards the street (that lets go)
+  let feintRead = false;
+  function tutFeintLock() {
+    const c = tut && tut.feint; if (!c || !c.lock || feintRead) return null;
+    feintRead = true; const [ix, iy] = readInput(); feintRead = false;
+    if (ix * -c.v[0] + iy * -c.v[1] > 0.4) { c.lock = false; return null; }
+    P.vx = P.vy = 0; return [0, 0];
+  }
   function tutFeintGo() {
     const c = tut.feint; if (!c) return false;
     if (c.none) return tutDown();
@@ -6508,8 +6517,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const ys = side(c.yl.x, c.yl.y), ya = along(c.yl.x, c.yl.y);
     if (!c.inSide && Math.abs(ya) < 0.45 && ys > 0.3 && ys < 3.3) c.inSide = true;
     if (!c.frozen && !c.inSide) { c.yl.lureT = 0.2; c.yl.lureX = c.J[0] + c.v[0] * 3; c.yl.lureY = c.J[1] + c.v[1] * 3; }
-    // in the side street and stopped: now back out
-    if (c.phase === 0 && side(P.x, P.y) > 0.7 && Math.hypot(P.vx, P.vy) < 0.5) {
+    // into the lit circle in the side street: the runner is stopped there (held until they push back towards the
+    // street), and it is time to back out
+    const mk = [c.J[0] + c.v[0] * 1.2, c.J[1] + c.v[1] * 1.2];
+    if (c.phase === 0 && Math.hypot(P.x - mk[0], P.y - mk[1]) < 0.55) {
+      [P.x, P.y] = mk; P.vx = P.vy = 0; P.hist = []; c.lock = true;
       // (the practice gives a little time to read: the yellow oni comes on at 60% from here)
       c.phase = 1; c.t1 = now; c.yl.var = 0.6; elems = elems.filter(o => o.k !== 'mark');
       const [mx, my] = [c.J[0] + c.u[0] * 5, c.J[1] + c.u[1] * 5]; elemAdd({ k: 'mark', x: mx, y: my, r: 0.6, life: 1e9 }, 1);
@@ -6613,7 +6625,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { btn: 'mine', say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
       { say: '黄色い鬼は先回りする。逃走者の進む先を読んで、行く手に回り込んでくる', info: true },
       { say: '後ろから赤い鬼、建物の向こうから黄色い鬼。このままだと角で挟まれる。光る脇道に入って止まろう', set: tutFeint, go: tutFeintGo },
-      { say: '黄色い鬼は脇道に釣られて後ろに回った。挟まれそうなときは、脇道に入って止まり、元の道に戻ろう', info: true, set: () => { P.inv = 1e9; enemies.length = 0; tut.oni = []; tut.feint = null; } },
+      { say: '黄色い鬼は脇道に釣られて後ろに回った。挟まれそうなときは、脇道に入って止まり、元の道に戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
@@ -6679,7 +6691,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '黄色い鬼から分かれた影の鬼は先回りして、行く手に回り込んでくる(点線のルート)。このままだと挟み撃ちになる', info: true, set: tutPincer },
       { btn: 'dash', say: '影の鬼は建物1つ分離れていても影に反応する。光る角に向かって走り、角でダッシュして影を置こう', set: tutPincer, go: tutPincerGo },
       { say: '影の鬼は脇道を下りて影に向かい、回り込めなくなった。挟まれそうなときは、手前の道に影を置こう', info: true, set: () => { P.inv = 1e9; } },
-      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
+      // (the practice's oni go, and with them the cover that kept the runner from being caught while reading)
+      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true, set: () => { enemies.length = 0; tut.oni = []; tut.pinc = null; P.inv = 0; } },
       { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     '3c': [
