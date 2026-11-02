@@ -28,6 +28,19 @@ service cloud.firestore {
       allow delete: if okGame(game) && okBoard(board) && signedIn() && request.auth.uid == uid;
     }
 
+    // games/<game>/rp<week>/<uid>: { name, best, at, d, v } — a weekly ranking run's replay (its moves, packed into d),
+    // kept by the game for runs in that week's top 3; everyone can watch, each player writes only their own
+    function okReplay(b) { return b.matches('rp[0-9]{1,6}'); }
+    match /games/{game}/{rboard}/{uid} {
+      allow read: if okGame(game) && okReplay(rboard);
+      allow create, update: if okGame(game) && okReplay(rboard) && signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['name', 'best', 'at', 'd', 'v'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 20
+        && request.resource.data.best is number && request.resource.data.best >= 0 && request.resource.data.best <= 86400
+        && request.resource.data.d is string && request.resource.data.d.size() <= 950000;
+      allow delete: if okGame(game) && okReplay(rboard) && signedIn() && request.auth.uid == uid;
+    }
+
     // games/<game>/names/<key>: { owner, name } — one owner per name
     match /games/{game}/names/{key} {
       allow read: if okGame(game);

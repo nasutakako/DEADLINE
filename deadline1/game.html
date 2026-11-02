@@ -335,6 +335,20 @@ h2.clear { color: #5dff9e; }
 .ranklist { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.25); }
 .ranklist li, .rankme { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; padding: 6px 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .ranklist li:last-child { border-bottom: 0; }
+.ranklist li:has(.rpbtn) { grid-template-columns: 3.4em minmax(0, 1fr) auto auto auto; }
+.ranklist li .rpbtn { align-self: center; padding: 2px 9px; white-space: nowrap; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(255,207,90,.5); border-radius: 12px; background: rgba(255,207,90,.1); color: #ffcf5a; cursor: pointer; }
+/* the replay: the map over the whole screen, a control bar on it */
+body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0; }
+.repbar { position: absolute; left: 50%; bottom: max(8px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, calc(100% - 20px)); z-index: 5; display: grid; gap: 6px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(10,13,20,.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: var(--ink); }
+.repbar .rptop { display: flex; align-items: center; gap: 10px; font-size: 13px; min-width: 0; }
+.repbar .rptop .kicker { margin: 0; font-size: 10px; }
+.repbar .rptop b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repbar .rptop span { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.repbar .rptop button { margin-left: auto; padding: 4px 12px; font-size: 12.5px; }
+.repbar .rprow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; }
+.repbar .rprow button { min-width: 44px; padding: 5px 10px; font-size: 13px; font-weight: 700; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); cursor: pointer; }
+.repbar input[type=range] { width: 100%; accent-color: #ffcf5a; }
+.repbar .rptime { font-family: var(--f-num); font-size: 13px; font-variant-numeric: tabular-nums; color: #ffcf5a; }
 .ranklist .no, .rankme .no { font-family: var(--f-num); font-weight: 700; color: var(--muted); text-align: right; }
 /* 1st-3rd: gold, silver and bronze */
 .ranklist li.r1, .rankme.r1 { background: linear-gradient(90deg, rgba(255,207,90,.2), rgba(255,207,90,.03)); }
@@ -928,6 +942,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
+  <div class="repbar" id="repBar" hidden>
+    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span id="repInfo"></span><button class="ghost" id="repClose" type="button">閉じる</button></div>
+    <div class="rprow"><button id="repPlay" type="button" aria-label="一時停止">❚❚</button><input type="range" id="repSeek" min="0" max="1000" value="0" aria-label="再生位置"><span class="rptime" id="repTime">0:00</span><button id="repSpeed" type="button">1x</button></div>
+  </div>
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
 
   <div class="overlay" id="titleScreen">
@@ -1312,6 +1330,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let daily = null;   // the night being played on stage 4
   // ---------- weekly ranking: stage 3 with no way out, on one map a week (Japan time, the week from Monday) ----------
   let rankRun = false;
+  // replays (see the recorder further down): the ranking run's map seed, its notes, the one playing, what its runner wore
+  let repSeed = 0, rec = null, rp = null, repEq = null;
   const WEEK = () => Math.floor((Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + 3) / 7);
   const weekSkin = () => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][WEEK() % 4] : 'd1';
   // 歴代ランキング: the best weekly-ranking run ever on each map (at1-at4 for d1-d4)
@@ -1622,9 +1642,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const fmt = s => fmtTime(+s || 0);
     // the developer's ranking names (their keys in names/): their records carry the 開発者 mark
     const DEV_KEYS = ['n6e61737574616b616b6f'];   // nasutakako
-    function row(no, p, mine) {
+    function row(no, p, mine, rp) {
       const li = document.createElement('li'); li.className = [mine ? 'me' : '', no >= 1 && no <= 3 ? 'r' + no : ''].join(' ').trim();
       for (const [c, v] of [['no', no + '位'], ['nm', p.name || '???'], ['tt', p.title || ''], ['tm', fmt(p.best)]]) { const s = document.createElement('span'); s.className = c; s.textContent = v; li.appendChild(s); }
+      // the weekly ranking's top 3: their run can be watched
+      if (rp) { const b = document.createElement('button'); b.type = 'button'; b.className = 'rpbtn'; b.textContent = '▶ リプレイ'; b.addEventListener('click', () => { tap(); playReplay(rp.w, rp.id, p.best, p.name || '???', rp.board); }); li.appendChild(b); }
       // the developer's own record, played like anyone's, marked as such
       if (DEV_KEYS.includes(p.key)) { const b = document.createElement('span'); b.className = 'devb'; b.textContent = '開発者'; li.querySelector('.nm').appendChild(b); }
       return li;
@@ -1666,7 +1688,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
           const p = d.data() || {};
           if (p.best !== prev) { no = i + 1; prev = p.best; }
           const isMe = d.id === uid; if (isMe) inTop = true;
-          list.appendChild(row(no, p, isMe));
+          const wk = /^wk(\d+)$/.exec(board);
+          list.appendChild(row(no, p, isMe, wk && no <= 3 ? { w: +wk[1], id: d.id, board } : null));
         });
         const meRow = list.querySelector('li.me'); if (meRow) meRow.scrollIntoView({ block: 'nearest' });
         const mineDoc = board === 'players' ? me : boardDocs[board];
@@ -1708,7 +1731,27 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         return (await db.collection('wk' + WEEK()).where('best', '>', mine.best).limit(1000).get()).size + 1;
       } catch (e) { return 0; }
     }
-    return { sync, paint, prizeCheck, prizeOpen, weekRank, named: () => !!(me && me.name) };
+    // a ranking run worth keeping (this player's best of the week, and in the week's top 3): its replay, kept with the board
+    async function saveReplay(w, best, pack) {
+      if (!db || !me || !me.name || !canWrite) return;
+      try {
+        const above = (await db.collection('wk' + w).where('best', '>', best).limit(3).get()).size;
+        if (above >= 3) return;
+        const d = await pack(); if (!d) return;
+        await db.doc('rp' + w + '/' + uid).set({ name: me.name, best, at: new Date().toISOString(), d, v: 1 });
+      } catch (e) {}
+    }
+    async function playReplay(w, id, best, name, board) {
+      if (!db) return;
+      try {
+        const s = await db.doc('rp' + w + '/' + id).get();
+        if (!s.exists || !s.data().d) { repSay('この記録のリプレイはまだない(リプレイは機能の追加後に上位3位に入った記録から残る)'); return; }
+        const r = s.data();
+        await repOpen(r, name, board);
+      } catch (e) { repSay('リプレイを読み込めなかった'); }
+    }
+    const repSay = m => { const l = $('rankLabel'); const old = l.textContent; l.textContent = m; setTimeout(() => { if (l.textContent === m) l.textContent = old; }, 3500); };
+    return { sync, paint, prizeCheck, prizeOpen, weekRank, saveReplay, open: openRank, named: () => !!(me && me.name) };
   })();
   // ---------- titles: earned from how a stage went (any stage); one is worn over your name and in the world ranking ----------
   // [id, name, how to earn, test(run, totals, owned count)]. Roughly easy to hard.
@@ -2218,7 +2261,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   $('spMisTog').addEventListener('click', () => { tap(); misOpen = !misOpen; misList(); });
   const MIS_HOST = () => matchMedia('(min-aspect-ratio: 5/4) and (pointer: coarse)').matches ? $('padInfo') : $('stage');
-  const EQ = k => { const s = records.shop; const v = (s && s.eq && s.eq[k]) || ''; return SHOP_GONE.includes(v) ? '' : v; };
+  const EQ = k => { if (repEq) return repEq[k] || ''; const s = records.shop; const v = (s && s.eq && s.eq[k]) || ''; return SHOP_GONE.includes(v) ? '' : v; };
   // a story's stage 3 lends its prize for the run (帰り道: 九死に一生, 電脳の檻: the EMP bomb) where that slot is the standard one
   const trial = () => MAP_CHOICE && stageN === 3 && !rankRun && state !== 'title' ? ROUTE[mapSkin] : '';
   const bombFx = () => EQ('bomb') || (trial() === 'cyber' ? 'bomb_emp' : '');
@@ -3991,7 +4034,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // a fresh map for each stage; mines in hand and the kill count carry over
   function newStage(stock) {
-    placeWho(); pickDims(); genMap(); resize();
+    placeWho(); pickDims();
+    // a ranking run's map comes from a seed kept with it, so its replay can build the same streets
+    if (rankRun && stageN === 3) { repSeed = (Math.random() * 4294967296) >>> 0; seeded(repSeed, genMap); } else genMap();
+    resize();
     flowKey = -1;
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
     P = { x: (yagura ? yagura.x + 1 : sx) + 0.5, y: yagura ? yagura.y + 4.5 : sy + 0.5, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
@@ -4002,6 +4048,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
+    recStart();
   }
 
   // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
@@ -4058,6 +4105,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   function update(dt) {
     t += dt; total += dt;
+    if (rec && t >= rec.next) recFrame();
     if (tut) tutTick(dt);
     if (misLive) misTick();
     // every oni taken down, however it went down, pushes the next oni back by 0.4 s
@@ -4657,6 +4705,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN === 3 && rankRun && ALL_SKINS.includes(mapSkin)) addRecord(allKey(mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
+    recEnd();
     // a survival night: the stars its missions paid
     misEnd();
     { const got = stageN === 4 ? misGot : 0; $('rStars').hidden = stageN !== 4;
@@ -7433,7 +7482,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
       if (caughtTimer <= 0) { state = 'over'; ui.over.hidden = false; titleChime('rTitles'); starChime(); prepShare('over'); }
     }
-    draw(); hud();
+    if (state === 'replay') repTick(dt);
+    draw(); if (state !== 'replay') hud();
     requestAnimationFrame(frame);
   }
 
@@ -8002,6 +8052,139 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     el.textContent = !m ? `コンプリートで★${MEMO_PRIZE}` : m.got ? `コンプリート報酬 ★${MEMO_PRIZE} 受け取り済み` : `★${MEMO_PRIZE}が✉️に届いている`;
     el.className = 'memoprize' + (!m ? '' : m.got ? ' done' : ' wait');
   }
+
+  // ---------- replays (the weekly ranking's top 3): a run kept as its moves, played back on the same map ----------
+  // A ranking run's map comes from a seed; while it runs, what is on the map is noted 8 times a second (the runner,
+  // the oni, bombs, blasts, boxes on the road, oni about to come out), positions in 1/20 of a tile. A replay builds the
+  // map from the seed again and draws those notes with the game's own drawing.
+  const REC_HZ = 8, REP_MAX = 900000;
+  function seeded(seed, fn) {
+    const keep = Math.random; let a = seed >>> 0;
+    Math.random = () => { a = a + 0x6D2B79F5 | 0; let x = Math.imul(a ^ a >>> 15, 1 | a); x = x + Math.imul(x ^ x >>> 7, 61 | x) ^ x; return ((x ^ x >>> 14) >>> 0) / 4294967296; };
+    try { fn(); } finally { Math.random = keep; }
+  }
+  function recStart() {
+    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, skin: mapSkin, cols: COLS, rows: ROWS,
+      eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash') } } : null;
+  }
+  function recFrame(last) {
+    const q = v => Math.round(v * 20), fxi = v => { v = v || ''; let i = rec.fx.indexOf(v); if (i < 0) { i = rec.fx.length; rec.fx.push(v); } return i; };
+    const id = o => { let i = rec.ids.get(o); if (!i) { i = rec.nid++; rec.ids.set(o, i); } return i; };
+    const pf = (P.barrier ? 1 : 0) | (P.inv > 0 ? 2 : 0) | (P.dashT > 0 ? 4 : 0) | (P.boostT > 0 ? 8 : 0) | (last ? 16 : 0);
+    const g = [
+      kills - stageKillStart,
+      [q(P.x), q(P.y), Math.round(Math.atan2(P.fy || 0, P.fx || 0) * 10), pf, P.jumpT > 0 ? q(P.jumpT) : 0].join(','),
+      enemies.map(e => [id(e), q(e.x), q(e.y), (e.black ? 1 : 0) | (e.amb ? 2 : 0) | (e.tough ? 4 : 0) | (e.bomber ? 8 : 0) | (e.shade ? 16 : 0) | (e.stun > 0 ? 32 : 0), e.fuseT != null ? q(Math.max(0, e.fuseT)) : -1].join(',')).join('/'),
+      mines.filter(m => !m.gone).map(m => [q(m.x), q(m.y), q(Math.max(0, m.fuse || 0)), fxi(m.fx)].join(',')).join('/'),
+      booms.map(b => [q(b.x), q(b.y), q(b.r || BLAST), q(b.t), fxi(b.fx), b.barrier ? 1 : 0, q(b.life || 0.6), b.fw ? 1 : 0, Math.round((b.seed || 0) * 100), b.cols ? Math.max(0, FW_COLS.indexOf(b.cols)) : 0].join(',')).join('/'),
+      items.map(it => [q(it.x), q(it.y), it.rk ? 1 : 0, q(t - it.born)].join(',')).join('/'),
+      pending.map(p => [q(p.x), q(p.y), q(p.t)].join(',')).join('/'),
+    ];
+    rec.fr.push(g.join('|')); rec.next += 1 / REC_HZ;
+  }
+  // the run is over: if it is this week's best for this player, its replay goes up (when it stands in the top 3)
+  function recEnd() {
+    const r = rec; rec = null;
+    if (!r || !(stageN === 3 && rankRun)) return;
+    rec = r; recFrame(true); rec = null;
+    const time = +t.toFixed(1), b = stageBest('wk' + WEEK());
+    if (!b || +(+b.time).toFixed(1) !== time) return;
+    Rank.saveReplay(WEEK(), time, () => repPack(r, time));
+  }
+  // the notes as one string: gzip and base64 where the browser has them; too long, every other note is dropped
+  async function repPack(r, len) {
+    let fr = r.fr, hz = REC_HZ;
+    for (let k = 0; k < 4; k++) {
+      const head = JSON.stringify({ v: 1, skin: r.skin, cols: r.cols, rows: r.rows, seed: r.seed, hz, fx: r.fx, eq: r.eq, len });
+      const raw = head + '\n' + fr.join(';');
+      let out = 'p:' + raw;
+      try {
+        if (typeof CompressionStream === 'function') {
+          const buf = await new Response(new Blob([raw]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+          let bin = ''; const u8 = new Uint8Array(buf); for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000));
+          out = 'z:' + btoa(bin);
+        }
+      } catch (e) {}
+      if (out.length <= REP_MAX) return out;
+      fr = fr.filter((_, i) => i % 2 === 0); hz /= 2;
+    }
+    return null;
+  }
+  async function repUnpack(d) {
+    let raw = d.slice(2);
+    if (d.startsWith('z:')) {
+      const bin = atob(raw), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+      raw = await new Response(new Blob([u8]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+    }
+    const nl = raw.indexOf('\n'), head = JSON.parse(raw.slice(0, nl));
+    const nums = s => s ? s.split(',').map(Number) : [];
+    const list = s => s ? s.split('/').map(nums) : [];
+    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]) }; });
+    // when each oni first showed (it grows in over 0.3 s, as in the game)
+    const seen = new Map(); fr.forEach((f, n) => { for (const e of f.e) if (!seen.has(e[0])) seen.set(e[0], n / head.hz); });
+    return { head, fr, seen };
+  }
+  async function repOpen(r, name, board) {
+    const data = await repUnpack(r.d), h = data.head;
+    rp = Object.assign(data, { time: 0, speed: 1, playing: true, name, board, best: r.best, len: h.len || data.fr.length / h.hz });
+    $('rankScreen').hidden = true; ui.title.hidden = true;
+    document.body.classList.add('replaying');
+    stageN = 3; daily = null; rankRun = false; tut = null; mapSkin = h.skin; COLS = h.cols; ROWS = h.rows;
+    seeded(h.seed, genMap); resize();
+    repEq = h.eq || {};
+    P = { x: 0, y: 0, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock: 0, barrier: false, inv: 0, boostT: 0, jumpT: 0, saveT: 0, flT: 0 };
+    enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
+    shake = 0; flash = 0; danger = 0; exitOpen = false; keyPos = null; stageKillStart = 0;
+    state = 'replay';
+    rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][2] : '';
+    $('repName').textContent = name;
+    $('repBar').hidden = false; repPaintBar(); repApply(0);
+  }
+  function repClose() {
+    if (!rp) return;
+    const board = rp.board; rp = null; repEq = null;
+    $('repBar').hidden = true; document.body.classList.remove('replaying');
+    P = null; enemies = []; mines = []; booms = []; items = []; pending = [];
+    toTitle();
+    try { Rank.open(board); } catch (e) {}
+  }
+  function repApply(time) {
+    const h = rp.head, N = rp.fr.length, f = Math.max(0, time * h.hz), i = Math.min(N - 1, Math.floor(f)), u = Math.min(1, f - i);
+    const A = rp.fr[i], B = rp.fr[Math.min(N - 1, i + 1)], L = (a, b) => a + (b - a) * u, z = v => v / 20;
+    t = time; kills = A.k;
+    const [px, py, pa, pf, pj] = A.p, bp = B.p.length ? B.p : A.p;
+    P.x = z(L(px, bp[0])); P.y = z(L(py, bp[1])); P.fx = Math.cos(pa / 10); P.fy = Math.sin(pa / 10);
+    P.barrier = !!(pf & 1); P.inv = pf & 2 ? 1 : 0; P.dashT = pf & 4 ? 0.1 : 0; P.boostT = pf & 8 ? 1 : 0; P.jumpT = z(pj || 0);
+    const nextE = new Map(B.e.map(e => [e[0], e]));
+    enemies = A.e.map(e => {
+      const b = nextE.get(e[0]) || e, x = z(L(e[1], b[1])), y = z(L(e[2], b[2])), fl = e[3];
+      return { x, y, r: R_ENEMY, vx: b[1] - e[1] || 0.001, vy: b[2] - e[2], born: rp.seen.get(e[0]) || 0, bias: (e[0] * 0.618) % 1, var: 1, hp: 1,
+        black: !!(fl & 1), amb: !!(fl & 2), tough: !!(fl & 4), armored: !!(fl & 4), bomber: !!(fl & 8), shade: !!(fl & 16), stun: fl & 32 ? 1 : 0, fuseT: e[4] >= 0 ? Math.max(0, z(e[4]) - u / h.hz) : null };
+    });
+    mines = A.m.map(m => ({ x: z(m[0]), y: z(m[1]), fuse: Math.max(0, z(m[2]) - u / h.hz), fx: h.fx[m[3]] || '' }));
+    booms = A.b.map(b => ({ x: z(b[0]), y: z(b[1]), r: z(b[2]), t: z(b[3]) + u / h.hz, fx: h.fx[b[4]] || '', barrier: !!b[5], life: z(b[6]), fw: !!b[7], seed: (b[8] || 0) / 100, cols: FW_COLS[b[9] || 0] })).filter(b => b.t < b.life);
+    items = A.i.map(it => ({ x: z(it[0]), y: z(it[1]), rk: !!it[2], born: time - z(it[3]) }));
+    pending = A.w.map(p => ({ x: z(p[0]), y: z(p[1]), t: Math.max(0.01, z(p[2]) - u / h.hz) }));
+  }
+  function repTick(dt) {
+    if (!rp) return;
+    if (rp.playing) { rp.time = Math.min(rp.len, rp.time + dt * rp.speed); if (rp.time >= rp.len) { rp.playing = false; } }
+    repApply(rp.time); repPaintBar();
+  }
+  function repPaintBar() {
+    const mm = v => fmtTime(v).split('.')[0];
+    $('repTime').textContent = `${mm(rp.time)} / ${mm(rp.len)}`;
+    if (!rp.drag) $('repSeek').value = Math.round(rp.time / rp.len * 1000);
+    $('repPlay').textContent = rp.playing ? '❚❚' : rp.time >= rp.len ? '↺' : '▶';
+    $('repPlay').setAttribute('aria-label', rp.playing ? '一時停止' : '再生');
+    $('repSpeed').textContent = rp.speed + 'x';
+    $('repInfo').textContent = (rp.time >= rp.len ? '確保 ・ ' : `${rp.map} ・ `) + `撃破${kills} ・ 記録 ${fmtTime(rp.best)}`;
+  }
+  $('repPlay').addEventListener('click', () => { if (!rp) return; if (rp.time >= rp.len) rp.time = 0; rp.playing = !rp.playing; repPaintBar(); });
+  $('repSpeed').addEventListener('click', () => { if (!rp) return; rp.speed = rp.speed >= 4 ? 1 : rp.speed * 2; repPaintBar(); });
+  $('repSeek').addEventListener('input', e => { if (!rp) return; rp.drag = true; rp.time = e.target.value / 1000 * rp.len; repApply(rp.time); repPaintBar(); });
+  $('repSeek').addEventListener('change', () => { if (rp) rp.drag = false; });
+  $('repClose').addEventListener('click', () => { tap(); repClose(); });
 
   // ---------- the mail (the envelope on the title, between the hearts and the gear): rewards wait here until taken ----------
   // records.mail: [{ id, k: 'star' | 'item', n (stars), item, slot, t (title), b (line), at, got }], kept with the records
