@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>html, body { margin: 0; }</style>
 <script src="../fb.js" data-game="deadline1"></script>
-<title>DEADLINE</title>
+<title>DEADLiNE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700&family=Azeret+Mono:wght@500;700&display=swap">
@@ -956,7 +956,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     <button class="mailbtn" id="mailBtn" type="button" aria-label="メール"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="M3.5 7l8.5 6.5L20.5 7"/></svg><i class="mailbadge" id="mailBadge" hidden></i></button>
     <button class="gear" id="setBtn" type="button" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
     <div class="card">
-      <h1 aria-label="DEADLINE">DEAD<span>L<b class="tstem" aria-hidden="true"><i class="tbar"></i><i class="tdot"><i class="teye"></i></i></b>NE</span></h1>
+      <h1 aria-label="DEADLiNE">DEAD<span>L<b class="tstem" aria-hidden="true"><i class="tbar"></i><i class="tdot"><i class="teye"></i></i></b>NE</span></h1>
       <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
@@ -1202,7 +1202,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="overlay lifeov adov" id="adScreen" hidden>
     <div class="card">
       <span class="label" id="adLabel">広告(サンプル)</span>
-      <div class="adbox" id="adBox"><b>DEADLINE</b><span>ここに広告が入ります</span></div>
+      <div class="adbox" id="adBox"><b>DEADLiNE</b><span>ここに広告が入ります</span></div>
       <button class="ghost" id="adClose" type="button" disabled>あと5秒</button>
     </div>
   </div>
@@ -1940,7 +1940,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const kills = $(kind === 'clear' ? 'cKills' : 'rKills').textContent;
     const line = kind === 'clear' ? `脱出成功  撃破${kills}` : stageN >= 3 ? `生き残った  撃破${kills}` : `確保された…  撃破${kills}`;
     const what = kind === 'clear' ? `${where}を ${sc} で脱出!` : stageN >= 3 ? `${where}で ${sc} 生き残った! 撃破${kills}` : `${where}で ${sc} 逃げたけど確保された…`;
-    const text = `${document.title} ${what}${tn ? ' 《' + tn + '》' : ''}\n#DEADLINE鬼ごっこ` + (SHARE_URL ? '\n' + SHARE_URL : '');
+    const text = `${document.title} ${what}${tn ? ' 《' + tn + '》' : ''}\n#DEADLiNE鬼ごっこ` + (SHARE_URL ? '\n' + SHARE_URL : '');
     return { sc, tn, where, line, text };
   }
   function drawCard(kind) {
@@ -1968,7 +1968,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       g.fillStyle = lamp; g.fillText(t, 96, 552);
     }
     g.fillStyle = ink; g.globalAlpha = 0.72; g.font = `500 24px ${body}`;
-    g.fillText('#DEADLINE鬼ごっこ' + (SHARE_URL ? '   ' + SHARE_URL.replace(/^https:\/\//, '') : ''), 72, H - 48); g.globalAlpha = 1;
+    g.fillText('#DEADLiNE鬼ごっこ' + (SHARE_URL ? '   ' + SHARE_URL.replace(/^https:\/\//, '') : ''), 72, H - 48); g.globalAlpha = 1;
     return c;
   }
   // made when the result screen opens, so the tap can hand it straight to the share sheet
