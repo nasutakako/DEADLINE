@@ -344,7 +344,9 @@ body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0
 .repbar .rptop .kicker { margin: 0; font-size: 10px; }
 .repbar .rptop b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repbar .rptop span { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.repbar .rptop button { margin-left: auto; padding: 4px 12px; font-size: 12.5px; }
+.repbar .rptop button { padding: 4px 12px; font-size: 12.5px; }
+.repbar .rptop #repHide { margin-left: auto; }
+.repshow { position: absolute; right: max(10px, env(safe-area-inset-right, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); z-index: 5; padding: 6px 12px; font-size: 12.5px; font-weight: 700; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; background: rgba(10,13,20,.6); color: var(--ink); cursor: pointer; opacity: .75; }
 .repbar .rprow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; }
 .repbar .rprow button { min-width: 44px; padding: 5px 10px; font-size: 13px; font-weight: 700; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); cursor: pointer; }
 .repbar input[type=range] { width: 100%; accent-color: #ffcf5a; }
@@ -942,8 +944,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
+  <button class="repshow" id="repShow" type="button" hidden aria-label="操作バーを出す">▲ 操作</button>
   <div class="repbar" id="repBar" hidden>
-    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span id="repInfo"></span><button class="ghost" id="repClose" type="button">閉じる</button></div>
+    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span id="repInfo"></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
     <div class="rprow"><button id="repPlay" type="button" aria-label="一時停止">❚❚</button><input type="range" id="repSeek" min="0" max="1000" value="0" aria-label="再生位置"><span class="rptime" id="repTime">0:00</span><button id="repSpeed" type="button">1x</button></div>
   </div>
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
@@ -1239,7 +1242,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
-  const RK_DROP_AT = 420, RK_DROP_P = 0.15;   // the weekly ranking's launcher: from 7:00, one chance in about seven each time a box comes
+  const RK_DROP_AT = 420, RK_DROP_EVERY = 90, RK_LIFE = 20;   // the weekly ranking's launcher: from 7:00, one every 1:30 (lying 20 s)
   const STICK_R = 34;
   // the exit opens at 2:30 on stage 1, 4:30 on stage 2 (stage 3: STORY_EXIT)
   const BARRIER_AT = 120, EXIT_AT = 150, EXIT_AT2 = 270, INV_TIME = 1.5;
@@ -4204,10 +4207,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
 
     // items: mines lying in the street
+    // the weekly ranking, from 7:00: a launcher lies in the street every 1:30
+    if (stageN === 3 && rankRun && t >= (P.nextRk ?? RK_DROP_AT)) {
+      if (!items.some(it => it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
+      P.nextRk = (P.nextRk ?? RK_DROP_AT) + RK_DROP_EVERY;
+    }
     if (t >= nextItem) {
       if (!items.some(it => !it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t }); }
-      // the weekly ranking, from 7:00: now and then a launcher lies in the street too
-      if (stageN === 3 && rankRun && t >= RK_DROP_AT && !items.some(it => it.rk) && Math.random() < RK_DROP_P) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
       nextItem = t + ITEM_EVERY;
     }
 
@@ -4288,7 +4294,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (it.rk) { bag.push('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
       P.stock++; tone(990, 0.08, 'square', 0.04); setTimeout(() => tone(1320, 0.1, 'square', 0.04), 70);
     }
-    items = items.filter(it => !it.taken && t - it.born < ITEM_LIFE);
+    items = items.filter(it => !it.taken && t - it.born < (it.rk ? RK_LIFE : ITEM_LIFE));
 
     flow(Math.floor(P.x), Math.floor(P.y));
 
@@ -5536,7 +5542,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // pickups
     for (const it of items) {
       // blink during the last 3 seconds before it disappears
-      if (ITEM_LIFE - (t - it.born) < 3 && Math.sin(now * 18) < 0) continue;
+      if ((it.rk ? RK_LIFE : ITEM_LIFE) - (t - it.born) < 3 && Math.sin(now * 18) < 0) continue;
       const bob = Math.sin(now * 4 + it.x) * 0.05;
       if (it.rk) {
         // a launcher in a ring, the size of the bomb box
@@ -8164,7 +8170,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function repClose() {
     if (!rp) return;
     const board = rp.board; rp = null; repEq = null;
-    $('repBar').hidden = true; document.body.classList.remove('replaying');
+    $('repBar').hidden = true; $('repShow').hidden = true; document.body.classList.remove('replaying');
     P = null; enemies = []; mines = []; booms = []; items = []; pending = [];
     toTitle();
     try { Rank.open(board); } catch (e) {}
@@ -8207,6 +8213,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('repSeek').addEventListener('input', e => { if (!rp) return; rp.drag = true; rp.time = e.target.value / 1000 * rp.len; repApply(rp.time); repPaintBar(); });
   $('repSeek').addEventListener('change', () => { if (rp) rp.drag = false; });
   $('repClose').addEventListener('click', () => { tap(); repClose(); });
+  // the bar can be put away to see the bottom of the map; a small button brings it back
+  $('repHide').addEventListener('click', () => { tap(); $('repBar').hidden = true; $('repShow').hidden = false; });
+  $('repShow').addEventListener('click', () => { tap(); $('repShow').hidden = true; $('repBar').hidden = false; });
 
   // ---------- the mail (the envelope on the title, between the hearts and the gear): rewards wait here until taken ----------
   // records.mail: [{ id, k: 'star' | 'item', n (stars), item, slot, t (title), b (line), at, got }], kept with the records
@@ -8330,7 +8339,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>週替わりランキング ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(ハイジャンプ・バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
-      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, `ランチャー: ${RK_DROP_AT / 60}分から、爆弾の箱が出るときにまれに(約${Math.round(RK_DROP_P * 100)}%)一緒に落ちる`, '鬼を40体倒すごとに、ハイジャンプかランチャーが届く'])}</section>
+      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, `ランチャー: ${RK_DROP_AT / 60}分から${RK_DROP_EVERY / 60 | 0}分${RK_DROP_EVERY % 60 ? RK_DROP_EVERY % 60 + '秒' : ''}ごとに道に落ちる(${RK_LIFE}秒で消える)`, '鬼を40体倒すごとに、ハイジャンプかランチャーが届く'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
