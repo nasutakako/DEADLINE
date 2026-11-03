@@ -4855,12 +4855,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       seen.push(e); const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < fd) { fd = d; first = e; }
     }
     // the closer to the runner, the longer it chases the decoy: the closest for the decoy's whole life, each next one
-    // 60% as long (the yellow ones half that again), and one that would come back to the runner within 0.35 s not at all
+    // 60% as long (the yellow ones as long as the rest), and one that would come back to the runner within 0.35 s not at all
     // The shadow oni hang back to close in from the other side, so they are ranked among themselves only: the nearest
     // of them takes the bait as fully as the nearest oni does, from up to a building or two off (the lure radius)
     const near = (a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y);
     for (const list of [seen.filter(e => !e.shade).sort(near), seen.filter(e => e.shade).sort(near)])
-      list.forEach((e, i) => { const d = c.life * Math.pow(0.6, i) * (e.amb && i ? 0.5 : 1); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
+      list.forEach((e, i) => { const d = c.life * Math.pow(0.6, i); if (d >= 0.35) { e.decoy = c; e.decoyT = d; got.push(e); } });
   }
   function elemTick(dt) {
     // the boost's flames and the dash's ice, spaced out so they never pile up
