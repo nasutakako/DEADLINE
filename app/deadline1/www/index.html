@@ -4596,9 +4596,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the item chosen with ◀ ▶ (when none of it is left, the next kind in the bag)
   const ITEM_KINDS = ['boost', 'barrier', 'launcher'];
   let itemSel = 'boost';
+  // (a barrier in the bag can't go on while one is on: then the choice moves to one that can be used, so the button
+  // never does nothing while a launcher or a jump is in the bag)
+  const itemUsable = k => bag.includes(k) && !(k === 'barrier' && P && P.barrier);
   function itemCur() {
-    if (bag.includes(itemSel)) return itemSel;
-    const k = ITEM_KINDS.find(x => bag.includes(x)); if (k) itemSel = k;
+    if (itemUsable(itemSel)) return itemSel;
+    const k = ITEM_KINDS.find(itemUsable) || (bag.includes(itemSel) ? itemSel : ITEM_KINDS.find(x => bag.includes(x)));
+    if (k) itemSel = k;
     return itemSel;
   }
   function itemStep(d) {
