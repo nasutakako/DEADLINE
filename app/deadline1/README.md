@@ -28,7 +28,7 @@ npx cap open ios             # Xcode が開く → ▶ で実機/シミュレー
 
 | 商品ID | 種類 | 値段 |
 |---|---|---|
-| deadline1.item.bomb_emp / bomb_grav / rk_plasma / bs_after / bs_thunder / dash_warp | 非消耗型 | 500円 |
+| deadline1.item.bomb_grav / rk_plasma / bs_after / bs_thunder / dash_warp | 非消耗型 | 500円 |
 | deadline1.stars.50 / 100 / 250 / 500 / 750 / 1000 | 消耗型 | 200 / 400 / 1,000 / 2,000 / 3,000 / 4,000円 |
 
 - 購入は `www/iap.js`（cordova-plugin-purchase）が受け持つ。ゲーム側は `window.DEADLINE_IAP` だけを見る

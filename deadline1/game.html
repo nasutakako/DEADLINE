@@ -2437,7 +2437,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const banned = (x, y) => !!shadeBan && shadeBan.has(idx(Math.floor(x), Math.floor(y)));
     if (banned(e.x, e.y)) { const nx = e.x, ny = e.y; e.x = ox; if (banned(e.x, e.y)) { e.x = nx; e.y = oy; if (banned(e.x, e.y)) { e.x = ox; e.y = oy; e.vx = e.vy = 0; } } }
   }
-  const dashFx = () => shadowStory() && stageN >= 2 && !rankRun ? 'dash_shadow' : EQ('dash');
+  // 影絵世界: 影分身ダッシュ on its stages 2 and 3, and on its weekly ranking (月蝕の夜), whatever dash is worn
+  const dashFx = () => shadowStory() && stageN >= 2 ? 'dash_shadow' : EQ('dash');
   const IDATEN_N = 2;
   // (花火の夜 gives 韋駄天 and only that: the equipped skill sits out there)
   const skillOn = k => trial() === 'fuse' ? k === 'skill_idaten' : EQ('skill') === k || (!EQ('skill') && k === 'skill_luck' && trial() === 'home');
@@ -2463,7 +2464,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     rk_water: '鬼は倒さない。通路を飛ぶ水流が、通り道の鬼をすべて奥へ押し流す。',
     bs_fire: '加速中、通った場所に炎が1.2秒残る。触れた鬼は怯む(同じ鬼は2秒に1回まで)。',
     dash_ice: 'ダッシュした道に氷が2.4秒残る。氷を踏んだ鬼は1.6秒遅くなる。',
-    dash_shadow: 'ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼はその場で立ち止まる。黄色い鬼から分かれた影の鬼は、少し離れていても反応する。',
+    dash_shadow: '影絵世界のステージ2・3と、月蝕の夜の週替わりランキングでは、買わなくても自動で使える。ほかのマップで使うにはここで交換する。ダッシュした瞬間、その場に影の分身が残る。近くの鬼が分身を追う。逃走者に近い鬼ほど長く追う(いちばん近い鬼で1.8秒)。分身にたどり着いた鬼はその場で立ち止まる。黄色い鬼から分かれた影の鬼は、少し離れていても反応する。',
     dash_water: 'ダッシュした場所に水の分身が2.2秒残る。分身が見えた鬼の半分ほどがそちらへ向かう。',
   };
   // each slot's items cheapest first (the shop and the equip list alike; the same price keeps the order above)
@@ -2484,7 +2485,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     el.style.background = sw || (look && look.m ? `radial-gradient(circle at 38% 35%,${look.m[0]},${look.m[1]} 45%,${look.m[2]})` : SHOP_STD[k]);
     el.style.boxShadow = look && look.fx === 'neon' ? '0 0 12px #ff3fd8' : look && look.fx === 'fire' ? '0 0 12px #2b8cff' : look && look.fx === 'moon' ? '0 0 12px rgba(255,250,220,.7)' : '';
   }
-  const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
+  // a story's prize is won, not sold: it stays in the catalog (装備 lists it) but not on the shop's shelves
+  const SHOP_PRIZE_ONLY = ['bomb_emp'];
+  const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
     for (const [k, label] of [['fx', 'アイテム'], ['skin', 'スキン'], ['star', '★を買う']]) {
@@ -6955,7 +6958,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     k2: [
-      { say: '黄昏通りからは、この物語だけの影分身ダッシュが使える。クリアしても手には入らない', info: true },
+      { say: '黄昏通りからは、影分身ダッシュが自動で使える(月蝕の夜の週替わりランキングでも)。ほかのマップで使うにはショップで手に入れる', info: true },
       { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
       { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影はすぐ消える', info: true },
       { say: '黄色い鬼から分かれた影の鬼は先回りして、行く手に回り込んでくる(点線のルート)。このままだと挟み撃ちになる', info: true, set: tutPincer },
@@ -8096,6 +8099,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       booms.map(b => [q(b.x), q(b.y), q(b.r || BLAST), q(b.t), fxi(b.fx), b.barrier ? 1 : 0, q(b.life || 0.6), b.fw ? 1 : 0, Math.round((b.seed || 0) * 100), b.cols ? Math.max(0, FW_COLS.indexOf(b.cols)) : 0].join(',')).join('/'),
       items.map(it => [q(it.x), q(it.y), it.rk ? 1 : 0, q(t - it.born)].join(',')).join('/'),
       pending.map(p => [q(p.x), q(p.y), q(p.t)].join(',')).join('/'),
+      elems.filter(o => o.k === 'clone').map(o => [q(o.x), q(o.y), q(o.t), q(o.life), o.el === 'water' ? 1 : 0].join(',')).join('/'),
     ];
     rec.fr.push(g.join('|')); rec.next += 1 / REC_HZ;
   }
@@ -8136,7 +8140,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const nl = raw.indexOf('\n'), head = JSON.parse(raw.slice(0, nl));
     const nums = s => s ? s.split(',').map(Number) : [];
     const list = s => s ? s.split('/').map(nums) : [];
-    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]) }; });
+    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]) }; });
     // when each oni first showed (it grows in over 0.3 s, as in the game)
     const seen = new Map(); fr.forEach((f, n) => { for (const e of f.e) if (!seen.has(e[0])) seen.set(e[0], n / head.hz); });
     return { head, fr, seen };
@@ -8182,6 +8186,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     booms = A.b.map(b => ({ x: z(b[0]), y: z(b[1]), r: z(b[2]), t: z(b[3]) + u / h.hz, fx: h.fx[b[4]] || '', barrier: !!b[5], life: z(b[6]), fw: !!b[7], seed: (b[8] || 0) / 100, cols: FW_COLS[b[9] || 0] })).filter(b => b.t < b.life);
     items = A.i.map(it => ({ x: z(it[0]), y: z(it[1]), rk: !!it[2], born: time - z(it[3]) }));
     pending = A.w.map(p => ({ x: z(p[0]), y: z(p[1]), t: Math.max(0.01, z(p[2]) - u / h.hz) }));
+    elems = A.c.map(c => ({ k: 'clone', x: z(c[0]), y: z(c[1]), t: z(c[2]) + u / h.hz, life: z(c[3]), el: c[4] ? 'water' : 'dark' })).filter(c => c.t < c.life);
   }
   function repTick(dt) {
     if (!rp) return;
@@ -8319,7 +8324,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。乗って0.3秒でもう一方へ飛ぶ。一度使うと1分30秒使えない'],
-      shadow: ['落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
+      shadow: ['影分身ダッシュが自動で使える(装備に関係なく)。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
       fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.2倍(ステージ3は1.5倍)', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>週替わりランキング ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(ハイジャンプ・バリア・ランチャー)を1つ選んで始まる'])}</section>
@@ -8400,7 +8405,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
     $('spKicker').textContent = `RANKING ${mapName(3)}`; bestLine('spBest', 3);
-    $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}${MAP_CHOICE ? '(' + STORY_NAMES[ROUTE[mapSkin]] + ')' : ''}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)\n補給アイテムを1つ選ぶと始まる。`;
+    $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}${MAP_CHOICE ? '(' + STORY_NAMES[ROUTE[mapSkin]] + ')' : ''}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
     fitStandby();
