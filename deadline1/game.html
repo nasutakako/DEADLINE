@@ -1322,9 +1322,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // ---------- daily challenge: stage 4 in the code. One of three nights, in turn by the date (Japan time);
   // opens once stage 2 has been escaped. Played on the stage 3 map and rules, with every oni of one kind ----------
   const DAILY = [
-    { key: 'd1', board: 'daily1', name: '疾風の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
-    { key: 'd2', board: 'daily2', name: '先回りの夜', rule: '・出てくる鬼はすべて、先回りしてくる黄色い鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
-    { key: 'd3', board: 'daily3', name: '鉄壁の夜', rule: '・出てくる鬼はすべて、爆発に1回耐えるバリア鬼\n・一度に出る鬼はステージ3と同じく増えていく' },
+    { key: 'd1', board: 'daily1', name: '疾風の夜', rule: '・出てくる鬼はすべて、自分より速い黒い鬼\n・一度に出る鬼はステージ3と同じく増えていく(1回6体まで、マップに最大25体)' },
+    { key: 'd2', board: 'daily2', name: '先回りの夜', rule: '・出てくる鬼はすべて、先回りしてくる黄色い鬼\n・一度に出る鬼はステージ3と同じく増えていく(1回6体まで、マップに最大25体)' },
+    { key: 'd3', board: 'daily3', name: '鉄壁の夜', rule: '・出てくる鬼はすべて、爆発に1回耐えるバリア鬼\n・一度に出る鬼はステージ3と同じく増えていく(1回6体まで、マップに最大25体)' },
   ];
   const dailyToday = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3) % DAILY.length;
   let daily = null;   // the night being played on stage 4
@@ -4071,6 +4071,24 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // stage 2 opens at 2 per wave, stage 3 at 3
   // stage 3: 3 oni a wave, then one more at 4, 5, 6 and 7 min, and again at 10, 11 and 12 min (10 at most)
   // stages 1 and 2, once the exit is open: 5 a wave (+1 every 30 s) on stage 1, 7 a wave (+1 every 15 s) on stage 2
+  // the weekly ranking and the survival nights: a cap on a wave and on the map
+  const ONI_WAVE_MAX = 6, ONI_MAP_MAX = 25;
+  const capRun = () => (stageN === 3 && rankRun) || stageN === 4;
+  // stage 3's kinds that must be about: barrier oni 2 from 4:00; black and yellow 1 from 6:00, and on the weekly
+  // ranking one more of each every 2 minutes from 8:00 (2 at 8:00, 3 at 10:00, 4 at 12:00, ...)
+  function kindNeed(k) {
+    if (k === 'tough') return t >= 240 ? 2 : 0;
+    if (k === 'bomber') return t >= 480 && fuseStory() ? 1 : 0;
+    if (t < 360) return 0;
+    return 1 + (rankRun && t >= 480 ? Math.floor((t - 360) / 120) : 0);
+  }
+  // how many of those are short (on the map and warned), for a wave that would otherwise not come
+  function kindShort() {
+    if (t < 240) return 0;
+    let n = 0;
+    for (const k of t >= 360 ? ['black', 'tough', 'amb'] : ['tough']) n += Math.max(0, kindNeed(k) - enemies.filter(e => e[k]).length - pending.filter(p => p[k]).length);
+    return n;
+  }
   const exitAt = () => stageN === 3 ? STORY_EXIT : stageN === 2 ? EXIT_AT2 : EXIT_AT;
   // stage 3's waves by the clock (stage 2 goes by them too from 4:00: four at once, five at 5:00, ...)
   const wave3 = () => t >= 720 ? 10 : t >= 660 ? 9 : t >= 600 ? 8 : t >= 420 ? 7 : t >= 360 ? 6 : t >= 300 ? 5 : t >= 240 ? 4 : 3;
@@ -4158,7 +4176,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // stage 2: when the exit opens, one black oni (faster than you) joins the chase
     if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; queueSpawn(); pending[pending.length - 1].black = true; }
     if (t >= nextSpawn) {
-      const batch = spawnBatch();
+      let batch = spawnBatch();
+      // the weekly ranking and the survival nights: at most 6 a wave, and never more than 25 on the map (counting the
+      // warned ones); the kinds that must be about still come when the map is full
+      if (capRun()) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length), stageN === 3 ? kindShort() : 0);
       for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
@@ -4171,7 +4192,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const free = pending.filter(p => !p.black && !p.tough && !p.amb && !p.bomber).sort(() => Math.random() - 0.5);
       for (const k of t >= 360 ? ['black', 'tough', 'amb', ...(t >= 480 && fuseStory() ? ['bomber'] : [])] : ['tough']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
-        for (let n = (k === 'tough' ? 2 : 1) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
+        for (let n = kindNeed(k) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
       }
     }
     }
@@ -8299,7 +8320,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the weekly ranking's details: what comes when, from the game's own numbers
   function rankInfo() {
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
-    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', 6], ['7:00', 7], ['10:00', 8], ['11:00', 9], ['12:00', 10]];
+    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。乗って0.3秒でもう一方へ飛ぶ。一度使うと1分30秒使えない'],
       shadow: ['落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
@@ -8310,8 +8331,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, `ランチャー: ${RK_DROP_AT / 60}分から、爆弾の箱が出るときにまれに(約${Math.round(RK_DROP_P * 100)}%)一緒に落ちる`, '鬼を40体倒すごとに、ハイジャンプかランチャーが届く'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなり、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
-      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分から: 出てくる鬼のほとんどがバリア鬼になる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
+        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなり、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '8分から: 出てくる鬼のほとんどがバリア鬼になる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li(own)}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -8331,7 +8352,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const supply = n === 1 ? ['2分: バリア + 爆弾1個'] : n === 2 ? ['2分: バリア + 爆弾1個', '3分: 爆弾2個', '4分: バリア + 爆弾2個'] : ['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個'];
     const waves = n === 1 ? [['0:00', '1体'], ['0:40', '2体'], ['1:20', '3体'], [mmss(EXIT_AT).replace('分', ':').replace('秒', '') + ' (出口が開く)', '5体(以降30秒ごとに+1体)']]
       : n === 2 ? [['0:00', '2体'], ['1:20', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']]
-      : [['0:00', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体'], ...(n === 4 ? [['7:00', '7体'], ['10:00', '8体'], ['11:00', '9体'], ['12:00', '10体']] : [])];
+      : [['0:00', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']];
     const kinds = n === 4 ? [daily ? daily.rule.split('\n')[0].replace(/^・/, '') : '']
       : n === 1 ? ['ふつうの鬼(赤)がほとんど', '先回りの鬼(黄色): まれにまざる(約6%)。逃走者の行く先に回り込む']
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
@@ -8350,7 +8371,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, n >= 2 ? '鬼を40体倒すごとに、ハイジャンプかランチャーが届く' : ''])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([...(n === 4 ? [`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`] : []), '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
