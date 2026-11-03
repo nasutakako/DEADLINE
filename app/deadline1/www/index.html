@@ -218,6 +218,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 
 /* ---- controls ---- */
 .controls { grid-area: ctl; display: flex; align-items: stretch; gap: 8px; min-width: 0; }
+/* a thumb on the stick and a tap on a button make two fingers: none of it may start a pinch or a pan, or the phone
+   takes the tap for its own gesture */
+.controls, .controls *, .sys, .sys * { touch-action: none; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .sys { grid-area: sys; display: flex; gap: 6px; align-items: stretch; }
 .btn { border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 9px 10px; font-weight: 700; font-size: 13px; white-space: nowrap; }
 .act { position: relative; overflow: hidden; border-radius: 10px; padding: 10px 14px; font-weight: 700; font-size: 15px; white-space: nowrap; background: var(--panel); min-width: 84px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1.1; }
@@ -8466,22 +8469,24 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   for (const b of document.querySelectorAll('#clearPicks .pick')) b.addEventListener('click', () => (tap(), nextStage(b.dataset.item)));
   for (const b of document.querySelectorAll('#startPicks .pick')) b.addEventListener('click', () => { if (state === 'startpick') tap(), start(pendingStart, b.dataset.item); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
-  ui.item.addEventListener('pointerdown', e => { e.preventDefault(); useItem(itemCur()); });
-  ui.item.addEventListener('click', e => { if (e.detail === 0) useItem(itemCur()); });
-  for (const [id, d] of [['itemPrev', -1], ['itemNext', 1]]) {
-    $(id).addEventListener('pointerdown', e => { e.preventDefault(); itemStep(d); });
-    $(id).addEventListener('click', e => { if (e.detail === 0) itemStep(d); });
+  // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
+  // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
+  function press(el, fn) {
+    // (one landing gives both events within a few ms: the second of the pair is skipped; quick taps are further apart)
+    let last = -1e9, kind = '';
+    const go = k => e => { e.preventDefault(); const now = performance.now(); if (kind !== k && now - last < 80) return; last = now; kind = k; fn(); };
+    el.addEventListener('pointerdown', go('p'));
+    el.addEventListener('touchstart', go('t'), { passive: false });
+    el.addEventListener('click', e => { if (e.detail === 0) fn(); });
   }
+  press(ui.item, () => useItem(itemCur()));
+  for (const [id, d] of [['itemPrev', -1], ['itemNext', 1]]) press($(id), () => itemStep(d));
   $('resumeBtn').addEventListener('click', () => { if (state === 'pause') tap(); setPause(false); });
   // the stop button answers on touch-down, so it works with a thumb still on the stick
   // (a second finger's tap never becomes a click on phones)
   const pauseTap = () => { if (state !== 'play' && state !== 'pause') return; tap(); setPause(state === 'play'); };
-  ui.pauseBtn.addEventListener('pointerdown', e => { e.preventDefault(); pauseTap(); });
-  ui.pauseBtn.addEventListener('click', e => { if (e.detail === 0) pauseTap(); });
-  for (const [btn, fn] of [[ui.dash, dash], [ui.mine, placeMine]]) {
-    btn.addEventListener('pointerdown', e => { e.preventDefault(); fn(); });
-    btn.addEventListener('click', e => { if (e.detail === 0) fn(); });
-  }
+  press(ui.pauseBtn, pauseTap);
+  for (const [btn, fn] of [[ui.dash, dash], [ui.mine, placeMine]]) press(btn, fn);
 
   const root = document.documentElement;
   if (document.fullscreenEnabled && root.requestFullscreen) {
