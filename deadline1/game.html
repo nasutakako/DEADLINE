@@ -6401,10 +6401,128 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (n) { voice({ type: 'sawtooth', f: midi(n), at, dec: 0.6, v: 0.03, cut: 3200, q: 2, vib: 5 }); voice({ type: 'sawtooth', f: midi(n), at, dec: 0.6, v: 0.016, cut: 3200, to: bgm.echo }); }
     }
   }
+  // a firework, as one hears it from the river bank: the shell's launch thump; its whistle (a narrow band of noise
+  // with a thin tone inside) shooting up at first, then a long, almost level climb, fading away at the top
+  // (ヒューーーー…); a breath of silence; then the burst: a sharp crack, the deep boom with its sub, the boom thrown
+  // back off the buildings three times, a long rumble rolling away in the hall, and the stars crackling down (little
+  // clicks, thick at first, thinning out over three seconds). `burst` is when it bangs; `rise` how long before it
+  // the shell leaves the ground.
+  function bgmFirework(burst, rise, k = 1, seed = 0) {
+    const out = bgm.out, verb = bgm.verb || out, noise = (at, dur, v, type, f, q, f2, to, att) => {
+      const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = bgm.nb; s.loop = true; fl.type = type; fl.frequency.setValueAtTime(f, at); fl.Q.value = q;
+      if (f2) fl.frequency.exponentialRampToValueAtTime(f2, at + dur);
+      g.gain.setValueAtTime(0.0001, at); g.gain.exponentialRampToValueAtTime(v, at + (att || 0.002)); g.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+      s.connect(fl).connect(g).connect(to || out); s.start(at, Math.random() * 0.5); s.stop(at + dur + 0.05);
+    };
+    const t0 = burst - rise, gap = 0.38, w = Math.max(0.8, rise - gap - 0.05), ws = t0 + 0.05;
+    noise(t0, 0.2, 0.18 * k, 'lowpass', 320, 0.7);
+    // the whistle: a quick first rise, then a long slow climb that thins out at the top
+    const pitch = p => { p.setValueAtTime(700, ws); p.exponentialRampToValueAtTime(1900, ws + w * 0.18); p.linearRampToValueAtTime(2500, ws + w); };
+    { const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+      s.buffer = bgm.nb; s.loop = true; fl.type = 'bandpass'; fl.Q.value = 18; pitch(fl.frequency);
+      g.gain.setValueAtTime(0.0001, ws); g.gain.exponentialRampToValueAtTime(0.1 * k, ws + w * 0.15); g.gain.setValueAtTime(0.1 * k, ws + w * 0.45); g.gain.exponentialRampToValueAtTime(0.0001, ws + w);
+      s.connect(fl).connect(g); g.connect(out); g.connect(verb); s.start(ws, Math.random() * 0.5); s.stop(ws + w + 0.05);
+      const o = ac.createOscillator(), og = ac.createGain(), lfo = ac.createOscillator(), lg = ac.createGain(); o.type = 'sine'; pitch(o.frequency);
+      lfo.frequency.value = 9; lg.gain.value = 18; lfo.connect(lg).connect(o.frequency);
+      og.gain.setValueAtTime(0.0001, ws); og.gain.exponentialRampToValueAtTime(0.014 * k, ws + w * 0.15); og.gain.setValueAtTime(0.014 * k, ws + w * 0.45); og.gain.exponentialRampToValueAtTime(0.0001, ws + w);
+      o.connect(og).connect(out); og.connect(verb); o.start(ws); lfo.start(ws); o.stop(ws + w + 0.05); lfo.stop(ws + w + 0.05); }
+    // the burst
+    noise(burst, 0.05, 0.5 * k, 'highpass', 1400, 0.6);
+    noise(burst, 1.6, 0.55 * k, 'lowpass', 420, 0.8, 60);
+    { const o = ac.createOscillator(), g = ac.createGain(); o.frequency.setValueAtTime(62, burst); o.frequency.exponentialRampToValueAtTime(27, burst + 1);
+      g.gain.setValueAtTime(0.0001, burst); g.gain.exponentialRampToValueAtTime(0.55 * k, burst + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, burst + 1.4); o.connect(g).connect(out); o.start(burst); o.stop(burst + 1.5); }
+    // the afterglow: a long rumble rolling away, and the boom back off the buildings
+    noise(burst, 5.5, 0.2 * k, 'lowpass', 650, 0.7, 70, verb, 0.01);
+    noise(burst + 0.1, 4.5, 0.07 * k, 'lowpass', 260, 0.7, 50, null, 0.3);
+    noise(burst + 0.42, 1.2, 0.13 * k, 'lowpass', 380, 0.7, 80);
+    noise(burst + 0.98, 1.2, 0.07 * k, 'lowpass', 330, 0.7, 70, verb);
+    noise(burst + 1.7, 1.4, 0.035 * k, 'lowpass', 280, 0.7, 60, verb);
+    // the stars crackling: thick right after the burst, thinning out over three seconds
+    for (let i = 0; i < 60; i++) {
+      const u = hsh(seed * 97 + i * 13), tt = burst + 0.35 + Math.pow(u, 1.7) * 3.2;
+      noise(tt, 0.004 + hsh(seed + i * 7) * 0.009, (0.04 + hsh(seed * 3 + i) * 0.1) * k * (1 - u * 0.7), 'highpass', 2200 + hsh(i * 5 + seed) * 4500, 0.8, null, hsh(i) < 0.35 ? verb : null, 0.001);
+    }
+    noise(burst + 0.3, 3.2, 0.018 * k, 'bandpass', 5200, 1.2, 2600);
+  }
+  // 縁日通り (112 BPM, D in-scale): the festival at night, gone wrong. The festival band is all still there,
+  // taiko, kane bell, shamisen and fue, but in a dark mode over a sober electronic floor: a deep pulse, a low
+  // drone, a muted kick under the taiko, and the crowd's murmur far off. Serious, not merry.
+  const MIYAKO = [0, 1, 5, 7, 8, 12, 13, 17];
+  function stepCrowd(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16), ph = bar % 8, BAR = 60 / 112 * 4;
+    const root = [38, 38, 39, 36][Math.floor(bar / 2) % 4];
+    // taiko: don . . don | . . don don | don . . don | . ka don .  and the rim "ka"
+    if ([0, 3, 6, 7, 8, 11, 14].includes(st)) voice({ f: st === 0 || st === 8 ? 96 : 112, f2: 48, at, dec: st === 0 || st === 8 ? 0.5 : 0.3, v: st === 0 || st === 8 ? 0.7 : 0.38, att: 0.002 });
+    if (st === 4 || st === 12 || (st === 13 && bar % 2)) { voice({ type: 'square', f: 820, at, dec: 0.035, v: 0.05, cut: 3800, att: 0.001 }); hiss({ at, dec: 0.05, v: 0.08, type: 'bandpass', f: 2400, q: 5 }); }
+    if (st % 4 === 0) voice({ f: 60, f2: 40, at, dec: 0.25, v: 0.35, att: 0.002 });
+    // kane bell: on the off-beats, dry and metallic
+    if (st % 4 === 2) fmv(2900, at, 0.16, 0.022, 1.47, 2000, bgm.out, 0.001);
+    // deep pulse and drone
+    if (st % 2 === 0) voice({ type: 'sawtooth', f: midi(root - 24 + (st === 6 || st === 14 ? 12 : 0)), at, dec: 0.13, v: 0.12, cut: 420 + 260 * (ph / 8), q: 5 });
+    if (st === 0) voice({ type: 'sawtooth', f: midi(root - 12), at, dec: BAR * 1.02, v: 0.035, att: 0.4, cut: 500, to: bgm.verb });
+    // shamisen: a hard pluck walking the scale
+    const sh = [0, null, 7, null, 8, 7, null, 5, 0, null, 1, null, 5, null, 7, null][st];
+    if (sh != null && ph >= 2) voice({ type: 'sawtooth', f: midi(root + 12 + sh), f2: midi(root + 12 + sh) * 0.985, at, dec: 0.22, v: 0.04, cut: 2600, q: 3, att: 0.001 });
+    // fue: long breathy notes over the back half
+    const fue = ph >= 4 ? [{ 0: 74, 6: 75, 8: 79, 14: 80 }, { 0: 79, 8: 75, 12: 74 }, { 0: 74, 4: 75, 8: 74, 12: 69 }, { 0: 70, 8: 74 }][bar % 4][st] : null;
+    if (fue) { voice({ f: midi(fue + 12), at, dec: 0.95, v: 0.035, att: 0.08, vib: 7, to: bgm.verb }); voice({ f: midi(fue + 12), at, dec: 0.9, v: 0.03, att: 0.06, vib: 7 }); hiss({ at, dec: 0.15, v: 0.012, type: 'bandpass', f: midi(fue + 12) * 2, q: 6 }); }
+    // the crowd far off, and a taiko roll closing each phrase
+    if (st === 0) hiss({ at, dec: BAR, v: 0.012, type: 'bandpass', f: 600, q: 0.6, to: bgm.verb });
+    if (ph === 7 && st >= 10 && st % 2 === 0) voice({ f: 130 - (st - 10) * 8, f2: 55, at, dec: 0.3, v: 0.42, att: 0.002, to: bgm.verb });
+  }
+  // 花火の夜 (120 BPM, D minor): the last night, mostly hushed, building up to two shells. Plain triads only
+  // (Dm Bb F C), nothing busy: a low pulse, a soft kick and taiko like a heartbeat, a warm pad, a kane now and then.
+  // Twice in its 32 bars it swells into a short, grand build (four-on-the-floor, the taiko pounding, low brass on
+  // the beats, strings climbing, a roll into the burst); the shell goes up through the build, ヒューーーー…, bursts
+  // on the next downbeat, バァン, and everything stops: only its afterglow, the rumble and the stars crackling
+  // down, over a low chord fading away.
+  //   0-9 hushed   10-13 build   14-15 the first shell's afterglow   16-25 hushed   26-29 build   30-31 afterglow
+  function stepFinale(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 32, BEAT = 60 / 120, SPS = BEAT / 4;
+    const deg = [0, -4, 3, -2][Math.floor(bar / 2) % 4], root = 50 + deg;             // Dm  Bb  F  C, two bars each
+    const tri = deg === 0 ? [0, 3, 7] : [0, 4, 7];
+    const build = (bar >= 10 && bar < 14) || (bar >= 26 && bar < 30), after = bar === 14 || bar === 15 || bar >= 30;
+    const k = build ? ((bar >= 26 ? bar - 26 : bar - 10) * 16 + st) / 64 : 0;          // 0..1 through a build
+    const big = bar >= 26;                                                             // the second build is the bigger
+    // the afterglow: a low chord fading under the shell's crackle, nothing else
+    if (after) {
+      if ((bar === 14 || bar === 30) && st === 0) for (const c of [0, 7, 12, 15]) voice({ type: 'triangle', f: midi(38 + c), at, dec: BEAT * 7.5, v: 0.026, att: 0.6, to: bgm.verb });
+      return;
+    }
+    if (!build) {
+      // hushed: a heartbeat on the taiko, a low pulse, the pad, a kane now and then
+      if (st === 0 || st === 3) voice({ f: st ? 70 : 82, f2: 38, at, dec: 0.35, v: st ? 0.3 : 0.42, att: 0.003 });
+      if (st % 4 === 2) voice({ type: 'sawtooth', f: midi(root - 24), at, dec: 0.3, v: 0.07, cut: 380, q: 2 });
+      if (st === 0 && bar % 2 === 0) for (const c of tri) for (const d of [-7, 7]) voice({ type: 'sawtooth', f: midi(root + c), at, dec: BEAT * 8.2, v: 0.011, att: 1, cut: 1300, det: d, to: bgm.verb });
+      if (st === 8 && bar % 4 === 1) fmv(midi(root + 36), at, 2.4, 0.016, 2.76, 700, bgm.verb, 0.001);
+      if (st % 4 === 2) hiss({ at, dec: 0.02, v: 0.012, type: 'highpass', f: 9500 });
+      return;
+    }
+    // the build: everything rising together into the burst
+    const lv = 0.55 + k * 0.45;
+    if (st % 4 === 0) voice({ f: 120, f2: 42, at, dec: 0.32, v: 0.75 * lv, att: 0.002 });
+    if ([0, 6, 8, 14].includes(st)) voice({ f: 92, f2: 44, at, dec: 0.5, v: 0.45 * lv, att: 0.002, to: bgm.verb });
+    if (k > 0.5 && st % 2 === 1) voice({ f: 128, f2: 60, at, dec: 0.16, v: 0.2 * lv, att: 0.002 });
+    if (st === 4 || st === 12) { hiss({ at, dec: 0.12, v: 0.2 * lv, type: 'bandpass', f: 1500, q: 0.8 }); hiss({ at, dec: 0.9, v: 0.07 * lv, type: 'bandpass', f: 1800, to: bgm.verb }); }
+    if (st % 2 === 0) hiss({ at, dec: 0.03, v: 0.03 * lv, type: 'highpass', f: 9000 });
+    if (st % 4 === 2) voice({ type: 'sawtooth', f: midi(root - 24), at, dec: 0.22, v: 0.15, cut: 650, q: 3 });
+    // low brass on every beat, the triad of the bar
+    if (st % 4 === 0) for (const c of tri) voice({ type: 'sawtooth', f: midi(root - 12 + c), at, dec: BEAT * 0.9, v: (big ? 0.03 : 0.024) * lv, att: 0.02, cut: 1300 + k * 900, q: 1.2, det: c ? 4 : -4, to: bgm.verb });
+    // strings: held, climbing a step each bar
+    if (st === 0) { const n = root + 12 + [tri[2], tri[2] + 5, tri[2] + 9, tri[2] + 12][Math.floor(k * 4)]; for (const d of [-8, 8]) voice({ type: 'sawtooth', f: midi(n), at, dec: BEAT * 4.2, v: (big ? 0.02 : 0.015) * lv, att: 0.4, cut: 3000, det: d, vib: 3, to: bgm.verb }); voice({ type: 'triangle', f: midi(n - 12), at, dec: BEAT * 4.2, v: 0.02 * lv, att: 0.4, to: bgm.verb }); }
+    if (big && st === 0) for (const c of tri) voice({ type: 'triangle', f: midi(root + 24 + c), at, dec: BEAT * 4, v: 0.012, att: 0.6, to: bgm.verb });
+    // a crash at the start of the build, a swell, and a taiko roll into the burst
+    if (k === 0) hiss({ at, dec: 2.2, v: 0.12, type: 'highpass', f: 4500, to: bgm.verb });
+    if (st === 0 && k === 0) hiss({ at, dec: BEAT * 16, v: 0.08, type: 'bandpass', f: 220, f2: 6000, q: 1.4 });
+    if (k >= 0.75 && st >= 8) voice({ f: 150 - (st - 8) * 9, f2: 60, at, dec: 0.25, v: 0.3 + (st - 8) * 0.04, att: 0.002, to: st % 2 ? bgm.verb : undefined });
+    // the shell: leaving the ground 20 steps before the downbeat after the build
+    if (st === 12 && (bar === 12 || bar === 28)) bgmFirework(at + 20 * SPS, 20 * SPS, 1, bar);
+  }
   const SONGS4 = {
-    1: { bpm: 120, vol: 0.7, step: stepWorks, setup: b => cyberFx(b, 60 / 120 * 0.75, 0.3, 1.6) },
-    2: { bpm: 128, vol: 0.75, step: stepFair, setup: b => cyberFx(b, 60 / 128 * 0.75, 0.3, 1.8) },
-    3: { bpm: 100, vol: 0.52, step: stepShow, setup: b => cyberFx(b, 60 / 100 * 0.75, 0.35, 3) },
+    1: { bpm: 128, vol: 0.75, step: stepFair, setup: b => cyberFx(b, 60 / 128 * 0.75, 0.3, 1.8) },
+    2: { bpm: 112, vol: 0.55, step: stepCrowd, setup: b => cyberFx(b, 60 / 112 * 0.75, 0.32, 2.4) },
+    3: { bpm: 120, vol: 0.55, step: stepFinale, setup: b => cyberFx(b, 60 / 120 * 0.75, 0.3, 3.4) },
   };
   // (生存課題 plays the music of the map it drew)
   const songFor = n => (mapSkin === 'd2' ? SONGS2 : mapSkin === 'd3' ? SONGS3 : mapSkin === 'd4' ? SONGS4 : SONGS)[Math.min(3, Math.max(1, n === 4 && daily && dailyLook ? dailyLook.n : n))];
