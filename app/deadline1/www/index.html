@@ -4035,7 +4035,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let state = 'title';
   let P, enemies, pending, items, mines, booms, sparks, t, nextSpawn, spawnGap, level, kills;
   let shake = 0, flash = 0, caughtTimer = 0, beatTimer = 0, nextItem = 0, danger = 0;
-  const PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45, PIT_FLASH = 1.5;
+  const PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45, PIT_FLASH = 1.5, PIT_LID = 0.48;   // (the lid's radius as drawn)
   let holes = [], falls = [], pendingStart = 2, rockets = [];
   // warp points (the DEADLINE2 maps): stand on one for 0.5 sec to come out of the other; both rest a minute and a half after a jump
   let warps = [];
@@ -4257,12 +4257,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     bx = P.x; by = P.y;
     move(P, P.vx, P.vy, dt);
     // pits start shut: walking over a lid and off it again opens the pit; an open pit takes the runner too
+    // (over it = the runner's ball half over the lid as drawn, not only its very middle: a quick run across the lid's
+    // edge counts as stepping on it)
     for (const h of holes) {
       const d = Math.hypot(P.x - h.x, P.y - h.y);
       if (!h.open) {
         if (h.cool > 0) h.armed = false;  // locked lid
-        else if (d < 0.46) h.armed = true;
-        else if (h.armed && d > 0.46 + P.r) { h.armed = false; h.open = true; h.left = PIT_OPEN; h.ate = false; tone(180, 0.25, 'square', 0.05, 90); }
+        else if (d < PIT_LID + P.r * 0.5) h.armed = true;
+        else if (h.armed && d > PIT_LID + P.r) { h.armed = false; h.open = true; h.left = PIT_OPEN; h.ate = false; tone(180, 0.25, 'square', 0.05, 90); }
       } else if (d < 0.46 - 0.06) { if (tut) { P.x = bx; P.y = by; P.vx = P.vy = 0; continue; } fallIn(h); return; }  // the barrier does not help here (the tutorial's pit is a wall)
     }
     if (warps.length === 2) {
