@@ -13,51 +13,43 @@
 <link rel="apple-touch-icon" href="../icon-180.png">
 <style>
 html, body { margin: 0; height: 100%; background: #07080d; overflow: hidden; overscroll-behavior: none; }
-#g { position: fixed; left: 0; top: 0; border: 0; display: block; transform-origin: 0 0; background: #07080d; }
-#inset { position: fixed; left: 0; top: 0; width: 0; height: 0; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+/* The game's frame is sized by the browser itself, from the visible area and the safe areas, so it follows the
+   screen as it settles (a home-screen launch on iPhone reports its size late) without any measuring in script.
+   The game keeps its own 16px edge, so only the part of a safe area beyond that is taken off. */
+:root {
+  --t: max(0px, calc(env(safe-area-inset-top, 0px) - 16px)); --b: max(0px, calc(env(safe-area-inset-bottom, 0px) - 16px));
+  --l: max(0px, calc(env(safe-area-inset-left, 0px) - 16px)); --r: max(0px, calc(env(safe-area-inset-right, 0px) - 16px));
+  --vh: 100vh; --L: var(--l); --R: var(--r);
+}
+@supports (height: 100dvh) { :root { --vh: 100dvh; } }
+/* held sideways, iPhone reports the same inset on both sides, but only the notch side needs it (the other is a
+   rounded corner): turned left the notch is on the left, turned right on the right */
+html.nl { --R: 0px; } html.nr { --L: 0px; }
+#g { position: fixed; left: 0; top: 0; border: 0; display: block; transform-origin: 0 0; background: #07080d;
+  width: calc(100vw - var(--L) - var(--R)); height: calc(var(--vh) - var(--t) - var(--b)); transform: translate(var(--L), var(--t)); }
+/* an upright phone: the game laid on its side, its top toward the right edge, its left edge clear of the status bar
+   and the island */
+html.up #g { width: calc(var(--vh) - var(--t) - var(--b)); height: 100vw; transform: translate(100vw, var(--t)) rotate(90deg); }
 </style>
 </head>
 <body>
-<div id="inset"></div>
 <iframe id="g" src="game.html?v=39c2da1649" title="DEADLiNE" allow="fullscreen; autoplay; clipboard-write; clipboard-read; web-share"></iframe>
 <script>
 window.DEADLINE_SHELL = true;
 (() => {
-  const g = document.getElementById('g'), inset = document.getElementById('inset');
-  const coarse = matchMedia('(pointer: coarse)');
-  // the game keeps its own 16px edge, so only the part of an inset beyond that is taken off; held sideways, iPhone
-  // reports the same inset on both sides, but only the notch side needs it (the other is a rounded corner)
-  const cut = v => Math.max(0, v - 16);
+  const g = document.getElementById('g'), root = document.documentElement;
+  const coarse = matchMedia('(pointer: coarse)'), portrait = matchMedia('(orientation: portrait)');
+  // (script only says which way the phone is held; the sizes are all in the style above)
   function fit() {
-    // (opened from an iPhone's home screen the page fills the whole screen, so its size is the screen's: the
-    // window's own measures can be short at launch, or grow when the turned game reaches past the edge)
-    const app = navigator.standalone === true, up = matchMedia('(orientation: portrait)').matches;
-    const W = app ? (up ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height)) : innerWidth;
-    const H = app ? (up ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height)) : innerHeight;
-    const cs = getComputedStyle(inset);
-    let t = parseFloat(cs.paddingTop) || 0, r = parseFloat(cs.paddingRight) || 0, b = parseFloat(cs.paddingBottom) || 0, l = parseFloat(cs.paddingLeft) || 0;
-    // an iPhone home-screen app held upright that still reports no safe areas: the status bar and the island (or
-    // notch) are there all the same, so keep clear of them by the phone's own size
-    if (navigator.standalone && H > W && t === 0 && b === 0) { const sh = Math.max(screen.width, screen.height); if (sh >= 812) { t = sh >= 852 ? 59 : 47; b = 34; } else t = 20; }
-    if (coarse.matches && H > W) {
-      // upright phone: the game is laid on its side, its top toward the right edge, its left edge clear of the notch
-      const a = cut(t), z = cut(b);
-      g.style.width = (H - a - z) + 'px'; g.style.height = W + 'px';
-      g.style.transform = 'translate(' + W + 'px,' + a + 'px) rotate(90deg)';
-    } else {
-      const ang = typeof window.orientation === 'number' ? window.orientation : screen.orientation ? (screen.orientation.angle > 180 ? -90 : screen.orientation.angle) : 0;
-      // turned left (90): the notch is on the left; turned right (-90): on the right
-      const L = ang === -90 ? 0 : cut(l), R = ang === 90 ? 0 : cut(r), T = cut(t), B = cut(b);
-      g.style.width = (W - L - R) + 'px'; g.style.height = (H - T - B) + 'px';
-      g.style.transform = 'translate(' + L + 'px,' + T + 'px)';
-    }
+    const up = coarse.matches && portrait.matches;
+    const ang = typeof window.orientation === 'number' ? window.orientation : screen.orientation ? (screen.orientation.angle > 180 ? -90 : screen.orientation.angle) : 0;
+    root.classList.toggle('up', up);
+    root.classList.toggle('nl', !up && ang === 90); root.classList.toggle('nr', !up && ang === -90);
   }
-  addEventListener('resize', fit); addEventListener('orientationchange', () => { setTimeout(fit, 120); setTimeout(fit, 600); });
-  if (window.visualViewport) visualViewport.addEventListener('resize', fit);
-  // measured again while a home-screen launch settles, and whenever the page comes back into view
-  addEventListener('load', fit); addEventListener('pageshow', fit);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) { fit(); setTimeout(fit, 300); } });
-  fit(); for (const ms of [50, 250, 700, 1500, 3000]) setTimeout(fit, ms);
+  addEventListener('resize', fit); addEventListener('orientationchange', () => { fit(); setTimeout(fit, 300); });
+  for (const m of [coarse, portrait]) (m.addEventListener ? m.addEventListener('change', fit) : m.addListener(fit));
+  addEventListener('pageshow', fit);
+  fit();
   g.addEventListener('load', () => { try { g.contentWindow.focus(); } catch (e) {} });
 })();
 </script>
