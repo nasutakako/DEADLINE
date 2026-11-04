@@ -4174,7 +4174,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // stage 3: even minutes bring a barrier and 2 bombs, odd minutes (from 3:00) 2 bombs only
       const minute = Math.round((P.nextR - 60) / 60), bombsOnly = (stageN >= 3 || stageN === 2) && minute % 2 === 1;
       // (a barrier already on: this one goes into the items, to be put on later)
-      if (!bombsOnly) { P.gotBarrier = true; if (P.barrier) bag.push('barrier'); else P.barrier = true; }
+      // (a barrier in the items: one at most; with one already there the new one is not kept)
+      if (!bombsOnly) { P.gotBarrier = true; if (!P.barrier) P.barrier = true; else if (!bag.includes('barrier')) bag.push('barrier'); }
       P.stock = Math.min(MINE_MAX, P.stock + (stageN >= 3 || (stageN === 2 && minute >= 3) ? 2 : 1)); /* +1 bomb at 2:00 on stages 1 and 2, +2 after (and on stage 3) */ flash = Math.max(flash, 0.25);
       tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120);
     }
@@ -4595,7 +4596,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (state !== 'clear' || stageN >= 3) return;
     // every stage played uses one play, the next one after a clear too (none left: the recovery screen, the clear screen stays)
     if (!lifeUse()) return;
-    if (item) bag.push(item);
+    if (item && !(item === 'barrier' && bag.includes('barrier'))) bag.push(item);
     const stock = P.stock;
     stageN++;
     ui.clear.hidden = true; bgmStop();
