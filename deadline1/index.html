@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>DEADLiNE</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#07080d">
@@ -29,10 +29,12 @@ window.DEADLINE_SHELL = true;
   // reports the same inset on both sides, but only the notch side needs it (the other is a rounded corner)
   const cut = v => Math.max(0, v - 16);
   function fit() {
-    // (the screen's size: the largest any of the browser's own measures gives. Opened from the home screen, an
-    // iPhone can report a short height and no safe areas for a moment at launch, and say nothing when they settle)
-    const de = document.documentElement, vv = window.visualViewport;
-    const W = Math.max(innerWidth, de.clientWidth), H = Math.max(innerHeight, de.clientHeight, vv ? Math.round(vv.height) : 0), cs = getComputedStyle(inset);
+    // (opened from an iPhone's home screen the page fills the whole screen, so its size is the screen's: the
+    // window's own measures can be short at launch, or grow when the turned game reaches past the edge)
+    const app = navigator.standalone === true, up = matchMedia('(orientation: portrait)').matches;
+    const W = app ? (up ? Math.min(screen.width, screen.height) : Math.max(screen.width, screen.height)) : innerWidth;
+    const H = app ? (up ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height)) : innerHeight;
+    const cs = getComputedStyle(inset);
     let t = parseFloat(cs.paddingTop) || 0, r = parseFloat(cs.paddingRight) || 0, b = parseFloat(cs.paddingBottom) || 0, l = parseFloat(cs.paddingLeft) || 0;
     // an iPhone home-screen app held upright that still reports no safe areas: the status bar and the island (or
     // notch) are there all the same, so keep clear of them by the phone's own size
