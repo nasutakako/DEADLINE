@@ -14,7 +14,7 @@
 <style>
 html, body { margin: 0; height: 100%; background: #07080d; overflow: hidden; overscroll-behavior: none; }
 #g { position: fixed; left: 0; top: 0; border: 0; display: block; transform-origin: 0 0; background: #07080d; }
-#inset { position: fixed; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#inset { position: fixed; left: 0; top: 0; right: 0; bottom: 0; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
 </style>
 </head>
 <body>
@@ -29,8 +29,14 @@ window.DEADLINE_SHELL = true;
   // reports the same inset on both sides, but only the notch side needs it (the other is a rounded corner)
   const cut = v => Math.max(0, v - 16);
   function fit() {
-    const W = innerWidth, H = innerHeight, cs = getComputedStyle(inset);
-    const t = parseFloat(cs.paddingTop) || 0, r = parseFloat(cs.paddingRight) || 0, b = parseFloat(cs.paddingBottom) || 0, l = parseFloat(cs.paddingLeft) || 0;
+    // (the screen's size: the largest any of the browser's own measures gives. Opened from the home screen, an
+    // iPhone can report a short height and no safe areas for a moment at launch, and say nothing when they settle)
+    const de = document.documentElement, vv = window.visualViewport;
+    const W = Math.max(innerWidth, de.clientWidth), H = Math.max(innerHeight, de.clientHeight, vv ? Math.round(vv.height) : 0), cs = getComputedStyle(inset);
+    let t = parseFloat(cs.paddingTop) || 0, r = parseFloat(cs.paddingRight) || 0, b = parseFloat(cs.paddingBottom) || 0, l = parseFloat(cs.paddingLeft) || 0;
+    // an iPhone home-screen app held upright that still reports no safe areas: the status bar and the island (or
+    // notch) are there all the same, so keep clear of them by the phone's own size
+    if (navigator.standalone && H > W && t === 0 && b === 0) { const sh = Math.max(screen.width, screen.height); if (sh >= 812) { t = sh >= 852 ? 59 : 47; b = 34; } else t = 20; }
     if (coarse.matches && H > W) {
       // upright phone: the game is laid on its side, its top toward the right edge, its left edge clear of the notch
       const a = cut(t), z = cut(b);
@@ -44,9 +50,12 @@ window.DEADLINE_SHELL = true;
       g.style.transform = 'translate(' + L + 'px,' + T + 'px)';
     }
   }
-  addEventListener('resize', fit); addEventListener('orientationchange', () => setTimeout(fit, 120));
+  addEventListener('resize', fit); addEventListener('orientationchange', () => { setTimeout(fit, 120); setTimeout(fit, 600); });
   if (window.visualViewport) visualViewport.addEventListener('resize', fit);
-  fit();
+  // measured again while a home-screen launch settles, and whenever the page comes back into view
+  addEventListener('load', fit); addEventListener('pageshow', fit);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) { fit(); setTimeout(fit, 300); } });
+  fit(); for (const ms of [50, 250, 700, 1500, 3000]) setTimeout(fit, ms);
   g.addEventListener('load', () => { try { g.contentWindow.focus(); } catch (e) {} });
 })();
 </script>
