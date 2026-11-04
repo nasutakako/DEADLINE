@@ -4256,14 +4256,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (Math.hypot(ix, iy) > 0.05) { P.fx = ix; P.fy = iy; }
     bx = P.x; by = P.y;
     move(P, P.vx, P.vy, dt);
-    // pits start shut: walking over a lid and off it again opens the pit; an open pit takes the runner too
+    // pits start shut: stepping on a lid opens the pit at once. The one who stepped on it stands on the open pit
+    // safely until they are off it; after that an open pit takes the runner too
     for (const h of holes) {
       const d = Math.hypot(P.x - h.x, P.y - h.y);
       if (!h.open) {
-        if (h.cool > 0) h.armed = false;  // locked lid
-        else if (d < 0.46) h.armed = true;
-        else if (h.armed && d > 0.46 + P.r) { h.armed = false; h.open = true; h.left = PIT_OPEN; h.ate = false; tone(180, 0.25, 'square', 0.05, 90); }
-      } else if (d < 0.46 - 0.06) { if (tut) { P.x = bx; P.y = by; P.vx = P.vy = 0; continue; } fallIn(h); return; }  // the barrier does not help here (the tutorial's pit is a wall)
+        h.armed = false;
+        if (!(h.cool > 0) && d < 0.46) { h.open = true; h.safe = true; h.left = PIT_OPEN; h.ate = false; tone(180, 0.25, 'square', 0.05, 90); }
+      } else if (h.safe) { if (d > 0.46 + P.r) h.safe = false; }
+      else if (d < 0.46 - 0.06) { if (tut) { P.x = bx; P.y = by; P.vx = P.vy = 0; continue; } fallIn(h); return; }  // the barrier does not help here (the tutorial's pit is a wall)
     }
     if (warps.length === 2) {
       for (const w of warps) { if (w.flash > 0) w.flash -= dt; if (w.cool > 0) { w.cool -= dt; if (w.cool <= 0) { w.flash = PIT_FLASH; if (w === warps[0]) { tone(1175, 0.12, 'triangle', 0.04); setTimeout(() => tone(1568, 0.16, 'triangle', 0.04), 110); } } } }
@@ -6935,7 +6936,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     3: [
-      { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
+      { pit: true, say: '広場の落とし穴のふたを踏むと、穴が開く(踏んだときは、離れるまで落ちない)。ふたを踏んでみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
       { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
       { pit: true, say: '一度使った落とし穴は45秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
       { pit: true, say: '自分が落とし穴に落ちても確保になるので注意', info: true },
@@ -8356,7 +8357,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function rankInfo() {
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
     const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
-    const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
+    const own = { home: ['落とし穴が2か所。ふたを踏むと開き、通った鬼をまとめて落とす(踏んだときは離れるまで落ちないが、開いた穴に入ると確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。乗って0.3秒でもう一方へ飛ぶ。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える(装備に関係なく)。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
       fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.2倍(ステージ3は1.5倍)', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
@@ -8393,7 +8394,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
       : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
     const own = [];
-    if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
+    if (ms >= 3) own.push(`落とし穴が2か所。ふたを踏むと開き、通った鬼をまとめて落とす(踏んだときは離れるまで落ちないが、開いた穴に入ると確保)。一度使うと${PIT_COOL}秒使えない`);
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。乗って${WARP_HOLD}秒でもう一方へ飛ぶ。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
