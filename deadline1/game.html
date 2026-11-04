@@ -4257,13 +4257,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     bx = P.x; by = P.y;
     move(P, P.vx, P.vy, dt);
     // pits start shut: walking over a lid and off it again opens the pit; an open pit takes the runner too
-    // (over it = the runner's ball half over the lid as drawn, not only its very middle: a quick run across the lid's
-    // edge counts as stepping on it)
+    // (over it = a third of the runner's ball over the lid as drawn, not only its very middle: a quick run across the
+    // lid's edge counts as stepping on it)
     for (const h of holes) {
       const d = Math.hypot(P.x - h.x, P.y - h.y);
       if (!h.open) {
         if (h.cool > 0) h.armed = false;  // locked lid
-        else if (d < PIT_LID + P.r * 0.5) h.armed = true;
+        else if (d < PIT_LID + P.r - P.r * 2 / 3) h.armed = true;
         else if (h.armed && d > PIT_LID + P.r) { h.armed = false; h.open = true; h.left = PIT_OPEN; h.ate = false; tone(180, 0.25, 'square', 0.05, 90); }
       } else if (d < 0.46 - 0.06) { if (tut) { P.x = bx; P.y = by; P.vx = P.vy = 0; continue; } fallIn(h); return; }  // the barrier does not help here (the tutorial's pit is a wall)
     }
@@ -4593,6 +4593,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   function nextStage(item) {
     if (state !== 'clear' || stageN >= 3) return;
+    // every stage played uses one play, the next one after a clear too (none left: the recovery screen, the clear screen stays)
+    if (!lifeUse()) return;
     if (item) bag.push(item);
     const stock = P.stock;
     stageN++;
