@@ -1341,6 +1341,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let rankRun = false;
   // replays (see the recorder further down): the ranking run's map seed, its notes, the one playing, what its runner wore
   let repSeed = 0, rec = null, rp = null, repEq = null;
+  // whether the map's first pit was moved for the stage 3 tutorial (kept with a replay, so it builds the same pits)
+  let lastTutPit = false, repTutPit = null;
   const WEEK = () => Math.floor((Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + 3) / 7);
   const weekSkin = () => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][WEEK() % 4] : 'd1';
   // 歴代ランキング: the best weekly-ranking run ever on each map (at1-at4 for d1-d4)
@@ -3082,7 +3084,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // two pits, in two random plazas
       for (const [bx, by] of plazas.sort(() => Math.random() - 0.5).slice(0, 2)) holes.push({ x: bx + 1.5, y: by + 1.5, i: idx(bx + 1, by + 1) });
       // the stage 3 tutorial: one pit in the block nearest the middle of the map, clear of the tutorial's banner at the top
-      if (stageN === 3 && tutNeed(3)) {
+      const tutPit = repTutPit != null ? repTutPit : stageN === 3 && tutNeed(3); lastTutPit = tutPit;
+      if (tutPit) {
         const mid = ([bx, by]) => Math.hypot(bx + 1.5 - COLS / 2, by + 1.5 - ROWS / 2) - by * 0.01;  // a tie goes to the lower block, further from the banner
         const [bx, by] = blocks.slice().sort((a, b) => mid(a) - mid(b))[0];
         for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) grid[idx(x, y)] = 2;
@@ -8107,7 +8110,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     try { fn(); } finally { Math.random = keep; }
   }
   function recStart() {
-    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, skin: mapSkin, cols: COLS, rows: ROWS,
+    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, cols: COLS, rows: ROWS,
       eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash') } } : null;
   }
   function recFrame(last) {
@@ -8123,6 +8126,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       items.map(it => [q(it.x), q(it.y), it.rk ? 1 : 0, q(t - it.born)].join(',')).join('/'),
       pending.map(p => [q(p.x), q(p.y), q(p.t)].join(',')).join('/'),
       elems.filter(o => o.k === 'clone').map(o => [q(o.x), q(o.y), q(o.t), q(o.life), o.el === 'water' ? 1 : 0].join(',')).join('/'),
+      // the pits: 0 shut and ready, 1 open, 2 shut and resting; and the oni falling in
+      holes.map(h => h.open ? 1 : h.cool > 0 ? 2 : 0).join(','),
+      falls.map(f => [q(f.x), q(f.y), q(f.hx), q(f.hy), q(f.t), f.tough ? 1 : 0].join(',')).join('/'),
     ];
     rec.fr.push(g.join('|')); rec.next += 1 / REC_HZ;
   }
@@ -8139,7 +8145,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   async function repPack(r, len) {
     let fr = r.fr, hz = REC_HZ;
     for (let k = 0; k < 4; k++) {
-      const head = JSON.stringify({ v: 1, skin: r.skin, cols: r.cols, rows: r.rows, seed: r.seed, hz, fx: r.fx, eq: r.eq, len });
+      const head = JSON.stringify({ v: 1, skin: r.skin, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len });
       const raw = head + '\n' + fr.join(';');
       let out = 'p:' + raw;
       try {
@@ -8163,7 +8169,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const nl = raw.indexOf('\n'), head = JSON.parse(raw.slice(0, nl));
     const nums = s => s ? s.split(',').map(Number) : [];
     const list = s => s ? s.split('/').map(nums) : [];
-    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]) }; });
+    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]), h: g[8] ? g[8].split(',').map(Number) : null, f: list(g[9]) }; });
     // when each oni first showed (it grows in over 0.3 s, as in the game)
     const seen = new Map(); fr.forEach((f, n) => { for (const e of f.e) if (!seen.has(e[0])) seen.set(e[0], n / head.hz); });
     return { head, fr, seen };
@@ -8174,7 +8180,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('rankScreen').hidden = true; ui.title.hidden = true;
     document.body.classList.add('replaying');
     stageN = 3; daily = null; rankRun = false; tut = null; mapSkin = h.skin; COLS = h.cols; ROWS = h.rows;
-    seeded(h.seed, genMap); resize();
+    repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; } resize();
     repEq = h.eq || {};
     P = { x: 0, y: 0, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock: 0, barrier: false, inv: 0, boostT: 0, jumpT: 0, saveT: 0, flT: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
@@ -8209,6 +8215,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     booms = A.b.map(b => ({ x: z(b[0]), y: z(b[1]), r: z(b[2]), t: z(b[3]) + u / h.hz, fx: h.fx[b[4]] || '', barrier: !!b[5], life: z(b[6]), fw: !!b[7], seed: (b[8] || 0) / 100, cols: FW_COLS[b[9] || 0] })).filter(b => b.t < b.life);
     items = A.i.map(it => ({ x: z(it[0]), y: z(it[1]), rk: !!it[2], born: time - z(it[3]) }));
     pending = A.w.map(p => ({ x: z(p[0]), y: z(p[1]), t: Math.max(0.01, z(p[2]) - u / h.hz) }));
+    if (A.h) holes.forEach((o, k) => { o.open = A.h[k] === 1; o.cool = A.h[k] === 2 ? 1 : 0; o.flash = 0; });
+    falls = A.f.map(f => ({ x: z(f[0]), y: z(f[1]), hx: z(f[2]), hy: z(f[3]), t: z(f[4]) + u / h.hz, tough: !!f[5] })).filter(f => f.t < 0.7);
     elems = A.c.map(c => ({ k: 'clone', x: z(c[0]), y: z(c[1]), t: z(c[2]) + u / h.hz, life: z(c[3]), el: c[4] ? 'water' : 'dark' })).filter(c => c.t < c.life);
   }
   function repTick(dt) {
