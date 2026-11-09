@@ -895,14 +895,12 @@ body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
   body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
   body.ontitle .pad { grid-area: 1 / 1 / -1 / 2; z-index: 2; background: none; padding-top: 8px; }
-  body.ontitle #titleScreen { padding-left: calc(var(--side) + 16px); -webkit-backdrop-filter: none; backdrop-filter: none; background: linear-gradient(90deg, rgba(8, 10, 15, .12) 0, rgba(8, 10, 15, .18) calc(var(--side) + 4px), rgba(8, 10, 15, .5) calc(var(--side) + 70px)); }
+  body.ontitle #titleScreen { padding-left: calc(var(--side) + 16px); }
   body.ontitle .pad { pointer-events: none; }
   body.ontitle .pad .who { pointer-events: auto; }
 }
-body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .38); border-color: rgba(255, 255, 255, .16); }
-body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .45), rgba(16, 19, 28, .32) 70%); border-color: color-mix(in srgb, var(--runner) 40%, transparent); }
-body.ontitle .who .mrow b, body.ontitle .who .mrow small, body.ontitle .who .idcard { text-shadow: 0 1px 3px rgba(0,0,0,.9), 0 0 8px rgba(0,0,0,.6); }
-body.ontitle .who .mrow:hover { background: rgba(30, 36, 52, .55); }
+body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .8), rgba(16, 19, 28, .78) 70%); }
 body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 /* a landscape phone: the stand-by screens fit without scrolling */
 @media (max-height: 520px) {
@@ -998,11 +996,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     <button class="gear" id="setBtn" type="button" aria-label="設定"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.2a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4z"/><path d="M19.4 13.5a7.6 7.6 0 0 0 0-3l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-2.6-1.5L14 2.5h-4l-.4 2.5A7.4 7.4 0 0 0 7 6.5l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 3l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 2.6 1.5l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 2.6-1.5l2.4 1 2-3.4z"/></svg></button>
     <div class="card">
       <h1 aria-label="DEADLiNE">DEAD<span>L<b class="tstem" aria-hidden="true"><i class="tbar"></i><i class="tdot"><i class="teye"></i></i></b>NE</span></h1>
-      <p>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
+      <p hidden>閉じ込められた地下から鬼をかわして脱出しろ。ステージ1は地下、ステージ2からは地上の夜の街。鬼は時間とともに増え、だんだん速くなる。拾った爆弾で鬼を吹き飛ばせ。</p>
       <div class="records" id="records" role="button" tabindex="0" aria-label="各ステージの記録を見る"></div>
       <p class="rotate">横向きがおすすめ。スマホを横にすると画面いっぱいで遊べます。</p>
       <span class="label bgmhint" id="bgmHint">♪ 画面をタップするとBGMが流れます</span>
-      <div class="row"><button class="go" id="startBtn" type="button">ステージ1</button><button class="go alt" id="start2Btn" type="button">ステージ2</button><button class="go alt" id="start3Btn" type="button">ステージ3</button><button class="go alt special" id="specialBtn" type="button">スペシャル</button><button class="go alt" id="rankPlayBtn" type="button">ランキング</button><button class="go alt tutl" id="tutListBtn" type="button">チュートリアル一覧</button></div>
+      <div class="row"><button class="go" id="startBtn" type="button">ステージ1</button><button class="go alt" id="start2Btn" type="button">ステージ2</button><button class="go alt" id="start3Btn" type="button">ステージ3</button><button class="go alt special" id="specialBtn" type="button">スペシャル</button><button class="go alt" id="rankPlayBtn" type="button">ランクレース</button><button class="go alt tutl" id="tutListBtn" type="button">チュートリアル一覧</button></div>
     </div>
   </div>
 
@@ -1391,7 +1389,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function rankOpen() { try { return storyDone(weekSkin()); } catch (e) { return false; } }
   function updateLocks() {
     const locked = [];
-    { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランキング'; }
+    { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランクレース'; }
     for (const n of [2, 3, 4, 'rankPlay']) {
       const b = $(n === 'rankPlay' ? 'rankPlayBtn' : 'start' + n + 'Btn'); if (!b) continue;
       if (n === 'rankPlay') {
@@ -8620,7 +8618,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `RANKING ${mapName(3)}`; bestLine('spBest', 3);
+    $('spKicker').textContent = `ランクレース ${mapName(3)}`; bestLine('spBest', 3);
     $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
