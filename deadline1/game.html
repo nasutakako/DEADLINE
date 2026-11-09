@@ -1135,8 +1135,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <h2 class="clear">マップ選択</h2>
       <div class="mapsel" id="briefMaps" hidden></div>
       <p class="mono" id="briefMono" hidden></p>
-      <p id="briefMsg" style="white-space: pre-line">2分30秒経過すると出口が開く、鍵を拾って脱出しよう。
-出口が開くと鬼が増えるぞ。</p>
+      <p id="briefMsg" style="white-space: pre-line">2分30秒で出口が開く。鍵を拾って脱出せよ。</p>
       <div class="row sprow"><button class="go" id="briefGoBtn" type="button">スタート</button><button class="ghost" id="briefInfoBtn" type="button">ステージ詳細</button><button class="ghost toright" id="briefBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
@@ -8530,7 +8529,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // the stand-by notes of stages 2 and 3, for the map picked
   function spText(n) {
-    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `6分30秒で右端に出口が開く。鍵を拾って脱出。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・${ROUTE[mapSkin] === 'home' ? '九死に一生が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'cyber' ? '電磁爆弾が特別に使える(クリアで獲得)' : ROUTE[mapSkin] === 'shadow' ? '影分身ダッシュが使える' : '韋駄天が特別に使える(クリアで獲得)。自爆は範囲1.5倍'}` : '出口なし。捕まるまで逃げ続けるステージ。\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・時間が経つほど鬼の出方が変化する') : '・2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される\n・4分から鬼が増え、4分30秒で出口が開くと自分より速い黒い鬼も現れる\n' + (MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '・影分身ダッシュが使える(この物語だけ)' : MAP_CHOICE && ROUTE[mapSkin] === 'fuse' ? '・近づくと自爆する鬼が出る(点滅したら離れろ)' : '補給アイテムを1つ選ぶとステージ2が始まる。');
+    // the map step says only when the way out opens, and to take the key out through it
+    const mmss = s => `${s / 60 | 0}分${s % 60 ? s % 60 + '秒' : ''}`;
+    $('spMsg').textContent = n === 3 ? (MAP_CHOICE ? `${mmss(STORY_EXIT)}で出口が開く。鍵を拾って脱出せよ。` : '出口なし。捕まるまで逃げ続けるステージ。') : `${mmss(EXIT_AT2)}で出口が開く。鍵を拾って脱出せよ。`;
   }
   // the weekly ranking's details: what comes when, from the game's own numbers
   function rankInfo() {
