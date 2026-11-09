@@ -260,8 +260,31 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 body.picking .hud, body.picking .sys, body.picking .controls, body.picking .pad { display: none !important; }
 body.picking .stage { grid-column: 1 / -1 !important; grid-row: 1 / -1 !important; }
 body.picking :is(#briefScreen, #startPickScreen) .card { max-width: min(860px, 100%) !important; width: 100%; }
-/* the item cards keep DEADLINE2's size: about a third of a 560px card each */
-body.picking #startPicks { width: 100%; max-width: 380px; }
+/* the stand-by screens fill the whole screen: the map cards (or the item cards) take the height left over */
+body.picking :is(#briefScreen, #startPickScreen) { padding: 14px 18px; }
+body.picking :is(#briefScreen, #startPickScreen) .card { margin: 0 auto; height: 100%; min-height: 0; gap: min(10px, 2.2vh) !important; }
+body.picking .mapsel { flex: 1 1 0; min-height: 0; align-items: stretch; gap: 10px !important; }
+body.picking .mapsel .mapcard { grid-template-rows: minmax(0, 1fr) auto auto !important; align-content: stretch !important; row-gap: min(6px, 1.4vh) !important; padding: min(8px, 1.8vh) !important; border-radius: 10px; }
+body.picking .mapsel .mapcard .thumb { height: auto !important; min-height: 26px; align-self: stretch; }
+body.picking .mapsel .mapcard b { font-size: clamp(13px, 4.6vh, 22px) !important; }
+body.picking .mapsel .mapcard small:not(.story) { font-size: clamp(9.5px, 2.9vh, 13px) !important; }
+body.picking .mapsel .mapcard small.mclr { font-size: clamp(10px, 3vh, 14px) !important; }
+body.picking :is(#spMsg, #briefMsg) { font-size: clamp(12px, 3.7vh, 17px); line-height: 1.5; margin: 0; }
+body.picking :is(#briefScreen, #startPickScreen) .pbest { font-size: clamp(11px, 3.1vh, 14px); }
+body.picking :is(#briefScreen, #startPickScreen) .kicker { font-size: clamp(11px, 3.1vh, 14px); }
+body.picking .sprow .go { padding: min(12px, 2.8vh) 30px !important; font-size: clamp(15px, 4.4vh, 19px) !important; }
+body.picking .sprow .ghost { padding: min(10px, 2.4vh) 18px !important; font-size: clamp(13px, 3.6vh, 15px) !important; }
+/* the daily and the ranking have no map to pick: their notes sit in the middle */
+#startPickScreen[data-step="map"]:has(#spMaps[hidden]) #spMsg { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
+/* two items: barrier or launcher, side by side with "or" between; the cards take the height left over */
+body.picking #startPicks { flex: 1 1 0; min-height: 0; max-height: 300px; width: 100%; max-width: 680px; align-self: center; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important; gap: 14px !important; align-items: stretch; }
+body.picking #startPicks .pick { justify-content: center; align-items: center; text-align: center; padding: min(14px, 3vh) 14px !important; gap: min(8px, 1.8vh) !important; border-radius: 12px; border-width: 1.5px; }
+body.picking #startPicks .pick b { font-size: clamp(16px, 5.4vh, 24px) !important; }
+body.picking #startPicks .pick span { font-size: clamp(12px, 3.6vh, 15px) !important; line-height: 1.5 !important; display: block !important; }
+body.picking #startPicks .pick span i { display: block; }
+#startPicks .or { display: none; }
+body.picking #startPicks .or { display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-size: clamp(16px, 5vh, 24px); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
+body.picking #spItemMsg { font-size: clamp(12px, 3.5vh, 16px); text-align: center; }
 body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(30px, 7.5vh) !important; }
 .pick.boost b { color: #ffb347; } .pick.barrier b { color: var(--runner); } .pick.launcher b { color: #d9b3ff; }
 .act[aria-disabled="true"] { opacity: .45; }
@@ -1154,6 +1177,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。</p>
       <div class="picks" id="startPicks">
         <button class="pick barrier" data-item="barrier" type="button"><b>1 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
+        <span class="or" aria-hidden="true">or</span>
         <button class="pick launcher" data-item="launcher" type="button"><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
@@ -4128,7 +4152,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const spawnBatch = () => stageN === 1 && exitOpen ? 5 + Math.floor((t - alarmAt) / 30) : stageN >= 3 || (stageN === 2 && t >= 240) ? wave3() : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   // stage 3 starts at the stage 2 speed
   // (the tutorial: the oni at stage 3's opening speed, whatever stage it is taught on)
-  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(ENEMY_MAX, ENEMY_BASE + (capRun() ? ENEMY_STEP_LONG : ENEMY_STEP) * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
+  // how fast the oni speed up every 20 s: the ranking and the survival nights slowly; on the story stages by world —
+  // 1-1 to 2-3 as slowly as the ranking, 4-1 to 4-3 at the full rate, 3-1 to 3-3 halfway between
+  const enemyStep = () => capRun() ? ENEMY_STEP_LONG : mapSkin === 'd4' ? ENEMY_STEP : mapSkin === 'd3' ? (ENEMY_STEP + ENEMY_STEP_LONG) / 2 : ENEMY_STEP_LONG;
+  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(ENEMY_MAX, ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
