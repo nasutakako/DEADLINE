@@ -1263,8 +1263,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
-  const RK_TXT = () => `ランチャー: 1分30秒ごとに道に落ちる(${RK_LIFE}秒で消える)`;
-  const RK_DROP_AT = 90, RK_DROP_EVERY = 90, RK_LIFE = 10;   // a launcher lies in the street at 1:30, then every 1:30 (lying 10 s, as a bomb box), on every stage
+  const RK_TXT = () => `ランチャー: ときどき道に落ちる(平均1分30秒に1回、${RK_LIFE}秒で消える)`;
+  const RK_DROP_AT = 90, RK_DROP_EVERY = 90, RK_LIFE = 10;   // a launcher lies in the street by chance, about once every 1:30 on average (lying 10 s, as a bomb box), on every stage
   const STICK_R = 34;
   // the exit opens at 2:30 on stage 1, 4:30 on stage 2 (stage 3: STORY_EXIT)
   const BARRIER_AT = 120, EXIT_AT = 150, EXIT_AT2 = 270, INV_TIME = 1.5;
@@ -4241,10 +4241,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
 
     // items: mines lying in the street
-    // the weekly ranking, from 7:00: a launcher lies in the street every 1:30
-    if (!tut && t >= (P.nextRk ?? RK_DROP_AT)) {
-      if (!items.some(it => it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
-      P.nextRk = (P.nextRk ?? RK_DROP_AT) + RK_DROP_EVERY;
+    // a launcher lies in the street by chance: once a second a 1-in-90 roll (about once every 1:30 on average,
+    // sometimes sooner, sometimes later); one at a time
+    if (!tut && t >= (P.nextRk ?? 1)) {
+      P.nextRk = (P.nextRk ?? 1) + 1;
+      if (Math.random() < 1 / RK_DROP_EVERY && !items.some(it => it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
     }
     if (t >= nextItem) {
       if (!items.some(it => !it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t }); }
