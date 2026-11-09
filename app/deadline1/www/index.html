@@ -256,20 +256,12 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .sprow .toright { margin-left: auto; }
 #spItemMsg { margin: 0; color: var(--muted); }
 #startPicks .pick.sel { border-color: #5dff9e; background: color-mix(in srgb, #5dff9e 14%, var(--panel)); box-shadow: 0 0 0 1px #5dff9e inset, 0 0 14px rgba(93,255,158,.25); }
-#startPickScreen[data-step="item"] #startPicks .pick { padding: 14px 12px; }
 /* until the run begins the stand-by screens have the whole screen: no stick, no buttons, no side columns */
 body.picking .hud, body.picking .sys, body.picking .controls, body.picking .pad { display: none !important; }
 body.picking .stage { grid-column: 1 / -1 !important; grid-row: 1 / -1 !important; }
 body.picking :is(#briefScreen, #startPickScreen) .card { max-width: min(860px, 100%) !important; width: 100%; }
-body.picking .mapsel { gap: 10px !important; }
-body.picking .mapsel .mapcard { padding: 8px !important; row-gap: 5px !important; border-radius: 10px; }
-body.picking .mapsel .mapcard .thumb { height: min(96px, 19vh) !important; }
-body.picking .mapsel .mapcard b { font-size: 19px !important; }
-body.picking .mapsel .mapcard small:not(.story) { font-size: 12px !important; }
-body.picking #startPicks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px !important; }
-body.picking #startPicks .pick { min-height: min(150px, 30vh); justify-content: center; align-items: center; text-align: center; gap: 8px !important; padding: 14px !important; border-radius: 12px; border-width: 2px; }
-body.picking #startPicks .pick b { font-size: min(26px, 7cqw) !important; }
-body.picking #startPicks .pick span { font-size: min(15px, 5cqw) !important; display: block !important; }
+/* the item cards keep DEADLINE2's size: about a third of a 560px card each */
+body.picking #startPicks { width: 100%; max-width: 380px; }
 body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(30px, 7.5vh) !important; }
 .pick.boost b { color: #ffb347; } .pick.barrier b { color: var(--runner); } .pick.launcher b { color: #d9b3ff; }
 .act[aria-disabled="true"] { opacity: .45; }
@@ -1164,7 +1156,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="pick barrier" data-item="barrier" type="button"><b>1 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
         <button class="pick launcher" data-item="launcher" type="button"><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">次へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
