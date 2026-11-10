@@ -1422,8 +1422,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
   // stage 2 opens once stage 1 is escaped, stage 3 once stage 2 is; the daily nights (生存課題) once stage 1 is
   const unlocked = n => n <= 1 || isCleared(n === 4 ? 1 : Math.min(n, 3) - 1);
-  // this week's ranking map, open once its stage 3 has been cleared
-  function rankOpen() { try { return storyDone(weekSkin()); } catch (e) { return false; } }
+  // ランクレース: open once 1-1 is escaped (whatever this week's map)
+  function rankOpen() { try { return isCleared(1); } catch (e) { return false; } }
   function updateLocks() {
     const locked = [];
     { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランクレース'; }
@@ -1434,7 +1434,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
         b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
         // small underneath: this week's map, or (locked) what opens it (the map's name kept off the big line, which it crowded)
-        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${MAP_NAMES[weekSkin()][2]}` : `${STORY_LAST[ROUTE[weekSkin()]]}クリアで解放`; b.append(sm); }
+        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${MAP_NAMES[weekSkin()][2]}` : '1-1クリアで解放'; b.append(sm); }
         continue;
       }
       if (n === 4 && b.classList.contains('mrow')) {
