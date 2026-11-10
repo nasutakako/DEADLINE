@@ -160,6 +160,8 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .mapcard small.prize { color: var(--muted); white-space: normal; line-height: 1.2; }
 .mapcard small.mclr { justify-self: start; margin-top: 2px; padding: 1px 8px 2px; border-radius: 4px; border: 1.5px solid #5dff9e; color: #5dff9e; background: rgba(93,255,158,.1); font-family: var(--f-display); font-size: 12px; letter-spacing: .14em; line-height: 1.3; text-shadow: 0 0 8px rgba(93,255,158,.55); }
 .mapcard.locked .thumb { filter: grayscale(1) brightness(.5); }
+.mapcard .thumb .tmark { position: absolute; width: clamp(9px, 11%, 22px); aspect-ratio: 1; transform: translate(-50%, -50%); filter: drop-shadow(0 0 3px rgba(0,0,0,.9)); pointer-events: none; }
+.mapcard .thumb .tmark svg { display: block; width: 100%; height: 100%; }
 @media (max-height: 460px) { .mapcard .thumb { width: 60px; height: 38px; } .mapcard { padding: 4px 6px; } }
 #tutPicks .pick b { color: var(--lamp); }
 #tutPicks .pick.locked { opacity: .5; cursor: not-allowed; }
@@ -4091,7 +4093,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // (the dash button's own wait untouched); then 30 s before it works again
   let pads = [];
   const PAD_COOL = 30, BOOSTPAD_R = 0.42;
-  const WARP_HOLD = 0.3, WARP_COOL = 90, WARP_R = 0.46;
+  const WARP_HOLD = 0.08, WARP_COOL = 90, WARP_R = 0.46;   // (the hold counts only off a dash: a dash runs straight over)
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
 
@@ -4342,8 +4344,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // the point the runner came out of only works again once they have stepped off it
       if (P.warpAway && Math.hypot(P.x - P.warpAway.x, P.y - P.warpAway.y) > WARP_R + 0.2) P.warpAway = null;
       const on = !(warps[0].cool > 0) && warps.find(w => w !== P.warpAway && Math.hypot(P.x - w.x, P.y - w.y) < WARP_R);
-      if (on) {
-        if (!P.warpT) tone(660, 0.5, 'sine', 0.035, 1320);
+      if (on && P.dashT > 0) { P.warpT = 0; P.warpOn = null; }   // dashing over it: no warp
+      else if (on) {
+        if (!P.warpT) tone(660, 0.3, 'sine', 0.035, 1320);
         P.warpT = (P.warpT || 0) + dt; P.warpOn = on;
         if (P.warpT >= WARP_HOLD) {
           const to = warps.find(w => w !== on);
@@ -7124,7 +7127,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   const TUT = {
     w: [
-      { warp: true, say: '2-1にはワープポイントがある。乗って0.3秒待つと、もう1つのワープポイントに飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
+      { warp: true, say: '2-1にはワープポイントがある。踏むと、もう1つのワープポイントに飛ぶ(ダッシュで通り過ぎたときは飛ばない)。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
       { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', set: tutWarpBar, go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
     ],
@@ -7506,6 +7509,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $(n === 1 ? 'briefKicker' : 'spKicker').textContent = stageKicker(n);
     if (n === 1) { bestLine('briefBest', 1); mono('briefMono', 1, 'standby'); fitBrief(); } else { spText(n); bestLine('spBest', n); mono('spMono', n, 'standby'); fitStandby(); }
   }
+  // what a map has, marked on its card's picture: 加速装置 (from 1-2 on), pits (each world's 3rd stage), warp points (world 2)
+  const MARK_SVG = {
+    pad: '<svg viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" rx="3" fill="#1d2c38" stroke="#7dfcff" stroke-width="1.6"/><path d="M6 6.5l3.5 3.5L6 13.5M10.5 6.5l3.5 3.5-3.5 3.5" fill="none" stroke="#7dfcff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    pit: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="#6c7686" stroke="#8fe9ff" stroke-width="1.4"/><path d="M4 7.5h12M3.5 10h13M4 12.5h12" stroke="#3a404b" stroke-width="1.3"/></svg>',
+    warp: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="rgba(10,0,24,.85)" stroke="#3fe0ff" stroke-width="1.8"/><circle cx="10" cy="10" r="4.5" fill="none" stroke="#ff4fd8" stroke-width="1.6"/></svg>'
+  };
+  function thumbMarks(im, skin, n) {
+    const at = [];
+    if (!(skin === 'd1' && n === 1)) at.push(['pad', 22, 30], ['pad', 76, 72]);
+    if (n >= 3) at.push(['pit', 52, 50], ['pit', 88, 26]);
+    if (skin === 'd2') at.push(['warp', 12, 74], ['warp', 62, 18]);
+    for (const [k, x, y] of at) { const m = document.createElement('i'); m.className = 'tmark'; m.style.left = x + '%'; m.style.top = y + '%'; m.innerHTML = MARK_SVG[k]; im.append(m); }
+  }
   // the two map cards on a stand-by screen
   function mapRow(n) {
     const box = $(n === 1 ? 'briefMaps' : 'spMaps'); if (!box) return;
@@ -7515,6 +7531,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const lock = skin !== 'd1' && !mapOpen(n, skin), on = mapSkin === skin;
       const b = document.createElement('button'); b.type = 'button'; b.className = 'mapcard' + (on ? ' on' : '') + (lock ? ' locked' : '');
       const im = document.createElement('span'); im.className = 'thumb'; if (MAP_THUMBS[skin + n]) im.style.backgroundImage = `url(${MAP_THUMBS[skin + n]})`; if (skin + n === 'd43') im.style.backgroundPosition = 'center top';   // 4-3: its river in view
+      thumbMarks(im, skin, n);
       const nm = document.createElement('b'); nm.textContent = (lock ? '🔒 ' : '') + mapName(n, skin);
       b.append(im, nm);
       if (!lock && mapCleared(n, skin)) { const sub = document.createElement('small'); sub.className = 'mclr'; sub.textContent = 'CLEAR'; b.append(sub); b.classList.add('done'); }
@@ -8616,7 +8633,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
     const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
-      cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。乗って0.3秒でもう一方へ飛ぶ。一度使うと1分30秒使えない'],
+      cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
       fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.2倍(ステージ3は1.5倍)', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
     $('rankInfoBody').innerHTML = `
@@ -8654,7 +8671,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const own = [];
     if (!(route === 'home' && ms === 1)) own.push('加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
-    if (mapSkin === 'd2') own.push(`ワープポイントが2つ。乗って${WARP_HOLD}秒でもう一方へ飛ぶ。一度使うと${mmss(WARP_COOL)}使えない`);
+    if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
     if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', n >= 2 ? 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)' : '');
