@@ -367,7 +367,8 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
     padding-right: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
   /* in a run the side columns give up a little room to the map */
-  body:not(.ontitle) { --side: clamp(100px, 12.5vw, 118px); }
+  body:not(.ontitle) { --side: clamp(100px, 12.5vw, 118px); column-gap: 0; }
+  /* (the map's own edge is the line: the buttons and the stick come right up to it) */
   .pad { grid-area: pad; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 30px; min-height: 0; touch-action: none; border-radius: 8px; background: rgba(255,255,255,.025); }
 }
 .card p.rotate { display: none; color: var(--lamp); font-size: 13px; }
@@ -3074,7 +3075,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
     // (a little wider than the screen's shape: one more column of blocks, the tiles a little smaller)
-    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a * 1.12); }
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a * 1.08); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
