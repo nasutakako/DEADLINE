@@ -233,7 +233,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 /* the item button between ◀ ▶: the arrows pick which item it uses */
 .itemrow { display: flex; align-items: stretch; gap: 1px; min-width: 0; }
 .itemrow .act { flex: 1 1 auto; min-width: 0; }
-.itemarr { flex: 0 0 auto; width: 14px; padding: 0; border-radius: 5px; border: 1px solid rgba(199,146,255,.55); background: var(--panel); color: #d9b3ff; font-size: 9px; line-height: 1; touch-action: manipulation; }
+.itemarr { flex: 0 0 auto; width: 19px; padding: 0; border-radius: 6px; border: 1px solid rgba(199,146,255,.55); background: var(--panel); color: #d9b3ff; font-size: 11px; line-height: 1; touch-action: manipulation; }
 .itemarr:active { background: rgba(199,146,255,.2); }
 .itemarr:disabled { opacity: .35; }
 #itemName.boost, #itemLabel.boost { color: #ffb347; } #itemName.barrier, #itemLabel.barrier { color: var(--runner); } #itemName.launcher, #itemLabel.launcher { color: #d9b3ff; }
@@ -331,8 +331,8 @@ body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(30px, 7.5vh
   .time { font-size: 20px; }
   .stats, .next, .bestline { display: none; }
   .controls { flex-direction: column; justify-content: flex-end; min-height: 0; }
-  .act { min-width: 0; flex: 0 1 76px; min-height: 0; font-size: 16px; }
-  .itemrow { flex: 0 1 76px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 15px; padding: 6px 2px; }
+  .act { min-width: 0; flex: 0 1 68px; min-height: 0; font-size: 16px; }
+  .itemrow { flex: 0 1 68px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 15px; padding: 6px 2px; }
 }
 @media (min-aspect-ratio: 5/4) and (max-height: 360px) {
   .bestline, .next .label { display: none; }
@@ -3646,8 +3646,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (let k = 0; k < Math.round(COLS * ROWS / 45); k++) {
       const x = rnd() * COLS, y = rnd() * ROWS, r = 2 + rnd() * 2, c = COLS5[Math.floor(rnd() * 5)];
       pool(x, y, r, c, 0.22);
-      // now and then the burst itself, its streaks faint on the ground
-      if (rnd() < 0.4) { m.strokeStyle = `rgba(${c},0.2)`; m.lineWidth = 0.03; m.beginPath(); for (let j = 0; j < 16; j++) { const a = j / 16 * Math.PI * 2; m.moveTo(x + Math.cos(a) * r * 0.3, y + Math.sin(a) * r * 0.3); m.lineTo(x + Math.cos(a) * r * 0.8, y + Math.sin(a) * r * 0.8); } m.stroke(); }
+      rnd();   // (the fireworks' streaks on the ground are gone; the draw kept so the rest of the map comes out the same)
     }
     m.restore();
     // paper lanterns strung down the streets, as on 縁日通り
@@ -3745,7 +3744,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1) m.fillRect(x + 0.14, y + 0.16, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (grid[idx(x, y)] !== 1) continue;
-      const l = 15 + blockShade[idx(x, y)] * 7;
+      const l = 15;   // (every block the darker shade: a lighter one read too much like the street)
       m.fillStyle = `hsl(${hue}, 16%, ${l}%)`; m.fillRect(x, y, 1.002, 1.002);
       m.fillStyle = `hsl(${hue}, 14%, ${l + 9}%)`;
       if (walk(x, y - 1)) m.fillRect(x, y, 1, 0.07);
@@ -7584,7 +7583,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const nm = document.createElement('b'); nm.textContent = (lock ? '🔒 ' : '') + mapName(n, skin);
       b.append(im, nm);
       if (!lock && mapCleared(n, skin)) { const sub = document.createElement('small'); sub.className = 'mclr'; sub.textContent = 'CLEAR'; b.append(sub); b.classList.add('done'); }
-      else { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? MAP_LOCKS[skin][n - 1] : n < 3 ? `初回クリアで★${FIRST_STARS[n]}・${MAP_NAMES[skin][n]}解放` : `初回クリアで★${FIRST_STARS[3]}` + (STORY_NOTE[ROUTE[skin]] ? '・' + STORY_NOTE[ROUTE[skin]].replace(/^クリアで/, '') : ''); b.append(sub); }
+      else { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? `${MAP_LOCKS[skin][n - 1]}・初回クリアで★${FIRST_STARS[n]}` : n < 3 ? `初回クリアで★${FIRST_STARS[n]}・${MAP_NAMES[skin][n]}解放` : `初回クリアで★${FIRST_STARS[3]}` + (STORY_NOTE[ROUTE[skin]] ? '・' + STORY_NOTE[ROUTE[skin]].replace(/^クリアで/, '') : ''); b.append(sub); }
       b.setAttribute('aria-pressed', String(on));
       b.addEventListener('click', () => { if (lock) { lockedTap(n === 1 ? 1 : n); return; } if (!on) { tap(); mapChoose(n, skin); } });
       box.append(b);
