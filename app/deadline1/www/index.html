@@ -257,6 +257,14 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .sprow { width: 100%; }
 .sprow .toright { margin-left: auto; }
 #spItemMsg { margin: 0; color: var(--muted); }
+.rkstat { display: flex; gap: 12px; }
+.rkstat[hidden] { display: none; }
+.rkstat > div { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: min(10px, 2.2vh) 12px; border-radius: 12px; border: 1px solid rgba(255, 207, 90, .4); background: linear-gradient(180deg, rgba(255, 207, 90, .12), rgba(255, 207, 90, .03)); }
+.rkstat small { font-size: clamp(11px, 3.1vh, 13px); color: var(--muted); letter-spacing: .08em; }
+.rkstat b { font-family: var(--f-num); font-size: clamp(24px, 9vh, 44px); line-height: 1.1; color: var(--lamp); font-variant-numeric: tabular-nums; }
+.rkstat b.dim { font-size: clamp(14px, 4.4vh, 20px); color: var(--muted); }
+#startPickScreen[data-step="item"] #spRk { display: none; }
+#startPickScreen:has(#spRk:not([hidden])) #spBest { display: none; }
 #startPicks .pick.sel { border-color: #5dff9e; background: color-mix(in srgb, #5dff9e 14%, var(--panel)); box-shadow: 0 0 0 1px #5dff9e inset, 0 0 14px rgba(93,255,158,.25); }
 /* until the run begins the stand-by screens have the whole screen: no stick, no buttons, no side columns */
 body.picking .hud, body.picking .sys, body.picking .controls, body.picking .pad { display: none !important; }
@@ -283,8 +291,8 @@ body.picking .sprow .ghost { padding: min(10px, 2.4vh) 18px !important; font-siz
    marks and an icon; the chosen one lit up in that colour */
 body.picking #startPicks { flex: 0 1 auto; height: clamp(120px, 44vh, 196px); min-height: 0; margin: auto; width: 100%; max-width: 520px; align-self: center; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important; gap: 14px !important; align-items: stretch; }
 #startPicks .pick.barrier { --ic: 143, 233, 255; } #startPicks .pick.launcher { --ic: 217, 179, 255; }
-body.picking #startPicks .pick { position: relative; overflow: hidden; justify-content: center; align-items: center; text-align: center; padding: min(12px, 2.6vh) 12px !important; gap: min(6px, 1.4vh) !important; border-radius: 14px; border: 1.5px solid rgba(var(--ic), .32); background: radial-gradient(120% 90% at 50% 0%, rgba(var(--ic), .13), transparent 60%), linear-gradient(180deg, #12161f, #0b0d13); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.35); transition: transform .12s, border-color .12s, box-shadow .12s; }
-body.picking #startPicks .pick::before, body.picking #startPicks .pick::after { content: ''; position: absolute; width: 14px; height: 14px; border: 2px solid rgba(var(--ic), .55); pointer-events: none; }
+body.picking #startPicks .pick { position: relative; overflow: hidden; justify-content: center; align-items: center; text-align: center; padding: min(12px, 2.6vh) 12px !important; gap: min(6px, 1.4vh) !important; border-radius: 14px; border: 1.5px solid var(--line); background: radial-gradient(120% 90% at 50% 0%, rgba(var(--ic), .13), transparent 60%), linear-gradient(180deg, #12161f, #0b0d13); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.35); transition: transform .12s, border-color .12s, box-shadow .12s; }
+body.picking #startPicks .pick::before, body.picking #startPicks .pick::after { content: ''; position: absolute; width: 14px; height: 14px; border: 2px solid rgba(93, 255, 158, .35); pointer-events: none; }
 body.picking #startPicks .pick::before { top: 7px; left: 7px; border-right: 0; border-bottom: 0; border-top-left-radius: 6px; }
 body.picking #startPicks .pick::after { bottom: 7px; right: 7px; border-left: 0; border-top: 0; border-bottom-right-radius: 6px; }
 body.picking #startPicks .pick .pic { display: grid; place-items: center; width: clamp(28px, 9vh, 40px); height: clamp(28px, 9vh, 40px); border-radius: 50%; background: rgba(var(--ic), .12); border: 1px solid rgba(var(--ic), .4); }
@@ -292,9 +300,9 @@ body.picking #startPicks .pick .pic svg { width: 58%; height: 58%; fill: none; s
 body.picking #startPicks .pick b { font-size: clamp(15px, 4.6vh, 20px) !important; color: rgb(var(--ic)) !important; letter-spacing: .04em; }
 body.picking #startPicks .pick span { font-size: clamp(11px, 3.1vh, 13px) !important; line-height: 1.45 !important; display: block !important; color: var(--muted); }
 body.picking #startPicks .pick span i { display: block; }
-body.picking #startPicks .pick:hover { border-color: rgba(var(--ic), .6); }
-body.picking #startPicks .pick.sel { transform: translateY(-2px); border-color: rgb(var(--ic)); background: radial-gradient(120% 90% at 50% 0%, rgba(var(--ic), .26), transparent 65%), linear-gradient(180deg, #151b26, #0c0f16); box-shadow: 0 0 0 1px rgba(var(--ic), .6) inset, 0 0 22px rgba(var(--ic), .3), 0 8px 20px rgba(0,0,0,.4); }
-body.picking #startPicks .pick.sel::before, body.picking #startPicks .pick.sel::after { border-color: rgb(var(--ic)); }
+body.picking #startPicks .pick:hover { border-color: rgba(93, 255, 158, .55); }
+body.picking #startPicks .pick.sel { transform: translateY(-2px); border-color: #5dff9e; background: radial-gradient(120% 90% at 50% 0%, rgba(var(--ic), .24), transparent 65%), linear-gradient(180deg, #151b26, #0c0f16); box-shadow: 0 0 0 1px #5dff9e inset, 0 0 18px rgba(93, 255, 158, .3), 0 8px 20px rgba(0,0,0,.4); }
+body.picking #startPicks .pick.sel::before, body.picking #startPicks .pick.sel::after { border-color: #5dff9e; }
 body.picking #startPicks .pick.sel span { color: #c9d0dc; }
 #startPicks .or { display: none; }
 body.picking #startPicks .or { display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-size: clamp(16px, 5vh, 24px); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
@@ -350,6 +358,8 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
     padding-left: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
     padding-right: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
+  /* in a run the side columns give up a little room to the map */
+  body:not(.ontitle) { --side: clamp(100px, 12.5vw, 118px); }
   .pad { grid-area: pad; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 30px; min-height: 0; touch-action: none; border-radius: 8px; background: rgba(255,255,255,.025); }
 }
 .card p.rotate { display: none; color: var(--lamp); font-size: 13px; }
@@ -1181,6 +1191,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <span class="kicker exitk" id="spKicker">STAGE 2</span>
       <span class="pbest" id="spBest" hidden></span>
       <h2 class="clear" id="spHead">マップ選択</h2>
+      <div class="rkstat" id="spRk" hidden><div><small>今週の自己ベスト</small><b id="spRkBest">--:--.-</b></div><div><small>今週の順位</small><b id="spRkPlace">--</b></div></div>
       <p class="mono" id="spMono" hidden></p>
       <div class="mapsel" id="spMaps" hidden></div>
       <p id="spMsg" style="white-space: pre-line">補給アイテムを1つ選ぶとステージが始まる。</p>
@@ -3040,7 +3051,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const r = stage.getBoundingClientRect();
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
-    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a); }
+    // (a little wider than the screen's shape: one more column of blocks, the tiles a little smaller)
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a * 1.12); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
@@ -3189,11 +3201,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // the start crossing and the pits stay in the light
       shadeMap[idx(sx, sy)] = 0; for (const h of holes) shadeMap[h.i] = 0;
     }
-    pads = mapSkin === 'd1' && mapStage() === 1 ? [] : makePads();
+    pads = stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : mapStage() <= 1 ? [] : makePads(2);
   }
   // the 加速装置: two straight-street tiles (a street running on both sides, buildings or plazas beside), at least
   // half the map apart, clear of the pits, the warp points, the goals, the bridges, the yagura and the start crossing
-  function makePads() {
+  function makePads(num) {
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4, c = [];
     const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
@@ -3205,10 +3217,20 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (yagura && Math.abs(x - yagura.x - 1) < 4 && Math.abs(y - yagura.y - 1) < 4) continue;
       c.push([x, y, h]);
     }
-    const need = Math.max(8, Math.hypot(COLS, ROWS) / 2);
-    for (let k = 0; k < 400 && c.length; k++) {
-      const a = c[Math.floor(Math.random() * c.length)], b = c[Math.floor(Math.random() * c.length)];
-      if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b].map(([x, y, h]) => ({ x: x + 0.5, y: y + 0.5, i: idx(x, y), h, cool: 0, flash: 0, on: false }));
+    const mk = ([x, y, h]) => ({ x: x + 0.5, y: y + 0.5, i: idx(x, y), h, cool: 0, flash: 0, on: false });
+    if (num <= 2) {
+      const need = Math.max(8, Math.hypot(COLS, ROWS) / 2);
+      for (let k = 0; k < 400 && c.length; k++) {
+        const a = c[Math.floor(Math.random() * c.length)], b = c[Math.floor(Math.random() * c.length)];
+        if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b].map(mk);
+      }
+      return [];
+    }
+    // many (疾風の夜): spread out, each well clear of the others (the gap eased off if the map runs short)
+    for (let gap = Math.max(6, Math.hypot(COLS, ROWS) / 5); gap >= 3; gap -= 1) {
+      const got = [], pool = c.slice().sort(() => Math.random() - 0.5);
+      for (const q of pool) { if (got.length >= num) break; if (got.every(g => Math.hypot(g[0] - q[0], g[1] - q[1]) >= gap)) got.push(q); }
+      if (got.length >= num) return got.map(mk);
     }
     return [];
   }
@@ -7517,7 +7539,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   };
   function thumbMarks(im, skin, n) {
     const at = [];
-    if (!(skin === 'd1' && n === 1)) at.push(['pad', 22, 30], ['pad', 76, 72]);
+    if (n >= 2) at.push(['pad', 22, 30], ['pad', 76, 72]);
     if (n >= 3) at.push(['pit', 52, 50], ['pit', 88, 26]);
     if (skin === 'd2') at.push(['warp', 12, 74], ['warp', 62, 18]);
     for (const [k, x, y] of at) { const m = document.createElement('i'); m.className = 'tmark'; m.style.left = x + '%'; m.style.top = y + '%'; m.innerHTML = MARK_SVG[k]; im.append(m); }
@@ -8601,7 +8623,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function begin(n) {
     tap(); daily = null; rankRun = false;
     if (n < 2) { start(n); return; }
-    pendingStart = n; state = 'startpick'; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
+    pendingStart = n; state = 'startpick'; $('spRk').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -8669,7 +8691,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
       : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
     const own = [];
-    if (!(route === 'home' && ms === 1)) own.push('加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
+    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
@@ -8710,12 +8732,23 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('rankPrizeBtn').addEventListener('click', () => { tap(); rankPrizeInfo(); });
   $('rankInfoClose').addEventListener('click', () => { tap(); $('rankInfoScreen').hidden = true; });
   // the weekly ranking: this week's map, stage 3 with no way out
+  // the ランクレース stand-by: this week's best (on this device) and this week's place on the board, large
+  async function rkStat() {
+    const box = $('spRk'); box.hidden = false;
+    const r = stageBest('wk' + WEEK()), bb = $('spRkBest'), pl = $('spRkPlace');
+    bb.textContent = r ? fmtTime(r.time) : 'まだ記録なし'; bb.classList.toggle('dim', !r);
+    pl.textContent = !r ? '--' : Rank.named() ? '確認中…' : '名前を登録すると載る'; pl.classList.toggle('dim', !r || !Rank.named());
+    if (!r || !Rank.named()) return;
+    const n = await Rank.weekRank();
+    if (!rankRun || state !== 'startpick') return;
+    pl.textContent = n ? n + '位' : 'まだ載っていない'; pl.classList.toggle('dim', !n);
+  }
   function beginRank() {
     tap(); daily = null; rankRun = true;
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${mapName(3)}`; bestLine('spBest', 3);
+    $('spKicker').textContent = `ランクレース ${mapName(3)}`; bestLine('spBest', 3); rkStat();
     $('spMsg').textContent = `週替わりランキング。今週のマップは${mapName(3)}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
