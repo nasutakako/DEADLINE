@@ -352,6 +352,10 @@ body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(30px, 7.5vh
 .pi { display: grid; grid-template-columns: auto 1fr; align-items: baseline; gap: 2px 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
 .pi b { font-family: var(--f-num); font-weight: 700; font-size: 16px; text-align: right; font-variant-numeric: tabular-nums; }
 .pi .meter { grid-column: 1 / -1; }
+/* (the side column is narrow: the label and the number each stay on one line, the number a size smaller if it must) */
+.pi { column-gap: 4px; }
+.pi .label, .pi b { white-space: nowrap; }
+.pi b { font-size: clamp(12px, 1.75vw, 16px); }
 body.ontitle .padinfo, body.ontitle .padbase { display: none; }
 .pi.kill b { color: var(--lamp); } .pi.oni b { color: var(--oni); }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
