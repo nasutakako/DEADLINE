@@ -5669,11 +5669,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // (no plate drawn round it: only the chevrons on the street, so it sits in the road)
       // the chevrons: both ways along the street, running outward when ready
       ctx.save(); ctx.translate(d.x, d.y); if (!d.h) ctx.rotate(Math.PI / 2);
-      ctx.lineWidth = 0.09; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.lineWidth = 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (const dir of [1, -1]) for (let k = 0; k < 2; k++) {
-        const ph = ready ? (now * 1.6 + k * 0.5) % 1 : 0.5, x0 = dir * (0.1 + 0.28 * (ready ? ph : k * 0.5 + 0.25));
+        const ph = ready ? (now * 0.8 + k * 0.5) % 1 : 0.5, x0 = dir * (0.1 + 0.28 * (ready ? ph : k * 0.5 + 0.25));
         ctx.strokeStyle = ready ? `rgba(100,200,215,${0.22 + 0.4 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
-        ctx.beginPath(); ctx.moveTo(x0 - dir * 0.11, -0.21); ctx.lineTo(x0 + dir * 0.055, 0); ctx.lineTo(x0 - dir * 0.11, 0.21); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x0 - dir * 0.08, -0.15); ctx.lineTo(x0 + dir * 0.04, 0); ctx.lineTo(x0 - dir * 0.08, 0.15); ctx.stroke();
       }
       ctx.restore();
       if (!ready) { ctx.strokeStyle = 'rgba(100,200,215,.5)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(d.x, d.y, 0.52, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - d.cool / PAD_COOL)); ctx.stroke(); }
