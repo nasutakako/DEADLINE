@@ -361,13 +361,14 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
   body {
     --side: clamp(120px, 15vw, 140px);
-    grid-template-columns: var(--side) minmax(0, 1fr) var(--side);
+    grid-template-columns: var(--side) minmax(0, 1fr) var(--side-r, var(--side));
     grid-template-areas: "pad stage hud" "pad stage sys" "pad stage ctl";
     padding-left: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
     padding-right: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
   /* in a run the side columns give up a little room to the map */
-  body:not(.ontitle) { --side: clamp(100px, 12.5vw, 118px); column-gap: 0; }
+  /* (the buttons' column keeps its full width: the stick's gives up a little to the map) */
+  body:not(.ontitle) { --side: clamp(100px, 12.5vw, 118px); --side-r: clamp(120px, 15vw, 140px); column-gap: 0; }
   /* (the map's own edge is the line: the buttons and the stick come right up to it) */
   .pad { grid-area: pad; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 30px; min-height: 0; touch-action: none; border-radius: 8px; background: rgba(255,255,255,.025); }
 }
@@ -815,7 +816,7 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
   body.swap:not(.ontitle) { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "hud stage" "sys stage" "ctl stage"; }
 }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
-  body.swap:not(.ontitle) { grid-template-columns: var(--side) minmax(0, 1fr) var(--side); grid-template-areas: "hud stage pad" "sys stage pad" "ctl stage pad"; }
+  body.swap:not(.ontitle) { grid-template-columns: var(--side-r, var(--side)) minmax(0, 1fr) var(--side); grid-template-areas: "hud stage pad" "sys stage pad" "ctl stage pad"; }
 }
 #titleScreen .go .locknote { display: block; margin-top: 3px; font-family: var(--f-body); font-size: 11px; font-weight: 700; letter-spacing: .02em; line-height: 1.3; white-space: normal; color: #b4bccd; }
 #titleScreen #rankPlayBtn { padding-left: 10px; padding-right: 10px; }
@@ -3072,7 +3073,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   function pickDims() {
     const r = stage.getBoundingClientRect();
-    const a = Math.max(0.3, r.width / Math.max(1, r.height));
+    // (in a run the buttons' column is wider than the stick's: the map keeps the columns it had when they matched, its tiles a little smaller)
+    let extra = 0;
+    if (!document.body.classList.contains('ontitle') && !document.body.classList.contains('picking')) {
+      const cs = getComputedStyle(document.body), px = v => parseFloat(cs.getPropertyValue(v)) || 0;
+      const pd = $('pad') && $('pad').getBoundingClientRect().width, ct = document.querySelector('.controls') && document.querySelector('.controls').getBoundingClientRect().width;
+      if (pd && ct && ct > pd) extra = ct - pd;
+    }
+    const a = Math.max(0.3, (r.width + extra) / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
     // (a little wider than the screen's shape: one more column of blocks, the tiles a little smaller)
     if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a * 1.08); }
