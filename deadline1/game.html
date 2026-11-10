@@ -2693,10 +2693,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     ui.title.hidden = true; $('equipScreen').hidden = false;
   }
-  // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 15 minutes, one more for
+  // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
   // watching an ad, three for two ads in a row. The 無制限パス (bought once) does away with the count. Kept on this
   // device. ----------
-  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 15 * 60 * 1000, AD_SEC = 5;
+  const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 10 * 60 * 1000, AD_SEC = 5;
   const PASS_ID = 'pass_unlimited', PASS_YEN = 480;
   const passOn = () => shopData().owned.includes(PASS_ID);
   const lifeData = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIFE_KEY)); } catch (_) {} return Object.assign({ n: LIFE_MAX, at: Date.now(), inv: '' }, v || {}); })();
