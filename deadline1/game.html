@@ -1158,7 +1158,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <h2 class="clear">チュートリアル一覧</h2>
       <div class="picks" id="tutPicks">
         <button class="pick" data-tut="1" type="button"><b>1-1</b><span><i>走る・ダッシュ・</i><i>爆弾・黄色い鬼・</i><i>「!」を踏む</i></span></button>
-        <button class="pick" data-tut="2" type="button"><b>1-2</b><span><i>補給アイテム・</i><i>バリア鬼・</i><i>黒い鬼・</i><i>40体ごとの支給</i></span></button>
+        <button class="pick" data-tut="2" type="button"><b>1-2</b><span><i>補給アイテム・</i><i>加速装置・</i><i>バリア鬼・</i><i>黒い鬼・</i><i>40体ごとの支給</i></span></button>
         <button class="pick" data-tut="3h" type="button"><b>1-3</b><span><i>九死に一生・</i><i>落とし穴・</i><i>6分30秒で出口</i></span></button>
         <button class="pick" data-tut="w" type="button"><b>2-1</b><span><i>ワープポイント</i></span></button>
         <button class="pick" data-tut="c2" type="button"><b>2-2</b><span><i>補給・</i><i>出口の時間</i></span></button>
@@ -3187,6 +3187,28 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // the start crossing and the pits stay in the light
       shadeMap[idx(sx, sy)] = 0; for (const h of holes) shadeMap[h.i] = 0;
     }
+    pads = mapSkin === 'd1' && mapStage() === 1 ? [] : makePads();
+  }
+  // the 加速装置: two straight-street tiles (a street running on both sides, buildings or plazas beside), at least
+  // half the map apart, clear of the pits, the warp points, the goals, the bridges, the yagura and the start crossing
+  function makePads() {
+    const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4, c = [];
+    const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
+    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+      const i = idx(x, y);
+      if (!road(x, y) || goalT[i]) continue;
+      const h = road(x - 1, y) && road(x + 1, y) && !road(x, y - 1) && !road(x, y + 1), v = road(x, y - 1) && road(x, y + 1) && !road(x - 1, y) && !road(x + 1, y);
+      if (!h && !v) continue;
+      if (holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || Math.hypot(x - sx, y - sy) < 3) continue;
+      if (yagura && Math.abs(x - yagura.x - 1) < 4 && Math.abs(y - yagura.y - 1) < 4) continue;
+      c.push([x, y, h]);
+    }
+    const need = Math.max(8, Math.hypot(COLS, ROWS) / 2);
+    for (let k = 0; k < 400 && c.length; k++) {
+      const a = c[Math.floor(Math.random() * c.length)], b = c[Math.floor(Math.random() * c.length)];
+      if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b].map(([x, y, h]) => ({ x: x + 0.5, y: y + 0.5, i: idx(x, y), h, cool: 0, flash: 0, on: false }));
+    }
+    return [];
   }
   // two street tiles at least half the map apart (never a pit, a goal or the start crossing)
   function makeWarps() {
@@ -4065,6 +4087,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let holes = [], falls = [], pendingStart = 2, rockets = [];
   // warp points (the DEADLINE2 maps): stand on one for 0.5 sec to come out of the other; both rest a minute and a half after a jump
   let warps = [];
+  // 加速装置: two plates on straight streets (from 1-2 on), far apart; stepping on one runs the runner as a dash would
+  // (the dash button's own wait untouched); then 30 s before it works again
+  let pads = [];
+  const PAD_COOL = 30, BOOSTPAD_R = 0.42;
   const WARP_HOLD = 0.3, WARP_COOL = 90, WARP_R = 0.46;
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
@@ -4290,6 +4316,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // pits start shut: walking over a lid and off it again opens the pit; an open pit takes the runner too
     // (over it = a third of the runner's ball over the lid as drawn, not only its very middle: a quick run across the
     // lid's edge counts as stepping on it)
+    // 加速装置: the runner's ball a third over the plate (as with the pit lids) runs it as a dash; once per crossing
+    for (const d of pads) {
+      if (d.flash > 0) d.flash -= dt;
+      if (d.cool > 0) { d.cool -= dt; if (d.cool <= 0) { d.flash = PIT_FLASH; tone(1175, 0.1, 'triangle', 0.035); } }
+      const near = Math.hypot(P.x - d.x, P.y - d.y) < BOOSTPAD_R + P.r - P.r * 2 / 3;
+      if (near && !d.on && !(d.cool > 0) && !(P.jumpT > 0)) {
+        d.cool = PAD_COOL; P.dashT = DASH_TIME; P.lucky = false; if (tut) tut.padUsed = true;
+        flash = Math.max(flash, 0.12);
+        for (let k = 0; k < 16; k++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 4; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: k % 2 ? '#7dfcff' : '#ffffff' }); }
+        tone(660, 0.08, 'square', 0.04, 1320); setTimeout(() => tone(1320, 0.14, 'triangle', 0.045, 2200), 50);
+      }
+      d.on = near;
+    }
     for (const h of holes) {
       const d = Math.hypot(P.x - h.x, P.y - h.y);
       if (!h.open) {
@@ -5566,6 +5605,28 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
       // the runner standing on it: the charge fills
       if (P && P.warpOn === w) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.09; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R + 0.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, P.warpT / WARP_HOLD)); ctx.stroke(); }
+    }
+    // 加速装置: a plate with chevrons along the street; lit and running when ready, dark with the wait as a ring after
+    for (const d of pads) {
+      const ready = !(d.cool > 0), fl = d.flash > 0 ? d.flash / PIT_FLASH : 0, s = 0.44;
+      if (ready) {
+        const a = Math.min(0.85, 0.2 + 0.1 * Math.sin(now * 4) + 0.6 * fl), rr = 0.8 + 0.5 * fl;
+        const lg = ctx.createRadialGradient(d.x, d.y, 0.2, d.x, d.y, rr);
+        lg.addColorStop(0, `rgba(125,252,255,${a})`); lg.addColorStop(1, 'rgba(125,252,255,0)');
+        ctx.fillStyle = lg; ctx.fillRect(d.x - rr, d.y - rr, rr * 2, rr * 2);
+      }
+      ctx.fillStyle = ready ? '#1d2c38' : '#191d25'; ctx.strokeStyle = ready ? 'rgba(125,252,255,.8)' : 'rgba(120,130,150,.5)'; ctx.lineWidth = 0.05;
+      ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(d.x - s, d.y - s, s * 2, s * 2, 0.1); else ctx.rect(d.x - s, d.y - s, s * 2, s * 2); ctx.fill(); ctx.stroke();
+      // the chevrons: both ways along the street, running outward when ready
+      ctx.save(); ctx.translate(d.x, d.y); if (!d.h) ctx.rotate(Math.PI / 2);
+      ctx.lineWidth = 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      for (const dir of [1, -1]) for (let k = 0; k < 2; k++) {
+        const ph = ready ? (now * 1.6 + k * 0.5) % 1 : 0.5, x0 = dir * (0.06 + 0.22 * (ready ? ph : k * 0.5 + 0.25));
+        ctx.strokeStyle = ready ? `rgba(125,252,255,${0.35 + 0.65 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.45)';
+        ctx.beginPath(); ctx.moveTo(x0 - dir * 0.08, -0.15); ctx.lineTo(x0 + dir * 0.04, 0); ctx.lineTo(x0 - dir * 0.08, 0.15); ctx.stroke();
+      }
+      ctx.restore();
+      if (!ready) { ctx.strokeStyle = 'rgba(125,252,255,.7)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(d.x, d.y, 0.52, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - d.cool / PAD_COOL)); ctx.stroke(); }
     }
     // pits
     for (const h of holes) {
@@ -7080,6 +7141,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     2: [
       { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
+      { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと30秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
       { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
@@ -7351,6 +7413,25 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[i] !== 1 && !holes.some(q => q.i === i)) { at = { x: x + 0.5, y: y + 0.5 }; break; }
     }
     P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
+  // the 加速装置 practice: one plate set two or three tiles off the runner on a straight street it can see, ready
+  function tutPadPlace() {
+    const d = pads[0]; if (!d) { tut.padUsed = true; return; }
+    flow(Math.floor(P.x), Math.floor(P.y));
+    const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
+    let best = null;
+    for (let i = 0; i < dist.length; i++) {
+      if (dist[i] < 2 || dist[i] > 4 || goalT[i]) continue;
+      const x = i % COLS, y = (i / COLS) | 0;
+      const h = road(x - 1, y) && road(x + 1, y), v = road(x, y - 1) && road(x, y + 1);
+      if (!(h !== v)) continue;
+      if (pads.some(q => q !== d && q.i === i) || holes.some(q => q.i === i)) continue;
+      const sc = (tutClear(x + 0.5, y + 0.5) ? 0 : 10) + Math.abs(dist[i] - 3);
+      if (!best || sc < best.sc) best = { x, y, h, sc };
+    }
+    if (!best) { tut.padUsed = true; return; }
+    Object.assign(d, { x: best.x + 0.5, y: best.y + 0.5, i: idx(best.x, best.y), h: best.h, cool: 0, flash: PIT_FLASH, on: false });
+    tut.padUsed = false;
+  }
   // a street tile on the far side of the pit from the runner, so the oni crosses it on its way
   // the warp tutorial: the runner starts two tiles from the warp point lower on the map (clear of the banner)
   // the banner at the top, or at the foot or the middle of the map if that keeps more of the two warp points in sight
@@ -8286,6 +8367,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // the pits: 0 shut and ready, 1 open, 2 shut and resting; and the oni falling in
       holes.map(h => h.open ? 1 : h.cool > 0 ? 2 : 0).join(','),
       falls.map(f => [q(f.x), q(f.y), q(f.hx), q(f.hy), q(f.t), f.tough ? 1 : 0].join(',')).join('/'),
+      // the 加速装置: the seconds left of each one's wait (0 ready)
+      pads.map(d => Math.ceil(Math.max(0, d.cool))).join(','),
     ];
     rec.fr.push(g.join('|')); rec.next += 1 / REC_HZ;
   }
@@ -8326,7 +8409,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const nl = raw.indexOf('\n'), head = JSON.parse(raw.slice(0, nl));
     const nums = s => s ? s.split(',').map(Number) : [];
     const list = s => s ? s.split('/').map(nums) : [];
-    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]), h: g[8] ? g[8].split(',').map(Number) : null, f: list(g[9]) }; });
+    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]), h: g[8] ? g[8].split(',').map(Number) : null, f: list(g[9]), d: g[10] ? g[10].split(',').map(Number) : null }; });
     // when each oni first showed (it grows in over 0.3 s, as in the game)
     const seen = new Map(); fr.forEach((f, n) => { for (const e of f.e) if (!seen.has(e[0])) seen.set(e[0], n / head.hz); });
     return { head, fr, seen };
@@ -8373,6 +8456,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     items = A.i.map(it => ({ x: z(it[0]), y: z(it[1]), rk: !!it[2], born: time - z(it[3]) }));
     pending = A.w.map(p => ({ x: z(p[0]), y: z(p[1]), t: Math.max(0.01, z(p[2]) - u / h.hz) }));
     if (A.h) holes.forEach((o, k) => { o.open = A.h[k] === 1; o.cool = A.h[k] === 2 ? 1 : 0; o.flash = 0; });
+    pads.forEach((o, k) => { o.cool = A.d ? A.d[k] || 0 : 0; o.flash = 0; });
     falls = A.f.map(f => ({ x: z(f[0]), y: z(f[1]), hx: z(f[2]), hy: z(f[3]), t: z(f[4]) + u / h.hz, tough: !!f[5] })).filter(f => f.t < 0.7);
     elems = A.c.map(c => ({ k: 'clone', x: z(c[0]), y: z(c[1]), t: z(c[2]) + u / h.hz, life: z(c[3]), el: c[4] ? 'water' : 'dark' })).filter(c => c.t < c.life);
   }
@@ -8543,7 +8627,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>このマップ</h3>${li(own)}</section>
+      <section><h3>このマップ</h3>${li([...own, '加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
   }
@@ -8568,6 +8652,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
       : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
     const own = [];
+    if (!(route === 'home' && ms === 1)) own.push('加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。乗って${WARP_HOLD}秒でもう一方へ飛ぶ。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
