@@ -4671,8 +4671,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('cTime').textContent = t.toFixed(1) + '秒';
     $('cKills').textContent = kills + '体';
     $('cTotal').textContent = total.toFixed(1) + '秒';
+    const fcFirst = !mapCleared(stageN, mapSkin);   // (asked before this clear is written down)
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
     if (mapSkin in MCLEAR) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
+    const fcStars = fcFirst ? firstClearPrize(stageN, mapSkin) : 0;
     const crank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
     if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
     mono('cMono', stageN, 'clear');
@@ -4687,15 +4689,16 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (last) $('cMsg').textContent = '全ステージ制覇。もう一度挑むか、タイトルに戻るかを選べる。';
     $('cMsg').classList.toggle('story', last && MAP_CHOICE);
     if (last && MAP_CHOICE) {
-      const route = ROUTE[mapSkin], got = STORY_STARS[route] ? givePrize(route) : '';
+      const route = ROUTE[mapSkin], got = [fcStars ? '初回クリア報酬★' + fcStars : '', STORY_STARS[route] ? givePrize(route) : ''].filter(Boolean).join('と');
       $('cMsg').textContent = `${STORY_LAST[route]} クリア。` + (got ? `${got}を獲得した。タイトル右上の✉️(メール)から受け取れる。` : 'もう一度挑むか、タイトルに戻るかを選べる。');
     }
     $('againBtn').textContent = `もう一度ステージ${stageN}`;
     $('cRank').textContent = rankText(stageN, crank);
     $('cNext').textContent = '×' + P.stock;
-    if (!last) $('cMsg').textContent = stageN === 1
+    if (fcStars && !last) $('cMsg').classList.add('story');
+    if (!last) $('cMsg').textContent = (fcStars ? `初回クリア報酬 ★${fcStars}(✉️メールで受け取れる)。` : '') + (stageN === 1
       ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度挑むか、タイトルに戻るかを選べる。'
-      : 'アイテムを選んでステージ3へ進むか、もう一度挑むか、タイトルに戻るかを選べる。';
+      : 'アイテムを選んでステージ3へ進むか、もう一度挑むか、タイトルに戻るかを選べる。');
     ui.clear.hidden = false; titleChime('cTitles'); prepShare('clear');
   }
   // a story's prize: into what the player owns, and on at once if that slot is still the standard one;
@@ -7527,6 +7530,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const STORY_NIGHT = { home: 1, cyber: 2, shadow: 3, fuse: 4 };
   const stageKicker = n => `ステージ ${mapName(n)}`;
   // what clearing each story's stage 3 gives: [slot, item, name]
+  // a map's first clear: ★10 / ★20 / ★30 for its stage 1 / 2 / 3 (once each, by mail)
+  const FIRST_STARS = [0, 10, 20, 30];
+  function firstClearPrize(n, skin) {
+    const id = 'fc-' + skin + n, st = FIRST_STARS[n] || 0;
+    if (!st || tut || mailFind(id)) return 0;
+    mailSend({ id, k: 'star', n: st, t: `${MAP_NAMES[skin][n - 1]} 初回クリア報酬`, b: '★' + st }); return st;
+  }
   const STORY_STARS = { home: 100, cyber: 150, shadow: 200, fuse: 300 };
   const STORY_PRIZE = { home: ['skin', 'sk_dawn', '限定スキン「夜明け」'], cyber: ['bomb', 'bomb_emp', '限定の爆弾「電磁爆弾」(見た目)'], fuse: ['skin', 'sk_finale', '限定スキン「大輪」'] };
   const STORY_NOTE = { home: 'クリアで★100と限定スキン', cyber: 'クリアで★150と限定爆弾', shadow: 'クリアで★200と4-1解放', fuse: 'クリアで★300と限定スキン' };
@@ -7563,7 +7573,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const nm = document.createElement('b'); nm.textContent = (lock ? '🔒 ' : '') + mapName(n, skin);
       b.append(im, nm);
       if (!lock && mapCleared(n, skin)) { const sub = document.createElement('small'); sub.className = 'mclr'; sub.textContent = 'CLEAR'; b.append(sub); b.classList.add('done'); }
-      else { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? MAP_LOCKS[skin][n - 1] : n < 3 ? `クリアでステージ${n + 1} ${MAP_NAMES[skin][n]}解放` : STORY_NOTE[ROUTE[skin]]; b.append(sub); }
+      else { const sub = document.createElement('small'); sub.className = lock ? '' : 'prize'; sub.textContent = lock ? MAP_LOCKS[skin][n - 1] : n < 3 ? `初回クリアで★${FIRST_STARS[n]}・${MAP_NAMES[skin][n]}解放` : `初回クリアで★${FIRST_STARS[3]}・` + STORY_NOTE[ROUTE[skin]].replace(/^クリアで/, ''); b.append(sub); }
       b.setAttribute('aria-pressed', String(on));
       b.addEventListener('click', () => { if (lock) { lockedTap(n === 1 ? 1 : n); return; } if (!on) { tap(); mapChoose(n, skin); } });
       box.append(b);
