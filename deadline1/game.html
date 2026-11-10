@@ -667,6 +667,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .mrow.shop small { color: var(--lamp); }
 .mrow.equip { --c: #8fe9ff; }
 .mrow.memo { --c: #d9b3ff; }
+/* the other menu rows wear their own colour the way 生存課題 does: a tinted edge and a wash from the top left */
+.mrow:is(.rank, .shop, .equip) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 14%, var(--panel)), var(--panel) 70%); }
 .mrow.tuts { --c: #c792ff; }
 /* the title's six: two to a row (ステージ1 2 / ステージ3 スペシャル / ランキング チュートリアル一覧) */
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
@@ -933,6 +935,7 @@ body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-
 }
 body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .8), rgba(16, 19, 28, .78) 70%); }
+body.ontitle .who .mrow:is(.rank, .shop, .equip) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, rgba(16, 19, 28, .8)), rgba(16, 19, 28, .78) 70%); }
 body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 /* a landscape phone: the stand-by screens fit without scrolling */
 @media (max-height: 520px) {
