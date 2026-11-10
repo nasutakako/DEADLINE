@@ -160,11 +160,7 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .mapcard small.prize { color: var(--muted); white-space: normal; line-height: 1.2; }
 .mapcard small.mclr { justify-self: start; margin-top: 2px; padding: 1px 8px 2px; border-radius: 4px; border: 1.5px solid #5dff9e; color: #5dff9e; background: rgba(93,255,158,.1); font-family: var(--f-display); font-size: 12px; letter-spacing: .14em; line-height: 1.3; text-shadow: 0 0 8px rgba(93,255,158,.55); }
 .mapcard.locked .thumb { filter: grayscale(1) brightness(.5); }
-.mapcard .thumb { container-type: size; }
-.mapcard .thumb .timg { position: absolute; left: 50%; top: 50%; width: max(100cqw, 160cqh); aspect-ratio: 240 / 150; transform: translate(-50%, -50%); background: center / 100% 100% no-repeat; }
-.mapcard .thumb .timg.top { top: 0; transform: translateX(-50%); }
-.mapcard .thumb .tmark { position: absolute; width: 5.4%; aspect-ratio: 1; transform: translate(-50%, -50%); filter: drop-shadow(0 0 2px rgba(0,0,0,.9)); pointer-events: none; }
-.mapcard .thumb .tmark svg { display: block; width: 100%; height: 100%; }
+
 @media (max-height: 460px) { .mapcard .thumb { width: 60px; height: 38px; } .mapcard { padding: 4px 6px; } }
 #tutPicks .pick b { color: var(--lamp); }
 #tutPicks .pick.locked { opacity: .5; cursor: not-allowed; }
@@ -7586,36 +7582,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $(n === 1 ? 'briefKicker' : 'spKicker').textContent = stageKicker(n);
     if (n === 1) { bestLine('briefBest', 1); mono('briefMono', 1, 'standby'); fitBrief(); } else { spText(n); bestLine('spBest', n); mono('spMono', n, 'standby'); fitStandby(); }
   }
-  // what a map has, marked on its card's picture: 加速装置 (from 1-2 on), pits (each world's 3rd stage), warp points (world 2)
-  const MARK_SVG = {
-    pad: '<svg viewBox="0 0 20 20"><rect x="2" y="2" width="16" height="16" rx="3" fill="#1d2c38" stroke="#7dfcff" stroke-width="1.6"/><path d="M6 6.5l3.5 3.5L6 13.5M10.5 6.5l3.5 3.5-3.5 3.5" fill="none" stroke="#7dfcff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-    pit: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="#6c7686" stroke="#8fe9ff" stroke-width="1.4"/><path d="M4 7.5h12M3.5 10h13M4 12.5h12" stroke="#3a404b" stroke-width="1.3"/></svg>',
-    warp: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="rgba(10,0,24,.85)" stroke="#3fe0ff" stroke-width="1.8"/><circle cx="10" cy="10" r="4.5" fill="none" stroke="#ff4fd8" stroke-width="1.6"/></svg>'
-  };
-  // where the streets run on each card picture (240 x 150): [x gap, first x, y gap, first y] in its pixels
-  const THUMB_GRID = {"d11": [37.75, 24.0, 34.75, 1.0], "d12": [35.25, 33.0, 36.0, 1.0], "d13": [35.25, 33.0, 36.0, 1.0], "d21": [35.25, 34.0, 37.25, 35.0], "d22": [35.25, 34.0, 37.25, 2.0], "d23": [35.25, 29.0, 37.25, 2.0], "d31": [35.25, 33.5, 37.25, 2.5], "d32": [35.25, 33.5, 37.25, 2.5], "d33": [35.25, 33.5, 37.25, 2.0], "d41": [35.25, 29.0, 35.0, 2.5], "d42": [35.5, 31.5, 37.25, 37.0], "d43": [35.25, 33.5, 37.25, 35.0]};
-  function thumbMarks(im, skin, n) {
-    // the picture in its own box the picture's shape, filling the card like 'cover' (top-aligned on 4-3, for its river);
-    // the marks sit in that box, so they stay on the picture's streets however the card is cut
-    const pic = document.createElement('span'); pic.className = 'timg' + (skin + n === 'd43' ? ' top' : '');
-    pic.style.backgroundImage = im.style.backgroundImage; im.style.backgroundImage = 'none'; im.append(pic);
-    const g = THUMB_GRID[skin + n]; if (!g) return;
-    const xs = [], ys = [];
-    for (let x = g[1] % g[0]; x < 240; x += g[0]) if (x > 14 && x < 226) xs.push(x);
-    for (let y = g[3] % g[2]; y < 150; y += g[2]) if (y > (skin + n === 'd43' ? 40 : 12) && y < 138) ys.push(y);
-    const want = [];
-    if (n >= 2) want.push(['pad', 0.18, 0.3], ['pad', 0.5, 0.78], ['pad', 0.84, 0.32]);
-    if (n >= 3) want.push(['pit', 0.38, 0.5], ['pit', 0.7, 0.62]);
-    if (skin === 'd2') want.push(['warp', 0.1, 0.78], ['warp', 0.62, 0.2]);
-    const used = new Set();
-    for (const [k, fx, fy] of want) {
-      let best = null;
-      for (const x of xs) for (const y of ys) { const key = x + ',' + y; if (used.has(key)) continue; const d = Math.hypot(x / 240 - fx, (y / 150 - fy) * 0.62); if (!best || d < best[0]) best = [d, x, y, key]; }
-      if (!best) continue; used.add(best[3]);
-      const m = document.createElement('i'); m.className = 'tmark'; m.style.left = (best[1] / 2.4) + '%'; m.style.top = (best[2] / 1.5) + '%'; m.innerHTML = MARK_SVG[k]; pic.append(m);
-    }
-  }
-
   // the two map cards on a stand-by screen
   function mapRow(n) {
     const box = $(n === 1 ? 'briefMaps' : 'spMaps'); if (!box) return;
@@ -7625,7 +7591,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       const lock = skin !== 'd1' && !mapOpen(n, skin), on = mapSkin === skin;
       const b = document.createElement('button'); b.type = 'button'; b.className = 'mapcard' + (on ? ' on' : '') + (lock ? ' locked' : '');
       const im = document.createElement('span'); im.className = 'thumb'; if (MAP_THUMBS[skin + n]) im.style.backgroundImage = `url(${MAP_THUMBS[skin + n]})`; if (skin + n === 'd43') im.style.backgroundPosition = 'center top';   // 4-3: its river in view
-      thumbMarks(im, skin, n);
       const nm = document.createElement('b'); nm.textContent = (lock ? '🔒 ' : '') + mapName(n, skin);
       b.append(im, nm);
       if (!lock && mapCleared(n, skin)) { const sub = document.createElement('small'); sub.className = 'mclr'; sub.textContent = 'CLEAR'; b.append(sub); b.classList.add('done'); }
