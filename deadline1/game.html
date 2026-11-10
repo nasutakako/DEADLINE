@@ -231,9 +231,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .mine { border: 1px solid var(--lamp); color: var(--lamp); }
 .itemb { border: 1px solid #c792ff; color: #d9b3ff; }
 /* the item button between ◀ ▶: the arrows pick which item it uses */
-.itemrow { display: flex; align-items: stretch; gap: 3px; min-width: 0; }
+.itemrow { display: flex; align-items: stretch; gap: 1px; min-width: 0; }
 .itemrow .act { flex: 1 1 auto; min-width: 0; }
-.itemarr { flex: 0 0 auto; width: 22px; padding: 0; border-radius: 8px; border: 1px solid rgba(199,146,255,.55); background: var(--panel); color: #d9b3ff; font-size: 12px; line-height: 1; touch-action: manipulation; }
+.itemarr { flex: 0 0 auto; width: 14px; padding: 0; border-radius: 5px; border: 1px solid rgba(199,146,255,.55); background: var(--panel); color: #d9b3ff; font-size: 9px; line-height: 1; touch-action: manipulation; }
 .itemarr:active { background: rgba(199,146,255,.2); }
 .itemarr:disabled { opacity: .35; }
 #itemName.boost, #itemLabel.boost { color: #ffb347; } #itemName.barrier, #itemLabel.barrier { color: var(--runner); } #itemName.launcher, #itemLabel.launcher { color: #d9b3ff; }
@@ -332,7 +332,7 @@ body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(30px, 7.5vh
   .stats, .next, .bestline { display: none; }
   .controls { flex-direction: column; justify-content: flex-end; min-height: 0; }
   .act { min-width: 0; flex: 0 1 76px; min-height: 0; font-size: 16px; }
-  .itemrow { flex: 0 1 66px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 14px; padding: 6px 4px; }
+  .itemrow { flex: 0 1 76px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 15px; padding: 6px 2px; }
 }
 @media (min-aspect-ratio: 5/4) and (max-height: 360px) {
   .bestline, .next .label { display: none; }
