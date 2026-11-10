@@ -160,7 +160,10 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 .mapcard small.prize { color: var(--muted); white-space: normal; line-height: 1.2; }
 .mapcard small.mclr { justify-self: start; margin-top: 2px; padding: 1px 8px 2px; border-radius: 4px; border: 1.5px solid #5dff9e; color: #5dff9e; background: rgba(93,255,158,.1); font-family: var(--f-display); font-size: 12px; letter-spacing: .14em; line-height: 1.3; text-shadow: 0 0 8px rgba(93,255,158,.55); }
 .mapcard.locked .thumb { filter: grayscale(1) brightness(.5); }
-.mapcard .thumb .tmark { position: absolute; width: clamp(9px, 11%, 22px); aspect-ratio: 1; transform: translate(-50%, -50%); filter: drop-shadow(0 0 3px rgba(0,0,0,.9)); pointer-events: none; }
+.mapcard .thumb { container-type: size; }
+.mapcard .thumb .timg { position: absolute; left: 50%; top: 50%; width: max(100cqw, 160cqh); aspect-ratio: 240 / 150; transform: translate(-50%, -50%); background: center / 100% 100% no-repeat; }
+.mapcard .thumb .timg.top { top: 0; transform: translateX(-50%); }
+.mapcard .thumb .tmark { position: absolute; width: 5.4%; aspect-ratio: 1; transform: translate(-50%, -50%); filter: drop-shadow(0 0 2px rgba(0,0,0,.9)); pointer-events: none; }
 .mapcard .thumb .tmark svg { display: block; width: 100%; height: 100%; }
 @media (max-height: 460px) { .mapcard .thumb { width: 60px; height: 38px; } .mapcard { padding: 4px 6px; } }
 #tutPicks .pick b { color: var(--lamp); }
@@ -3217,7 +3220,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // the start crossing and the pits stay in the light
       shadeMap[idx(sx, sy)] = 0; for (const h of holes) shadeMap[h.i] = 0;
     }
-    pads = stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : mapStage() <= 1 ? [] : makePads(2);
+    pads = stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : mapStage() <= 1 ? [] : makePads(3);
   }
   // the 加速装置: two straight-street tiles (a street running on both sides, buildings or plazas beside), at least
   // half the map apart, clear of the pits, the warp points, the goals, the bridges, the yagura and the start crossing
@@ -3226,7 +3229,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
       const i = idx(x, y);
-      if (!road(x, y) || goalT[i]) continue;
+      if (!road(x, y) || goalT[i] || (riverOn && y <= 3)) continue;   // (not on 4-3's bridges)
       const h = road(x - 1, y) && road(x + 1, y) && !road(x, y - 1) && !road(x, y + 1), v = road(x, y - 1) && road(x, y + 1) && !road(x - 1, y) && !road(x + 1, y);
       if (!h && !v) continue;
       if (holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || Math.hypot(x - sx, y - sy) < 3) continue;
@@ -3242,8 +3245,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       }
       return [];
     }
-    // many (疾風の夜): spread out, each well clear of the others (the gap eased off if the map runs short)
-    for (let gap = Math.max(6, Math.hypot(COLS, ROWS) / 5); gap >= 3; gap -= 1) {
+    // three (or 疾風の夜's ten): spread out, each well clear of the others (the gap eased off if the map runs short)
+    for (let gap = num <= 3 ? Math.max(8, Math.hypot(COLS, ROWS) / 3) : Math.max(6, Math.hypot(COLS, ROWS) / 5); gap >= 3; gap -= 1) {
       const got = [], pool = c.slice().sort(() => Math.random() - 0.5);
       for (const q of pool) { if (got.length >= num) break; if (got.every(g => Math.hypot(g[0] - q[0], g[1] - q[1]) >= gap)) got.push(q); }
       if (got.length >= num) return got.map(mk);
@@ -7553,13 +7556,30 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     pit: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8.5" fill="#6c7686" stroke="#8fe9ff" stroke-width="1.4"/><path d="M4 7.5h12M3.5 10h13M4 12.5h12" stroke="#3a404b" stroke-width="1.3"/></svg>',
     warp: '<svg viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" fill="rgba(10,0,24,.85)" stroke="#3fe0ff" stroke-width="1.8"/><circle cx="10" cy="10" r="4.5" fill="none" stroke="#ff4fd8" stroke-width="1.6"/></svg>'
   };
+  // where the streets run on each card picture (240 x 150): [x gap, first x, y gap, first y] in its pixels
+  const THUMB_GRID = {"d11": [37.75, 24.0, 34.75, 1.0], "d12": [35.25, 33.0, 36.0, 1.0], "d13": [35.25, 33.0, 36.0, 1.0], "d21": [35.25, 34.0, 37.25, 35.0], "d22": [35.25, 34.0, 37.25, 2.0], "d23": [35.25, 29.0, 37.25, 2.0], "d31": [35.25, 33.5, 37.25, 2.5], "d32": [35.25, 33.5, 37.25, 2.5], "d33": [35.25, 33.5, 37.25, 2.0], "d41": [35.25, 29.0, 35.0, 2.5], "d42": [35.5, 31.5, 37.25, 37.0], "d43": [35.25, 33.5, 37.25, 35.0]};
   function thumbMarks(im, skin, n) {
-    const at = [];
-    if (n >= 2) at.push(['pad', 22, 30], ['pad', 76, 72]);
-    if (n >= 3) at.push(['pit', 52, 50], ['pit', 88, 26]);
-    if (skin === 'd2') at.push(['warp', 12, 74], ['warp', 62, 18]);
-    for (const [k, x, y] of at) { const m = document.createElement('i'); m.className = 'tmark'; m.style.left = x + '%'; m.style.top = y + '%'; m.innerHTML = MARK_SVG[k]; im.append(m); }
+    // the picture in its own box the picture's shape, filling the card like 'cover' (top-aligned on 4-3, for its river);
+    // the marks sit in that box, so they stay on the picture's streets however the card is cut
+    const pic = document.createElement('span'); pic.className = 'timg' + (skin + n === 'd43' ? ' top' : '');
+    pic.style.backgroundImage = im.style.backgroundImage; im.style.backgroundImage = 'none'; im.append(pic);
+    const g = THUMB_GRID[skin + n]; if (!g) return;
+    const xs = [], ys = [];
+    for (let x = g[1] % g[0]; x < 240; x += g[0]) if (x > 14 && x < 226) xs.push(x);
+    for (let y = g[3] % g[2]; y < 150; y += g[2]) if (y > (skin + n === 'd43' ? 40 : 12) && y < 138) ys.push(y);
+    const want = [];
+    if (n >= 2) want.push(['pad', 0.18, 0.3], ['pad', 0.5, 0.78], ['pad', 0.84, 0.32]);
+    if (n >= 3) want.push(['pit', 0.38, 0.5], ['pit', 0.7, 0.62]);
+    if (skin === 'd2') want.push(['warp', 0.1, 0.78], ['warp', 0.62, 0.2]);
+    const used = new Set();
+    for (const [k, fx, fy] of want) {
+      let best = null;
+      for (const x of xs) for (const y of ys) { const key = x + ',' + y; if (used.has(key)) continue; const d = Math.hypot(x / 240 - fx, (y / 150 - fy) * 0.62); if (!best || d < best[0]) best = [d, x, y, key]; }
+      if (!best) continue; used.add(best[3]);
+      const m = document.createElement('i'); m.className = 'tmark'; m.style.left = (best[1] / 2.4) + '%'; m.style.top = (best[2] / 1.5) + '%'; m.innerHTML = MARK_SVG[k]; pic.append(m);
+    }
   }
+
   // the two map cards on a stand-by screen
   function mapRow(n) {
     const box = $(n === 1 ? 'briefMaps' : 'spMaps'); if (!box) return;
@@ -8683,7 +8703,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>このマップ</h3>${li([...own, '加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
+      <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
   }
@@ -8708,7 +8728,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
       : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
     const own = [];
-    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が2か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
+    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
