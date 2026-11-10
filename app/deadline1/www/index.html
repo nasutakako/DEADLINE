@@ -4135,8 +4135,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // (the dash button's own wait untouched); then 30 s before it works again
   let pads = [];
   const PAD_COOL = 30, BOOSTPAD_R = 0.42;
-  // stepped on mid-dash: a dash's distance again, run SUPER_MULT times as fast (so over a shorter time), with a sonic boom
-  const SUPER_MULT = 1.4, BOOM_T = 0.55;
   const WARP_HOLD = 0.08, WARP_COOL = 90, WARP_R = 0.46;   // (the hold counts only off a dash: a dash runs straight over)
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
@@ -4290,8 +4288,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     P.inv = Math.max(0, P.inv - dt);
     if (P.luckFx > 0) P.luckFx -= dt;
-    if (P.super && !(P.dashT > 0)) P.super = false;
-    if (P.boom && (P.boom.t += dt) > BOOM_T) P.boom = null;
     // after the exit opens an alarm keeps wailing until you escape
     if (exitOpen) {
       P.alarmT = (P.alarmT || 0) - dt;
@@ -4352,7 +4348,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (air) jumpStep(dt, ix, iy);
     ground: {
     if (air) break ground;
-    const sp = runnerSpeed() * (P.dashT > 0 ? DASH_MULT * (P.super ? SUPER_MULT : 1) * (P.lucky ? LUCK_MULT : 1) : 1) * (P.boostT > 0 ? BOOST_MULT : 1) * (P.saveT > 0 ? SAVE_MULT : 1);
+    const sp = runnerSpeed() * (P.dashT > 0 ? DASH_MULT * (P.lucky ? LUCK_MULT : 1) : 1) * (P.boostT > 0 ? BOOST_MULT : 1) * (P.saveT > 0 ? SAVE_MULT : 1);
     const [dvx, dvy] = steer(ix, iy, sp);
     const vl = Math.hypot(P.vx, P.vy), dl = Math.hypot(dvx, dvy);
     const turn = vl > 0.5 && dl > 0.5 ? (P.vx * dvx + P.vy * dvy) / (vl * dl) : 1;  // cos of the swing
@@ -4370,15 +4366,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (d.cool > 0) { d.cool -= dt; if (d.cool <= 0) { d.flash = PIT_FLASH; tone(1175, 0.1, 'triangle', 0.035); } }
       const near = Math.hypot(P.x - d.x, P.y - d.y) < BOOSTPAD_R + P.r - P.r * 2 / 3;
       if (near && !d.on && !(d.cool > 0) && !(P.jumpT > 0)) {
-        const sup = P.dashT > 0;   // already dashing: the faster run, and the boom
-        d.cool = PAD_COOL; P.lucky = false; P.super = sup; P.dashT = sup ? DASH_TIME / SUPER_MULT : DASH_TIME; if (tut) tut.padUsed = true;
-        if (sup) {
-          const f = Math.hypot(P.fx, P.fy) || 1;
-          P.boom = { t: 0, x: P.x + P.fx / f * 0.35, y: P.y + P.fy / f * 0.35, a: Math.atan2(P.fy, P.fx) };
-          shake = reduceMotion ? 0 : Math.max(shake, 0.18); flash = Math.max(flash, 0.22);
-          noise(0.25, 0.07); tone(140, 0.35, 'sawtooth', 0.06, 60); setTimeout(() => tone(1760, 0.18, 'triangle', 0.04, 2600), 40);
-          if (tut) tut.superUsed = true;
-        }
+        d.cool = PAD_COOL; P.dashT = DASH_TIME; P.lucky = false; if (tut) tut.padUsed = true;
         flash = Math.max(flash, 0.12);
         for (let k = 0; k < 16; k++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 4; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: k % 2 ? '#7dfcff' : '#ffffff' }); }
         tone(660, 0.08, 'square', 0.04, 1320); setTimeout(() => tone(1320, 0.14, 'triangle', 0.045, 2200), 50);
@@ -5667,23 +5655,23 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (const d of pads) {
       const ready = !(d.cool > 0), fl = d.flash > 0 ? d.flash / PIT_FLASH : 0, s = 0.44;
       if (ready) {
-        const a = Math.min(0.85, 0.2 + 0.1 * Math.sin(now * 4) + 0.6 * fl), rr = 0.8 + 0.5 * fl;
+        const a = Math.min(0.6, 0.08 + 0.05 * Math.sin(now * 4) + 0.45 * fl), rr = 0.7 + 0.5 * fl;
         const lg = ctx.createRadialGradient(d.x, d.y, 0.2, d.x, d.y, rr);
-        lg.addColorStop(0, `rgba(125,252,255,${a})`); lg.addColorStop(1, 'rgba(125,252,255,0)');
+        lg.addColorStop(0, `rgba(90,190,205,${a})`); lg.addColorStop(1, 'rgba(90,190,205,0)');
         ctx.fillStyle = lg; ctx.fillRect(d.x - rr, d.y - rr, rr * 2, rr * 2);
       }
-      ctx.fillStyle = ready ? '#1d2c38' : '#191d25'; ctx.strokeStyle = ready ? 'rgba(125,252,255,.8)' : 'rgba(120,130,150,.5)'; ctx.lineWidth = 0.05;
+      ctx.fillStyle = ready ? '#1a2530' : '#191d25'; ctx.strokeStyle = ready ? 'rgba(100,200,215,.5)' : 'rgba(120,130,150,.4)'; ctx.lineWidth = 0.05;
       ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(d.x - s, d.y - s, s * 2, s * 2, 0.1); else ctx.rect(d.x - s, d.y - s, s * 2, s * 2); ctx.fill(); ctx.stroke();
       // the chevrons: both ways along the street, running outward when ready
       ctx.save(); ctx.translate(d.x, d.y); if (!d.h) ctx.rotate(Math.PI / 2);
       ctx.lineWidth = 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (const dir of [1, -1]) for (let k = 0; k < 2; k++) {
         const ph = ready ? (now * 1.6 + k * 0.5) % 1 : 0.5, x0 = dir * (0.06 + 0.22 * (ready ? ph : k * 0.5 + 0.25));
-        ctx.strokeStyle = ready ? `rgba(125,252,255,${0.35 + 0.65 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.45)';
+        ctx.strokeStyle = ready ? `rgba(100,200,215,${0.22 + 0.4 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
         ctx.beginPath(); ctx.moveTo(x0 - dir * 0.08, -0.15); ctx.lineTo(x0 + dir * 0.04, 0); ctx.lineTo(x0 - dir * 0.08, 0.15); ctx.stroke();
       }
       ctx.restore();
-      if (!ready) { ctx.strokeStyle = 'rgba(125,252,255,.7)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(d.x, d.y, 0.52, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - d.cool / PAD_COOL)); ctx.stroke(); }
+      if (!ready) { ctx.strokeStyle = 'rgba(100,200,215,.5)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(d.x, d.y, 0.52, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - d.cool / PAD_COOL)); ctx.stroke(); }
     }
     // pits
     for (const h of holes) {
@@ -5804,28 +5792,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ctx.beginPath(); ctx.arc(P.x, P.y, P.r + u * 1.6, 0, Math.PI * 2); ctx.stroke();
       ctx.strokeStyle = `rgba(143,233,255,${0.7 * (1 - u)})`; ctx.lineWidth = 0.08 * (1 - u) + 0.02;
       ctx.beginPath(); ctx.arc(P.x, P.y, P.r + u * 2.4, 0, Math.PI * 2); ctx.stroke();
-      ctx.restore();
-    }
-    // the sonic boom: the shock ring left where the plate was taken (an oval stood across the run), its wake swept back
-    // to the runner, and speed lines streaming past while the faster run lasts
-    if (P.boom) {
-      const b = P.boom, u = b.t / BOOM_T, k = 1 - u;
-      ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a); ctx.globalCompositeOperation = 'lighter';
-      ctx.strokeStyle = `rgba(200,250,255,${0.9 * k})`; ctx.lineWidth = 0.09 * k + 0.02;
-      for (const s of [1, 0.72]) { ctx.beginPath(); ctx.ellipse(-u * 0.3, 0, (0.16 + u * 0.12) * s, (0.75 + u * 0.55) * s, 0, 0, Math.PI * 2); ctx.stroke(); }
-      // the cone's sides, from the ring's top and bottom back past the runner's start
-      ctx.strokeStyle = `rgba(125,252,255,${0.7 * k})`; ctx.lineWidth = 0.05;
-      for (const sgn of [1, -1]) { ctx.beginPath(); ctx.moveTo(-u * 0.3, sgn * (0.75 + u * 0.55)); ctx.quadraticCurveTo(-1.0 - u, sgn * (0.5 + u * 0.4), -2.2 - u * 1.5, sgn * 0.15); ctx.stroke(); }
-      ctx.restore();
-    }
-    if (P.super && P.dashT > 0) {
-      const a = Math.atan2(P.fy, P.fx);
-      ctx.save(); ctx.translate(P.x, P.y); ctx.rotate(a); ctx.lineCap = 'round';
-      for (let i = 0; i < 7; i++) {
-        const y = ((i * 0.37 + now * 3.1) % 1 - 0.5) * 1.3, x0 = -0.5 - ((i * 0.61 + now * 9) % 1) * 1.6, len = 0.6 + (i % 3) * 0.35;
-        ctx.strokeStyle = `rgba(220,250,255,${0.35 + (i % 2) * 0.3})`; ctx.lineWidth = 0.035 + (i % 2) * 0.02;
-        ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x0 - len, y); ctx.stroke();
-      }
       ctx.restore();
     }
     // (the runner, drawn here on the ground; up in a ハイジャンプ, over the oni after them, its shadow left down here)
@@ -7221,7 +7187,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     2: [
       { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
       { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと30秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
-      { say: 'ダッシュしている状態で加速装置に乗ると、さらに加速するぞ(進む距離は同じで、もっと速く駆け抜ける)', info: true },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
       { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
@@ -7632,7 +7597,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (P.dashT > 0) { P.dashQ = true; return; }
       P.dashN--; if (!(P.chargeT > 0)) P.chargeT = DASH_CD;
     } else if (P.cd > 0) return;
-    P.dashT = DASH_TIME; P.super = false; P.cd = ida ? (P.dashN > 0 ? 0 : P.chargeT) : DASH_CD; if (S3) S3.dashes++;
+    P.dashT = DASH_TIME; P.cd = ida ? (P.dashN > 0 ? 0 : P.chargeT) : DASH_CD; if (S3) S3.dashes++;
     // 九死に一生: one dash in ten (the tutorial's first one always) runs half as far again
     P.lucky = skillOn('skill_luck') && (Math.random() < LUCK_P || !!(tut && tut.luckNext));
     if (P.lucky) {
@@ -8711,7 +8676,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。ダッシュ中に踏むとさらに速く駆け抜ける。一度使うと30秒使えない'])}</section>
+      <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
   }
@@ -8736,7 +8701,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
       : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
     const own = [];
-    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。ダッシュ中に踏むとさらに速く駆け抜ける。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。ダッシュ中に踏むとさらに速く駆け抜ける。一度使うと30秒使えない');
+    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     if (ms >= 3) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
