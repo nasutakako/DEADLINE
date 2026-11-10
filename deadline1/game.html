@@ -277,11 +277,23 @@ body.picking .sprow .ghost { padding: min(10px, 2.4vh) 18px !important; font-siz
 /* the daily and the ranking have no map to pick: their notes sit in the middle */
 #startPickScreen[data-step="map"]:has(#spMaps[hidden]) #spMsg { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: center; }
 /* two items: barrier or launcher, side by side with "or" between; the cards take the height left over */
-body.picking #startPicks { flex: 1 1 0; min-height: 0; max-height: 300px; width: 100%; max-width: 680px; align-self: center; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important; gap: 14px !important; align-items: stretch; }
-body.picking #startPicks .pick { justify-content: center; align-items: center; text-align: center; padding: min(14px, 3vh) 14px !important; gap: min(8px, 1.8vh) !important; border-radius: 12px; border-width: 1.5px; }
-body.picking #startPicks .pick b { font-size: clamp(16px, 5.4vh, 24px) !important; }
-body.picking #startPicks .pick span { font-size: clamp(12px, 3.6vh, 15px) !important; line-height: 1.5 !important; display: block !important; }
+/* the two item cards: a little smaller than the room left, in the middle of it; each in its own colour, with corner
+   marks and an icon; the chosen one lit up in that colour */
+body.picking #startPicks { flex: 0 1 auto; height: clamp(120px, 44vh, 196px); min-height: 0; margin: auto; width: 100%; max-width: 520px; align-self: center; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) !important; gap: 14px !important; align-items: stretch; }
+#startPicks .pick.barrier { --ic: 143, 233, 255; } #startPicks .pick.launcher { --ic: 217, 179, 255; }
+body.picking #startPicks .pick { position: relative; overflow: hidden; justify-content: center; align-items: center; text-align: center; padding: min(12px, 2.6vh) 12px !important; gap: min(6px, 1.4vh) !important; border-radius: 14px; border: 1.5px solid rgba(var(--ic), .32); background: radial-gradient(120% 90% at 50% 0%, rgba(var(--ic), .13), transparent 60%), linear-gradient(180deg, #12161f, #0b0d13); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 6px 18px rgba(0,0,0,.35); transition: transform .12s, border-color .12s, box-shadow .12s; }
+body.picking #startPicks .pick::before, body.picking #startPicks .pick::after { content: ''; position: absolute; width: 14px; height: 14px; border: 2px solid rgba(var(--ic), .55); pointer-events: none; }
+body.picking #startPicks .pick::before { top: 7px; left: 7px; border-right: 0; border-bottom: 0; border-top-left-radius: 6px; }
+body.picking #startPicks .pick::after { bottom: 7px; right: 7px; border-left: 0; border-top: 0; border-bottom-right-radius: 6px; }
+body.picking #startPicks .pick .pic { display: grid; place-items: center; width: clamp(28px, 9vh, 40px); height: clamp(28px, 9vh, 40px); border-radius: 50%; background: rgba(var(--ic), .12); border: 1px solid rgba(var(--ic), .4); }
+body.picking #startPicks .pick .pic svg { width: 58%; height: 58%; fill: none; stroke: rgb(var(--ic)); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+body.picking #startPicks .pick b { font-size: clamp(15px, 4.6vh, 20px) !important; color: rgb(var(--ic)) !important; letter-spacing: .04em; }
+body.picking #startPicks .pick span { font-size: clamp(11px, 3.1vh, 13px) !important; line-height: 1.45 !important; display: block !important; color: var(--muted); }
 body.picking #startPicks .pick span i { display: block; }
+body.picking #startPicks .pick:hover { border-color: rgba(var(--ic), .6); }
+body.picking #startPicks .pick.sel { transform: translateY(-2px); border-color: rgb(var(--ic)); background: radial-gradient(120% 90% at 50% 0%, rgba(var(--ic), .26), transparent 65%), linear-gradient(180deg, #151b26, #0c0f16); box-shadow: 0 0 0 1px rgba(var(--ic), .6) inset, 0 0 22px rgba(var(--ic), .3), 0 8px 20px rgba(0,0,0,.4); }
+body.picking #startPicks .pick.sel::before, body.picking #startPicks .pick.sel::after { border-color: rgb(var(--ic)); }
+body.picking #startPicks .pick.sel span { color: #c9d0dc; }
 #startPicks .or { display: none; }
 body.picking #startPicks .or { display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-size: clamp(16px, 5vh, 24px); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
 body.picking #spItemMsg { font-size: clamp(12px, 3.5vh, 16px); text-align: center; }
@@ -1173,9 +1185,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <div class="mislist" id="spMis" hidden><button class="mistog" id="spMisTog" type="button"></button><ol id="spMisList" hidden></ol></div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。</p>
       <div class="picks" id="startPicks">
-        <button class="pick barrier" data-item="barrier" type="button"><b>1 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
+        <button class="pick barrier" data-item="barrier" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></em><b>1 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
         <span class="or" aria-hidden="true">or</span>
-        <button class="pick launcher" data-item="launcher" type="button"><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
+        <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
