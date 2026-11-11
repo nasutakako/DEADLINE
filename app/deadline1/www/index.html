@@ -3156,7 +3156,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
     // (one more column of blocks than the screen's shape would give: the tiles a little smaller to fit)
-    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a) + 4); }
+    if (a >= 1) {
+      COLS = Math.min(SIZES[SIZES.length - 1], nearest((r.height < 440 ? 17 : 21) * a) + 4);
+      // the rows: whichever count fills the most of the screen (so no empty bands above and below the map)
+      const fill = n => { const T = Math.min(r.width / COLS, r.height / n); return COLS * n * T * T; };
+      ROWS = SIZES.filter(n => n >= 13 && n <= COLS).reduce((b, n) => fill(n) > fill(b) + 0.5 ? n : b, 13);
+    }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
@@ -3670,8 +3675,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     m.fillStyle = 'rgba(4,3,16,0.5)'; m.fillRect(0, 0, COLS, ROWS);
     m.fillStyle = 'rgba(160,150,190,0.08)';
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 0) m.fillRect(x, y, 1, 1);
-    // the plazas: dark grass
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 2) { m.fillStyle = '#1d2a22'; m.fillRect(x, y, 1, 1); }
+    // the plazas: dark grass (as dark as the night round it, and kept out of the fireworks' light below)
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 2) { m.fillStyle = '#141d18'; m.fillRect(x, y, 1, 1); }
     // the river along the top: dark water catching the fireworks, the grass bank below it
     if (riverOn) {
       const g = m.createLinearGradient(0, 1, 0, 3); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
@@ -3712,7 +3717,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     // light falls on the open ground only: red lanterns along the streets, and the fireworks' colours overhead
     m.save(); m.beginPath();
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (walk(x, y)) m.rect(x, y, 1, 1);
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (walk(x, y) && grid[idx(x, y)] !== 2) m.rect(x, y, 1, 1);
     m.clip();
     const pool = (x, y, r, c, a) => { const gr = m.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(0.6, `rgba(${c},${a * 0.3})`); gr.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gr; m.fillRect(x - r, y - r, r * 2, r * 2); };
     const COLS5 = ['255,90,80', '255,210,90', '120,200,255', '200,120,255', '120,255,170'];
@@ -4451,7 +4456,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (near && !d.on && !(d.cool > 0) && !(P.jumpT > 0)) {
         d.cool = PAD_COOL; P.dashT = DASH_TIME; P.lucky = false; if (tut) tut.padUsed = true;
         flash = Math.max(flash, 0.12);
-        for (let k = 0; k < 32; k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 5; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.75 + Math.random() * 0.35, c: k % 3 ? '#7dfcff' : '#ffffff' }); }
+        for (let k = 0; k < 32; k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 5; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1 + Math.random() * 0.4, c: k % 3 ? '#b6fdff' : '#ffffff' }); }
         tone(660, 0.08, 'square', 0.04, 1320); setTimeout(() => tone(1320, 0.14, 'triangle', 0.045, 2200), 50);
       }
       d.on = near;
@@ -5743,9 +5748,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (const d of pads) {
       const ready = !(d.cool > 0), fl = d.flash > 0 ? d.flash / PIT_FLASH : 0, s = 0.44;
       if (ready) {
-        const a = Math.min(0.6, 0.08 + 0.05 * Math.sin(now * 4) + 0.45 * fl), rr = 0.7 + 0.5 * fl;
+        const a = Math.min(0.7, 0.13 + 0.06 * Math.sin(now * 4) + 0.45 * fl), rr = 0.75 + 0.5 * fl;
         const lg = ctx.createRadialGradient(d.x, d.y, 0.2, d.x, d.y, rr);
-        lg.addColorStop(0, `rgba(105,208,222,${a})`); lg.addColorStop(1, 'rgba(105,208,222,0)');
+        lg.addColorStop(0, `rgba(130,228,240,${a})`); lg.addColorStop(1, 'rgba(130,228,240,0)');
         ctx.fillStyle = lg; ctx.fillRect(d.x - rr, d.y - rr, rr * 2, rr * 2);
       }
       // (no plate drawn round it: only the chevrons on the street, so it sits in the road)
@@ -5754,7 +5759,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ctx.lineWidth = 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (const dir of [1, -1]) for (let k = 0; k < 2; k++) {
         const ph = ready ? (now * 0.8 + k * 0.5) % 1 : 0.5, x0 = dir * (0.1 + 0.28 * (ready ? ph : k * 0.5 + 0.25));
-        ctx.strokeStyle = ready ? `rgba(115,218,232,${0.27 + 0.45 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
+        ctx.strokeStyle = ready ? `rgba(140,236,248,${0.4 + 0.5 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
         ctx.beginPath(); ctx.moveTo(x0 - dir * 0.08, -0.15); ctx.lineTo(x0 + dir * 0.04, 0); ctx.lineTo(x0 - dir * 0.08, 0.15); ctx.stroke();
       }
       ctx.restore();
