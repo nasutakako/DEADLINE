@@ -4384,7 +4384,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (near && !d.on && !(d.cool > 0) && !(P.jumpT > 0)) {
         d.cool = PAD_COOL; P.dashT = DASH_TIME; P.lucky = false; if (tut) tut.padUsed = true;
         flash = Math.max(flash, 0.12);
-        for (let k = 0; k < 16; k++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 4; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: k % 2 ? '#7dfcff' : '#ffffff' }); }
+        for (let k = 0; k < 32; k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 5; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.75 + Math.random() * 0.35, c: k % 3 ? '#7dfcff' : '#ffffff' }); }
         tone(660, 0.08, 'square', 0.04, 1320); setTimeout(() => tone(1320, 0.14, 'triangle', 0.045, 2200), 50);
       }
       d.on = near;
@@ -5676,7 +5676,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (ready) {
         const a = Math.min(0.6, 0.08 + 0.05 * Math.sin(now * 4) + 0.45 * fl), rr = 0.7 + 0.5 * fl;
         const lg = ctx.createRadialGradient(d.x, d.y, 0.2, d.x, d.y, rr);
-        lg.addColorStop(0, `rgba(90,190,205,${a})`); lg.addColorStop(1, 'rgba(90,190,205,0)');
+        lg.addColorStop(0, `rgba(105,208,222,${a})`); lg.addColorStop(1, 'rgba(105,208,222,0)');
         ctx.fillStyle = lg; ctx.fillRect(d.x - rr, d.y - rr, rr * 2, rr * 2);
       }
       // (no plate drawn round it: only the chevrons on the street, so it sits in the road)
@@ -5685,7 +5685,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       ctx.lineWidth = 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (const dir of [1, -1]) for (let k = 0; k < 2; k++) {
         const ph = ready ? (now * 0.8 + k * 0.5) % 1 : 0.5, x0 = dir * (0.1 + 0.28 * (ready ? ph : k * 0.5 + 0.25));
-        ctx.strokeStyle = ready ? `rgba(100,200,215,${0.22 + 0.4 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
+        ctx.strokeStyle = ready ? `rgba(115,218,232,${0.27 + 0.45 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
         ctx.beginPath(); ctx.moveTo(x0 - dir * 0.08, -0.15); ctx.lineTo(x0 + dir * 0.04, 0); ctx.lineTo(x0 - dir * 0.08, 0.15); ctx.stroke();
       }
       ctx.restore();
