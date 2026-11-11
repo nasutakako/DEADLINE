@@ -273,18 +273,20 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 /* until the run begins the stand-by screens have the whole screen: no stick, no buttons, no side columns */
 body.picking .hud, body.picking .sys, body.picking .controls, body.picking .pad { display: none !important; }
 body.picking .stage { grid-column: 1 / -1 !important; grid-row: 1 / -1 !important; }
-body.picking :is(#briefScreen, #startPickScreen) .card { max-width: min(860px, 100%) !important; width: 100%; }
+body.picking :is(#briefScreen, #startPickScreen) .card { max-width: min(800px, 100%) !important; width: 100%; }
 /* the stand-by screens fill the whole screen: the map cards (or the item cards) take the height left over */
-body.picking :is(#briefScreen, #startPickScreen) { padding: 14px 18px; }
-body.picking :is(#briefScreen, #startPickScreen) .card { margin: 0 auto; height: 100%; min-height: 0; gap: min(10px, 2.2vh) !important; }
-body.picking .mapsel { flex: 1 1 0; min-height: 0; align-items: stretch; gap: 10px !important; }
-body.picking .mapsel .mapcard { grid-template-rows: minmax(0, 1fr) auto auto !important; align-content: stretch !important; row-gap: min(6px, 1.4vh) !important; padding: min(8px, 1.8vh) !important; border-radius: 10px; }
+body.picking :is(#briefScreen, #startPickScreen) { padding: min(22px, 4.5vh) 28px; }
+body.picking :is(#briefScreen, #startPickScreen) .card { margin: 0 auto; height: 100%; min-height: 0; justify-content: center; gap: min(12px, 2.6vh) !important; }
+/* (the map cards no longer take every pixel left: a little room round them, so the screen breathes) */
+body.picking .mapsel { flex: 0 1 auto; height: clamp(110px, 45vh, 210px); min-height: 0; align-items: stretch; gap: 14px !important; margin: min(4px, 1vh) 0; }
+body.picking .mapsel .mapcard { grid-template-rows: minmax(0, 1fr) auto auto !important; align-content: stretch !important; row-gap: min(6px, 1.4vh) !important; padding: min(9px, 2vh) !important; border-radius: 12px; background: rgba(18, 21, 30, .72); }
 body.picking .mapsel .mapcard .thumb { height: auto !important; min-height: 26px; align-self: stretch; }
 body.picking .mapsel .mapcard b { font-size: clamp(13px, 4.6vh, 22px) !important; }
 body.picking .mapsel .mapcard small:not(.story) { font-size: clamp(9.5px, 2.9vh, 13px) !important; }
 body.picking .mapsel .mapcard small.mclr { font-size: clamp(10px, 3vh, 14px) !important; }
 body.picking :is(#spMsg, #briefMsg) { font-size: clamp(12px, 3.7vh, 17px); line-height: 1.5; margin: 0; }
-body.picking :is(#briefScreen, #startPickScreen) .pbest { font-size: clamp(11px, 3.1vh, 14px); }
+body.picking :is(#briefScreen, #startPickScreen) .pbest { font-size: clamp(12px, 3.6vh, 15px); }
+body.picking :is(#briefScreen, #startPickScreen) .pbest b { font-size: 1.45em; vertical-align: -0.08em; }
 body.picking :is(#briefScreen, #startPickScreen) .kicker { font-size: clamp(11px, 3.1vh, 14px); }
 body.picking .sprow .go { padding: min(12px, 2.8vh) 30px !important; font-size: clamp(15px, 4.4vh, 19px) !important; }
 body.picking .sprow .ghost { padding: min(10px, 2.4vh) 18px !important; font-size: clamp(13px, 3.6vh, 15px) !important; }
@@ -311,7 +313,7 @@ body.picking #startPicks .pick.sel span { color: #c9d0dc; }
 #startPicks .or { display: none; }
 body.picking #startPicks .or { display: flex; align-items: center; justify-content: center; font-family: var(--f-display); font-size: clamp(16px, 5vh, 24px); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
 body.picking #spItemMsg { font-size: clamp(12px, 3.5vh, 16px); text-align: center; }
-body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(30px, 7.5vh) !important; }
+body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(26px, 6.5vh) !important; }
 .pick.boost b { color: #ffb347; } .pick.barrier b { color: var(--runner); } .pick.launcher b { color: #d9b3ff; }
 .act[aria-disabled="true"] { opacity: .45; }
 
