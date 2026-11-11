@@ -252,7 +252,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 @media (max-width: 520px) { .controls { gap: 6px; } .act { min-width: 0; flex: 1; padding: 8px 6px; font-size: 14px; } .sys .btn { padding: 8px 7px; } .picks { grid-template-columns: 1fr; } .pick { flex-direction: row; align-items: baseline; gap: 10px; } .pick b { white-space: nowrap; } }
 /* the stand-by screens go one step at a time: the map (and the stage's notes), then the item, then スタート */
 #startPickScreen[data-step="map"] :is(#startPicks, .stepitem) { display: none !important; }
-#startPickScreen[data-step="item"] :is(#spMaps, #spMsg, #spMis, .stepmap) { display: none !important; }
+#startPickScreen[data-step="item"] :is(#spMaps, #spMsg, .stepmap) { display: none !important; }
+#startPickScreen[data-step="map"] #spMis { display: none !important; }
 .sprow { width: 100%; }
 .sprow .toright { margin-left: auto; }
 #spItemMsg { margin: 0; color: var(--muted); }
@@ -670,6 +671,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .mrow.shop small { color: var(--lamp); }
 .mrow.equip { --c: #8fe9ff; }
 .mrow.memo { --c: #d9b3ff; }
+/* 生存課題 is gone (its records stay): its row is not shown */
+#start4Btn { display: none !important; }
 /* the other menu rows wear their own colour the way 生存課題 does: a tinted edge and a wash from the top left */
 .mrow:is(.rank, .shop, .equip) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 14%, var(--panel)), var(--panel) 70%); }
 .mrow.tuts { --c: #c792ff; }
@@ -1045,7 +1048,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="overlay" id="nameScreen" hidden>
     <div class="card">
       <h2 style="color: var(--lamp)">名前を登録</h2>
-      <p>ランクレースと生存課題の逃走時間が世界ランキングに載る。ほかのプレイヤーと同じ名前は使えない。</p>
+      <p>ランクレースの逃走時間が世界ランキングに載る。ほかのプレイヤーと同じ名前は使えない。</p>
       <input class="namein" id="nameIn" type="text" maxlength="10" autocomplete="off" spellcheck="false" placeholder="10文字まで" aria-label="プレイヤー名">
       <span class="nameerr" id="nameErr" role="status"></span>
       <div class="row"><button class="go" id="nameOk" type="button">登録</button><button class="ghost" id="nameCancel" type="button" hidden>やめる</button></div>
@@ -1099,7 +1102,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <div class="shophead">
         <h2>ショップ</h2>
         <div class="ranktabs" id="shopTabs" role="tablist"></div>
-        <span class="shopstars" id="shopStars"></span><span class="shopnote">★は生存課題・ランクレース・共有で獲得できます</span>
+        <span class="shopstars" id="shopStars"></span><span class="shopnote">★はミッション・ログインボーナス・ランクレース・共有で獲得できます</span>
         <button class="ghost shoprestore" id="shopRestore" type="button">購入を復元</button><button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
         <span class="shopmsg" id="shopMsg" role="status" hidden></span>
       </div>
@@ -1248,7 +1251,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   <div class="overlay" id="mailScreen" hidden>
     <div class="card rankcard rinfo memocard mailcard">
       <div class="memohead"><h2>メール</h2><span class="kicker">MAIL</span><button class="ghost mailall" id="mailAll" type="button" hidden>まとめて受け取る</button><button class="ghost" id="mailClose" type="button">閉じる</button></div>
-      <p class="memohint" id="mailHint">ステージクリアの報酬、ランクレースの報酬がここに届く。</p>
+      <p class="memohint" id="mailHint">ログインボーナス、ステージクリアの報酬、ランクレースの報酬がここに届く。</p>
       <div class="rinfobody mailbody" id="mailBody"></div>
     </div>
   </div>
@@ -1745,7 +1748,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // the endless stage by its name alone (it needs no "ステージ3")
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
     // this week's map (by its name) and the three survival nights
-    const boards = () => [['wk' + WEEK(), '週替わり ' + weekMapName(), weekMapName() + '(今週)'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['wk' + WEEK(), '週替わり ' + weekMapName(), weekMapName() + '(今週)'], ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     const allBoards = () => ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => [allKey(sk, n), '歴代 ' + MAP_NAMES[sk][n - 1], MAP_NAMES[sk][n - 1], sk]));
     const isAll = b => /^at[1-4](s[12])?$/.test(b);
     function paintTabs(cur) {
@@ -1963,7 +1966,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ['t98', '試練の鬼狩り', '生存課題の通算撃破数1000体', (r, a) => dsum(a, 'kills') >= 1000],
     ['t99', '三夜の王', '3種類の生存課題すべてで10分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 600)],
     ['t100', '称号マスター', '称号を80個集める', (r, a, n) => n >= 80],
-  ];
+  ];  // (the titles for playing 生存課題 can no longer be won: they are off the list; any already won stay won)
+  for (let i = TITLES.length - 1; i >= 0; i--) if (/生存課題/.test(TITLES[i][2])) TITLES.splice(i, 1);
+
   // the daily nights' tallies: days played, the current and longest run of days, and each night's plays, time, kills and best
   const dn = (a, k) => a.d[k] || { plays: 0, time: 0, kills: 0, best: 0 };
   const dsum = (a, f) => ['d1', 'd2', 'd3'].reduce((s, k) => s + dn(a, k)[f], 0);
@@ -2277,7 +2282,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   };
   const starPrice = it => STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : Math.round(it.price / 2);
 
-  // ---------- today's missions (the survival nights): ten a day, easiest first, three on show at a time, ★1 each ----------
+  // ---------- today's missions (every run counts: stages, ランクレース): ten a day, easiest first, three on show at a time, ★1 each ----------
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
   // of the day, 'best' needs it in one night. [count, sum|best, goal, the full line, the short line for the side panel]
   const MIS_POOL = [
@@ -2665,7 +2670,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
-    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(★100〜★500。どれも見た目だけが変わる)。生存課題のミッション(毎日10個まで)・ランクレースの報酬・共有でも集められる。'));
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(★100〜★500。どれも見た目だけが変わる)。今日のミッション(毎日10個まで)・ログインボーナス(毎日★5)・ランクレースの報酬・共有でも集められる。'));
     const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
     btn.addEventListener('click', async () => {
       tap(); btn.disabled = true;
@@ -4680,6 +4685,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
 
   function stageClear() {
+    misEnd();
     bgmStop();
     state = 'clear'; input.stick = null;
     tone(523, 0.1, 'square', 0.05); setTimeout(() => tone(784, 0.1, 'square', 0.05), 110); setTimeout(() => tone(1047, 0.25, 'square', 0.05), 220);
@@ -4735,6 +4741,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     stageN++;
     ui.clear.hidden = true; bgmStop();
     newStage(stock);
+    misLive = !tut && !tutReplay; misFlash = null; misQ = []; misRender();
     tutNeed(stageN) ? tutBegin() : startCount();
   }
 
@@ -4892,8 +4899,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     recEnd();
     // a survival night: the stars its missions paid
     misEnd();
-    { const got = stageN === 4 ? misGot : 0; $('rStars').hidden = stageN !== 4;
-      starGot = stageN === 4 ? got : -1;
+    { const got = misGot; $('rStars').hidden = !got;
+      starGot = got ? got : -1;
       const row = $('rStarRow'); row.textContent = '';
       // one star per mission, landing one after another once the screen is up
       for (let i = 0; i < Math.min(got, STAR_SHOW); i++) { const e = document.createElement('i'); e.style.animationDelay = (0.25 + i * STAR_GAP) + 's'; row.append(e); }
@@ -7605,7 +7612,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     document.body.classList.remove('picking');
     newGame(n, item);
-    misLive = stageN === 4 && !!daily && !tut; misGot = 0; misFlash = null; misQ = []; misRender();
+    misLive = !tut && !tutReplay; misGot = 0; misFlash = null; misQ = []; misRender();
     tutNeed(stageN) ? tutBegin() : startCount();
   }
   function setPause(on) {
@@ -8600,7 +8607,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
     const n = mailList().filter(x => !x.got).length;
     $('mailAll').hidden = n < 2;
-    $('mailHint').textContent = n ? `未受け取り ${n}件 ・ 所持 ★${starHave()}` : `ステージクリアの報酬、ランクレースの報酬がここに届く。所持 ★${starHave()}`;
+    $('mailHint').textContent = n ? `未受け取り ${n}件 ・ 所持 ★${starHave()}` : `ログインボーナス、ステージクリアの報酬、ランクレースの報酬がここに届く。所持 ★${starHave()}`;
     mailPaint();
   }
   // what was just taken: a chime, and the list again
@@ -8616,6 +8623,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('mailClose').addEventListener('click', () => closeOverlay('mailScreen'));
   $('mailAll').addEventListener('click', () => { const ms = mailList().filter(x => !x.got); ms.forEach(mailTake); saveRecords(); mailGot(ms); });
   new MutationObserver(() => { if (!ui.title.hidden) mailPaint(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
+  // ログインボーナス: the first open of each day (Japan time) brings ★5 by mail
+  try { const d = misDay(); if (!mailFind('login' + d)) { mailSend({ id: 'login' + d, k: 'star', n: 5, t: 'ログインボーナス', b: '★5' }); saveRecords(); } } catch (e) {}
   mailPaint();
   new MutationObserver(() => { if (!ui.title.hidden) memoSub(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
   memoSub();
@@ -8645,7 +8654,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function spStep(step) {
     const sc = $('startPickScreen'); sc.dataset.step = step;
     $('spHead').textContent = step === 'item' ? 'アイテム選択' : rankRun ? '今週のマップ' : daily ? '今日のマップ' : 'マップ選択';
-    if (step === 'item') spSel(spItem);
+    if (step === 'item') { spSel(spItem); misOpen = false; misList(); }
     sc.scrollTop = 0; const c = sc.querySelector('.card'); if (c) c.scrollTop = 0;
     if (step === 'map') fitStandby();
   }
