@@ -8,7 +8,7 @@
 <title>DEADLiNE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700&family=Azeret+Mono:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@500;700&family=Azeret+Mono:wght@500;700&family=Share+Tech+Mono&display=swap">
 <style>
 /* Layout: one-screen arcade. Portrait = HUD on top, map, controls below. Landscape = HUD column | map | controls column, so the map gets the full height. Single dark look by choice (a night chase). */
 :root {
@@ -231,9 +231,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .mine { border: 1px solid var(--lamp); color: var(--lamp); }
 .itemb { border: 1px solid #c792ff; color: #d9b3ff; }
 /* the item button between ◀ ▶: the arrows pick which item it uses */
-.itemrow { display: flex; align-items: stretch; gap: 1px; min-width: 0; }
+.itemrow { display: flex; align-items: stretch; gap: 3px; min-width: 0; }
 .itemrow .act { flex: 1 1 auto; min-width: 0; }
-.itemarr { flex: 0 0 auto; width: 19px; padding: 0; border-radius: 6px; border: 1px solid rgba(199,146,255,.55); background: var(--panel); color: #d9b3ff; font-size: 11px; line-height: 1; touch-action: manipulation; }
+.itemarr { flex: 0 0 auto; width: 22px; padding: 0; border-radius: 8px; border: 1px solid rgba(199,146,255,.55); background: var(--panel); color: #d9b3ff; font-size: 12px; line-height: 1; touch-action: manipulation; }
 .itemarr:active { background: rgba(199,146,255,.2); }
 .itemarr:disabled { opacity: .35; }
 #itemName.boost, #itemLabel.boost { color: #ffb347; } #itemName.barrier, #itemLabel.barrier { color: var(--runner); } #itemName.launcher, #itemLabel.launcher { color: #d9b3ff; }
@@ -334,9 +334,8 @@ body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(26px, 6.5vh
   .time { font-size: 20px; }
   .stats, .next, .bestline { display: none; }
   .controls { flex-direction: column; justify-content: flex-end; min-height: 0; }
-  .act { min-width: 0; flex: 0 1 68px; min-height: 0; font-size: 16px; }
-  #dashBtn { flex-basis: 86px; }
-  .itemrow { flex: 0 1 68px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 15px; padding: 6px 2px; }
+  .act { min-width: 0; flex: 0 1 76px; min-height: 0; font-size: 16px; }
+  .itemrow { flex: 0 1 66px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 14px; padding: 6px 4px; }
 }
 @media (min-aspect-ratio: 5/4) and (max-height: 360px) {
   .bestline, .next .label { display: none; }
@@ -937,6 +936,32 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 }
 /* a narrow screen: the detail sits under the tiles */
 @media (max-width: 640px) { .shopbody { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; } .shopdetail { max-height: 46vh; } }
+
+/* ===== the play screen, DEADLINE2's look: square neon-edged panels and buttons, glowing pixel numbers ===== */
+body:not(.ontitle):not(.picking) .stage { border-radius: 0; box-shadow: 0 0 0 1px rgba(0,229,255,.4), 0 0 24px rgba(0,229,255,.18); }
+.act { border-radius: 0; background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); letter-spacing: .1em; }
+.act small { letter-spacing: .2em; }
+.dash { border: 1px solid #00e5ff; color: #00e5ff; box-shadow: 0 0 14px rgba(0,229,255,.35), inset 0 0 14px rgba(0,229,255,.14); }
+.dash::after { background: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
+.mine { border: 1px solid #ffd23f; color: #ffd23f; box-shadow: 0 0 14px rgba(255,210,63,.3), inset 0 0 14px rgba(255,210,63,.12); }
+.itemb { border: 1px solid #ff2bd6; color: #ff8ff0; box-shadow: 0 0 14px rgba(255,43,214,.3), inset 0 0 14px rgba(255,43,214,.12); }
+.itemarr { border-radius: 0; border: 1px solid rgba(255,43,214,.6); background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); color: #ff8ff0; box-shadow: 0 0 8px rgba(255,43,214,.25), inset 0 0 8px rgba(255,43,214,.1); }
+.itemarr:active { background: rgba(255,43,214,.2); }
+.sys .btn { border-radius: 0; background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.6); color: #00e5ff; box-shadow: 0 0 8px rgba(0,229,255,.25), inset 0 0 10px rgba(0,229,255,.1); letter-spacing: .1em; }
+.pi { border-radius: 0; border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.04); }
+.pi b { font-family: "Share Tech Mono", var(--f-num); font-weight: 700; text-shadow: 0 0 8px currentColor; }
+.pi .meter, .hud .meter { border-radius: 0; background: rgba(0,229,255,.12); }
+.pi .meter i, .hud .meter i { background: linear-gradient(90deg, #ff2bd6, #ff3b30); box-shadow: 0 0 6px #ff2bd6; }
+.hud .time { font-family: "Share Tech Mono", var(--f-num); font-weight: 700; color: #fff; text-shadow: 0 0 12px rgba(0,229,255,.75); }
+.hud .label, .hud .next .label { letter-spacing: .18em; }
+.padbase { border-color: rgba(0,229,255,.55); background: radial-gradient(circle, rgba(0,229,255,.1), rgba(0,229,255,0) 70%); box-shadow: 0 0 16px rgba(0,229,255,.25), inset 0 0 16px rgba(0,229,255,.15); }
+.pad.on .padbase { border-color: rgba(0,229,255,.85); }
+.padknob { background: radial-gradient(circle at 35% 30%, #c4f9ff, #00a6c4 60%, #00323e); border-color: #7ff4ff; box-shadow: 0 0 14px rgba(0,229,255,.65); }
+/* in a run: DEADLINE2's night-blue glow from the top and its faint scanlines */
+body:not(.ontitle):not(.picking) { background: radial-gradient(ellipse at 50% -10%, #142456 0%, #05070d 60%) fixed, #05070d; }
+body:not(.ontitle):not(.picking)::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60; background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px); }
+.misbox { border-radius: 0; border-color: rgba(255,210,63,.55); background: rgba(10,16,34,.9); box-shadow: 0 0 10px rgba(255,210,63,.2), inset 0 0 10px rgba(255,210,63,.08); }
+body:not(.ontitle) .pad { border-radius: 0; }
 </style>
 </head>
 <body>
@@ -3131,12 +3156,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
     // (one more column of blocks than the screen's shape would give: the tiles a little smaller to fit)
-    if (a >= 1) {
-      COLS = Math.min(SIZES[SIZES.length - 1], nearest((r.height < 440 ? 17 : 21) * a) + 4);
-      // the rows: whichever count leaves the least of the screen empty (no bands above and below the map)
-      const fill = n => { const T = Math.min(r.width / COLS, r.height / n); return COLS * n * T * T; };
-      ROWS = SIZES.filter(n => n >= 13 && n <= COLS).reduce((b, n) => fill(n) > fill(b) + 0.5 ? n : b, 13);
-    }
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a) + 4); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
@@ -4783,8 +4803,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     stageN++;
     ui.clear.hidden = true; bgmStop();
     newStage(stock);
-    misLive = !tut && !tutReplay; misFlash = null; misQ = []; misRender();
+    misLive = false; misFlash = null; misQ = [];
     tutNeed(stageN) ? tutBegin() : startCount();
+    misLive = !tut && !tutReplay; misRender();
   }
 
   // the item chosen with ◀ ▶ (when none of it is left, the next kind in the bag)
@@ -7414,6 +7435,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     tut = null; $('tutBar').hidden = true;
     kills = s.kills; total = s.total; bag = s.bag; rocketKills = s.rk;
     bgmStop(); newStage(s.stock); startCount();
+    misLive = true; misFlash = null; misQ = []; misRender();   // the run itself, after the practice: its missions count
   }
   // the buttons a step teaches ('dash', 'mine', 'item', space-separated) glow until it is done
   function tutGlow(which) {
@@ -7653,8 +7675,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     document.body.classList.remove('picking');
     newGame(n, item);
-    misLive = !tut && !tutReplay; misGot = 0; misFlash = null; misQ = []; misRender();
+    misLive = false; misGot = 0; misFlash = null; misQ = [];
     tutNeed(stageN) ? tutBegin() : startCount();
+    misLive = !tut && !tutReplay; misRender();
   }
   function setPause(on) {
     if (on && state === 'play') { state = 'pause'; ui.pause.hidden = false; input.stick = null; }
