@@ -625,15 +625,24 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 @keyframes misdone { 0% { transform: scale(1.15); text-shadow: 0 0 12px var(--lamp); } 60% { text-shadow: 0 0 6px var(--lamp); } 100% { transform: none; } }
 .misbox.float { position: absolute; left: 8px; top: 8px; width: 160px; z-index: 2; background: rgba(10,12,18,.75); pointer-events: none; }
 .mislist { display: flex; flex-direction: column; gap: 6px; margin-top: -8px; }
-.mislist[hidden], .mislist ol[hidden] { display: none; }
+.mislist[hidden] { display: none; }
+.mispanel { position: absolute; inset: 0; z-index: 5; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(6, 8, 12, .72); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+.mispanel[hidden] { display: none; }
+.mpcard { width: 100%; max-width: 640px; max-height: 100%; overflow: auto; display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(255, 207, 90, .45); background: linear-gradient(180deg, rgba(40, 33, 16, .95), rgba(16, 18, 26, .97)); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+.mphead { display: flex; align-items: center; gap: 10px; }
+.mphead b { font-size: 16px; color: var(--lamp); letter-spacing: .06em; }
+.mphead span { font-family: var(--f-num); font-size: 13px; color: var(--muted); }
+.mphead .ghost { margin-left: auto; padding: 6px 14px; font-size: 13px; }
+#misPanel ol { font-size: 13px !important; line-height: 1.7 !important; gap: 4px 18px !important; }
+.mpnote { margin: 0; font-size: 11px; color: var(--muted); }
 .mistog { align-self: flex-start; padding: 2px 8px; line-height: 1.4; border: 1px solid rgba(255,207,90,.45); border-radius: 6px; background: rgba(255,207,90,.08); color: var(--lamp); font-weight: 700; font-size: 12px; letter-spacing: .03em; text-align: left; }
-.mislist ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; gap: 2px 14px; font-size: 11px; line-height: 1.35; text-align: left; }
-.mislist li { display: grid; grid-template-columns: 16px 1fr auto; gap: 0 4px; align-items: baseline; color: var(--muted); }
-.mislist li span { font-family: var(--f-num); text-align: center; }
-.mislist li b { font-family: var(--f-num); font-weight: 600; font-variant-numeric: tabular-nums; }
-.mislist li.on { color: var(--ink); } .mislist li.done { color: var(--lamp); text-decoration: line-through; text-decoration-color: rgba(255,207,90,.55); }
-.mislist li.done span { text-decoration: none; }
-@media (max-width: 520px) { .mislist ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
+#misPanel ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(5, auto); grid-auto-flow: column; gap: 2px 14px; font-size: 11px; line-height: 1.35; text-align: left; }
+#misPanel li { display: grid; grid-template-columns: 16px 1fr auto; gap: 0 4px; align-items: baseline; color: var(--muted); }
+#misPanel li span { font-family: var(--f-num); text-align: center; }
+#misPanel li b { font-family: var(--f-num); font-weight: 600; font-variant-numeric: tabular-nums; }
+#misPanel li.on { color: var(--ink); } #misPanel li.done { color: var(--lamp); text-decoration: line-through; text-decoration-color: rgba(255,207,90,.55); }
+#misPanel li.done span { text-decoration: none; }
+@media (max-width: 520px) { #misPanel ol { grid-template-columns: 1fr; grid-template-rows: none; grid-auto-flow: row; } }
 /* erasing the name: a quiet line under the card, red once it asks to be sure */
 .namedel { align-self: flex-start; padding: 4px 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
 .namedel.arm { color: var(--oni); font-weight: 700; }
@@ -959,7 +968,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   #startPickScreen .ghost, #briefScreen .ghost { padding: 7px 14px; font-size: 13px; }
   #briefScreen .go { padding: 9px 22px; font-size: 16px; }
   /* the ten missions opened: the runner's words and the item notes step aside for them */
-  #startPickScreen:has(#spMisList:not([hidden])) .mono, #startPickScreen:has(#spMisList:not([hidden])) #spMsg, #startPickScreen:has(#spMisList:not([hidden])) .pick span { display: none; }
 }
 @media (max-height: 380px) {
   :is(#briefScreen, #startPickScreen) h2 { font-size: 24px; }
@@ -1205,6 +1213,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   </div>
 
   <div class="overlay" id="startPickScreen" data-step="map" hidden>
+    <div class="mispanel" id="misPanel" hidden><div class="mpcard"><div class="mphead"><b>今日のミッション</b><span id="misPanelSum"></span><button class="ghost" id="misClose" type="button">閉じる</button></div><ol id="spMisList"></ol><p class="mpnote">1つ達成ごとに★1(ショップで交換)。どのステージ・ランクレースで遊んでも進む</p></div></div>
     <div class="card">
       <span class="kicker exitk" id="spKicker">STAGE 2</span>
       <span class="pbest" id="spBest" hidden></span>
@@ -1213,7 +1222,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <p class="mono" id="spMono" hidden></p>
       <div class="mapsel" id="spMaps" hidden></div>
       <p id="spMsg" style="white-space: pre-line">補給アイテムを1つ選ぶとステージが始まる。</p>
-      <div class="mislist" id="spMis" hidden><button class="mistog" id="spMisTog" type="button"></button><ol id="spMisList" hidden></ol></div>
+      <div class="mislist" id="spMis" hidden><button class="mistog" id="spMisTog" type="button"></button></div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。</p>
       <div class="picks" id="startPicks">
         <button class="pick barrier" data-item="barrier" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></em><b>1 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
@@ -2367,15 +2376,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function misList() {
     const el = $('spMis'); if (!el) return;
     const s = misState(), L = misToday(), on = misShown();
-    $('spMisTog').textContent = `★ 今日のミッション ${s.done.length}/${MIS_POOL.length} ・ 1つ達成ごとに★1(ショップで交換) ${misOpen ? '▲' : '▼ 一覧'}`;
+    $('spMisTog').textContent = `★ 今日のミッション ${s.done.length}/${MIS_POOL.length} ・ 1つ達成ごとに★1  ▶ 一覧`;
+    $('misPanelSum').textContent = `${s.done.length}/${MIS_POOL.length} 達成`;
     $('spMisList').innerHTML = L.map((m, i) => {
       const done = s.done.includes(i), cls = done ? 'done' : on.includes(i) ? 'on' : '';
       return `<li class="${cls}"><span>${done ? '★' : i + 1}</span>${m[3]}<b>${done ? '達成' : misFmt(m, misVal(m))}</b></li>`;
     }).join('');
-    $('spMisList').hidden = !misOpen;
+    $('misPanel').hidden = !misOpen;
     el.hidden = false;
   }
-  $('spMisTog').addEventListener('click', () => { tap(); misOpen = !misOpen; misList(); });
+  $('spMisTog').addEventListener('click', () => { tap(); misOpen = true; misList(); });
+  $('misClose').addEventListener('click', () => { tap(); misOpen = false; misList(); });
+  $('misPanel').addEventListener('click', e => { if (e.target === $('misPanel')) { tap(); misOpen = false; misList(); } });
   const MIS_HOST = () => matchMedia('(min-aspect-ratio: 5/4) and (pointer: coarse)').matches ? $('padInfo') : $('stage');
   const EQ = k => { if (repEq) return repEq[k] || ''; const s = records.shop; const v = (s && s.eq && s.eq[k]) || ''; return SHOP_GONE.includes(v) ? '' : v; };
   // a story's stage 3 lends its prize for the run (帰り道: 九死に一生, 電脳の檻: the EMP bomb) where that slot is the standard one
@@ -3094,7 +3106,12 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
     // (one more column of blocks than the screen's shape would give: the tiles a little smaller to fit)
-    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a) + 4); }
+    if (a >= 1) {
+      COLS = Math.min(SIZES[SIZES.length - 1], nearest((r.height < 440 ? 17 : 21) * a) + 4);
+      // the rows: whichever count leaves the least of the screen empty (no bands above and below the map)
+      const fill = n => { const T = Math.min(r.width / COLS, r.height / n); return COLS * n * T * T; };
+      ROWS = SIZES.filter(n => n >= 13 && n <= COLS).reduce((b, n) => fill(n) > fill(b) + 0.5 ? n : b, 13);
+    }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
@@ -8654,7 +8671,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function spStep(step) {
     const sc = $('startPickScreen'); sc.dataset.step = step;
     $('spHead').textContent = step === 'item' ? 'アイテム選択' : rankRun ? '今週のマップ' : daily ? '今日のマップ' : 'マップ選択';
-    if (step === 'item') { spSel(spItem); misOpen = false; misList(); }
+    misOpen = false; $('misPanel').hidden = true;
+    if (step === 'item') { spSel(spItem); misList(); }
     sc.scrollTop = 0; const c = sc.querySelector('.card'); if (c) c.scrollTop = 0;
     if (step === 'map') fitStandby();
   }
