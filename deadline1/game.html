@@ -273,8 +273,6 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 #startPicks .pick.sel { border-color: #5dff9e; background: color-mix(in srgb, #5dff9e 14%, var(--panel)); box-shadow: 0 0 0 1px #5dff9e inset, 0 0 14px rgba(93,255,158,.25); }
 /* until the run begins the stand-by screens have the whole screen: no stick, no buttons, no side columns */
 body.picking .hud, body.picking .sys, body.picking .controls, body.picking .pad { display: none !important; }
-body.ontitle, body.picking { --play-y: 0px !important; }
-body:not(.ontitle):not(.picking) { padding-top: calc(8px + var(--play-y, 0px)); padding-bottom: calc(8px + var(--play-y, 0px)); }
 body.picking .stage { grid-column: 1 / -1 !important; grid-row: 1 / -1 !important; }
 body.picking :is(#briefScreen, #startPickScreen) .card { max-width: min(800px, 100%) !important; width: 100%; }
 /* the stand-by screens fill the whole screen: the map cards (or the item cards) take the height left over */
@@ -3369,16 +3367,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     renderMapCache();
     sideFill();
   }
-  // in a run, what the map leaves empty above and below it is left empty across the whole screen: the stick's and
-  // the buttons' columns take the same band off their top and bottom, so all three line up with the map
-  function sideFill() {
-    const b = document.body;
-    if (b.classList.contains('ontitle') || b.classList.contains('picking') || getComputedStyle($('pad')).display === 'none') return;
-    const gap = H - ROWS * T, cur = parseFloat(b.style.getPropertyValue('--play-y')) || 0;
-    if (Math.abs(gap) < 2) return;
-    const want = Math.max(0, Math.min(120, cur + gap / 2));
-    if (Math.abs(want - cur) >= 1) b.style.setProperty('--play-y', want.toFixed(1) + 'px');
-  }
+  // (the side columns keep their full height: the map's own bands above and below stay as they are)
+  function sideFill() {}
+
 
   function renderMapCache() {
     mapCache = document.createElement('canvas');
