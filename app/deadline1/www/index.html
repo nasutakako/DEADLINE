@@ -656,7 +656,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .idcard .whoname { border: 0; background: none; padding: 0; font-size: 15px; line-height: 1.25; color: var(--ink); }
 .idcard .whoname.unset { color: var(--lamp); }
 .idcard .whoname.unset::after { content: " ›"; }
-.idcard .whotitle { border: 0; background: none; padding: 0; font-size: 10.5px; line-height: 1.3; color: var(--lamp); }
+.idcard .whotitle { border: 0; background: none; padding: 0; font-size: 10.5px; line-height: 1.3; color: var(--lamp); display: block; width: 100%; min-width: 0; text-align: left; white-space: nowrap; overflow: hidden; cursor: default; pointer-events: none; }
 .idcard .whotitle.none { color: var(--muted); }
 .idcard .whoname:focus-visible, .idcard .whotitle:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; border-radius: 3px; }
 .menu { display: grid; gap: 6px; flex-shrink: 0; }
@@ -680,10 +680,11 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .mrow.shop small { color: var(--lamp); }
 .mrow.equip { --c: #8fe9ff; }
 .mrow.memo { --c: #d9b3ff; }
+.mrow.titles { --c: #ff9a7a; }
 /* 生存課題 is gone (its records stay): its row is not shown */
 #start4Btn { display: none !important; }
 /* the other menu rows wear their own colour the way 生存課題 does: a tinted edge and a wash from the top left */
-.mrow:is(.rank, .shop, .equip) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 14%, var(--panel)), var(--panel) 70%); }
+.mrow:is(.rank, .shop, .equip, .titles) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 14%, var(--panel)), var(--panel) 70%); }
 .mrow.tuts { --c: #c792ff; }
 /* the title's six: two to a row (ステージ1 2 / ステージ3 スペシャル / ランキング チュートリアル一覧) */
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
@@ -950,7 +951,7 @@ body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-
 }
 body.ontitle .who .idcard, body.ontitle .who .mrow, body.ontitle .who .records { background: rgba(16, 19, 28, .78); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 body.ontitle .who .mrow.daily { background: linear-gradient(135deg, rgba(36, 60, 72, .8), rgba(16, 19, 28, .78) 70%); }
-body.ontitle .who .mrow:is(.rank, .shop, .equip) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, rgba(16, 19, 28, .8)), rgba(16, 19, 28, .78) 70%); }
+body.ontitle .who .mrow:is(.rank, .shop, .equip, .titles) { border-color: color-mix(in srgb, var(--c) 45%, var(--line)); background: linear-gradient(135deg, color-mix(in srgb, var(--c) 16%, rgba(16, 19, 28, .8)), rgba(16, 19, 28, .78) 70%); }
 body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 /* a landscape phone: the stand-by screens fit without scrolling */
 @media (max-height: 520px) {
@@ -1009,6 +1010,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <button class="mrow rank" id="rankBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M7 6H4v1a3 3 0 0 0 3 3M17 6h3v1a3 3 0 0 1-3 3M12 13v4M8 20h8M9 17h6"/></svg></i><span class="mt"><b>ランキング</b><small>今週の世界順位</small></span></button>
       <button class="mrow shop" id="shopBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h14l-1.2 11H6.2z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></i><span class="mt"><b>ショップ</b><small id="mShopSub"></small></span></button>
       <button class="mrow equip" id="equipBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg></i><span class="mt"><b>装備</b><small id="mEquipSub">付け替え</small></span></button>
+      <button class="mrow titles" id="titlesBtn" type="button"><i class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="5"/><path d="M8.5 13.2L7 21l5-2.6 5 2.6-1.5-7.8"/><path d="M12 6.5l.9 1.8 2 .3-1.4 1.4.3 2-1.8-1-1.8 1 .3-2-1.4-1.4 2-.3z"/></svg></i><span class="mt"><b>称号</b><small id="mTitlesSub"></small></span></button>
       
     </div>
     <span class="whonote" id="whoNote" hidden></span>
@@ -2169,9 +2171,21 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!records.title && records.titles && records.titles.length) records.title = records.titles[records.titles.length - 1];
     const b = $('whoTitle'); if (!b) return;
     const n = titleName(records.title);
-    b.textContent = n ? '《' + n + '》' : (records.titles && records.titles.length ? '称号を選ぶ' : '称号なし');
+    b.textContent = n ? '《' + n + '》' : '称号なし';
     b.classList.toggle('none', !n);
+    fitWhoTitle();
+    const sub = $('mTitlesSub'); if (sub) { const own = new Set(records.titles || []); sub.textContent = `${TITLES.filter(t => own.has(t[0])).length}/${TITLES.length} 獲得`; }
   }
+  // a long title: its type a little smaller until it fits the card on one line
+  function fitWhoTitle() {
+    const b = $('whoTitle'); if (!b) return;
+    b.style.fontSize = '';
+    if (!b.clientWidth) return;
+    let fs = parseFloat(getComputedStyle(b).fontSize);
+    while (b.scrollWidth > b.clientWidth + 1 && fs > 7) { fs -= 0.5; b.style.fontSize = fs + 'px'; }
+  }
+  addEventListener('resize', () => { try { fitWhoTitle(); } catch (e) {} });
+  new MutationObserver(() => { if (!ui.title.hidden) setTimeout(() => { try { fitWhoTitle(); } catch (e) {} }, 50); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
   function openTitles() {
     const list = $('titlesList'), owned = new Set(records.titles || []);
     list.textContent = '';
@@ -3041,7 +3055,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('equipBtn').addEventListener('click', () => { tap(); openEquip(); });
   $('equipClose').addEventListener('click', () => closeOverlay('equipScreen'));
   $('shopClose').addEventListener('click', () => { shopSay(''); closeOverlay('shopScreen'); bgmStart(SONGS.title); updateLocks(); });
-  $('whoTitle').addEventListener('click', () => { tap(); openTitles(); });
+  $('titlesBtn').addEventListener('click', () => { tap(); openTitles(); });
+  { const w = $('whoTitle'); w.tabIndex = -1; w.setAttribute('aria-disabled', 'true'); }
   $('titlesClose').addEventListener('click', () => closeOverlay('titlesScreen'));
   paintTitle();
   placeWho();
