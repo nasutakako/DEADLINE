@@ -510,7 +510,7 @@ body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0
 
 .ranktabs { display: flex; flex-wrap: wrap; gap: 6px; }
 .ranktabs .tabbreak { flex-basis: 100%; height: 0; }
-.rankmodes { display: flex; gap: 8px; }
+.rankmodes { display: none; }   /* (歴代ランキング is off for now: no mode to pick) */
 .rankmodes button { flex: 1 1 0; padding: 8px 6px; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 8px; background: var(--panel); color: var(--muted); font-family: var(--f-display); font-size: clamp(16px, 3.6vw, 22px); letter-spacing: .02em; cursor: pointer; white-space: nowrap; }
 .rankmodes button[aria-selected="true"] { color: var(--lamp); border-color: var(--lamp); background: rgba(255,207,90,.08); }
 .ranktabs button { border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 6px 11px; font-weight: 700; font-size: 12px; white-space: nowrap; }
@@ -1428,11 +1428,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // whether the map's first pit was moved for the stage 3 tutorial (kept with a replay, so it builds the same pits)
   let lastTutPit = false, repTutPit = null;
   const WEEK = () => Math.floor((Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + 3) / 7);
-  const weekSkin = () => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][WEEK() % 4] : 'd1';
+  const weekSkin = (w = WEEK()) => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][w % 4] : 'd1';
   // which of its series' maps this week runs on: in turn, so each of the 12 comes once in 12 weeks (week 2967, when
   // this began, still ran 4-3)
-  const weekStage = () => MAP_CHOICE ? ((Math.floor(WEEK() / 4) + 2) % 3) + 1 : 3;
-  const weekMapName = () => MAP_NAMES[weekSkin()][weekStage() - 1];
+  const weekStage = (w = WEEK()) => MAP_CHOICE ? ((Math.floor(w / 4) + 2) % 3) + 1 : 3;
+  const weekMapName = (w = WEEK()) => MAP_NAMES[weekSkin(w)][weekStage(w) - 1];
   // a replay's map (its stage within the series), while one is being watched
   let repN = null;
   // 歴代ランキング: the best weekly-ranking run ever on each map (at1-at4 for d1-d4)
@@ -1580,7 +1580,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
     async function syncDaily() {
       if (!db || !me || !me.name || !canWrite) return;
-      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ...(MAP_CHOICE ? ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => ({ key: allKey(sk, n), board: allKey(sk, n) }))) : [])]) {
+      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ]) {
         const b = bestOf(d.key); if (!(b > 0)) continue;
         let cur = boardDocs[d.board];
         if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
@@ -1757,7 +1757,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // the endless stage by its name alone (it needs no "ステージ3")
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
     // this week's map (by its name) and the three survival nights
-    const boards = () => [['wk' + WEEK(), '週替わり ' + weekMapName(), weekMapName() + '(今週)'], ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['wk' + WEEK(), '今週 ' + weekMapName(), '今週 ' + weekMapName()], ['wk' + (WEEK() - 1), '先週 ' + weekMapName(WEEK() - 1) + '(最終結果)', '先週 ' + weekMapName(WEEK() - 1)], ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     const allBoards = () => ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => [allKey(sk, n), '歴代 ' + MAP_NAMES[sk][n - 1], MAP_NAMES[sk][n - 1], sk]));
     const isAll = b => /^at[1-4](s[12])?$/.test(b);
     function paintTabs(cur) {
@@ -1799,7 +1799,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
           list.appendChild(row(no, p, isMe, wk && no <= 3 ? { w: +wk[1], id: d.id, board } : null));
         });
         const meRow = list.querySelector('li.me'); if (meRow) meRow.scrollIntoView({ block: 'nearest' });
-        const mineDoc = board === 'players' ? me : boardDocs[board];
+        const mineDoc = board === 'players' ? me : boardDocs[board] || (/^wk\d+$/.test(board) && uid ? await db.doc(board + '/' + uid).get().then(x => x.exists ? x.data() : null).catch(() => null) : null);
         if (!inTop && mineDoc && mineDoc.best > 0) {
           const a = await db.collection(board).where('best', '>', mineDoc.best).limit(1000).get();
           const li = row(a.size >= 1000 ? '1000+' : a.size + 1, mineDoc, true);
@@ -4911,7 +4911,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
-    if (stageN === 3 && rankRun && ALL_SKINS.includes(mapSkin)) addRecord(allKey(mapSkin, weekStage()), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     recEnd();
     // a survival night: the stars its missions paid
