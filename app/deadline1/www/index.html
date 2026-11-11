@@ -334,6 +334,7 @@ body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(26px, 6.5vh
   .stats, .next, .bestline { display: none; }
   .controls { flex-direction: column; justify-content: flex-end; min-height: 0; }
   .act { min-width: 0; flex: 0 1 68px; min-height: 0; font-size: 16px; }
+  #dashBtn { flex-basis: 86px; }
   .itemrow { flex: 0 1 68px; min-height: 0; } .itemrow .act { flex: 1 1 auto; font-size: 15px; padding: 6px 2px; }
 }
 @media (min-aspect-ratio: 5/4) and (max-height: 360px) {
@@ -369,9 +370,6 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
     padding-right: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
   }
   /* in a run the side columns give up a little room to the map */
-  /* (the buttons' column keeps its full width: the stick's gives up a little to the map) */
-  body:not(.ontitle) { --side: clamp(100px, 12.5vw, 118px); --side-r: clamp(120px, 15vw, 140px); column-gap: 0; }
-  /* (the map's own edge is the line: the buttons and the stick come right up to it) */
   .pad { grid-area: pad; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 30px; min-height: 0; touch-action: none; border-radius: 8px; background: rgba(255,255,255,.025); }
 }
 .card p.rotate { display: none; color: var(--lamp); font-size: 13px; }
@@ -3088,17 +3086,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   function pickDims() {
     const r = stage.getBoundingClientRect();
-    // (in a run the buttons' column is wider than the stick's: the map keeps the columns it had when they matched, its tiles a little smaller)
-    let extra = 0;
-    if (!document.body.classList.contains('ontitle') && !document.body.classList.contains('picking')) {
-      const cs = getComputedStyle(document.body), px = v => parseFloat(cs.getPropertyValue(v)) || 0;
-      const pd = $('pad') && $('pad').getBoundingClientRect().width, ct = document.querySelector('.controls') && document.querySelector('.controls').getBoundingClientRect().width;
-      if (pd && ct && ct > pd) extra = ct - pd;
-    }
-    const a = Math.max(0.3, (r.width + extra) / Math.max(1, r.height));
+    const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
-    // (a little wider than the screen's shape: one more column of blocks, the tiles a little smaller)
-    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = nearest(ROWS * a * 1.08); }
+    // (one more column of blocks than the screen's shape would give: the tiles a little smaller to fit)
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a) + 4); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
