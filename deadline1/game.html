@@ -2728,8 +2728,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
   const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
-  const EQUIP_TABS = [['item', 'アイテム', ['rocket', 'barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']]];
-  let equipTab = 'item';
+  const EQUIP_TABS = [['rocket', 'ランチャー', ['rocket']], ['barrier', 'バリア', ['barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']]];
+  let equipTab = 'rocket';
   function openEquip() {
     const tabs = $('equipTabs'); tabs.textContent = '';
     for (const [k, label] of EQUIP_TABS) {
