@@ -938,7 +938,9 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 @media (max-width: 640px) { .shopbody { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; } .shopdetail { max-height: 46vh; } }
 
 /* ===== the play screen, DEADLINE2's look: square neon-edged panels and buttons, glowing pixel numbers ===== */
-body:not(.ontitle):not(.picking) .stage { border-radius: 0; box-shadow: 0 0 0 1px rgba(0,229,255,.4), 0 0 24px rgba(0,229,255,.18); }
+body:not(.ontitle):not(.picking):not(.replaying) .stage { border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
+#mapEdge { position: absolute; pointer-events: none; box-shadow: 0 0 0 1px rgba(0,229,255,.4), 0 0 24px rgba(0,229,255,.18); }
+body.ontitle #mapEdge, body.picking #mapEdge, body.replaying #mapEdge { display: none; }
 .act { border-radius: 0; background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); letter-spacing: .1em; }
 .act small { letter-spacing: .2em; }
 .dash { border: 1px solid #00e5ff; color: #00e5ff; box-shadow: 0 0 14px rgba(0,229,255,.35), inset 0 0 14px rgba(0,229,255,.14); }
@@ -3366,6 +3368,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ox = (W - COLS * T) / 2; oy = (H - ROWS * T) / 2;
     renderMapCache();
     sideFill();
+    // the neon edge, round the map (not the whole stage)
+    let e = $('mapEdge'); if (!e) { e = document.createElement('div'); e.id = 'mapEdge'; stage.append(e); }
+    Object.assign(e.style, { left: ox + 'px', top: oy + 'px', width: COLS * T + 'px', height: ROWS * T + 'px' });
   }
   // (the side columns keep their full height: the map's own bands above and below stay as they are)
   function sideFill() {}
@@ -5713,9 +5718,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ctx.strokeStyle = 'rgba(0,0,0,0.55)'; ctx.lineWidth = r * 0.12;
     ctx.beginPath(); ctx.arc(x, y, r * 0.95, 0, Math.PI * 2); ctx.stroke();
   }
+  const playLook = () => !document.body.classList.contains('ontitle') && !document.body.classList.contains('picking') && !document.body.classList.contains('replaying');
   function draw() {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = '#0c0f16'; ctx.fillRect(0, 0, cv.width, cv.height);
+    if (playLook()) ctx.clearRect(0, 0, cv.width, cv.height);   // (in a run the page's background shows round the map)
+    else { ctx.fillStyle = '#0c0f16'; ctx.fillRect(0, 0, cv.width, cv.height); }
     let sx = 0, sy = 0;
     if (shake > 0 && settings.shake) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
     if (mapCache) ctx.drawImage(mapCache, Math.round((ox + sx) * dpr), Math.round((oy + sy) * dpr));
