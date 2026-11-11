@@ -508,6 +508,7 @@ body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0
 .mono { margin: 0; font-family: var(--f-say); font-weight: 400; font-size: 14px; line-height: 1.65; color: var(--ink); border-left: 3px solid var(--runner); padding: 2px 0 2px 10px; opacity: .92; }
 
 .ranktabs { display: flex; flex-wrap: wrap; gap: 6px; }
+.ranktabs .tabbreak { flex-basis: 100%; height: 0; }
 .rankmodes { display: flex; gap: 8px; }
 .rankmodes button { flex: 1 1 0; padding: 8px 6px; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 8px; background: var(--panel); color: var(--muted); font-family: var(--f-display); font-size: clamp(16px, 3.6vw, 22px); letter-spacing: .02em; cursor: pointer; white-space: nowrap; }
 .rankmodes button[aria-selected="true"] { color: var(--lamp); border-color: var(--lamp); background: rgba(255,207,90,.08); }
@@ -1416,8 +1417,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let lastTutPit = false, repTutPit = null;
   const WEEK = () => Math.floor((Math.floor((Date.now() + 9 * 3600e3) / 86400e3) + 3) / 7);
   const weekSkin = () => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][WEEK() % 4] : 'd1';
+  // which of its series' maps this week runs on: in turn, so each of the 12 comes once in 12 weeks (week 2967, when
+  // this began, still ran 4-3)
+  const weekStage = () => MAP_CHOICE ? ((Math.floor(WEEK() / 4) + 2) % 3) + 1 : 3;
+  const weekMapName = () => MAP_NAMES[weekSkin()][weekStage() - 1];
+  // a replay's map (its stage within the series), while one is being watched
+  let repN = null;
   // 歴代ランキング: the best weekly-ranking run ever on each map (at1-at4 for d1-d4)
-  const ALL_SKINS = ['d1', 'd2', 'd3', 'd4'], allKey = skin => 'at' + (ALL_SKINS.indexOf(skin) + 1);
+  // the all-time boards, one per map: at1-at4 the series' 3rd maps (as before), at1s1 / at1s2 … their 1st and 2nd
+  const ALL_SKINS = ['d1', 'd2', 'd3', 'd4'], allKey = (skin, n = 3) => 'at' + (ALL_SKINS.indexOf(skin) + 1) + (n === 3 ? '' : 's' + n);
   const recKey = n => n === 4 && daily ? daily.key : n === 3 && rankRun ? 'wk' + WEEK() : n === 3 && mapSkin === 'd2' ? 'n3' : n === 3 && mapSkin === 'd3' ? 'k3' : n === 3 && mapSkin === 'd4' ? 'b3' : n;
   const stageLabel = n => n === 4 && daily ? '生存課題 ' + daily.name : n === 3 && rankRun ? 'ランクレース' : 'ステージ' + n;
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
@@ -1435,7 +1443,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
         b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
         // small underneath: this week's map, or (locked) what opens it (the map's name kept off the big line, which it crowded)
-        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${MAP_NAMES[weekSkin()][2]}` : '1-1クリアで解放'; b.append(sm); }
+        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${weekMapName()}` : '1-1クリアで解放'; b.append(sm); }
         continue;
       }
       if (n === 4 && b.classList.contains('mrow')) {
@@ -1560,7 +1568,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
     async function syncDaily() {
       if (!db || !me || !me.name || !canWrite) return;
-      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ...(MAP_CHOICE ? ALL_SKINS.map(sk => ({ key: allKey(sk), board: allKey(sk) })) : [])]) {
+      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ...(MAP_CHOICE ? ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => ({ key: allKey(sk, n), board: allKey(sk, n) }))) : [])]) {
         const b = bestOf(d.key); if (!(b > 0)) continue;
         let cur = boardDocs[d.board];
         if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
@@ -1737,17 +1745,22 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     // the endless stage by its name alone (it needs no "ステージ3")
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
     // this week's map (by its name) and the three survival nights
-    const boards = () => [['wk' + WEEK(), '週替わり ' + MAP_NAMES[weekSkin()][2], MAP_NAMES[weekSkin()][2] + '(今週)'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
-    const allBoards = () => ALL_SKINS.map(sk => [allKey(sk), '歴代 ' + MAP_NAMES[sk][2], MAP_NAMES[sk][2]]);
-    const isAll = b => /^at[1-4]$/.test(b);
+    const boards = () => [['wk' + WEEK(), '週替わり ' + weekMapName(), weekMapName() + '(今週)'], ...DAILY.map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const allBoards = () => ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => [allKey(sk, n), '歴代 ' + MAP_NAMES[sk][n - 1], MAP_NAMES[sk][n - 1], sk]));
+    const isAll = b => /^at[1-4](s[12])?$/.test(b);
     function paintTabs(cur) {
       const box = $('rankTabs'); box.textContent = '';
       $('rankModeW').setAttribute('aria-selected', String(!isAll(cur))); $('rankModeA').setAttribute('aria-selected', String(isAll(cur)));
-      for (const [id, , short] of (isAll(cur) ? allBoards() : boards())) {
-        const b = document.createElement('button'); b.type = 'button'; b.textContent = short; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', id === cur ? 'true' : 'false');
-        b.addEventListener('click', () => { if (id !== cur) { tap(); openRank(id); } });
-        box.append(b);
+      const tab = (id, label, on, go) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', on ? 'true' : 'false'); b.addEventListener('click', () => { if (!on) { tap(); go(); } }); box.append(b); };
+      if (isAll(cur)) {
+        // 歴代: two rows, the series and then its three maps
+        const all = allBoards(), curSk = (all.find(x => x[0] === cur) || all[0])[3];
+        ALL_SKINS.forEach((sk, i) => tab('s' + sk, 'シリーズ' + (i + 1), sk === curSk, () => openRank(allKey(sk, 3))));
+        const br = document.createElement('span'); br.className = 'tabbreak'; box.append(br);
+        for (const [id, , short, sk] of all) if (sk === curSk) tab(id, short, id === cur, () => openRank(id));
+        return;
       }
+      for (const [id, , short] of boards()) tab(id, short, id === cur, () => openRank(id));
     }
     async function openRank(board = 'wk' + WEEK()) {
       const list = $('rankList'), mine = $('rankMe'), info = [...boards(), ...allBoards()].find(x => x[0] === board) || boards()[0];
@@ -1792,7 +1805,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('rankClose').addEventListener('click', () => { tap(); $('rankScreen').hidden = true; const back = $('rankScreen').dataset.back; $('rankScreen').dataset.back = ''; if (back && $(back)) $(back).hidden = false; else ui.title.hidden = false; });
     $('rankModeW').addEventListener('click', () => { if ($('rankModeW').getAttribute('aria-selected') !== 'true') { tap(); openRank('wk' + WEEK()); } });
     // the all-time ranking opens on this week's map
-    $('rankModeA').addEventListener('click', () => { if ($('rankModeA').getAttribute('aria-selected') !== 'true') { tap(); openRank(allKey(weekSkin())); } });
+    $('rankModeA').addEventListener('click', () => { if ($('rankModeA').getAttribute('aria-selected') !== 'true') { tap(); openRank(allKey(weekSkin(), weekStage())); } });
     $('nameOk').addEventListener('click', claim);
     $('nameDel').addEventListener('click', () => { tap(); erase(); });
     // put off on the first visit: not asked again on this device; the name button on the title still opens it
@@ -3090,7 +3103,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // 生存課題: a map drawn at random from the ones open (any story's stage 1, 2 or 3), rolled on each stand-by screen;
   // the map is drawn and laid out as that stage, the night itself runs as 生存課題
   let dailyLook = null;
-  const mapStage = () => stageN === 4 && daily && dailyLook ? dailyLook.n : stageN;
+  const mapStage = () => stageN === 3 && repN != null ? repN : stageN === 4 && daily && dailyLook ? dailyLook.n : stageN === 3 && rankRun ? weekStage() : stageN;
   function rollDailyMap() {
     const all = [];
     for (const skin of MAP_CHOICE ? ALL_SKINS : ['d1']) for (const n of [1, 2, 3]) if (skin === 'd1' || mapOpen(n, skin)) all.push({ skin, n });
@@ -3232,7 +3245,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       // the start crossing and the pits stay in the light
       shadeMap[idx(sx, sy)] = 0; for (const h of holes) shadeMap[h.i] = 0;
     }
-    pads = stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : mapStage() <= 1 ? [] : makePads(3);
+    pads = stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : stageN === 3 && (rankRun || repN != null) ? makePads(3) : mapStage() <= 1 ? [] : makePads(3);
   }
   // the 加速装置: two straight-street tiles (a street running on both sides, buildings or plazas beside), at least
   // half the map apart, clear of the pits, the warp points, the goals, the bridges, the yagura and the start crossing
@@ -4881,7 +4894,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
-    if (stageN === 3 && rankRun && ALL_SKINS.includes(mapSkin)) addRecord(allKey(mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
+    if (stageN === 3 && rankRun && ALL_SKINS.includes(mapSkin)) addRecord(allKey(mapSkin, weekStage()), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     recEnd();
     // a survival night: the stars its missions paid
@@ -5931,7 +5944,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
-    const SN = sN === 4 && daily ? '生存課題 ' + daily.name : sN === 3 && rankRun ? `ランクレース ${mapName(3)}` : `ステージ${sN} ${mapName(sN)}`;
+    const SN = sN === 4 && daily ? '生存課題 ' + daily.name : sN === 3 && rankRun ? `ランクレース ${weekMapName()}` : `ステージ${sN} ${mapName(sN)}`;
     { const k = itemCur(), n = bag.filter(x => x === k).length, kinds = ITEM_KINDS.filter(x => bag.includes(x)).length;
       $('itemLabel').textContent = bag.length ? ITEM_SHORT[k] : 'アイテム'; $('itemLabel').className = bag.length ? k : '';
       ui.itemName.textContent = bag.length ? `×${n}` : 'なし'; ui.itemName.className = bag.length ? k : '';
@@ -6927,7 +6940,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const tutKeyOf = n => n === 4 ? n : mapSkin === 'd4' ? (n === 1 ? 'b1' : n === 2 ? 'b2' : n) : mapSkin === 'd3' ? (n <= 3 ? 'k' + n : n) : mapSkin === 'd2' ? (n === 1 ? 'w' : n === 2 ? 'c2' : null) : n;
   // a story's stage 3 has its own: its prize, then the pits (if not seen yet), then the way out at 6:30
   const tutKey = n => n === 3 && MAP_CHOICE && !rankRun && tutReplay !== 3 && ROUTE[mapSkin] !== 'shadow' ? ({ home: '3h', cyber: '3c', fuse: '3b' })[ROUTE[mapSkin]] : tutKeyOf(n);
-  const tutNeed = n => { const k = tutKey(n); return k != null && (k === 'w' || (n >= 1 && n <= 3)) && (tutReplay === k || !tutSeen()[k]); };
+  // (a ランクレース never stops for a practice, whatever map it runs on)
+  const tutNeed = n => { if (rankRun && n === 3) return false; const k = tutKey(n); return k != null && (k === 'w' || (n >= 1 && n <= 3)) && (tutReplay === k || !tutSeen()[k]); };
   function tutMark(n) { const s = tutSeen(); s[n] = true; try { localStorage.setItem(TUT_KEY, JSON.stringify(s)); } catch (_) {} }
   // a practice oni comes out of a short ! warning a few streets away
   const tutOni = o => { tut.want = Object.assign({}, o); tut.oni = []; tutWarn(o.at || tutSpot(5, 8), Object.assign({ t: 0.8, tut: true }, o)); };
@@ -8413,7 +8427,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     try { fn(); } finally { Math.random = keep; }
   }
   function recStart() {
-    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, cols: COLS, rows: ROWS,
+    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), cols: COLS, rows: ROWS,
       eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash') } } : null;
   }
   function recFrame(last) {
@@ -8450,7 +8464,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   async function repPack(r, len) {
     let fr = r.fr, hz = REC_HZ;
     for (let k = 0; k < 4; k++) {
-      const head = JSON.stringify({ v: 1, skin: r.skin, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len });
+      const head = JSON.stringify({ v: 1, skin: r.skin, n: r.n || 3, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len });
       const raw = head + '\n' + fr.join(';');
       let out = 'p:' + raw;
       try {
@@ -8486,19 +8500,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('rankScreen').hidden = true; ui.title.hidden = true;
     document.body.classList.add('replaying');
     stageN = 3; daily = null; rankRun = false; tut = null; mapSkin = h.skin; COLS = h.cols; ROWS = h.rows;
-    repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; } resize();
+    repN = h.n || 3; repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; } resize();
     repEq = h.eq || {};
     P = { x: 0, y: 0, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock: 0, barrier: false, inv: 0, boostT: 0, jumpT: 0, saveT: 0, flT: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
     shake = 0; flash = 0; danger = 0; exitOpen = false; keyPos = null; stageKillStart = 0;
     state = 'replay';
-    rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][2] : '';
+    rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][(h.n || 3) - 1] : '';
     $('repName').textContent = name;
     $('repBar').hidden = false; repPaintBar(); repApply(0);
   }
   function repClose() {
     if (!rp) return;
-    const board = rp.board; rp = null; repEq = null;
+    const board = rp.board; rp = null; repEq = null; repN = null;
     $('repBar').hidden = true; $('repShow').hidden = true; document.body.classList.remove('replaying');
     P = null; enemies = []; mines = []; booms = []; items = []; pending = [];
     toTitle();
@@ -8687,9 +8701,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
-      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.2倍(ステージ3は1.5倍)', '8分からは自爆鬼が常に1体以上いる', 'マップの上は川。橋は3本'] }[route] || [];
+      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.2倍(ステージ3は1.5倍)', '8分からは自爆鬼が常に1体以上いる', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
     $('rankInfoBody').innerHTML = `
-      <section><h3>ランクレース ${MAP_NAMES[sk][2]}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
+      <section><h3>ランクレース ${weekMapName()}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く'])}</section>
@@ -8752,7 +8766,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const paint = rank => {
       const now = rank ? `今週の今の順位: ${rank}位 → このままなら★${rankPrize(rank)}` : played ? `今週は${Rank.named() ? 'まだランキングに載っていない' : '名前が未登録'}ので、このままなら★${RANK_PRIZE_LOW}` : `今週はまだ遊んでいない(1回遊べば★${RANK_PRIZE_LOW}以上)`;
       body.innerHTML = `
-      <section><h3>今週(${MAP_NAMES[weekSkin()][2]})</h3>${li([now])}</section>
+      <section><h3>今週(${weekMapName()})</h3>${li([now])}</section>
       <section><h3>もらえる★</h3><table><tr><th>週の最終順位</th><th>★</th></tr>${rows.map(([a, n]) => `<tr><td>${a}</td><td>★${n}</td></tr>`).join('')}</table></section>
       <section><h3>しくみ</h3>${li(['ランクレースは毎週月曜に始まり、日曜の終わりに締め切り(日本時間)', '週が終わったあと、最初にゲームを開いたときに★がタイトル右上の✉️(メール)に届く(開かなかった週の分もまとめて)', '順位は名前を登録してランキングに載った、その週の最高記録で決まる。同じタイムは同じ順位', `101位以下・名前が未登録でも、その週に1回遊べば★${RANK_PRIZE_LOW}`, 'その週に一度も遊ばなければ報酬はなし'])}</section>`;
     };
@@ -8784,8 +8798,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${mapName(3)}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false;
-    $('spMsg').textContent = `ランクレース。今週のマップは${mapName(3)}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
+    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false;
+    $('spMsg').textContent = `ランクレース。今週のマップは${weekMapName()}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・2分から毎分補給(偶数分はバリア+爆弾2、奇数分は爆弾2)\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
     fitStandby();

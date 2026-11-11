@@ -6,9 +6,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function okGame(g) { return g in ['deadline1', 'deadline2', 'deadline3d']; }
-    // the fixed boards, the all-time ones (at1-at4: 歴代ランキング, one per stage 3), and the weekly ranking's
+    // the fixed boards, the all-time ones (at1-at4: 歴代ランキング of each series' 3rd map; at1s1, at1s2 … its 1st and 2nd), and the weekly ranking's
     // (wk + the week's number, e.g. wk2964)
-    function okBoard(b) { return b in ['players', 'loop', 'daily1', 'daily2', 'daily3', 'at1', 'at2', 'at3', 'at4'] || b.matches('wk[0-9]{1,6}'); }
+    function okBoard(b) { return b in ['players', 'loop', 'daily1', 'daily2', 'daily3', 'at1', 'at2', 'at3', 'at4', 'at1s1', 'at1s2', 'at2s1', 'at2s2', 'at3s1', 'at3s2', 'at4s1', 'at4s2'] || b.matches('wk[0-9]{1,6}'); }
 
     // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, loop DEADLINE1's 無限回路, daily1-3 the daily nights, wk<n> the weekly ranking, at1-at4 the all-time ones
     match /games/{game}/{board}/{uid} {
