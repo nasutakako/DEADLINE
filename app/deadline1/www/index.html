@@ -273,6 +273,8 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 #startPicks .pick.sel { border-color: #5dff9e; background: color-mix(in srgb, #5dff9e 14%, var(--panel)); box-shadow: 0 0 0 1px #5dff9e inset, 0 0 14px rgba(93,255,158,.25); }
 /* until the run begins the stand-by screens have the whole screen: no stick, no buttons, no side columns */
 body.picking .hud, body.picking .sys, body.picking .controls, body.picking .pad { display: none !important; }
+body.ontitle, body.picking { --play-y: 0px !important; }
+body:not(.ontitle):not(.picking) { padding-top: calc(8px + var(--play-y, 0px)); padding-bottom: calc(8px + var(--play-y, 0px)); }
 body.picking .stage { grid-column: 1 / -1 !important; grid-row: 1 / -1 !important; }
 body.picking :is(#briefScreen, #startPickScreen) .card { max-width: min(800px, 100%) !important; width: 100%; }
 /* the stand-by screens fill the whole screen: the map cards (or the item cards) take the height left over */
@@ -364,7 +366,7 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
   body {
     --side: clamp(120px, 15vw, 140px);
-    grid-template-columns: var(--side) minmax(0, 1fr) var(--side-r, var(--side));
+    grid-template-columns: calc(var(--side) + var(--side-x, 0px)) minmax(0, 1fr) calc(var(--side-r, var(--side)) + var(--side-x, 0px));
     grid-template-areas: "pad stage hud" "pad stage sys" "pad stage ctl";
     padding-left: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
     padding-right: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
@@ -838,7 +840,7 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
   body.swap:not(.ontitle) { grid-template-columns: 112px minmax(0, 1fr); grid-template-areas: "hud stage" "sys stage" "ctl stage"; }
 }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
-  body.swap:not(.ontitle) { grid-template-columns: var(--side-r, var(--side)) minmax(0, 1fr) var(--side); grid-template-areas: "hud stage pad" "sys stage pad" "ctl stage pad"; }
+  body.swap:not(.ontitle) { grid-template-columns: calc(var(--side-r, var(--side)) + var(--side-x, 0px)) minmax(0, 1fr) calc(var(--side) + var(--side-x, 0px)); grid-template-areas: "hud stage pad" "sys stage pad" "ctl stage pad"; }
 }
 #titleScreen .go .locknote { display: block; margin-top: 3px; font-family: var(--f-body); font-size: 11px; font-weight: 700; letter-spacing: .02em; line-height: 1.3; white-space: normal; color: #b4bccd; }
 #titleScreen #rankPlayBtn { padding-left: 10px; padding-right: 10px; }
@@ -3152,16 +3154,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const pwalk = (x, y) => walk(x, y) && !goalT[idx(x, y)];
 
   function pickDims() {
-    const r = stage.getBoundingClientRect();
+    const r0 = stage.getBoundingClientRect(), bs = document.body;
+    // (measured as the side columns normally are: whatever sideFill gave them goes back to the map's room here)
+    const sy = bs.classList.contains('ontitle') || bs.classList.contains('picking') ? 0 : 2 * (parseFloat(bs.style.getPropertyValue('--play-y')) || 0);
+    const r = { width: r0.width, height: r0.height + sy };
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
     // (one more column of blocks than the screen's shape would give: the tiles a little smaller to fit)
-    if (a >= 1) {
-      COLS = Math.min(SIZES[SIZES.length - 1], nearest((r.height < 440 ? 17 : 21) * a) + 4);
-      // the rows: whichever count fills the most of the screen (so no empty bands above and below the map)
-      const fill = n => { const T = Math.min(r.width / COLS, r.height / n); return COLS * n * T * T; };
-      ROWS = SIZES.filter(n => n >= 13 && n <= COLS).reduce((b, n) => fill(n) > fill(b) + 0.5 ? n : b, 13);
-    }
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a) + 4); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
@@ -3367,6 +3367,17 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     T = Math.min(W / COLS, H / ROWS);
     ox = (W - COLS * T) / 2; oy = (H - ROWS * T) / 2;
     renderMapCache();
+    sideFill();
+  }
+  // in a run, what the map leaves empty above and below it is left empty across the whole screen: the stick's and
+  // the buttons' columns take the same band off their top and bottom, so all three line up with the map
+  function sideFill() {
+    const b = document.body;
+    if (b.classList.contains('ontitle') || b.classList.contains('picking') || getComputedStyle($('pad')).display === 'none') return;
+    const gap = H - ROWS * T, cur = parseFloat(b.style.getPropertyValue('--play-y')) || 0;
+    if (Math.abs(gap) < 2) return;
+    const want = Math.max(0, Math.min(120, cur + gap / 2));
+    if (Math.abs(want - cur) >= 1) b.style.setProperty('--play-y', want.toFixed(1) + 'px');
   }
 
   function renderMapCache() {
