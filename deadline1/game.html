@@ -3440,22 +3440,21 @@ body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !impor
       while (pl.length < MIN && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
       while (pl.length > 5) fill(pl.pop(), 1);
     }
-    // 花火の夜: a river across the top. The far bank (rows 0-2): seven long low buildings in a row (row 1) with roads
-    // all round them; the water (rows 3-4); the grass bank (row 5); and on this side, the same: a road (row 6), seven
-    // long low buildings (row 7), and the town's own road (row 8); three road bridges across, on the cross streets
+    // 花火の夜: a river across the top. The far bank (rows 0-2): seven long low buildings in a row (row 1), one over
+    // each block, with roads all round them (row 0 behind, row 2 in front, the cross streets between); the water (rows 3-6);
+    // the grass bank on this side (row 7); three road bridges across, on streets spread over the width
     riverOn = mapSkin === 'd4' && mapStage() === 3; bridges = [];
     if (riverOn) {
       for (let x = 0; x < COLS; x++) {
-        grid[idx(x, 0)] = grid[idx(x, 2)] = grid[idx(x, 6)] = 0;
-        grid[idx(x, 1)] = grid[idx(x, 7)] = x % 4 === 0 ? 0 : 1;
-        grid[idx(x, 3)] = grid[idx(x, 4)] = 1; grid[idx(x, 5)] = 0;
+        grid[idx(x, 0)] = 0; grid[idx(x, 1)] = x % 4 === 0 ? 0 : 1;
+        grid[idx(x, 2)] = 0; for (let y = 3; y <= 6; y++) grid[idx(x, y)] = 1; grid[idx(x, 7)] = 0;
       }
-      for (const f of [0.2, 0.5, 0.8]) { const bx = Math.round(COLS * f / 4) * 4; bridges.push(bx); grid[idx(bx, 3)] = grid[idx(bx, 4)] = 0; }
-      // seven in each row: a wider map joins neighbouring buildings (across a cross street that is no bridge's), a narrower one splits some
+      for (const f of [0.2, 0.5, 0.8]) { const bx = Math.round(COLS * f / 4) * 4; bridges.push(bx); for (let y = 3; y <= 6; y++) grid[idx(bx, y)] = 0; }
+      // seven: a wider map joins neighbouring buildings (across a cross street), a narrower one splits some
       const nb = Math.floor((COLS - 1) / 4);
-      const inner = []; for (let k = 1; k < nb; k++) if (!bridges.includes(4 * k)) inner.push(4 * k);
-      for (let j = 0, need = Math.max(0, nb - 7); j < need && inner.length; j++) { const x = inner[Math.min(inner.length - 1, Math.floor((j + 0.5) * inner.length / need))]; grid[idx(x, 1)] = grid[idx(x, 7)] = 1; }
-      for (let j = 0, more = Math.max(0, 7 - nb); j < more && j < nb; j++) { const x = 4 * Math.floor((j + 0.5) * nb / more) + 2; grid[idx(x, 1)] = grid[idx(x, 7)] = 0; }
+      const inner = []; for (let k = 1; k < nb; k++) inner.push(4 * k);
+      for (let j = 0, need = Math.max(0, nb - 7); j < need && inner.length; j++) { const x = inner[Math.min(inner.length - 1, Math.floor((j + 0.5) * inner.length / need))]; grid[idx(x, 1)] = 1; }
+      for (let j = 0, more = Math.max(0, 7 - nb); j < more && j < nb; j++) { const x = 4 * Math.floor((j + 0.5) * nb / more) + 2; grid[idx(x, 1)] = 0; }
     }
     // stage 3: a pit in the middle of every open plaza; oni that step in fall
     holes = [];
@@ -3576,7 +3575,7 @@ body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !impor
     const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
       const i = idx(x, y);
-      if (!road(x, y) || goalT[i] || (riverOn && y >= 3 && y <= 5)) continue;   // (not on 4-3's bridges or bank)
+      if (!road(x, y) || goalT[i] || (riverOn && y >= 3 && y <= 7)) continue;   // (not on 4-3's bridges or bank)
       const h = road(x - 1, y) && road(x + 1, y) && !road(x, y - 1) && !road(x, y + 1), v = road(x, y - 1) && road(x, y + 1) && !road(x - 1, y) && !road(x + 1, y);
       if (!h && !v) continue;
       if (holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || Math.hypot(x - sx, y - sy) < 3) continue;
@@ -3946,7 +3945,7 @@ body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !impor
     m.setLineDash([]);
     // roofs: a shadow, the roof, a lighter parapet; stalls on the street side throwing light out (warm, or lantern red)
     m.fillStyle = 'rgba(0,0,0,0.5)';
-    const roof = (x, y) => grid[idx(x, y)] === 1 && !(riverOn && (y === 3 || y === 4));
+    const roof = (x, y) => grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (roof(x, y)) m.fillRect(x + 0.14, y + 0.16, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (!roof(x, y)) continue;
@@ -4006,31 +4005,31 @@ body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !impor
         }
       }
     }
-    // the river (rows 3-4): dark water catching the fireworks, the grass bank below it (row 5)
+    // the river (rows 3-6): dark water catching the fireworks, the grass bank below it (row 7)
     if (riverOn) {
-      const g = m.createLinearGradient(0, 3, 0, 5); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
-      m.fillStyle = g; m.fillRect(0, 3, COLS, 2);
+      const g = m.createLinearGradient(0, 3, 0, 7); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
+      m.fillStyle = g; m.fillRect(0, 3, COLS, 4);
       m.strokeStyle = 'rgba(160,190,255,0.14)'; m.lineWidth = 0.03; m.beginPath();
-      for (let k = 0; k < COLS * 2; k++) { const x = rnd() * COLS, y = 3.15 + rnd() * 1.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
+      for (let k = 0; k < COLS * 4; k++) { const x = rnd() * COLS, y = 3.15 + rnd() * 3.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
       m.stroke();
       // the fireworks overhead, broken up on the water
       const FWC = ['255,90,80', '255,210,90', '120,200,255', '200,120,255', '120,255,170'];
       for (let k = 0; k < Math.round(COLS / 4); k++) {
-        const x = rnd() * COLS, c = FWC[Math.floor(rnd() * FWC.length)], gl = m.createRadialGradient(x, 4, 0, x, 4, 1.4);
-        gl.addColorStop(0, `rgba(${c},0.22)`); gl.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gl; m.fillRect(x - 1.4, 3, 2.8, 2);
+        const x = rnd() * COLS, c = FWC[Math.floor(rnd() * FWC.length)], gl = m.createRadialGradient(x, 5, 0, x, 5, 1.9);
+        gl.addColorStop(0, `rgba(${c},0.22)`); gl.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gl; m.fillRect(x - 1.9, 3, 3.8, 4);
         m.fillStyle = `rgba(${c},0.5)`;
-        for (let j = 0; j < 6; j++) m.fillRect(x - 0.25 + rnd() * 0.5, 3.15 + j * 0.28, 0.12 + rnd() * 0.25, 0.04);
+        for (let j = 0; j < 6; j++) m.fillRect(x - 0.25 + rnd() * 0.5, 3.3 + j * 0.58, 0.12 + rnd() * 0.25, 0.04);
       }
-      m.fillStyle = 'rgba(190,210,255,0.3)'; m.fillRect(0, 4.94, COLS, 0.06); m.fillRect(0, 3, COLS, 0.05);
+      m.fillStyle = 'rgba(190,210,255,0.3)'; m.fillRect(0, 6.94, COLS, 0.06); m.fillRect(0, 3, COLS, 0.05);
       // the bridges: a deck of road over the water, railings either side
       for (const bx of bridges) {
-        m.fillStyle = 'rgba(0,0,0,0.45)'; m.fillRect(bx + 0.12, 3.1, 1, 2);
-        m.fillStyle = '#3a3746'; m.fillRect(bx, 3, 1, 2);
-        m.strokeStyle = 'rgba(230,220,180,0.3)'; m.lineWidth = 0.035; m.setLineDash([0.26, 0.24]); m.beginPath(); m.moveTo(bx + 0.5, 3); m.lineTo(bx + 0.5, 5); m.stroke(); m.setLineDash([]);
-        m.fillStyle = '#b8b0a0'; m.fillRect(bx - 0.04, 3, 0.08, 2); m.fillRect(bx + 0.96, 3, 0.08, 2);
-        m.fillStyle = 'rgba(0,0,0,0.35)'; for (let k = 0; k < 8; k++) { m.fillRect(bx - 0.06, 3.1 + k * 0.25, 0.12, 0.04); m.fillRect(bx + 0.94, 3.1 + k * 0.25, 0.12, 0.04); }
+        m.fillStyle = 'rgba(0,0,0,0.45)'; m.fillRect(bx + 0.12, 3.1, 1, 4);
+        m.fillStyle = '#3a3746'; m.fillRect(bx, 3, 1, 4);
+        m.strokeStyle = 'rgba(230,220,180,0.3)'; m.lineWidth = 0.035; m.setLineDash([0.26, 0.24]); m.beginPath(); m.moveTo(bx + 0.5, 3); m.lineTo(bx + 0.5, 7); m.stroke(); m.setLineDash([]);
+        m.fillStyle = '#b8b0a0'; m.fillRect(bx - 0.04, 3, 0.08, 4); m.fillRect(bx + 0.96, 3, 0.08, 4);
+        m.fillStyle = 'rgba(0,0,0,0.35)'; for (let k = 0; k < 16; k++) { m.fillRect(bx - 0.06, 3.1 + k * 0.25, 0.12, 0.04); m.fillRect(bx + 0.94, 3.1 + k * 0.25, 0.12, 0.04); }
       }
-      for (let gy0 = 5; gy0 <= 5; gy0++) for (let x = 0; x < COLS; x++) {
+      for (let gy0 = 7; gy0 <= 7; gy0++) for (let x = 0; x < COLS; x++) {
         m.fillStyle = `rgb(${26 + rnd() * 5},${38 + rnd() * 6},${30 + rnd() * 5})`; m.fillRect(x, gy0, 1, 1);
         m.strokeStyle = 'rgba(90,140,90,0.35)'; m.lineWidth = 0.025; m.beginPath();
         for (let k = 0; k < 5; k++) { const gx = x + rnd(), gy = gy0 + 0.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
@@ -4056,11 +4055,8 @@ body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !impor
       rnd();   // (the fireworks' streaks on the ground are gone; the draw kept so the rest of the map comes out the same)
     }
     m.restore();
-    // paper lanterns strung down the streets, as on 縁日通り (4-3: none over the river or the far bank; a string along
-    // the road in front of the grass bank instead)
-    const lanternRows = []; for (let y = 0; y < ROWS; y += 4) if (!(riverOn && y < 6)) lanternRows.push(y);
-    if (riverOn) lanternRows.unshift(6);
-    for (const y of lanternRows) for (let x = 0; x < COLS; x++) {
+    // paper lanterns strung down the streets, as on 縁日通り
+    for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) {
       if (!walk(x, y) || (x % 2)) continue;
       const lx = x + 0.5, ly = y + 0.18;
       const g = m.createRadialGradient(lx, ly, 0, lx, ly, 0.7); g.addColorStop(0, 'rgba(255,90,50,0.3)'); g.addColorStop(1, 'rgba(255,90,50,0)');
@@ -4069,7 +4065,7 @@ body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !impor
       m.fillStyle = 'rgba(255,230,180,0.8)'; m.fillRect(lx - 0.02, ly - 0.05, 0.04, 0.1);
     }
     m.strokeStyle = 'rgba(30,20,20,0.6)'; m.lineWidth = 0.015; m.beginPath();
-    for (const y of lanternRows) { m.moveTo(0, y + 0.1); m.lineTo(COLS, y + 0.1); }
+    for (let y = 0; y < ROWS; y += 4) { m.moveTo(0, y + 0.1); m.lineTo(COLS, y + 0.1); }
     m.stroke();
     m.strokeStyle = 'rgba(255,90,52,0.55)'; m.lineWidth = 0.06; m.strokeRect(0.04, 0.04, COLS - 0.08, ROWS - 0.08);
   }
