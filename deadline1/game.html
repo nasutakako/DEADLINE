@@ -1585,7 +1585,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         const d = snap.data() || {};
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
-          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), rkPaid: Math.max(records.rkPaid || 0, d.rkPaid || 0) || records.rkPaid, mail: mergeMail(records.mail, d.mail), shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => ({ plays: Math.max(x.a.plays || 0, x.b.plays || 0), time: Math.max(x.a.time || 0, x.b.time || 0), kills: Math.max(x.a.kills || 0, x.b.kills || 0) }))({ a: records.s3 || {}, b: d.s3 || {} }) };
+          dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), rkPaid: Math.max(records.rkPaid || 0, d.rkPaid || 0) || records.rkPaid, mail: mergeMail(records.mail, d.mail), shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => { const o = {}; for (const k of new Set([...Object.keys(x.a), ...Object.keys(x.b), 'plays', 'time', 'kills'])) o[k] = Math.max(+x.a[k] || 0, +x.b[k] || 0); return o; })({ a: records.s3 || {}, b: d.s3 || {} }) };
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
@@ -1986,48 +1986,48 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ['t52', '二夜目', '2日、生存課題を遊ぶ', (r, a) => a.d.days >= 2],
     ['t53', '三夜巡り', '3種類の生存課題をすべて遊ぶ', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).plays)],
     ['t54', '三日坊主卒業', '3日連続で生存課題を遊ぶ', (r, a) => a.d.top >= 3],
-    ['t55', '風の噂', '疾風の夜を遊ぶ', r => r.daily === 'd1'],
-    ['t56', '心理戦デビュー', '先回りの夜を遊ぶ', r => r.daily === 'd2'],
-    ['t57', '鉄壁に凸', '鉄壁の夜を遊ぶ', r => r.daily === 'd3'],
-    ['t58', '風になった気がする', '疾風の夜で1分逃げ切る', r => r.daily === 'd1' && r.time >= 60],
-    ['t59', '裏の裏', '先回りの夜で1分逃げ切る', r => r.daily === 'd2' && r.time >= 60],
-    ['t60', 'ノックしてもしもし', '鉄壁の夜で1分逃げ切る', r => r.daily === 'd3' && r.time >= 60],
-    ['t61', '風の時代', '疾風の夜で2分逃げ切る', r => r.daily === 'd1' && r.time >= 120],
-    ['t62', '読めてる人', '先回りの夜で2分逃げ切る', r => r.daily === 'd2' && r.time >= 120],
-    ['t63', 'メンタル鋼', '鉄壁の夜で2分逃げ切る', r => r.daily === 'd3' && r.time >= 120],
-    ['t64', '嵐の中の無双', '疾風の夜で1回に鬼を10体倒す', r => r.daily === 'd1' && r.kills >= 10],
-    ['t65', '待ち伏せ返しの民', '先回りの夜で1回に鬼を20体倒す', r => r.daily === 'd2' && r.kills >= 20],
-    ['t66', '壁ドン', '鉄壁の夜で1回に鬼を20体倒す', r => r.daily === 'd3' && r.kills >= 20],
-    ['t67', '素手で台風', '疾風の夜で爆弾を使わずに1分逃げ切る', r => r.daily === 'd1' && r.bombs === 0 && r.time >= 60],
-    ['t68', '罠の沼', '先回りの夜で落とし穴に鬼を5体落とす', r => r.daily === 'd2' && r.pit >= 5],
-    ['t69', '鉄を溶かす', '鉄壁の夜で爆弾1発で鬼を3体倒す', r => r.daily === 'd3' && r.maxBlast >= 3],
+    ['t55', '脱出成功(震え)', '出口から脱出する', r => r.esc],
+    ['t56', 'ランクレース入門', 'ランクレースを1回遊ぶ', r => r.rk],
+    ['t57', 'ワープ酔い', 'ワープを使う', r => r.warps >= 1],
+    ['t58', '風になった気がする', '加速装置を使う', r => r.pads >= 1],
+    ['t59', 'ワープ中毒', '1回でワープを5回使う', r => r.warps >= 5],
+    ['t60', '加速装置ジャンキー', '1回で加速装置を10回使う', r => r.pads >= 10],
+    ['t61', '手ぶらで帰宅', 'アイテムを使わずに脱出する', r => r.esc && r.items === 0],
+    ['t62', '先回りの先回り', '1回で黄色い鬼を10体倒す', r => r.amb >= 10],
+    ['t63', 'メンタル鋼', '鬼が同時に45体いる中を生き延びる', r => r.maxOni >= 45],
+    ['t64', '無双ゲーの住人', '1回で鬼を150体倒す', r => r.kills >= 150],
+    ['t65', '待ち伏せ返しの民', '1回で黄色い鬼を30体倒す', r => r.amb >= 30],
+    ['t66', '壁ドン', '1回でバリア鬼を30体倒す', r => r.tough >= 30],
+    ['t67', '素手で帰宅', '爆弾を使わずに脱出する', r => r.esc && r.bombs === 0],
+    ['t68', '罠の沼', '1回で落とし穴に鬼を25体落とす', r => r.pit >= 25],
+    ['t69', '一撃必殺', '爆弾1発で鬼を8体倒す', r => r.maxBlast >= 8],
     ['t70', '一週間の試練', '7日、生存課題を遊ぶ', (r, a) => a.d.days >= 7],
-    ['t71', '逆風に強い', '疾風の夜で3分逃げ切る', r => r.daily === 'd1' && r.time >= 180],
-    ['t72', '未来から来た', '先回りの夜で3分逃げ切る', r => r.daily === 'd2' && r.time >= 180],
-    ['t73', '壁なんてなかった', '鉄壁の夜で3分逃げ切る', r => r.daily === 'd3' && r.time >= 180],
-    ['t74', '反復横跳び選手', '先回りの夜でダッシュを50回使う', r => r.daily === 'd2' && r.dashes >= 50],
-    ['t75', '物理で解決', '鉄壁の夜でランチャー1発で鬼を3体倒す', r => r.daily === 'd3' && r.maxRocket >= 3],
+    ['t71', 'ロケランおじさん', 'ランチャー1発で鬼を5体倒す', r => r.maxRocket >= 5],
+    ['t72', '未来から来た', '1回で「!」を60回踏む', r => r.stomps >= 60],
+    ['t73', '黒鬼の天敵', '1回で黒い鬼を15体倒す', r => r.black >= 15],
+    ['t74', '反復横跳び選手', '1回でダッシュを200回使う', r => r.dashes >= 200],
+    ['t75', '物理で解決', '1回で爆弾を50個使う', r => r.bombs >= 50],
     ['t76', '七夜連続', '7日連続で生存課題を遊ぶ', (r, a) => a.d.top >= 7],
     ['t77', '試練の常連', '生存課題を通算30回遊ぶ', (r, a) => dsum(a, 'plays') >= 30],
-    ['t78', '風より速い', '疾風の夜で5分逃げ切る', r => r.daily === 'd1' && r.time >= 300],
-    ['t79', '読み合い全勝', '先回りの夜で5分逃げ切る', r => r.daily === 'd2' && r.time >= 300],
-    ['t80', '鉄壁(笑)', '鉄壁の夜で5分逃げ切る', r => r.daily === 'd3' && r.time >= 300],
-    ['t81', '黒鬼ハンター', '疾風の夜で1回に鬼を30体倒す', r => r.daily === 'd1' && r.kills >= 30],
-    ['t82', '先回りの先回り', '先回りの夜で1回に鬼を60体倒す', r => r.daily === 'd2' && r.kills >= 60],
-    ['t83', '鉄壁クラッシャー', '鉄壁の夜で1回に鬼を50体倒す', r => r.daily === 'd3' && r.kills >= 50],
-    ['t84', '風の常連客', '疾風の夜を通算20回遊ぶ', (r, a) => dn(a, 'd1').plays >= 20],
-    ['t85', '読み合い中毒', '先回りの夜を通算20回遊ぶ', (r, a) => dn(a, 'd2').plays >= 20],
-    ['t86', '壁に話しかける人', '鉄壁の夜を通算20回遊ぶ', (r, a) => dn(a, 'd3').plays >= 20],
-    ['t87', '台風の目', '疾風の夜で7分逃げ切る', r => r.daily === 'd1' && r.time >= 420],
-    ['t88', '見えてる人', '先回りの夜で8分逃げ切る', r => r.daily === 'd2' && r.time >= 480],
-    ['t89', '豆腐メンタル卒業', '鉄壁の夜で8分逃げ切る', r => r.daily === 'd3' && r.time >= 480],
+    ['t78', 'ランク沼の入り口', 'ランクレースで5分逃げ切る', r => r.rk && r.time >= 300],
+    ['t79', 'ランク上位勢', 'ランクレースで8分逃げ切る', r => r.rk && r.time >= 480],
+    ['t80', '寝落ち不可避', 'ランクレースで10分逃げ切る', r => r.rk && r.time >= 600],
+    ['t81', '脱出常習犯', '通算10回脱出する', (r, a) => (a.esc || 0) >= 10],
+    ['t82', '出口の常連', '通算50回脱出する', (r, a) => (a.esc || 0) >= 50],
+    ['t83', 'ランク沼', 'ランクレースを通算10回遊ぶ', (r, a) => (a.rk || 0) >= 10],
+    ['t84', 'ランクの亡霊', 'ランクレースを通算50回遊ぶ', (r, a) => (a.rk || 0) >= 50],
+    ['t85', '鬼絶滅させ隊', '通算の撃破数5000体', (r, a) => a.kills >= 5000],
+    ['t86', '人生の一部', '通算の逃走時間5時間', (r, a) => a.time >= 18000],
+    ['t87', '生活の一部', '通算300回遊ぶ', (r, a) => a.plays >= 300],
+    ['t88', 'ワープ常習犯', 'ワープを通算100回使う', (r, a) => (a.warps || 0) >= 100],
+    ['t89', 'ニトロ中毒', '加速装置を通算100回使う', (r, a) => (a.pads || 0) >= 100],
     ['t90', '一月の夜', '30日、生存課題を遊ぶ', (r, a) => a.d.days >= 30],
     ['t91', '三夜の覇者', '3種類の生存課題すべてで5分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 300)],
-    ['t92', '嵐のあとの静けさ', '疾風の夜の通算撃破数200体', (r, a) => dn(a, 'd1').kills >= 200],
+    ['t92', '全世界逃亡', '4つの世界すべてで脱出する', (r, a) => ['d1', 'd2', 'd3', 'd4'].every(k => a['e_' + k])],
     ['t93', '試練の刻', '生存課題の通算逃走時間1時間', (r, a) => dsum(a, 'time') >= 3600],
-    ['t94', '風の神(自称)', '疾風の夜で10分逃げ切る', r => r.daily === 'd1' && r.time >= 600],
-    ['t95', '予言者', '先回りの夜で12分逃げ切る', r => r.daily === 'd2' && r.time >= 720],
-    ['t96', '攻略本いらず', '鉄壁の夜で12分逃げ切る', r => r.daily === 'd3' && r.time >= 720],
+    ['t94', '地球の裏まで逃げた', '4つの世界すべての○-3で脱出する', (r, a) => ['d1', 'd2', 'd3', 'd4'].every(k => a['e3_' + k])],
+    ['t95', '伝説の夜更かし', 'ランクレースで12分逃げ切る', r => r.rk && r.time >= 720],
+    ['t96', 'ランク界の妖怪', 'ランクレースで15分逃げ切る', r => r.rk && r.time >= 900],
     ['t97', '三十夜連続', '30日連続で生存課題を遊ぶ', (r, a) => a.d.top >= 30],
     ['t98', '試練の鬼狩り', '生存課題の通算撃破数1000体', (r, a) => dsum(a, 'kills') >= 1000],
     ['t99', '三夜の王', '3種類の生存課題すべてで10分逃げ切る', (r, a) => ['d1', 'd2', 'd3'].every(k => dn(a, k).best >= 600)],
@@ -2052,7 +2052,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const titleName = id => { const x = TITLES.find(t => t[0] === id); return x ? x[1] : ''; };
   // this stage's tallies (null outside a stage)
   let S3 = null;
-  const newRun = () => ({ bombs: 0, dashes: 0, items: 0, stomps: 0, pit: 0, black: 0, amb: 0, tough: 0, saves: 0, maxBlast: 0, maxRocket: 0, maxOni: 0 });
+  const newRun = () => ({ pads: 0, warps: 0, bombs: 0, dashes: 0, items: 0, stomps: 0, pit: 0, black: 0, amb: 0, tough: 0, saves: 0, maxBlast: 0, maxRocket: 0, maxOni: 0 });
   // an oni went down: how (pit, …) and what kind it was
   function tally(e, how) {
     if (!S3) return;
@@ -2064,10 +2064,14 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // end of a stage (caught or escaped): count it into the totals and hand out every title it earns; returns the new ones
   function awardTitles(time, kills, fell, caught) {
     if (!S3) return [];
-    const r = Object.assign({}, S3, { time, kills, fell, caught, stage: stageN, daily: stageN === 4 && daily ? daily.key : '' });
+    const r = Object.assign({}, S3, { time, kills, fell, caught, stage: stageN, daily: stageN === 4 && daily ? daily.key : '', esc: !caught, rk: !!rankRun, skin: mapSkin });
     S3 = null;
     const a = records.s3 = Object.assign({ plays: 0, time: 0, kills: 0 }, records.s3);
     a.plays++; a.time = +(a.time + time).toFixed(1); a.kills += kills;
+    // (escapes, all and per world and on each world's stage 3; ranking runs; warps and boost pads)
+    const inc = (k, n = 1) => { a[k] = (a[k] || 0) + n; };
+    if (r.esc) { inc('esc'); inc('e_' + r.skin); if (stageN === 3) inc('e3_' + r.skin); }
+    if (r.rk) inc('rk'); inc('warps', r.warps); inc('pads', r.pads);
     const A = Object.assign({}, a, { d: dailyStat(r) });
     const owned = new Set(records.titles || []), got = [], COLLECT = ['t50', 't100'];
     for (const [id, , , ok] of TITLES) if (!owned.has(id) && !COLLECT.includes(id) && ok(r, A, 0)) { owned.add(id); got.push(id); }
@@ -4565,7 +4569,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       if (d.cool > 0) { d.cool -= dt; if (d.cool <= 0) { d.flash = PIT_FLASH; tone(1175, 0.1, 'triangle', 0.035); } }
       const near = Math.hypot(P.x - d.x, P.y - d.y) < BOOSTPAD_R + P.r - P.r * 2 / 3;
       if (near && !d.on && !(d.cool > 0) && !(P.jumpT > 0)) {
-        d.cool = PAD_COOL; P.dashT = DASH_TIME; P.lucky = false; if (tut) tut.padUsed = true;
+        d.cool = PAD_COOL; P.dashT = DASH_TIME; P.lucky = false; if (tut) tut.padUsed = true; if (S3) S3.pads++;
         flash = Math.max(flash, 0.12);
         for (let k = 0; k < 32; k++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 5; sparks.push({ x: d.x, y: d.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1 + Math.random() * 0.4, c: k % 3 ? '#b6fdff' : '#ffffff' }); }
         tone(660, 0.08, 'square', 0.04, 1320); setTimeout(() => tone(1320, 0.14, 'triangle', 0.045, 2200), 50);
@@ -4597,6 +4601,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
           P.warpT = 0; P.warpOn = null; flash = Math.max(flash, 0.3);
           tone(1320, 0.18, 'sine', 0.05, 330); setTimeout(() => tone(440, 0.25, 'sine', 0.05, 1760), 90);
           if (tut) tut.warped = true;
+          if (S3) S3.warps++;
         }
       } else { P.warpT = 0; P.warpOn = null; }
     }
