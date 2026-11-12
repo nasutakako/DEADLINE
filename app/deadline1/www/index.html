@@ -1187,8 +1187,9 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .act { background: ra
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .act:active { box-shadow: 0 0 0 1px #000, 0 0 0 3px #9ca0a8, 0 0 0 3.5px #3a3c42, 0 1px 0 3px #000, 0 2px 3px rgba(0,0,0,.6), inset 0 1px 2px rgba(0,0,0,.5) !important; }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .act small, body.handui.darkhand:not(.ontitle):not(.picking) .controls #mineCount { color: #fff !important; }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .act::before { color: #b5b9c2 !important; }
-/* (the four face buttons joined by a thin metal line running through them) */
-body.handui.darkhand:not(.ontitle):not(.picking) .controls::before { content: ''; position: absolute; left: 17%; right: 17%; top: 23%; bottom: 19%; border-radius: 50%; border: 1.5px solid #6e727a; box-shadow: 0 0 0 .5px #000, inset 0 0 0 .5px #000; pointer-events: none; }
+/* (the four face buttons sit in one round recess in the shell, as on the reference: a dark dish with a faint rim) */
+body.handui.darkhand:not(.ontitle):not(.picking) .controls::before { content: ''; position: absolute; left: 50%; top: 52%; width: 86%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 50% 40%, #0c0c0e, #000 70%); box-shadow: inset 0 3px 8px rgba(0,0,0,.9), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(255,255,255,.2), 0 1px 0 1px rgba(0,0,0,.8); }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls { margin-bottom: 84px; }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.5) 0) !important; }
 
