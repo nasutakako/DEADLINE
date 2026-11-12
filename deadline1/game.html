@@ -1254,10 +1254,10 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       <div class="picks" id="tutPicks">
         <button class="pick" data-tut="1" type="button"><b>1-1</b><span><i>走る・ダッシュ・</i><i>爆弾・黄色い鬼・</i><i>「!」を踏む</i></span></button>
         <button class="pick" data-tut="2" type="button"><b>1-2</b><span><i>補給アイテム・</i><i>加速装置・</i><i>バリア鬼・</i><i>黒い鬼・</i><i>40体ごとの支給</i></span></button>
-        <button class="pick" data-tut="3h" type="button"><b>1-3</b><span><i>九死に一生・</i><i>落とし穴・</i><i>6分30秒で出口</i></span></button>
+        <button class="pick" data-tut="3h" type="button"><b>1-3</b><span><i>落とし穴・</i><i>6分30秒で出口</i></span></button>
         <button class="pick" data-tut="w" type="button"><b>2-1</b><span><i>ワープポイント</i></span></button>
         <button class="pick" data-tut="c2" type="button"><b>2-2</b><span><i>補給・</i><i>出口の時間</i></span></button>
-        <button class="pick" data-tut="3c" type="button"><b>2-3</b><span><i>電磁爆弾・</i><i>6分30秒で出口</i></span></button>
+        <button class="pick" data-tut="3c" type="button"><b>2-3</b><span><i>落とし穴・</i><i>ワープ・</i><i>6分30秒で出口</i></span></button>
         <button class="pick" data-tut="k1" type="button"><b>3-1</b><span><i>分裂する</i><i>黄色い鬼・</i><i>建物の影</i></span></button>
         <button class="pick" data-tut="k2" type="button"><b>3-2</b><span><i>影分身ダッシュ</i></span></button>
         <button class="pick" data-tut="k3" type="button"><b>3-3</b><span><i>6分30秒で出口</i></span></button>
@@ -2324,7 +2324,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     sk_finale: { m: ['#ffe2c8', '#d8232f', '#3a0306'], glow: '255,120,90', fx: 'star' },
   };
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
-  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'bomb_hole', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale', 'bomb_emp'];
+  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'bomb_hole', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   // ハイジャンプ is gone from the game, and its looks from the shop
   SHOP.splice(SHOP.findIndex(c => c.k === 'boost'), 1);
@@ -2461,7 +2461,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const EQ = k => { if (repEq) return repEq[k] || ''; const s = records.shop; const v = (s && s.eq && s.eq[k]) || ''; return SHOP_GONE.includes(v) ? '' : v; };
   // a story's stage 3 lends its prize for the run (帰り道: 九死に一生, 電脳の檻: the EMP bomb) where that slot is the standard one
   const trial = () => MAP_CHOICE && stageN === 3 && !rankRun && state !== 'title' ? ROUTE[mapSkin] : '';
-  const bombFx = () => trial() === 'cyber' ? 'bomb_emp' : EQ('bomb');
+  const bombFx = () => EQ('bomb');   // (電脳の檻 no longer lends the EMP bomb: it is a look in the shop like the others)
   // 影踏み: the shadow dash from 黄昏通り on (not in the weekly ranking); the yellow oni's shadows on every stage of it
   const shadowStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'shadow' && stageN <= 3 && !daily && state !== 'title';
   // 導火線: every stage of it has bomber oni (the weekly ranking on its map too; not the survival nights)
@@ -2634,8 +2634,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // 影絵世界: 影分身ダッシュ on its stages 2 and 3, and on its weekly ranking (月蝕の夜), whatever dash is worn
   const dashFx = () => shadowStory() && stageN >= 2 ? 'dash_shadow' : EQ('dash');
   const IDATEN_N = 2;
-  // (帰り道's stage 3 lends 九死に一生; 韋駄天 is gone from the game)
-  const skillOn = k => trial() === 'home' && k === 'skill_luck';
+  // (no stage lends a skill any more: 九死に一生 and 韋駄天 are gone from the game)
+  const skillOn = k => false;
   // two copies (this device and the saved one): everything either owns, and this device's choices first
   const mergeShop = (a, b) => { a = a || {}; b = b || {}; return { owned: [...new Set([...(a.owned || []), ...(b.owned || [])])], eq: Object.assign({}, b.eq, a.eq) }; };
   // what each item does in play (items not listed only change the look)
@@ -2660,7 +2660,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     el.style.boxShadow = look && look.fx === 'neon' ? '0 0 12px #ff3fd8' : look && look.fx === 'fire' ? '0 0 12px #2b8cff' : look && look.fx === 'moon' ? '0 0 12px rgba(255,250,220,.7)' : '';
   }
   // a story's prize is won, not sold: it stays in the catalog (装備 lists it) but not on the shop's shelves
-  const SHOP_PRIZE_ONLY = ['bomb_emp', 'sk_dawn', 'sk_finale'];
+  const SHOP_PRIZE_ONLY = ['sk_dawn', 'sk_finale'];
   const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
@@ -4994,7 +4994,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       shake = reduceMotion ? 0 : Math.max(shake, 0.45); flash = Math.max(flash, 0.6); tone(55, 0.8, 'sawtooth', 0.12, 25); noise(0.6, 0.15);
     }
     elemBomb(m);
-    if (m.fx === 'bomb_emp') { zaps.push({ x: m.x, y: m.y, r: 1.3, t: 0, life: 0.5, kind: 'emp', hit: new Set(), look: trial() !== 'cyber' }); sfx.emp(); }
+    if (m.fx === 'bomb_emp') { zaps.push({ x: m.x, y: m.y, r: 1.3, t: 0, life: 0.5, kind: 'emp', hit: new Set(), look: true }   /* (a look only, on every stage) */); sfx.emp(); }
     if (m.fx === 'bomb_ice') sfx.ice();
     if (m.fx === 'bomb_fw') sfx.firework();
   }
@@ -5249,7 +5249,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   function shopFx(dt) {
     // lightning left behind and the electric bomb's leftover charge
     if (P.boostT > 0 && EQ('boost') === 'bs_thunder' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'thunder', hit: new Set() }); }
-    if (P.boostT > 0 && EQ('boost') === 'bs_ice' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'frost', hit: new Set() }); }
+    if (P.boostT > 0 && EQ('boost') === 'bs_ice' && (P.thT = (P.thT || 0) - dt) <= 0) { P.thT = 0.1; zaps.push({ x: P.x, y: P.y, r: 0.6, t: 0, life: 1.5, kind: 'frost', hit: new Set(), look: true /* a look only */ }); }
     // the jump looks in the air: a twinkle, a crackle or a tinkle now and then
     if (P.jumpT > 0 && (P.sfT = (P.sfT || 0) - dt) <= 0) {
       const k = EQ('boost'); P.sfT = 0.16 + Math.random() * 0.1;
@@ -7397,8 +7397,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは6分30秒で出口が開く。ランクレースは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
     ],
     '3h': [
-      { say: '1-3では、スキル「九死に一生」が特別に使える。ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', info: true },
-      { btn: 'dash', say: 'ダッシュしてみよう。いまは必ず発動する。光の尾が大きくなれば九死に一生', set: () => { tut.luckNext = true; tut.lucky = false; }, go: () => tut.lucky },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
     ],
@@ -7448,10 +7446,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
     ],
     '3c': [
-      { say: '2-3では、電磁爆弾が特別に使える。爆発のあと電気が残り、触れた鬼は怯んで動けなくなる', info: true },
-      { say: 'ワープポイントのそばで、鬼を2体引きつけよう。「今!」の合図が出たら、足元に電磁爆弾を置く', info: true, set: tutEmp },
-      { btn: 'mine', say: '鬼が来る。「今!」の合図を待とう', set: tutEmp, go: tutEmpGo },
-      { say: '1体は爆発で倒れ、もう1体は残った電気で怯んだ。怯んでいる間に、ワープポイントに入ろう', set: () => { tut.warped = false; for (const q of warps) q.cool = 0; }, go: () => tut.warped },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
     ],
@@ -8938,8 +8932,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
     if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', n >= 2 ? 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)' : '');
     if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾の${n >= 3 ? '1.5' : '1.2'}倍`, '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
-    if (n === 3 && route === 'home') own.push('九死に一生が特別に使える(ダッシュがときどき1.5倍の距離になる)');
-    if (n === 3 && route === 'cyber') own.push('電磁爆弾が特別に使える');
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
