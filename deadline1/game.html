@@ -1106,8 +1106,8 @@ body.arcadeui:not(.ontitle):not(.picking) { background:
 body.arcadeui #mapEdge { box-shadow: inset 0 0 0 1px #9a9ca2, inset 0 0 0 2px rgba(0,0,0,.6) !important; }   /* (a thin chrome trim only: nothing covers the map's edge) */
 /* the arcade panel never shows outside a run (the title, the map and item pick, ...) */
 body.arcadeui.ontitle .controls, body.arcadeui.picking .controls { display: none !important; }
-body.arcadeui .pad { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.25)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
-body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !important; }
+body.arcadeui:not(.ontitle):not(.picking) .pad { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.25)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+body.arcadeui:not(.ontitle):not(.picking) .pi, body.arcadeui:not(.ontitle):not(.picking) .sys .btn { background: rgba(10,4,5,.75) !important; }
 
 </style>
 <!--/THEME-C-->
