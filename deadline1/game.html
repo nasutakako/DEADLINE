@@ -2510,18 +2510,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
   // of the day, 'best' needs it in one night. [count, sum|best, goal, the full line, the short line for the side panel]
   const MIS_POOL = [
-    [['time', 'sum', 60, '今日の合計で1分逃げる', '合計1分逃げる'], ['bombs', 'sum', 2, '爆弾を合計2個置く', '爆弾を置く'], ['dashes', 'sum', 5, 'ダッシュを合計5回使う', 'ダッシュする']],
-    [['time', 'sum', 180, '今日の合計で3分逃げる', '合計3分逃げる'], ['kills', 'sum', 5, '鬼を合計5体倒す', '鬼を倒す'], ['items', 'sum', 2, 'アイテムを合計2回使う', 'アイテムを使う']],
-    [['time', 'best', 120, '1回で2分逃げきる', '1回で2分逃げる'], ['stomps', 'sum', 2, '「!」を合計2回踏んで鬼を止める', '「!」を踏む'], ['bombs', 'sum', 6, '爆弾を合計6個置く', '爆弾を置く']],
-    [['kills', 'sum', 12, '鬼を合計12体倒す', '鬼を倒す'], ['time', 'sum', 360, '今日の合計で6分逃げる', '合計6分逃げる'], ['dashes', 'sum', 25, 'ダッシュを合計25回使う', 'ダッシュする']],
-    [['pit', 'sum', 1, '落とし穴で鬼を1体落とす', '穴に落とす'], ['kills', 'best', 6, '1回で鬼を6体倒す', '1回で倒す'], ['maxBlast', 'best', 2, '1回の爆発で鬼を2体倒す', '爆発1回で倒す']],
-    [['time', 'best', 180, '1回で3分逃げきる', '1回で3分逃げる'], ['kills', 'sum', 20, '鬼を合計20体倒す', '鬼を倒す'], ['saves', 'sum', 1, 'バリアで確保を1回防ぐ', 'バリアで防ぐ']],
-    [['time', 'sum', 600, '今日の合計で10分逃げる', '合計10分逃げる'], ['kills', 'best', 10, '1回で鬼を10体倒す', '1回で倒す'], ['pit', 'sum', 3, '落とし穴で鬼を合計3体落とす', '穴に落とす']],
-    [['time', 'best', 240, '1回で4分逃げきる', '1回で4分逃げる'], ['maxBlast', 'best', 3, '1回の爆発で鬼を3体倒す', '爆発1回で倒す'], ['kills', 'sum', 35, '鬼を合計35体倒す', '鬼を倒す']],
-    [['time', 'best', 300, '1回で5分逃げきる', '1回で5分逃げる'], ['kills', 'best', 18, '1回で鬼を18体倒す', '1回で倒す'], ['maxRocket', 'best', 3, 'ランチャー1発で鬼を3体倒す', 'ランチャー1発']],
-    [['time', 'best', 420, '1回で7分逃げきる', '1回で7分逃げる'], ['kills', 'best', 25, '1回で鬼を25体倒す', '1回で倒す'], ['time', 'sum', 1200, '今日の合計で20分逃げる', '合計20分逃げる']],
+    [['plays', 'sum', 1, '1回遊ぶ', '1回遊ぶ'], ['dashes', 'sum', 3, 'ダッシュを合計3回使う', 'ダッシュする'], ['bombs', 'sum', 1, '爆弾を1個置く', '爆弾を置く']],
+    [['time', 'sum', 60, '今日の合計で1分逃げる', '合計1分逃げる'], ['kills', 'sum', 3, '鬼を合計3体倒す', '鬼を倒す'], ['stomps', 'sum', 1, '「!」を1回踏んで鬼を止める', '「!」を踏む']],
+    [['plays', 'sum', 2, '2回遊ぶ', '2回遊ぶ'], ['items', 'sum', 1, 'アイテムを1回使う', 'アイテムを使う'], ['dashes', 'sum', 10, 'ダッシュを合計10回使う', 'ダッシュする']],
+    [['time', 'best', 60, '1回で1分逃げきる', '1回で1分逃げる'], ['kills', 'sum', 8, '鬼を合計8体倒す', '鬼を倒す'], ['bombs', 'sum', 5, '爆弾を合計5個置く', '爆弾を置く']],
+    [['plays', 'sum', 3, '3回遊ぶ', '3回遊ぶ'], ['time', 'sum', 180, '今日の合計で3分逃げる', '合計3分逃げる'], ['kills', 'sum', 12, '鬼を合計12体倒す', '鬼を倒す']],
+    [['time', 'best', 90, '1回で1分30秒逃げきる', '1回で1分30秒'], ['stomps', 'sum', 3, '「!」を合計3回踏んで鬼を止める', '「!」を踏む'], ['items', 'sum', 3, 'アイテムを合計3回使う', 'アイテムを使う']],
+    [['kills', 'sum', 15, '鬼を合計15体倒す', '鬼を倒す'], ['time', 'sum', 300, '今日の合計で5分逃げる', '合計5分逃げる'], ['maxBlast', 'best', 2, '1回の爆発で鬼を2体倒す', '爆発1回で倒す']],
+    [['time', 'best', 120, '1回で2分逃げきる', '1回で2分逃げる'], ['kills', 'best', 8, '1回で鬼を8体倒す', '1回で倒す'], ['pit', 'sum', 1, '落とし穴で鬼を1体落とす', '穴に落とす']],
+    [['plays', 'sum', 5, '5回遊ぶ', '5回遊ぶ'], ['kills', 'sum', 25, '鬼を合計25体倒す', '鬼を倒す'], ['time', 'sum', 480, '今日の合計で8分逃げる', '合計8分逃げる']],
+    [['time', 'best', 180, '1回で3分逃げきる', '1回で3分逃げる'], ['kills', 'best', 12, '1回で鬼を12体倒す', '1回で倒す'], ['maxBlast', 'best', 3, '1回の爆発で鬼を3体倒す', '爆発1回で倒す']],
   ];
-  const MIS_KEYS = ['time', 'kills', 'bombs', 'dashes', 'items', 'stomps', 'pit', 'saves', 'maxBlast', 'maxRocket'];
+  const MIS_KEYS = ['plays', 'time', 'kills', 'bombs', 'dashes', 'items', 'stomps', 'pit', 'saves', 'maxBlast', 'maxRocket'];
   const misDay = () => Math.floor((Date.now() + 9 * 3600e3) / 86400e3);
   const misToday = () => { const d = misDay(); return MIS_POOL.map((v, i) => v[(d + i * 2) % v.length]); };
   // kept on this device: the day, its totals and bests so far, and the missions done
@@ -2533,7 +2533,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     return misS;
   }
   const misSave = () => { try { localStorage.setItem(REC_KEY + '-mis', JSON.stringify(misS)); } catch (e) {} };
-  const misRun = k => !misLive ? 0 : k === 'time' ? t : k === 'kills' ? kills - stageKillStart : (S3 && S3[k]) || 0;
+  const misRun = k => !misLive || k === 'plays' ? 0 : k === 'time' ? t : k === 'kills' ? kills - stageKillStart : (S3 && S3[k]) || 0;
   const misVal = m => { const s = misState(), r = misRun(m[0]); return m[1] === 'sum' ? (s.sum[m[0]] || 0) + r : Math.max(s.best[m[0]] || 0, r); };
   const misFmt = (m, v) => m[0] === 'time' ? `${Math.floor(Math.min(v, m[2]) / 60)}:${String(Math.floor(Math.min(v, m[2]) % 60)).padStart(2, '0')}` : `${Math.min(v, m[2])}/${m[2]}`;
   // the three on show: the first three not done yet
@@ -2562,6 +2562,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!misLive) return;
     const s = misState();
     for (const k of MIS_KEYS) { const r = misRun(k); s.sum[k] = (s.sum[k] || 0) + r; s.best[k] = Math.max(s.best[k] || 0, r); }
+    s.sum.plays = (s.sum.plays || 0) + 1;   // (a run counts as played once it is over)
     misLive = false; misFlash = null; misQ = []; misSave();
     const L = misToday();
     for (let i = 0; i < L.length; i++) if (!s.done.includes(i) && misVal(L[i]) >= L[i][2]) misClear(i);
