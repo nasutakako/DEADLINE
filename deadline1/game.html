@@ -1080,9 +1080,9 @@ body.arcadeui .controls .act { position: absolute !important; width: 23% !import
   transform: translate(-50%, -50%); overflow: visible !important; border: 0 !important; border-radius: 50% !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   --f: 232,44,36; --r: 168,20,14; --s: 104,8,4;
   background: radial-gradient(circle at 50% 58%, rgb(var(--f)) 0 56%, color-mix(in srgb, rgb(var(--f)) 70%, #fff) 68%, rgb(var(--r)) 100%) !important;
-  box-shadow: 0 0 0 2px rgb(var(--r)), 0 4px 0 2px rgb(var(--s)), 0 0 0 5px #030303, 0 5px 0 5px #030303, inset 0 2px 1px rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.18) !important;
+  box-shadow: 0 0 0 2px rgb(var(--r)), 0 4px 0 2px rgb(var(--s)), 0 0 0 5px rgb(var(--g, var(--r))), 0 5px 0 5px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.18) !important;
   color: #fff !important; text-shadow: none !important; font-size: 0 !important; font-weight: 900; letter-spacing: 0 !important; line-height: 1.1; transition: transform .05s, box-shadow .05s; }
-body.arcadeui .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 5px #030303, 0 2px 0 5px #030303, inset 0 2px 1px rgba(255,255,255,.5), inset 0 -1px 3px rgba(0,0,0,.25) !important; }
+body.arcadeui .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 5px rgb(var(--g, var(--r))), 0 2px 0 5px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.5), inset 0 -1px 3px rgba(0,0,0,.25) !important; }
 /* (the names printed on the panel under each button, as on a real stick; the button's face shows how many are left) */
 body.arcadeui .controls .act::before { content: attr(data-lbl); position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: 0; color: #e9ebf0; pointer-events: none; }
 body.arcadeui .controls .act small, body.arcadeui .controls #mineCount { color: #fff !important; font-size: 13px !important; font-family: "Share Tech Mono", var(--f-num); letter-spacing: 0 !important; font-weight: 700; text-shadow: none !important; }
@@ -1112,6 +1112,20 @@ body.arcadeui:not(.ontitle):not(.picking) .pad { background: linear-gradient(180
 body.ontitle .pad, body.arcadeui.ontitle .pad { background: none !important; box-shadow: none !important; border: 0 !important; }
 body.arcadeui:not(.ontitle):not(.picking) .pi, body.arcadeui:not(.ontitle):not(.picking) .sys .btn { background: rgba(10,4,5,.75) !important; }
 
+
+/* ゲームセンター: a metal cabinet (brushed steel, green fluorescent readouts in black glass, steel buttons), with the
+   bright arcade colours on the lever and the four play buttons */
+body.arcadeui:not(.ontitle):not(.picking) { background: repeating-linear-gradient(90deg, rgba(255,255,255,.025) 0 1px, transparent 1px 3px), linear-gradient(180deg, #3a3d42, #1c1e22 60%, #131417) !important; }
+body.arcadeui:not(.ontitle):not(.picking) .pi { background: #04140c !important; border: 1px solid #000 !important; border-radius: 4px !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.8), 0 1px 0 rgba(255,255,255,.12) !important; }
+body.arcadeui:not(.ontitle):not(.picking) .pi .label { color: #6fbf93 !important; }
+body.arcadeui:not(.ontitle):not(.picking) .pi b, body.arcadeui:not(.ontitle):not(.picking) .time { font-family: "Share Tech Mono", monospace !important; color: #5dffb0 !important; text-shadow: 0 0 6px rgba(93,255,176,.7) !important; }
+body.arcadeui:not(.ontitle):not(.picking) .sys .btn { border-radius: 6px !important; background: linear-gradient(180deg, #d9dbe0, #8f9298) !important; color: #1b1c1f !important; border: 1px solid #000 !important; box-shadow: inset 0 1px 0 #fff, 0 2px 0 #000 !important; text-shadow: none !important; }
+body.arcadeui:not(.ontitle):not(.picking) .controls { background: linear-gradient(180deg, #2a2c31, #17181b) !important; box-shadow: 0 0 0 2px #000, 0 0 0 4px #9a9ca2, 0 6px 0 4px #000 !important; }
+body.arcadeui:not(.ontitle):not(.picking) #mapEdge { box-shadow: inset 0 0 0 2px #000, inset 0 0 0 3px #9a9ca2 !important; }
+body.arcadeui:not(.ontitle):not(.picking) .controls .mine { --f: 255,70,60; --r: 200,30,20; --s: 120,10,5; }
+body.arcadeui:not(.ontitle):not(.picking) .controls .barb { --f: 60,140,255; --r: 20,80,200; --s: 10,40,120; }
+body.arcadeui:not(.ontitle):not(.picking) .controls .dash { --f: 255,225,74; --r: 200,160,20; --s: 120,90,0; }
+body.arcadeui:not(.ontitle):not(.picking) .controls .rkb { --f: 70,220,110; --r: 20,150,60; --s: 10,90,30; }
 </style>
 <!--/THEME-C-->
 
