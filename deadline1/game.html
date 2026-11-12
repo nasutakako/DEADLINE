@@ -974,13 +974,12 @@ body:not(.ontitle):not(.picking):not(.replaying) .stage { border-radius: 0; back
 body.ontitle #mapEdge, body.picking #mapEdge, body.replaying #mapEdge { display: none; }
 .act { border-radius: 0; background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); letter-spacing: .1em; }
 .act small { letter-spacing: .2em; }
-.dash { border: 1px solid #1fa9bb; color: #3cc3d4; box-shadow: 0 0 8px rgba(0,229,255,.16), inset 0 0 10px rgba(0,229,255,.07); }
-.dash::after { background: #1fa9bb; box-shadow: 0 0 4px rgba(0,229,255,.5); }
-.mine { border: 1px solid #b8962f; color: #cfae45; box-shadow: 0 0 8px rgba(255,210,63,.14), inset 0 0 10px rgba(255,210,63,.06); }
-.itemb { border: 1px solid #a8329a; color: #c97cbf; box-shadow: 0 0 8px rgba(255,43,214,.14), inset 0 0 10px rgba(255,43,214,.06); }
-.itemarr { border-radius: 0; border: 1px solid rgba(168,50,154,.7); background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); color: #c97cbf; box-shadow: 0 0 5px rgba(255,43,214,.12), inset 0 0 6px rgba(255,43,214,.05); }
-.itemarr:active { background: rgba(168,50,154,.2); }
-#itemName.launcher, #itemLabel.launcher { color: #b894d4; } #itemName.barrier, #itemLabel.barrier { color: #6cb9c9; } #itemName.boost, #itemLabel.boost { color: #d39a4a; }
+.dash { border: 1px solid #00e5ff; color: #00e5ff; box-shadow: 0 0 14px rgba(0,229,255,.35), inset 0 0 14px rgba(0,229,255,.14); }
+.dash::after { background: #00e5ff; box-shadow: 0 0 8px #00e5ff; }
+.mine { border: 1px solid #ffd23f; color: #ffd23f; box-shadow: 0 0 14px rgba(255,210,63,.3), inset 0 0 14px rgba(255,210,63,.12); }
+.itemb { border: 1px solid #ff2bd6; color: #ff8ff0; box-shadow: 0 0 14px rgba(255,43,214,.3), inset 0 0 14px rgba(255,43,214,.12); }
+.itemarr { border-radius: 0; border: 1px solid rgba(255,43,214,.6); background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); color: #ff8ff0; box-shadow: 0 0 8px rgba(255,43,214,.25), inset 0 0 8px rgba(255,43,214,.1); }
+.itemarr:active { background: rgba(255,43,214,.2); }
 .sys .btn { border-radius: 0; background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.6); color: #00e5ff; box-shadow: 0 0 8px rgba(0,229,255,.25), inset 0 0 10px rgba(0,229,255,.1); letter-spacing: .1em; }
 .pi { border-radius: 0; border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.04); }
 .pi b { font-family: "Share Tech Mono", var(--f-num); font-weight: 700; text-shadow: 0 0 8px currentColor; }
@@ -1043,14 +1042,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   #startPickScreen .pick { padding: 4px 8px; }
   #startPickScreen .picks { gap: 5px; }
 }
-/* the play buttons: see-through dark, a coloured bar along the bottom only, the words in a muted colour */
-.act, .itemarr { border-radius: 4px !important; background: rgba(8,11,18,.7) !important; border: 1px solid rgba(255,255,255,.08) !important; border-bottom: 3px solid var(--ac) !important; box-shadow: none !important; letter-spacing: .12em; }
-.act:active, .itemarr:active { background: rgba(255,255,255,.06) !important; }
-.dash { --ac: #2a9fb0; color: #7fd0db !important; } .mine { --ac: #b08d2c; color: #d8bd6a !important; } .itemb, .itemarr { --ac: #8c3f86; color: #c79ac2 !important; }
-.act small { color: #7f8696 !important; }
-/* (the dash's wait: the button fills from the left as it comes back) */
-.dash::after { display: none; } .dash { background: linear-gradient(90deg, rgba(42,159,176,.22) calc(var(--p,1) * 100%), rgba(8,11,18,.7) 0) !important; }
-#itemLabel.launcher, #itemLabel.barrier, #itemLabel.boost { color: #c79ac2 !important; }
+/* the play buttons' faces as black as the screen behind them (the neon frames as they are) */
+.act, .itemarr { background: #000 !important; }
 /* the stick in dark gunmetal */
 .padbase { border: 1px solid #0a0b0d !important; background: radial-gradient(circle at 50% 50%, #15171b 0%, #1d2026 55%, #2c3038 78%, #1a1c21 100%) !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #23262d, 0 0 0 4px rgba(255,255,255,.06), 0 4px 10px rgba(0,0,0,.5) !important; }
 .pad.on .padbase { border-color: #0a0b0d !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #2b3a40, 0 0 0 4px rgba(87,194,210,.25), 0 4px 10px rgba(0,0,0,.5) !important; }
