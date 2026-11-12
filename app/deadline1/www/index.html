@@ -9,6 +9,17 @@
 <script src="fb.js" data-game="deadline1"></script>
 <title>DEADLiNE</title>
 <link rel="stylesheet" href="fonts/fonts.css">
+<script>
+// inside the site's frame the frame itself already keeps clear of the notch and the corners, so the game takes no
+// safe area of its own there (the phone reported them again inside the frame, adding a gap at each side)
+try { if (window.parent !== window && window.parent.DEADLINE_SHELL) document.documentElement.classList.add('inshell'); } catch (e) {}
+</script>
+<style>
+:root { --sa-top: env(safe-area-inset-top, 0px); --sa-bottom: env(safe-area-inset-bottom, 0px); --sa-left: env(safe-area-inset-left, 0px); --sa-right: env(safe-area-inset-right, 0px); }
+html.inshell { --sa-top: 0px; --sa-bottom: 0px; --sa-left: 0px; --sa-right: 0px; }
+</style>
+</head>
+<body>
 <style>
 /* Layout: one-screen arcade. Portrait = HUD on top, map, controls below. Landscape = HUD column | map | controls column, so the map gets the full height. Single dark look by choice (a night chase). */
 :root {
@@ -44,8 +55,8 @@ body {
   grid-template-areas: "hud hud" "stage stage" "sys ctl";
   gap: 8px;
   padding-block: 8px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-left: max(16px, var(--sa-left));
+  padding-right: max(16px, var(--sa-right));
   overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
@@ -134,10 +145,10 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
 /* the opening is short and a tap skips it, so it plays in full even with reduced motion; only the red pulse goes */
 @media (prefers-reduced-motion: reduce) { .intro::after { animation: none; } }
 /* ---- first-time tutorial ---- */
-.tutbar { position: absolute; left: 50%; top: calc(8px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(94%, 680px); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 10px; background: rgba(8,10,16,.9); border: 1.5px solid var(--lamp); box-shadow: 0 6px 24px rgba(0,0,0,.5); color: var(--ink); }
+.tutbar { position: absolute; left: 50%; top: calc(8px + var(--sa-top)); transform: translateX(-50%); z-index: 8; width: max-content; max-width: min(94%, 680px); display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 14px; border-radius: 10px; background: rgba(8,10,16,.9); border: 1.5px solid var(--lamp); box-shadow: 0 6px 24px rgba(0,0,0,.5); color: var(--ink); }
 .tutbar[hidden] { display: none; }
 /* a practice step whose scene lies under the banner: the banner goes to the foot of the map */
-.tutbar.low { top: auto; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+.tutbar.low { top: auto; bottom: calc(8px + var(--sa-bottom)); }
 /* or in the middle, when the scene lies at the top and the foot of the map */
 .tutbar.mid { top: 50%; transform: translate(-50%, -50%); }
 /* a small screen where the banner would still cover the scene: a smaller banner */
@@ -262,7 +273,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 /* the result screens never squeeze their card shorter than what is in it (it spilled out of its frame): the screen scrolls instead, and on a short screen the parts sit a little closer */
 .overlay > .card { flex-shrink: 0; }
 @media (max-height: 460px) { #overScreen, #clearScreen { padding-top: 6px; padding-bottom: 6px; } #overScreen .card, #clearScreen .card { gap: 5px; padding-top: 10px; padding-bottom: 10px; } #overScreen .result, #clearScreen .result { gap: 6px; } #overScreen h2, #clearScreen h2 { font-size: 26px !important; line-height: 1.1; } #overScreen .result div, #clearScreen .result div { padding-top: 4px; padding-bottom: 4px; } #overScreen .score b { font-size: 26px; } }
-#overScreen .row:has(#overRankBtn:not([hidden])) > * { white-space: nowrap; padding-left: 14px; padding-right: 14px; }
+#overScreen .row:has(#overRankBtn:not([hidden])) > * { white-space: nowrap; padding-left: 12px; padding-right: 12px; }
 .rkstat { display: flex; gap: 12px; }
 .rkstat[hidden] { display: none; }
 .rkstat > div { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: min(10px, 2.2vh) 12px; border-radius: 12px; border: 1px solid rgba(255, 207, 90, .4); background: linear-gradient(180deg, rgba(255, 207, 90, .12), rgba(255, 207, 90, .03)); }
@@ -371,8 +382,8 @@ body.ontitle .padinfo, body.ontitle .padbase { display: none; }
     --side: clamp(120px, 15vw, 140px);
     grid-template-columns: calc(var(--side) + var(--side-x, 0px)) minmax(0, 1fr) calc(var(--side-r, var(--side)) + var(--side-x, 0px));
     grid-template-areas: "pad stage hud" "pad stage sys" "pad stage ctl";
-    padding-left: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
-    padding-right: max(16px, env(safe-area-inset-left, 0px), env(safe-area-inset-right, 0px));
+    padding-left: max(16px, var(--sa-left), var(--sa-right));
+    padding-right: max(16px, var(--sa-left), var(--sa-right));
   }
   /* in a run the side columns give up a little room to the map */
   .pad { grid-area: pad; display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 8px; padding-bottom: 30px; min-height: 0; touch-action: none; border-radius: 8px; background: rgba(255,255,255,.025); }
@@ -418,14 +429,14 @@ h2.clear { color: #5dff9e; }
 .ranklist li .rpbtn { align-self: center; padding: 2px 9px; white-space: nowrap; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(255,207,90,.5); border-radius: 12px; background: rgba(255,207,90,.1); color: #ffcf5a; cursor: pointer; }
 /* the replay: the map over the whole screen, a control bar on it */
 body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0; }
-.repbar { position: absolute; left: 50%; bottom: max(8px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); width: min(560px, calc(100% - 20px)); z-index: 5; display: grid; gap: 6px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(10,13,20,.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: var(--ink); }
+.repbar { position: absolute; left: 50%; bottom: max(8px, var(--sa-bottom)); transform: translateX(-50%); width: min(560px, calc(100% - 20px)); z-index: 5; display: grid; gap: 6px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(10,13,20,.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: var(--ink); }
 .repbar .rptop { display: flex; align-items: center; gap: 10px; font-size: 13px; min-width: 0; }
 .repbar .rptop .kicker { margin: 0; font-size: 10px; }
 .repbar .rptop b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repbar .rptop span { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .repbar .rptop button { padding: 4px 12px; font-size: 12.5px; }
 .repbar .rptop #repHide { margin-left: auto; }
-.repshow { position: absolute; right: max(10px, env(safe-area-inset-right, 0px)); bottom: max(10px, env(safe-area-inset-bottom, 0px)); z-index: 5; padding: 6px 12px; font-size: 12.5px; font-weight: 700; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; background: rgba(10,13,20,.6); color: var(--ink); cursor: pointer; opacity: .75; }
+.repshow { position: absolute; right: max(10px, var(--sa-right)); bottom: max(10px, var(--sa-bottom)); z-index: 5; padding: 6px 12px; font-size: 12.5px; font-weight: 700; border: 1px solid rgba(255,255,255,.18); border-radius: 16px; background: rgba(10,13,20,.6); color: var(--ink); cursor: pointer; opacity: .75; }
 .repbar .rprow { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 10px; }
 .repbar .rprow button { min-width: 44px; padding: 5px 10px; font-size: 13px; font-weight: 700; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); cursor: pointer; }
 .repbar input[type=range] { width: 100%; accent-color: #ffcf5a; }
@@ -550,7 +561,7 @@ body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0
 #shareImg { width: 100%; max-width: 520px; aspect-ratio: 16 / 9; border-radius: 6px; border: 1px solid var(--line); -webkit-touch-callout: default; user-select: auto; }
 #shareText { width: 100%; max-width: 520px; font: inherit; font-size: 13px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; resize: none; }
 @media (max-height: 460px) { #shareImg { max-width: 300px; } #shareText { display: none; } }
-#shareToast { position: absolute; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 6px; background: rgba(8,9,14,.92); border: 1px solid var(--line); color: var(--ink); font-size: 13px; font-weight: 700; text-align: center; pointer-events: none; }
+#shareToast { position: absolute; left: 50%; bottom: calc(18px + var(--sa-bottom)); transform: translateX(-50%); z-index: 40; max-width: calc(100% - 32px); padding: 10px 16px; border-radius: 6px; background: rgba(8,9,14,.92); border: 1px solid var(--line); color: var(--ink); font-size: 13px; font-weight: 700; text-align: center; pointer-events: none; }
 /* the title screen keeps only the title: no stage name, clock, pause or action buttons; the screen takes their room */
 body.ontitle .hud, body.ontitle .sys, body.ontitle .controls { display: none; }
 body.ontitle .stage { grid-column: 1 / -1; grid-row: 1 / -1; }
@@ -578,7 +589,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .who > button, .who > .label { flex-shrink: 0; }
 .shopbtn { border: 1px solid rgba(255,120,200,.55); background: rgba(255,120,200,.08); color: #ff9bd6; border-radius: 6px; padding: 8px 9px; font-weight: 700; font-size: 13px; white-space: nowrap; }
 /* the shop takes the whole screen, over the side columns too */
-#shopScreen { position: fixed; inset: 0; z-index: 50; padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) max(10px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px)); background: rgba(6, 8, 12, .97); }
+#shopScreen { position: fixed; inset: 0; z-index: 50; padding: max(10px, var(--sa-top)) max(12px, var(--sa-right)) max(10px, var(--sa-bottom)) max(12px, var(--sa-left)); background: rgba(6, 8, 12, .97); }
 .shopwrap { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 1100px; height: 100%; min-height: 0; margin: 0 auto; }
 .shophead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
 .shophead h2 { margin: 0; font-size: clamp(22px, 4vw, 32px); color: #ff9bd6; }
@@ -703,7 +714,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 #titleScreen .row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 @media (max-width: 520px) { #titleScreen .row .go { white-space: normal !important; font-size: 14px !important; padding: 10px 6px !important; word-break: keep-all; overflow-wrap: anywhere; } }
 #titleScreen .row .go { align-self: stretch; white-space: nowrap; }
-#titleScreen .lifepill { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 60px; z-index: 3; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px;
+#titleScreen .lifepill { position: absolute; top: max(10px, var(--sa-top)); right: 60px; z-index: 3; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 6px 0 12px;
   border: 1px solid var(--line); border-radius: 21px; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; font: inherit; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .lifepill .hearts, .lifebig { color: var(--oni); letter-spacing: .04em; white-space: nowrap; }
 .lifepill .hearts { font-size: 17px; line-height: 1; }
@@ -765,7 +776,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 @media (max-height: 400px) { .lifebig { font-size: 26px; } #lifeScreen .card { gap: 6px; } .lifeact { padding: 7px 10px; } .lifeact b { font-size: 13.5px; } #lifeScreen h2 { font-size: 24px; } }
 /* a narrow title: the hearts stand in a column under the gear, and the title keeps clear of that column */
 @media (max-width: 760px) {
-  #titleScreen .lifepill { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 50px); right: 10px; width: 42px; height: auto; flex-direction: column; gap: 4px; padding: 8px 0 6px; border-radius: 21px; }
+  #titleScreen .lifepill { top: calc(max(10px, var(--sa-top)) + 50px); right: 10px; width: 42px; height: auto; flex-direction: column; gap: 4px; padding: 8px 0 6px; border-radius: 21px; }
   #titleScreen .lifepill .hearts { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 15px; }
   #titleScreen .lifepill .hearts em { font-size: 10px; margin: 0; color: var(--ink); font-style: normal; }
   #titleScreen .lifepill small { min-width: 0; font-size: 9.5px; letter-spacing: -.02em; }
@@ -773,12 +784,12 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
   #titleScreen > .card { padding-right: 48px; }
   #titleScreen #rankPlayBtn { white-space: normal; line-height: 1.25; }
 }
-#titleScreen .gear { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 10px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
+#titleScreen .gear { position: absolute; top: max(10px, var(--sa-top)); right: 10px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
   border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 #titleScreen .gear svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; }
 #titleScreen .gear:hover, #titleScreen .gear:focus-visible { border-color: var(--lamp); color: var(--lamp); outline: none; }
 /* the mail: between the hearts and the gear */
-#titleScreen .mailbtn { position: absolute; top: max(10px, env(safe-area-inset-top, 0px)); right: 60px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
+#titleScreen .mailbtn { position: absolute; top: max(10px, var(--sa-top)); right: 60px; z-index: 3; width: 42px; height: 42px; padding: 0; display: grid; place-items: center;
   border: 1px solid var(--line); border-radius: 50%; background: rgba(16, 19, 28, .78); color: var(--ink); cursor: pointer; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 #titleScreen .mailbtn svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linejoin: round; stroke-linecap: round; }
 #titleScreen .mailbtn:hover, #titleScreen .mailbtn:focus-visible { border-color: var(--lamp); color: var(--lamp); outline: none; }
@@ -788,8 +799,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 @keyframes mailping { 0% { box-shadow: 0 0 0 0 rgba(255, 210, 90, .7); } 100% { box-shadow: 0 0 0 14px rgba(255, 210, 90, 0); } }
 #titleScreen .lifepill { right: 110px; }
 @media (max-width: 760px) {
-  #titleScreen .mailbtn { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 50px); right: 10px; }
-  #titleScreen .lifepill { top: calc(max(10px, env(safe-area-inset-top, 0px)) + 100px); right: 10px; }
+  #titleScreen .mailbtn { top: calc(max(10px, var(--sa-top)) + 50px); right: 10px; }
+  #titleScreen .lifepill { top: calc(max(10px, var(--sa-top)) + 100px); right: 10px; }
 }
 .memoprize { font-size: 11px; font-weight: 700; color: var(--lamp); padding: 2px 8px; border: 1px solid color-mix(in srgb, var(--lamp) 45%, transparent); border-radius: 10px; white-space: nowrap; }
 .memoprize.done { color: var(--muted); border-color: var(--line); }
@@ -969,14 +980,12 @@ body:not(.ontitle):not(.picking) { background: repeating-linear-gradient(0deg, r
 .misbox { border-radius: 0; border-color: rgba(255,210,63,.55); background: rgba(10,16,34,.9); box-shadow: 0 0 10px rgba(255,210,63,.2), inset 0 0 10px rgba(255,210,63,.08); }
 body:not(.ontitle) .pad { border-radius: 0; }
 </style>
-</head>
-<body>
 <!--THEME-C-->
 <style>
 /* DEADLINE's own touches over the shared look (DEADLINE 3D's manner): the world shows through the title and the
    stand-by screens, and the map drifts slowly behind the title */
-#titleScreen { background: repeating-linear-gradient(0deg, rgba(120,235,255,.08) 0 1px, transparent 1px 28px), repeating-linear-gradient(90deg, rgba(120,235,255,.08) 0 1px, transparent 1px 28px), linear-gradient(180deg, rgba(60, 210, 255, .5) 0, rgba(30, 140, 220, .42) 25%, rgba(14, 70, 160, .5) 55%, rgba(6, 24, 80, .66)); }
-body.ontitle { background: repeating-linear-gradient(0deg, rgba(90,220,255,.1) 0 1px, transparent 1px 28px) fixed, repeating-linear-gradient(90deg, rgba(90,220,255,.1) 0 1px, transparent 1px 28px) fixed, radial-gradient(ellipse 110% 90% at 50% -12%, #5fe3ff 0%, #20a6e4 26%, #1561b8 50%, #0a2a6e 76%, #061440 100%) fixed, #061440; }
+#titleScreen { background: #000; }
+body.ontitle { background: #000; }
 #titleScreen .card, :is(#briefScreen, #startPickScreen) .card { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
 body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-out infinite alternate; }
 @keyframes titledrift { from { transform: scale(1.18) translate(-2.5%, -1.5%); } to { transform: scale(1.3) translate(2.5%, 1.5%); } }
@@ -7998,7 +8007,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     } else if (state === 'caught') {
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
-      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; titleChime('rTitles'); starChime(); prepShare('over'); }
+      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     if (state === 'replay') repTick(dt);
     draw(); if (state !== 'replay') hud();
@@ -8141,6 +8150,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // item pick before stage 2 or 3: every briefing line on one row, the words at the same size
   // the notes under the map cards: the cards keep their size; a longer note (3-2, 3-3's shadow dash) takes smaller type
   // until the whole stand-by screen fits without scrolling
+  // a row of buttons that would run past its card: its words step down until the row fits (never cut short)
+  function fitRow(row) {
+    if (!row) return;
+    const bs = [...row.children].filter(b => b.offsetParent);
+    for (const b of bs) b.style.fontSize = b.style.paddingLeft = b.style.paddingRight = '';
+    for (let k = 0; k < 12 && row.scrollWidth > row.clientWidth + 1; k++) {
+      for (const b of bs) { const f = parseFloat(getComputedStyle(b).fontSize); b.style.fontSize = Math.max(11, f - 1) + 'px'; b.style.paddingLeft = b.style.paddingRight = Math.max(8, 12 - k) + 'px'; }
+    }
+  }
   function fitTall(msg, scr) {
     const card = scr && scr.querySelector('.card'); if (!card || scr.hidden) return;
     const over = () => card.scrollHeight > card.clientHeight + 1 || scr.scrollHeight > scr.clientHeight + 1;

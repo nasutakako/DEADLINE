@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="DEADLiNE">
 <link rel="apple-touch-icon" href="../icon-180.png">
+<script>window.DEADLINE_SHELL = true;</script>
 <style>
 html, body { margin: 0; height: 100%; background: #07080d; overflow: hidden; overscroll-behavior: none; }
 /* The game's frame is sized by the browser itself, from the visible area and the safe areas, so it follows the
@@ -22,6 +23,9 @@ html, body { margin: 0; height: 100%; background: #07080d; overflow: hidden; ove
   --vh: 100vh; --L: var(--l); --R: var(--r);
 }
 @supports (height: 100dvh) { :root { --vh: 100dvh; } }
+/* a phone held sideways has no status bar along its top, but a home-screen launch can still report a top inset there,
+   which pushed the whole game down and shrank it: sideways on a phone the top is never held back */
+@media (orientation: landscape) and (max-height: 500px) { :root { --t: 0px; } }
 /* held sideways, iPhone reports the same inset on both sides, but only the notch side needs it (the other is a
    rounded corner): turned left the notch is on the left, turned right on the right */
 html.nl { --R: 0px; } html.nr { --L: 0px; }
@@ -33,9 +37,8 @@ html.up #g { width: calc(var(--vh) - var(--t) - var(--b)); height: 100vw; transf
 </style>
 </head>
 <body>
-<iframe id="g" src="game.html?v=bb41ad5a5c" title="DEADLiNE" allow="fullscreen; autoplay; clipboard-write; clipboard-read; web-share"></iframe>
+<iframe id="g" src="game.html?v=7be9f611df" title="DEADLiNE" allow="fullscreen; autoplay; clipboard-write; clipboard-read; web-share"></iframe>
 <script>
-window.DEADLINE_SHELL = true;
 (() => {
   const g = document.getElementById('g'), root = document.documentElement;
   const coarse = matchMedia('(pointer: coarse)'), portrait = matchMedia('(orientation: portrait)');
