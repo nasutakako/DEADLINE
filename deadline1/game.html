@@ -259,6 +259,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 #spItemMsg { margin: 0; color: var(--muted); }
 #spRankBtn[hidden], #overRankBtn[hidden] { display: none !important; }
 #overScreen .row:has(#overRankBtn:not([hidden])) { flex-wrap: nowrap; }
+/* the result screens never squeeze their card shorter than what is in it (it spilled out of its frame): the screen scrolls instead, and on a short screen the parts sit a little closer */
+.overlay > .card { flex-shrink: 0; }
+@media (max-height: 460px) { #overScreen, #clearScreen { padding-top: 6px; padding-bottom: 6px; } #overScreen .card, #clearScreen .card { gap: 5px; padding-top: 10px; padding-bottom: 10px; } #overScreen .result, #clearScreen .result { gap: 6px; } #overScreen h2, #clearScreen h2 { font-size: 26px !important; line-height: 1.1; } #overScreen .result div, #clearScreen .result div { padding-top: 4px; padding-bottom: 4px; } #overScreen .score b { font-size: 26px; } }
 #overScreen .row:has(#overRankBtn:not([hidden])) > * { white-space: nowrap; padding-left: 14px; padding-right: 14px; }
 .rkstat { display: flex; gap: 12px; }
 .rkstat[hidden] { display: none; }
@@ -3368,7 +3371,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     renderMapCache();
     sideFill();
     // the neon edge, round the map (not the whole stage)
-    let e = $('mapEdge'); if (!e) { e = document.createElement('div'); e.id = 'mapEdge'; stage.append(e); }
+    let e = $('mapEdge'); if (!e) { e = document.createElement('div'); e.id = 'mapEdge'; cv.after(e); }   // (right over the map, under everything shown on top of it)
     Object.assign(e.style, { left: ox + 'px', top: oy + 'px', width: COLS * T + 'px', height: ROWS * T + 'px' });
   }
   // (the side columns keep their full height: the map's own bands above and below stay as they are)
@@ -3705,6 +3708,37 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
             m.fillStyle = 'rgba(255,255,255,0.25)'; m.fillRect(lx, sy - 0.022, ww, 0.012);
           }
         }
+      }
+    }
+    // the river along the top: dark water catching the fireworks, the grass bank below it
+    if (riverOn) {
+      const g = m.createLinearGradient(0, 1, 0, 3); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
+      m.fillStyle = g; m.fillRect(0, 1, COLS, 2);
+      m.strokeStyle = 'rgba(160,190,255,0.14)'; m.lineWidth = 0.03; m.beginPath();
+      for (let k = 0; k < COLS * 2; k++) { const x = rnd() * COLS, y = 1.15 + rnd() * 1.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
+      m.stroke();
+      // the fireworks overhead, broken up on the water
+      const FWC = ['255,90,80', '255,210,90', '120,200,255', '200,120,255', '120,255,170'];
+      for (let k = 0; k < Math.round(COLS / 4); k++) {
+        const x = rnd() * COLS, c = FWC[Math.floor(rnd() * FWC.length)], gl = m.createRadialGradient(x, 2, 0, x, 2, 1.4);
+        gl.addColorStop(0, `rgba(${c},0.22)`); gl.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gl; m.fillRect(x - 1.4, 1, 2.8, 2);
+        m.fillStyle = `rgba(${c},0.5)`;
+        for (let j = 0; j < 6; j++) m.fillRect(x - 0.25 + rnd() * 0.5, 1.15 + j * 0.28, 0.12 + rnd() * 0.25, 0.04);
+      }
+      m.fillStyle = 'rgba(190,210,255,0.3)'; m.fillRect(0, 2.94, COLS, 0.06); m.fillRect(0, 1, COLS, 0.05);
+      // the bridges: a deck of road over the water, railings either side
+      for (const bx of bridges) {
+        m.fillStyle = 'rgba(0,0,0,0.45)'; m.fillRect(bx + 0.12, 1.1, 1, 2);
+        m.fillStyle = '#3a3746'; m.fillRect(bx, 1, 1, 2);
+        m.strokeStyle = 'rgba(230,220,180,0.3)'; m.lineWidth = 0.035; m.setLineDash([0.26, 0.24]); m.beginPath(); m.moveTo(bx + 0.5, 1); m.lineTo(bx + 0.5, 3); m.stroke(); m.setLineDash([]);
+        m.fillStyle = '#b8b0a0'; m.fillRect(bx - 0.04, 1, 0.08, 2); m.fillRect(bx + 0.96, 1, 0.08, 2);
+        m.fillStyle = 'rgba(0,0,0,0.35)'; for (let k = 0; k < 8; k++) { m.fillRect(bx - 0.06, 1.1 + k * 0.25, 0.12, 0.04); m.fillRect(bx + 0.94, 1.1 + k * 0.25, 0.12, 0.04); }
+      }
+      for (let x = 0; x < COLS; x++) {
+        m.fillStyle = `rgb(${26 + rnd() * 5},${38 + rnd() * 6},${30 + rnd() * 5})`; m.fillRect(x, 3, 1, 1);
+        m.strokeStyle = 'rgba(90,140,90,0.35)'; m.lineWidth = 0.025; m.beginPath();
+        for (let k = 0; k < 5; k++) { const gx = x + rnd(), gy = 3.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
+        m.stroke();
       }
     }
     // zebra crossings
