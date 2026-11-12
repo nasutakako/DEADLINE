@@ -1069,22 +1069,33 @@ body.arcadeui .padshaft { position: absolute; left: 50%; top: 50%; width: 1px; h
 body.arcadeui .padknob { width: 42px !important; height: 42px !important; margin: -21px 0 0 -21px !important; border: 0 !important;
   background: radial-gradient(circle at 36% 30%, #fff 0 6%, #ff8a80 12%, #ee2a1f 38%, #b3120c 70%, #5c0704 100%) !important;
   box-shadow: 0 6px 10px rgba(0,0,0,.65), inset 0 -4px 8px rgba(0,0,0,.35) !important; }
-body.arcadeui .controls .act, body.arcadeui .controls .itemarr { border: 0 !important; border-radius: 50% !important; aspect-ratio: 1; align-self: center; padding: 0 !important; min-width: 0 !important;
-  background: radial-gradient(circle at 50% 30%, #ff8f85 0%, #f1372c 30%, #c11a12 62%, #6d0805 100%) !important;
-  box-shadow: 0 0 0 4px #111, 0 0 0 6px #9a9ca2, 0 0 0 7px #2c2d30, 0 6px 0 5px #0a0a0a, 0 9px 14px rgba(0,0,0,.6), inset 0 3px 3px rgba(255,255,255,.5), inset 0 -7px 10px rgba(0,0,0,.4) !important;
-  color: #fff !important; text-shadow: 0 1px 0 rgba(0,0,0,.6), 0 0 6px rgba(0,0,0,.4); letter-spacing: .04em; font-weight: 900; transition: transform .05s, box-shadow .05s; }
-body.arcadeui .controls .act:active, body.arcadeui .controls .itemarr:active { transform: translateY(4px); box-shadow: 0 0 0 4px #111, 0 0 0 6px #9a9ca2, 0 0 0 7px #2c2d30, 0 2px 0 5px #0a0a0a, 0 3px 6px rgba(0,0,0,.6), inset 0 3px 3px rgba(255,255,255,.3), inset 0 -4px 10px rgba(0,0,0,.5) !important; }
-body.arcadeui .controls .act small, body.arcadeui .controls #mineCount, body.arcadeui #itemName { color: #ffe1dc !important; }
-#itemLabel, #itemLabel.launcher, #itemLabel.barrier, #itemLabel.boost { color: #fff !important; }
-body.arcadeui .controls .itemarr { width: 24px; height: 24px !important; flex: 0 0 24px !important; font-size: 9px !important; }
-body.arcadeui .controls .itemrow { align-items: center; justify-content: center; gap: 9px !important; }
-body.arcadeui .controls .itemrow .act { flex: 0 0 auto !important; height: 100%; max-height: 64px; }
-body.arcadeui .controls .act.mine, body.arcadeui .controls .act.dash { height: 100%; max-height: 80px; }
-body.arcadeui .controls { gap: 14px !important; padding-bottom: 8px; }
+/* the arcade buttons, as on a fight stick: a black panel in a blue case, four round flat-topped buttons in two
+   staggered rows (爆弾 バリア above, ダッシュ ランチャー below and to the left), yellow on top and white below,
+   each sunk in its black hole with a lip and a side that shows; the names printed on them */
+.barb, .rkb { display: none; }
+body.arcadeui .controls { display: block !important; position: relative; align-self: center; width: 100%; aspect-ratio: 1 / 1.02; max-height: 100%; padding: 0 !important;
+  background: linear-gradient(180deg, #17181c, #0a0a0c); border-radius: 16px; box-shadow: 0 0 0 4px #1f3ec4, 0 0 0 6px #142a8a, 0 6px 0 4px #0d1b5c, 0 10px 18px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.08); }
+body.arcadeui .controls .itemrow { display: none !important; }
+body.arcadeui .controls .act { position: absolute !important; width: 29% !important; aspect-ratio: 1; height: auto !important; min-height: 0 !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; flex: none !important;
+  transform: translate(-50%, -50%); overflow: visible !important; border: 0 !important; border-radius: 50% !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 0;
+  --f: 247,214,70; --r: 196,152,16; --s: 128,96,4;
+  background: radial-gradient(circle at 50% 58%, rgb(var(--f)) 0 56%, color-mix(in srgb, rgb(var(--f)) 70%, #fff) 68%, rgb(var(--r)) 100%) !important;
+  box-shadow: 0 0 0 2px rgb(var(--r)), 0 4px 0 2px rgb(var(--s)), 0 0 0 5px #030303, 0 5px 0 5px #030303, inset 0 2px 1px rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.18) !important;
+  color: #1c1a14 !important; text-shadow: none !important; font-size: 0 !important; font-weight: 900; letter-spacing: 0 !important; line-height: 1.1; transition: transform .05s, box-shadow .05s; }
+body.arcadeui .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 5px #030303, 0 2px 0 5px #030303, inset 0 2px 1px rgba(255,255,255,.5), inset 0 -1px 3px rgba(0,0,0,.25) !important; }
+/* (the names printed on the panel under each button, as on a real stick; the button's face shows how many are left) */
+body.arcadeui .controls .act::before { content: attr(data-lbl); position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: 0; color: #e9ebf0; pointer-events: none; }
+body.arcadeui .controls .act small, body.arcadeui .controls #mineCount { color: rgba(28,26,20,.8) !important; font-size: 13px !important; font-family: "Share Tech Mono", var(--f-num); letter-spacing: 0 !important; font-weight: 700; text-shadow: none !important; }
+body.arcadeui .controls .barb, body.arcadeui .controls .rkb { display: flex !important; }
+body.arcadeui .controls .mine { left: 43%; top: 23%; }
+body.arcadeui .controls .barb { left: 79%; top: 23%; }
+body.arcadeui .controls .dash { left: 20%; top: 66%; --f: 242,242,240; --r: 200,200,198; --s: 140,140,138; }
+body.arcadeui .controls .rkb { left: 60%; top: 66%; --f: 242,242,240; --r: 200,200,198; --s: 140,140,138; }
+body.arcadeui .controls .mine #mineCount { display: block; }
 /* the dash's wait: a shade sweeping round the button like a clock hand */
 body.arcadeui .controls .dash::after { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 50%; box-shadow: none !important;
-  background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.55) 0) !important; }
-body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brightness(.6); opacity: 1 !important; }
+  background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.45) 0) !important; }
+body.arcadeui .controls .act[aria-disabled="true"] { filter: brightness(.55); opacity: 1 !important; }
 .padshaft { display: none; } body.arcadeui .padshaft { display: block; }
 </style>
 <!--/THEME-C-->
@@ -1409,8 +1420,10 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
 </nav>
 <footer class="controls">
   <div class="itemrow" id="itemRow"><button class="itemarr" id="itemPrev" type="button" aria-label="前のアイテム">◀</button><button class="act itemb" id="itemBtn" type="button" aria-disabled="true"><b id="itemLabel">アイテム</b><small id="itemName">なし</small></button><button class="itemarr" id="itemNext" type="button" aria-label="次のアイテム">▶</button></div>
-  <button class="act mine" id="mineBtn" type="button">爆弾 <span id="mineCount">×1</span></button>
-  <button class="act dash" id="dashBtn" type="button">ダッシュ</button>
+  <button class="act mine" id="mineBtn" type="button" data-lbl="爆弾">爆弾 <span id="mineCount">×1</span></button>
+  <button class="act dash" id="dashBtn" type="button" data-lbl="ダッシュ">ダッシュ</button>
+  <button class="act barb" id="barBtn" type="button" aria-disabled="true" data-lbl="バリア">バリア<small id="barN">×0</small></button>
+  <button class="act rkb" id="rkBtn" type="button" aria-disabled="true" data-lbl="ランチャー">ランチャー<small id="rkN">×0</small></button>
 </footer>
 
 <script>
@@ -3417,19 +3430,29 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
       while (pl.length < MIN && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
       while (pl.length > 5) fill(pl.pop(), 1);
     }
-    // 花火の夜: a river along the top: the far bank's road (row 0), the water (rows 1-2), the grass bank (row 3),
-    // and three road bridges across, on streets spread over the width
+    // 花火の夜: a river across the top. The far bank (rows 0-2): seven long low buildings in a row (row 1) with roads
+    // all round them; the water (rows 3-4); the grass bank (row 5); and on this side, the same: a road (row 6), seven
+    // long low buildings (row 7), and the town's own road (row 8); three road bridges across, on the cross streets
     riverOn = mapSkin === 'd4' && mapStage() === 3; bridges = [];
     if (riverOn) {
-      for (let x = 0; x < COLS; x++) { grid[idx(x, 0)] = 0; grid[idx(x, 1)] = grid[idx(x, 2)] = 1; grid[idx(x, 3)] = 0; }
-      for (const f of [0.2, 0.5, 0.8]) { const bx = Math.round(COLS * f / 4) * 4; bridges.push(bx); grid[idx(bx, 1)] = grid[idx(bx, 2)] = 0; }
+      for (let x = 0; x < COLS; x++) {
+        grid[idx(x, 0)] = grid[idx(x, 2)] = grid[idx(x, 6)] = 0;
+        grid[idx(x, 1)] = grid[idx(x, 7)] = x % 4 === 0 ? 0 : 1;
+        grid[idx(x, 3)] = grid[idx(x, 4)] = 1; grid[idx(x, 5)] = 0;
+      }
+      for (const f of [0.2, 0.5, 0.8]) { const bx = Math.round(COLS * f / 4) * 4; bridges.push(bx); grid[idx(bx, 3)] = grid[idx(bx, 4)] = 0; }
+      // seven in each row: a wider map joins neighbouring buildings (across a cross street that is no bridge's), a narrower one splits some
+      const nb = Math.floor((COLS - 1) / 4);
+      const inner = []; for (let k = 1; k < nb; k++) if (!bridges.includes(4 * k)) inner.push(4 * k);
+      for (let j = 0, need = Math.max(0, nb - 7); j < need && inner.length; j++) { const x = inner[Math.min(inner.length - 1, Math.floor((j + 0.5) * inner.length / need))]; grid[idx(x, 1)] = grid[idx(x, 7)] = 1; }
+      for (let j = 0, more = Math.max(0, 7 - nb); j < more && j < nb; j++) { const x = 4 * Math.floor((j + 0.5) * nb / more) + 2; grid[idx(x, 1)] = grid[idx(x, 7)] = 0; }
     }
     // stage 3: a pit in the middle of every open plaza; oni that step in fall
     holes = [];
     if (stageN >= 3) {
       const open = (bx, by) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 2) return false; return true; };
       const blocks = [];
-      for (let by = riverOn ? 5 : 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) blocks.push([bx, by]);
+      for (let by = riverOn ? 9 : 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) blocks.push([bx, by]);
       let plazas = blocks.filter(([bx, by]) => open(bx, by));
       // always at least two pits
       const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
@@ -3476,7 +3499,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
       const pitIn = ([bx, by]) => holes.some(h => h.x > bx && h.x < bx + 3 && h.y > by && h.y < by + 3);
       const pl = all.filter(isPl);
       for (let i = pl.length - 1; i >= 0 && pl.length > 5; i--) if (!pitIn(pl[i])) { fill(pl[i], 1); pl.splice(i, 1); }
-      const rest = all.filter(b => solid(b) && !(riverOn && b[1] === 1)).sort(() => Math.random() - 0.5);
+      const rest = all.filter(b => solid(b) && !(riverOn && (b[1] === 1 || b[1] === 5))).sort(() => Math.random() - 0.5);
       while (pl.length < 4 && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
     }
     courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS); let courtDeal = -1;
@@ -3543,7 +3566,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
     const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
       const i = idx(x, y);
-      if (!road(x, y) || goalT[i] || (riverOn && y <= 3)) continue;   // (not on 4-3's bridges)
+      if (!road(x, y) || goalT[i] || (riverOn && y >= 3 && y <= 5)) continue;   // (not on 4-3's bridges or bank)
       const h = road(x - 1, y) && road(x + 1, y) && !road(x, y - 1) && !road(x, y + 1), v = road(x, y - 1) && road(x, y + 1) && !road(x - 1, y) && !road(x + 1, y);
       if (!h && !v) continue;
       if (holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 3) || Math.hypot(x - sx, y - sy) < 3) continue;
@@ -3913,7 +3936,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
     m.setLineDash([]);
     // roofs: a shadow, the roof, a lighter parapet; stalls on the street side throwing light out (warm, or lantern red)
     m.fillStyle = 'rgba(0,0,0,0.5)';
-    const roof = (x, y) => grid[idx(x, y)] === 1 && !(riverOn && y < 3);
+    const roof = (x, y) => grid[idx(x, y)] === 1 && !(riverOn && (y === 3 || y === 4));
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (roof(x, y)) m.fillRect(x + 0.14, y + 0.16, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (!roof(x, y)) continue;
@@ -3973,34 +3996,34 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
         }
       }
     }
-    // the river along the top: dark water catching the fireworks, the grass bank below it
+    // the river (rows 3-4): dark water catching the fireworks, the grass bank below it (row 5)
     if (riverOn) {
-      const g = m.createLinearGradient(0, 1, 0, 3); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
-      m.fillStyle = g; m.fillRect(0, 1, COLS, 2);
+      const g = m.createLinearGradient(0, 3, 0, 5); g.addColorStop(0, '#050a1c'); g.addColorStop(1, '#0c1a38');
+      m.fillStyle = g; m.fillRect(0, 3, COLS, 2);
       m.strokeStyle = 'rgba(160,190,255,0.14)'; m.lineWidth = 0.03; m.beginPath();
-      for (let k = 0; k < COLS * 2; k++) { const x = rnd() * COLS, y = 1.15 + rnd() * 1.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
+      for (let k = 0; k < COLS * 2; k++) { const x = rnd() * COLS, y = 3.15 + rnd() * 1.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
       m.stroke();
       // the fireworks overhead, broken up on the water
       const FWC = ['255,90,80', '255,210,90', '120,200,255', '200,120,255', '120,255,170'];
       for (let k = 0; k < Math.round(COLS / 4); k++) {
-        const x = rnd() * COLS, c = FWC[Math.floor(rnd() * FWC.length)], gl = m.createRadialGradient(x, 2, 0, x, 2, 1.4);
-        gl.addColorStop(0, `rgba(${c},0.22)`); gl.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gl; m.fillRect(x - 1.4, 1, 2.8, 2);
+        const x = rnd() * COLS, c = FWC[Math.floor(rnd() * FWC.length)], gl = m.createRadialGradient(x, 4, 0, x, 4, 1.4);
+        gl.addColorStop(0, `rgba(${c},0.22)`); gl.addColorStop(1, `rgba(${c},0)`); m.fillStyle = gl; m.fillRect(x - 1.4, 3, 2.8, 2);
         m.fillStyle = `rgba(${c},0.5)`;
-        for (let j = 0; j < 6; j++) m.fillRect(x - 0.25 + rnd() * 0.5, 1.15 + j * 0.28, 0.12 + rnd() * 0.25, 0.04);
+        for (let j = 0; j < 6; j++) m.fillRect(x - 0.25 + rnd() * 0.5, 3.15 + j * 0.28, 0.12 + rnd() * 0.25, 0.04);
       }
-      m.fillStyle = 'rgba(190,210,255,0.3)'; m.fillRect(0, 2.94, COLS, 0.06); m.fillRect(0, 1, COLS, 0.05);
+      m.fillStyle = 'rgba(190,210,255,0.3)'; m.fillRect(0, 4.94, COLS, 0.06); m.fillRect(0, 3, COLS, 0.05);
       // the bridges: a deck of road over the water, railings either side
       for (const bx of bridges) {
-        m.fillStyle = 'rgba(0,0,0,0.45)'; m.fillRect(bx + 0.12, 1.1, 1, 2);
-        m.fillStyle = '#3a3746'; m.fillRect(bx, 1, 1, 2);
-        m.strokeStyle = 'rgba(230,220,180,0.3)'; m.lineWidth = 0.035; m.setLineDash([0.26, 0.24]); m.beginPath(); m.moveTo(bx + 0.5, 1); m.lineTo(bx + 0.5, 3); m.stroke(); m.setLineDash([]);
-        m.fillStyle = '#b8b0a0'; m.fillRect(bx - 0.04, 1, 0.08, 2); m.fillRect(bx + 0.96, 1, 0.08, 2);
-        m.fillStyle = 'rgba(0,0,0,0.35)'; for (let k = 0; k < 8; k++) { m.fillRect(bx - 0.06, 1.1 + k * 0.25, 0.12, 0.04); m.fillRect(bx + 0.94, 1.1 + k * 0.25, 0.12, 0.04); }
+        m.fillStyle = 'rgba(0,0,0,0.45)'; m.fillRect(bx + 0.12, 3.1, 1, 2);
+        m.fillStyle = '#3a3746'; m.fillRect(bx, 3, 1, 2);
+        m.strokeStyle = 'rgba(230,220,180,0.3)'; m.lineWidth = 0.035; m.setLineDash([0.26, 0.24]); m.beginPath(); m.moveTo(bx + 0.5, 3); m.lineTo(bx + 0.5, 5); m.stroke(); m.setLineDash([]);
+        m.fillStyle = '#b8b0a0'; m.fillRect(bx - 0.04, 3, 0.08, 2); m.fillRect(bx + 0.96, 3, 0.08, 2);
+        m.fillStyle = 'rgba(0,0,0,0.35)'; for (let k = 0; k < 8; k++) { m.fillRect(bx - 0.06, 3.1 + k * 0.25, 0.12, 0.04); m.fillRect(bx + 0.94, 3.1 + k * 0.25, 0.12, 0.04); }
       }
-      for (let x = 0; x < COLS; x++) {
-        m.fillStyle = `rgb(${26 + rnd() * 5},${38 + rnd() * 6},${30 + rnd() * 5})`; m.fillRect(x, 3, 1, 1);
+      for (let gy0 = 5; gy0 <= 5; gy0++) for (let x = 0; x < COLS; x++) {
+        m.fillStyle = `rgb(${26 + rnd() * 5},${38 + rnd() * 6},${30 + rnd() * 5})`; m.fillRect(x, gy0, 1, 1);
         m.strokeStyle = 'rgba(90,140,90,0.35)'; m.lineWidth = 0.025; m.beginPath();
-        for (let k = 0; k < 5; k++) { const gx = x + rnd(), gy = 3.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
+        for (let k = 0; k < 5; k++) { const gx = x + rnd(), gy = gy0 + 0.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
         m.stroke();
       }
     }
@@ -4023,8 +4046,11 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
       rnd();   // (the fireworks' streaks on the ground are gone; the draw kept so the rest of the map comes out the same)
     }
     m.restore();
-    // paper lanterns strung down the streets, as on 縁日通り
-    for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) {
+    // paper lanterns strung down the streets, as on 縁日通り (4-3: none over the river or the far bank; a string along
+    // the road in front of the grass bank instead)
+    const lanternRows = []; for (let y = 0; y < ROWS; y += 4) if (!(riverOn && y < 6)) lanternRows.push(y);
+    if (riverOn) lanternRows.unshift(6);
+    for (const y of lanternRows) for (let x = 0; x < COLS; x++) {
       if (!walk(x, y) || (x % 2)) continue;
       const lx = x + 0.5, ly = y + 0.18;
       const g = m.createRadialGradient(lx, ly, 0, lx, ly, 0.7); g.addColorStop(0, 'rgba(255,90,50,0.3)'); g.addColorStop(1, 'rgba(255,90,50,0)');
@@ -4033,7 +4059,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
       m.fillStyle = 'rgba(255,230,180,0.8)'; m.fillRect(lx - 0.02, ly - 0.05, 0.04, 0.1);
     }
     m.strokeStyle = 'rgba(30,20,20,0.6)'; m.lineWidth = 0.015; m.beginPath();
-    for (let y = 0; y < ROWS; y += 4) { m.moveTo(0, y + 0.1); m.lineTo(COLS, y + 0.1); }
+    for (const y of lanternRows) { m.moveTo(0, y + 0.1); m.lineTo(COLS, y + 0.1); }
     m.stroke();
     m.strokeStyle = 'rgba(255,90,52,0.55)'; m.lineWidth = 0.06; m.strokeRect(0.04, 0.04, COLS - 0.08, ROWS - 0.08);
   }
@@ -4667,7 +4693,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
     }
     if (t >= exitAt() && !exitOpen && (stageN < 3 || storyExit()) && !tut) {  // the weekly ranking and the survival nights have no way out
       // the exit opens on the right edge, on one of the streets that reach it
-      const rows = []; for (let y = 4; y < ROWS - 1; y += 4) rows.push(y);
+      const rows = []; for (let y = riverOn ? 8 : 4; y < ROWS - 1; y += 4) rows.push(y);   // (4-3: not across the river)
       exitY = rows[Math.floor(Math.random() * rows.length)];
       exitOpen = true; alarmAt = t; klaxon(3, 0.03); shake = reduceMotion ? 0 : Math.max(shake, 0.2);
       const kp = randomRoad(8); keyPos = { x: kp.x, y: kp.y };
@@ -6320,6 +6346,9 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
       $('itemLabel').textContent = bag.length ? ITEM_SHORT[k] : 'アイテム'; $('itemLabel').className = bag.length ? k : '';
       ui.itemName.textContent = bag.length ? `×${n}` : 'なし'; ui.itemName.className = bag.length ? k : '';
       $('itemPrev').disabled = $('itemNext').disabled = kinds < 2; }
+    { const nb = bag.filter(x => x === 'barrier').length, nr = bag.filter(x => x === 'launcher').length, on = state === 'play';
+      $('barN').textContent = '×' + nb; $('rkN').textContent = '×' + nr;
+      $('barBtn').setAttribute('aria-disabled', String(!(on && nb && !(P && P.barrier)))); $('rkBtn').setAttribute('aria-disabled', String(!(on && nr))); }
     // (dim too while the chosen one is a barrier and a barrier is already on: ◀ ▶ picks another)
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' && !(itemCur() === 'barrier' && P && P.barrier) ? 'false' : 'true');
     if (playing && P) {
@@ -7742,7 +7771,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
   // the buttons a step teaches ('dash', 'mine', 'item', space-separated) glow until it is done
   function tutGlow(which) {
     const on = String(which || '').split(' ');
-    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item], ['pad', document.querySelector('#pad .padbase')]]) if (b) b.classList.toggle('tutglow', on.includes(k));
+    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item], ['item', $('rkBtn')], ['item', $('barBtn')], ['pad', document.querySelector('#pad .padbase')]]) if (b) b.classList.toggle('tutglow', on.includes(k));
   }
   const tutQuit = () => { tutGlow(''); tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
   // each practice and the stage it belongs to
@@ -9253,6 +9282,7 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brigh
     el.addEventListener('click', e => { if (e.detail === 0) fn(); });
   }
   press(ui.item, () => useItem(itemCur()));
+  press($('barBtn'), () => useItem('barrier')); press($('rkBtn'), () => useItem('launcher'));   // (the arcade panel's own two)
   for (const [id, d] of [['itemPrev', -1], ['itemNext', 1]]) press($(id), () => itemStep(d));
   $('resumeBtn').addEventListener('click', () => { if (state === 'pause') tap(); setPause(false); });
   // the stop button answers on touch-down, so it works with a thumb still on the stick
