@@ -422,6 +422,13 @@ h2.clear { color: #5dff9e; }
 .nameerr { min-height: 1.2em; font-size: 13px; color: var(--oni); }
 .card.rankcard { max-width: 520px; max-height: 100%; min-height: 0; margin: 0 auto; gap: 8px; }
 .rankcard h2 { font-size: clamp(26px, 6vw, 38px); color: var(--lamp); }
+/* the ranking keeps its top short (title, weeks and close on one line; what it ranks and the prize on the next) so the list of names gets the room */
+.rankhead { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rankhead h2 { margin: 0; font-size: clamp(22px, 4.6vw, 30px); line-height: 1.1; }
+.rankhead #rankClose { margin-left: auto; padding: 6px 14px; font-size: 13px; }
+.ranksub { display: flex; align-items: center; gap: 6px 14px; flex-wrap: wrap; }
+.ranksub .rankprize { flex: 1 1 auto; }
+@media (max-height: 500px) { .card.rankcard { gap: 6px; padding-top: 10px; padding-bottom: 10px; max-width: 640px; } .ranklist li, .rankme { padding-top: 3px; padding-bottom: 3px; line-height: 1.3; align-items: center; } .ranklist .tm, .rankme .tm { font-size: 14px; } }
 .ranklist { list-style: none; margin: 0; padding: 0; flex: 1 1 auto; min-height: 0; overflow-y: auto; border: 1px solid var(--line); border-radius: 8px; background: rgba(0,0,0,.25); }
 .ranklist li, .rankme { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; padding: 6px 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .ranklist li:last-child { border-bottom: 0; }
@@ -976,7 +983,7 @@ body.ontitle #mapEdge, body.picking #mapEdge, body.replaying #mapEdge { display:
 .pad.on .padbase { border-color: rgba(0,229,255,.85); }
 .padknob { background: radial-gradient(circle at 35% 30%, #c4f9ff, #00a6c4 60%, #00323e); border-color: #7ff4ff; box-shadow: 0 0 14px rgba(0,229,255,.65); }
 /* in a run: DEADLINE2's night-blue glow from the top and its faint scanlines */
-body:not(.ontitle):not(.picking) { background: repeating-linear-gradient(0deg, rgba(90,220,255,.07) 0 1px, transparent 1px 28px) fixed, repeating-linear-gradient(90deg, rgba(90,220,255,.07) 0 1px, transparent 1px 28px) fixed, radial-gradient(ellipse 100% 75% at 50% -12%, #2bb8e6 0%, #136aa6 26%, #0b2f5e 52%, #051020 78%) fixed, #051020; }
+body:not(.ontitle):not(.picking) { background: #000; }
 .misbox { border-radius: 0; border-color: rgba(255,210,63,.55); background: rgba(10,16,34,.9); box-shadow: 0 0 10px rgba(255,210,63,.2), inset 0 0 10px rgba(255,210,63,.08); }
 body:not(.ontitle) .pad { border-radius: 0; }
 </style>
@@ -1175,14 +1182,11 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   <div class="overlay" id="rankScreen" hidden>
     <div class="card rankcard">
-      <h2>世界ランキング</h2>
+      <div class="rankhead"><h2>世界ランキング</h2><div class="ranktabs" id="rankTabs" role="tablist"></div><button class="ghost" id="rankClose" type="button">閉じる</button></div>
       <div class="rankmodes" role="tablist"><button type="button" id="rankModeW" role="tab" aria-selected="true">世界ランキング</button><button type="button" id="rankModeA" role="tab" aria-selected="false">歴代ランキング</button></div>
-      <div class="ranktabs" id="rankTabs" role="tablist"></div>
-      <span class="label" id="rankLabel">1-3 ・ 逃走時間 上位100</span>
-      <div class="rankprize" id="rankPrize" hidden><span>週の終わりの順位で★がもらえる(最大★40)</span><button class="ghost" id="rankPrizeBtn" type="button">報酬詳細</button></div>
+      <div class="ranksub"><span class="label" id="rankLabel">1-3 ・ 逃走時間 上位100</span><div class="rankprize" id="rankPrize" hidden><span>週の終わりの順位で★がもらえる(最大★40)</span><button class="ghost" id="rankPrizeBtn" type="button">報酬詳細</button></div></div>
       <ol class="ranklist" id="rankList"></ol>
       <div class="rankme" id="rankMe" hidden></div>
-      <div class="row"><button class="ghost" id="rankClose" type="button">閉じる</button></div>
     </div>
   </div>
 
@@ -8808,6 +8812,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   $('mailBtn').addEventListener('click', () => { tap(); mailOpen(); ui.title.hidden = true; $('mailScreen').hidden = false; $('mailBody').scrollTop = 0; });
   $('mailClose').addEventListener('click', () => closeOverlay('mailScreen'));
+  // the glow plays once per new letter: it never stays on the button (kept there, it replayed every time the title came back)
+  $('mailBtn').addEventListener('animationend', e => { if (e.animationName === 'mailping') $('mailBtn').classList.remove('ping'); });
   $('mailAll').addEventListener('click', () => { const ms = mailList().filter(x => !x.got); ms.forEach(mailTake); saveRecords(); mailGot(ms); });
   new MutationObserver(() => { if (!ui.title.hidden) mailPaint(); }).observe(ui.title, { attributes: true, attributeFilter: ['hidden'] });
   // ログインボーナス: the first open of each day (Japan time) brings ★5 by mail
