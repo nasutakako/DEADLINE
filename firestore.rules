@@ -41,6 +41,20 @@ service cloud.firestore {
       allow delete: if okGame(game) && okReplay(rboard) && signedIn() && request.auth.uid == uid;
     }
 
+    // games/<game>/lk<week>/<to>_<by>: { to } — a like on a weekly ranking run that can be watched (its top 3):
+    // one per player per run, never on their own; everyone can count them, each player adds or takes back only their own
+    function okLike(b) { return b.matches('lk[0-9]{1,6}'); }
+    match /games/{game}/{lboard}/{lid} {
+      allow read: if okGame(game) && okLike(lboard);
+      allow create: if okGame(game) && okLike(lboard) && signedIn()
+        && request.resource.data.keys().hasOnly(['to'])
+        && request.resource.data.to is string && request.resource.data.to.size() <= 128
+        && request.resource.data.to != request.auth.uid
+        && lid == request.resource.data.to + '_' + request.auth.uid;
+      allow delete: if okGame(game) && okLike(lboard) && signedIn()
+        && lid == resource.data.to + '_' + request.auth.uid;
+    }
+
     // games/<game>/names/<key>: { owner, name } — one owner per name
     match /games/{game}/names/{key} {
       allow read: if okGame(game);

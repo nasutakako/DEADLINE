@@ -433,6 +433,10 @@ h2.clear { color: #5dff9e; }
 .ranklist li, .rankme { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto auto; gap: 10px; align-items: baseline; padding: 6px 10px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,.05); }
 .ranklist li:last-child { border-bottom: 0; }
 .ranklist li:has(.rpbtn) { grid-template-columns: 3.4em minmax(0, 1fr) auto auto auto; }
+.ranklist li:has(.likebtn) { grid-template-columns: 3.4em minmax(0, 1fr) auto auto auto auto; }
+.ranklist li .likebtn { align-self: center; min-width: 3.2em; padding: 2px 8px; white-space: nowrap; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(255,120,170,.45); border-radius: 12px; background: rgba(255,120,170,.08); color: #f4a3c4; cursor: pointer; }
+.ranklist li .likebtn.on { background: rgba(255,90,150,.25); border-color: #ff6f9f; color: #ff8fb5; }
+.ranklist li .likebtn.nope { animation: likeno .25s; } @keyframes likeno { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 .ranklist li .rpbtn { align-self: center; padding: 2px 9px; white-space: nowrap; font-size: 11.5px; font-weight: 700; border: 1px solid rgba(255,207,90,.5); border-radius: 12px; background: rgba(255,207,90,.1); color: #ffcf5a; cursor: pointer; }
 /* the replay: the map over the whole screen, a control bar on it */
 body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0; }
@@ -968,6 +972,15 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 body:not(.ontitle):not(.picking):not(.replaying) .stage { border-radius: 0; background: transparent; box-shadow: none; }
 #mapEdge { position: absolute; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0,229,255,.45), inset 0 0 18px rgba(0,229,255,.12); }
 body.ontitle #mapEdge, body.picking #mapEdge, body.replaying #mapEdge { display: none; }
+.act { border-radius: 0; background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); letter-spacing: .1em; }
+.act small { letter-spacing: .2em; }
+.dash { border: 1px solid #1fa9bb; color: #3cc3d4; box-shadow: 0 0 8px rgba(0,229,255,.16), inset 0 0 10px rgba(0,229,255,.07); }
+.dash::after { background: #1fa9bb; box-shadow: 0 0 4px rgba(0,229,255,.5); }
+.mine { border: 1px solid #b8962f; color: #cfae45; box-shadow: 0 0 8px rgba(255,210,63,.14), inset 0 0 10px rgba(255,210,63,.06); }
+.itemb { border: 1px solid #a8329a; color: #c97cbf; box-shadow: 0 0 8px rgba(255,43,214,.14), inset 0 0 10px rgba(255,43,214,.06); }
+.itemarr { border-radius: 0; border: 1px solid rgba(168,50,154,.7); background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); color: #c97cbf; box-shadow: 0 0 5px rgba(255,43,214,.12), inset 0 0 6px rgba(255,43,214,.05); }
+.itemarr:active { background: rgba(168,50,154,.2); }
+#itemName.launcher, #itemLabel.launcher { color: #b894d4; } #itemName.barrier, #itemLabel.barrier { color: #6cb9c9; } #itemName.boost, #itemLabel.boost { color: #d39a4a; }
 .sys .btn { border-radius: 0; background: rgba(0,229,255,.06); border: 1px solid rgba(0,229,255,.6); color: #00e5ff; box-shadow: 0 0 8px rgba(0,229,255,.25), inset 0 0 10px rgba(0,229,255,.1); letter-spacing: .1em; }
 .pi { border-radius: 0; border-color: rgba(0,229,255,.3); background: rgba(0,229,255,.04); }
 .pi b { font-family: "Share Tech Mono", var(--f-num); font-weight: 700; text-shadow: 0 0 8px currentColor; }
@@ -1030,6 +1043,16 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   #startPickScreen .pick { padding: 4px 8px; }
   #startPickScreen .picks { gap: 5px; }
 }
+/* the play buttons and the stick in dark gunmetal: brushed metal, a soft bevel, only their words in colour */
+.act, .itemarr { border-radius: 8px !important; background: linear-gradient(180deg, #3a3f49 0%, #23262d 48%, #191b20 52%, #121317 100%) !important; border: 1px solid #0a0b0d !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 3px rgba(0,0,0,.5), 0 3px 0 #050506, 0 5px 10px rgba(0,0,0,.5) !important; text-shadow: 0 1px 0 #000; letter-spacing: .08em; }
+.act:active, .itemarr:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 -1px 3px rgba(0,0,0,.6), 0 1px 0 #050506, 0 2px 5px rgba(0,0,0,.5) !important; }
+.dash { color: #57c2d2 !important; } .mine { color: #d4b157 !important; } .itemb, .itemarr { color: #bf8fbb !important; }
+.act small { color: #8a909b !important; }
+.dash::after { background: #57c2d2 !important; box-shadow: none !important; }
+#itemLabel.launcher, #itemLabel.barrier, #itemLabel.boost { color: #bf8fbb !important; }
+.padbase { border: 1px solid #0a0b0d !important; background: radial-gradient(circle at 50% 50%, #15171b 0%, #1d2026 55%, #2c3038 78%, #1a1c21 100%) !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #23262d, 0 0 0 4px rgba(255,255,255,.06), 0 4px 10px rgba(0,0,0,.5) !important; }
+.pad.on .padbase { border-color: #0a0b0d !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #2b3a40, 0 0 0 4px rgba(87,194,210,.25), 0 4px 10px rgba(0,0,0,.5) !important; }
+.padknob { background: radial-gradient(circle at 40% 32%, #7a808b 0%, #474c55 30%, #2a2d34 62%, #15161a 100%) !important; border: 1px solid #0a0b0d !important; box-shadow: inset 0 1px 1px rgba(255,255,255,.35), inset 0 -3px 5px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.6), 0 0 0 2px rgba(87,194,210,.18) !important; }
 </style>
 <!--/THEME-C-->
 
@@ -1795,12 +1818,38 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       finally { b.disabled = false; delArm = false; b.classList.remove('arm'); b.textContent = '名前とランキングの記録を削除'; }
     }
     const fmt = s => fmtTime(+s || 0);
+    // いいね: a run that can be watched (a week's top 3) can be liked, once by each player (not their own); kept as
+    // lk<week>/<who's run>_<who liked> = { to }, and counted from there
+    function likeWire(b, w, to) {
+      const col = 'lk' + w, mineId = () => to + '_' + uid;
+      let n = 0, on = false, busy = false;
+      const paint = () => { b.textContent = (on ? '♥ ' : '♡ ') + n; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); };
+      paint();
+      (async () => {
+        try {
+          n = (await db.collection(col).where('to', '==', to).get()).size;
+          on = !!uid && uid !== to && (await db.doc(col + '/' + mineId()).get()).exists;
+          paint();
+        } catch (e) { b.hidden = true; }
+      })();
+      b.addEventListener('click', async e => {
+        e.stopPropagation();
+        if (busy) return;
+        if (!uid || uid === to) { b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); return; }   // (your own run, or no sign-in)
+        busy = true; tap();
+        const was = on; on = !on; n = Math.max(0, n + (on ? 1 : -1)); paint();
+        try { if (on) await db.doc(col + '/' + mineId()).set({ to }); else await db.doc(col + '/' + mineId()).delete(); }
+        catch (err) { on = was; n = Math.max(0, n + (on ? 1 : -1)); paint(); }
+        busy = false;
+      });
+    }
     // the developer's ranking names (their keys in names/): their records carry the 開発者 mark
     const DEV_KEYS = ['n6e61737574616b616b6f'];   // nasutakako
     function row(no, p, mine, rp) {
       const li = document.createElement('li'); li.className = [mine ? 'me' : '', no >= 1 && no <= 3 ? 'r' + no : ''].join(' ').trim();
       for (const [c, v] of [['no', no + '位'], ['nm', p.name || '???'], ['tt', p.title || ''], ['tm', fmt(p.best)]]) { const s = document.createElement('span'); s.className = c; s.textContent = v; li.appendChild(s); }
       // the weekly ranking's top 3: their run can be watched
+      if (rp) { const lb = document.createElement('button'); lb.type = 'button'; lb.className = 'likebtn'; lb.textContent = '♡'; lb.setAttribute('aria-label', 'いいね'); li.appendChild(lb); likeWire(lb, rp.w, rp.id); }
       if (rp) { const b = document.createElement('button'); b.type = 'button'; b.className = 'rpbtn'; b.textContent = '▶ リプレイ'; b.addEventListener('click', () => { tap(); playReplay(rp.w, rp.id, p.best, p.name || '???', rp.board); }); li.appendChild(b); }
       // the developer's own record, played like anyone's, marked as such
       if (DEV_KEYS.includes(p.key)) { const b = document.createElement('span'); b.className = 'devb'; b.textContent = '開発者'; li.querySelector('.nm').appendChild(b); }
