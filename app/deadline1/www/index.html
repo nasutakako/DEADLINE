@@ -1263,7 +1263,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         <button class="pick" data-tut="k3" type="button"><b>3-3</b><span><i>6分30秒で出口</i></span></button>
         <button class="pick" data-tut="b1" type="button"><b>4-1</b><span><i>自爆する鬼・</i><i>誘爆</i></span></button>
         <button class="pick" data-tut="b2" type="button"><b>4-2</b><span><i>補給・</i><i>出口の時間</i></span></button>
-        <button class="pick" data-tut="3b" type="button"><b>4-3</b><span><i>韋駄天・</i><i>自爆1.5倍・</i><i>6分30秒で出口</i></span></button>
+        <button class="pick" data-tut="3b" type="button"><b>4-3</b><span><i>自爆1.5倍・</i><i>6分30秒で出口</i></span></button>
       </div>
       <div class="row"><button class="ghost" id="tutBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -2634,8 +2634,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // 影絵世界: 影分身ダッシュ on its stages 2 and 3, and on its weekly ranking (月蝕の夜), whatever dash is worn
   const dashFx = () => shadowStory() && stageN >= 2 ? 'dash_shadow' : EQ('dash');
   const IDATEN_N = 2;
-  // (花火の夜 gives 韋駄天 and only that: the equipped skill sits out there)
-  const skillOn = k => trial() === 'fuse' ? k === 'skill_idaten' : trial() === 'home' && k === 'skill_luck';
+  // (帰り道's stage 3 lends 九死に一生; 韋駄天 is gone from the game)
+  const skillOn = k => trial() === 'home' && k === 'skill_luck';
   // two copies (this device and the saved one): everything either owns, and this device's choices first
   const mergeShop = (a, b) => { a = a || {}; b = b || {}; return { owned: [...new Set([...(a.owned || []), ...(b.owned || [])])], eq: Object.assign({}, b.eq, a.eq) }; };
   // what each item does in play (items not listed only change the look)
@@ -7379,6 +7379,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ],
     2: [
       { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
+      { say: 'ときどき道にランチャーが落ちている。10秒で消えるので、見つけたら拾おう', info: true },
       { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと30秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
@@ -7402,9 +7403,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
     ],
     '3b': [
-      { say: '4-3では、スキル「韋駄天」が特別に使える。ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', info: true },
-      { btn: 'dash', say: 'ダッシュを2回続けて使ってみよう', set: () => { tut.d0 = S3.dashes; }, go: () => S3.dashes - tut.d0 >= 2 },
-      { say: '4-3の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、韋駄天で一気に離れよう', info: true },
+      { say: '4-3の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、ダッシュで一気に離れよう', info: true },
       { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
     ],
@@ -7587,6 +7586,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       '黄色い鬼は、脇道に一瞬入ってすぐ戻ると、脇道の向こうへ回り込む',
       '黄色い鬼の前で立ち止まると、まっすぐ向かってくる。爆弾を置いて待とう',
       '黄色い箱を拾うと爆弾が増える。持てるのは3個まで',
+      'ときどき道にランチャーが落ちている。10秒で消えるので、見つけたら拾おう',
     ],
     1: [
       '2分経過でバリアと爆弾1個が支給される',
@@ -8940,7 +8940,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾の${n >= 3 ? '1.5' : '1.2'}倍`, '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
     if (n === 3 && route === 'home') own.push('九死に一生が特別に使える(ダッシュがときどき1.5倍の距離になる)');
     if (n === 3 && route === 'cyber') own.push('電磁爆弾が特別に使える');
-    if (n === 3 && route === 'fuse') own.push('韋駄天が特別に使える(ダッシュを2回まで続けて使える)');
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
