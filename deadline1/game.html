@@ -1061,7 +1061,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 @media (prefers-reduced-motion: reduce) { .score.celepop b, .celetag.on { animation: none; } }
 /* ゲームセンター: a lever (a steel rod with a red ball on top, in a black panel with a chrome ring) and round red
    arcade buttons set in black bezels with a chrome rim, the words in white on them */
-body.arcadeui .padbase { border: 0 !important; background: radial-gradient(circle, #050505 0 26%, #1b1b1d 27% 58%, #0c0c0d 60%) !important;
+body.arcadeui .padbase { border: 0 !important; background: radial-gradient(circle, #101012 0 7%, #1b1b1d 9% 58%, #0c0c0d 60%) !important;
   box-shadow: 0 0 0 3px #2a2a2c, 0 0 0 5px #8d8f94, 0 0 0 6px #3a3b3e, 0 6px 14px rgba(0,0,0,.7), inset 0 3px 8px rgba(0,0,0,.9) !important; }
 body.arcadeui .pad.on .padbase { box-shadow: 0 0 0 3px #2a2a2c, 0 0 0 5px #b5b7bc, 0 0 0 6px #3a3b3e, 0 6px 14px rgba(0,0,0,.7), inset 0 3px 8px rgba(0,0,0,.9) !important; }
 body.arcadeui .padshaft { position: absolute; left: 50%; top: 50%; width: 1px; height: 13px; margin-top: -6.5px; transform-origin: 0 50%; transform: scaleX(0); pointer-events: none;
@@ -1076,27 +1076,37 @@ body.arcadeui .padknob { width: 42px !important; height: 42px !important; margin
 body.arcadeui .controls { display: block !important; position: relative; align-self: center; width: 100%; aspect-ratio: 1 / 1.02; max-height: 100%; padding: 0 !important;
   background: linear-gradient(180deg, #17181c, #0a0a0c); border-radius: 16px; box-shadow: 0 0 0 4px #1f3ec4, 0 0 0 6px #142a8a, 0 6px 0 4px #0d1b5c, 0 10px 18px rgba(0,0,0,.6), inset 0 2px 0 rgba(255,255,255,.08); }
 body.arcadeui .controls .itemrow { display: none !important; }
-body.arcadeui .controls .act { position: absolute !important; width: 29% !important; aspect-ratio: 1; height: auto !important; min-height: 0 !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; flex: none !important;
+body.arcadeui .controls .act { position: absolute !important; width: 23% !important; aspect-ratio: 1; height: auto !important; min-height: 0 !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; flex: none !important;
   transform: translate(-50%, -50%); overflow: visible !important; border: 0 !important; border-radius: 50% !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 0;
-  --f: 247,214,70; --r: 196,152,16; --s: 128,96,4;
+  --f: 232,44,36; --r: 168,20,14; --s: 104,8,4;
   background: radial-gradient(circle at 50% 58%, rgb(var(--f)) 0 56%, color-mix(in srgb, rgb(var(--f)) 70%, #fff) 68%, rgb(var(--r)) 100%) !important;
   box-shadow: 0 0 0 2px rgb(var(--r)), 0 4px 0 2px rgb(var(--s)), 0 0 0 5px #030303, 0 5px 0 5px #030303, inset 0 2px 1px rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.18) !important;
-  color: #1c1a14 !important; text-shadow: none !important; font-size: 0 !important; font-weight: 900; letter-spacing: 0 !important; line-height: 1.1; transition: transform .05s, box-shadow .05s; }
+  color: #fff !important; text-shadow: none !important; font-size: 0 !important; font-weight: 900; letter-spacing: 0 !important; line-height: 1.1; transition: transform .05s, box-shadow .05s; }
 body.arcadeui .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 5px #030303, 0 2px 0 5px #030303, inset 0 2px 1px rgba(255,255,255,.5), inset 0 -1px 3px rgba(0,0,0,.25) !important; }
 /* (the names printed on the panel under each button, as on a real stick; the button's face shows how many are left) */
 body.arcadeui .controls .act::before { content: attr(data-lbl); position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: 0; color: #e9ebf0; pointer-events: none; }
-body.arcadeui .controls .act small, body.arcadeui .controls #mineCount { color: rgba(28,26,20,.8) !important; font-size: 13px !important; font-family: "Share Tech Mono", var(--f-num); letter-spacing: 0 !important; font-weight: 700; text-shadow: none !important; }
+body.arcadeui .controls .act small, body.arcadeui .controls #mineCount { color: #fff !important; font-size: 13px !important; font-family: "Share Tech Mono", var(--f-num); letter-spacing: 0 !important; font-weight: 700; text-shadow: none !important; }
 body.arcadeui .controls .barb, body.arcadeui .controls .rkb { display: flex !important; }
-body.arcadeui .controls .mine { left: 43%; top: 23%; }
-body.arcadeui .controls .barb { left: 79%; top: 23%; }
-body.arcadeui .controls .dash { left: 20%; top: 66%; --f: 242,242,240; --r: 200,200,198; --s: 140,140,138; }
-body.arcadeui .controls .rkb { left: 60%; top: 66%; --f: 242,242,240; --r: 200,200,198; --s: 140,140,138; }
+body.arcadeui .controls .mine { left: 42%; top: 23%; }
+body.arcadeui .controls .barb { left: 82%; top: 23%; }
+body.arcadeui .controls .dash { left: 18%; top: 66%; }
+body.arcadeui .controls .rkb { left: 58%; top: 66%; }
 body.arcadeui .controls .mine #mineCount { display: block; }
 /* the dash's wait: a shade sweeping round the button like a clock hand */
 body.arcadeui .controls .dash::after { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 50%; box-shadow: none !important;
   background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.45) 0) !important; }
 body.arcadeui .controls .act[aria-disabled="true"] { filter: brightness(.55); opacity: 1 !important; }
 .padshaft { display: none; } body.arcadeui .padshaft { display: block; }
+/* the arcade skin's play screen, a cabinet: the black around it a deep red-black cabinet side with a faint diagonal
+   pinstripe and a glow from the screen, the map set in a thick black bezel with a chrome trim, as a cabinet's monitor */
+body.arcadeui:not(.ontitle):not(.picking) { background:
+  radial-gradient(ellipse 70% 60% at 50% 45%, rgba(90,140,255,.10), rgba(0,0,0,0) 70%),
+  repeating-linear-gradient(135deg, rgba(255,60,50,.07) 0 2px, rgba(0,0,0,0) 2px 14px),
+  linear-gradient(180deg, #1a0709 0%, #0d0405 55%, #060203 100%) !important; }
+body.arcadeui #mapEdge { box-shadow: inset 0 0 0 2px #9a9ca2, inset 0 0 0 3px #2a2a2d, inset 0 0 0 7px #050505, inset 0 0 22px 8px rgba(0,0,0,.55) !important; }
+body.arcadeui .pad { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(0,0,0,.25)) !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); }
+body.arcadeui .pi, body.arcadeui .sys .btn { background: rgba(10,4,5,.75) !important; }
+
 </style>
 <!--/THEME-C-->
 
@@ -8313,8 +8323,9 @@ body.arcadeui .controls .act[aria-disabled="true"] { filter: brightness(.55); op
   const pad = $('pad'), padBase = pad.querySelector('.padbase'), padKnob = $('padKnob'), PAD_R = STICK_R;
   const padDraw = s => {
     const R = padBase.offsetWidth / 2;
-    padKnob.style.transform = `translate(${s.kx * (R - 14) / PAD_R}px, ${s.ky * (R - 14) / PAD_R}px)`;
-    { const kx = s.kx * (R - 14) / PAD_R, ky = s.ky * (R - 14) / PAD_R, sh = $('padShaft'); if (sh) sh.style.transform = `rotate(${Math.atan2(ky, kx)}rad) scaleX(${Math.hypot(kx, ky)})`; }   // (the lever's rod, ゲームセンター)
+    const lean = document.body.classList.contains('arcadeui') ? 0.7 : 1;   // (the arcade lever leans only so far: its black well barely shows)
+    padKnob.style.transform = `translate(${s.kx * (R - 14) / PAD_R * lean}px, ${s.ky * (R - 14) / PAD_R * lean}px)`;
+    { const kx = s.kx * (R - 14) / PAD_R * lean, ky = s.ky * (R - 14) / PAD_R * lean, sh = $('padShaft'); if (sh) sh.style.transform = `rotate(${Math.atan2(ky, kx)}rad) scaleX(${Math.hypot(kx, ky)})`; }   // (the lever's rod, ゲームセンター)
   };
   const padMove = e => {
     const s = input.stick;

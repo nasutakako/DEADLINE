@@ -1,4 +1,5 @@
 import UIKit
+import WebKit
 import Capacitor
 
 @UIApplicationMain
@@ -40,5 +41,23 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                                           sessionRole: connectingSceneSession.role)
         config.delegateClass = SceneDelegate.self
         return config
+    }
+}
+
+// The game's screen: Capacitor's own view controller, with the web view always filling the whole screen (on some
+// iPhones held sideways it was laid inside the safe area, leaving a dark band along the top and the notch side; the
+// game keeps its own buttons clear of the notch). The status bar stays hidden by Info.plist
+class GameViewController: CAPBridgeViewController {
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        view.backgroundColor = .black
+        webView?.isOpaque = true
+        webView?.backgroundColor = .black
+        webView?.scrollView.backgroundColor = .black
+        webView?.scrollView.contentInsetAdjustmentBehavior = .never
+    }
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        if let w = webView, w.frame != view.bounds { w.frame = view.bounds }
     }
 }

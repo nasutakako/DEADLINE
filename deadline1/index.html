@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>DEADLiNE</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#07080d">
+<meta name="theme-color" content="#000000">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="../icon-180.png">
 <script>window.DEADLINE_SHELL = true;</script>
 <style>
-html, body { margin: 0; height: 100%; background: #07080d; overflow: hidden; overscroll-behavior: none; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; overscroll-behavior: none; }
 /* The game's frame is sized by the browser itself, from the visible area and the safe areas, so it follows the
    screen as it settles (a home-screen launch on iPhone reports its size late) without any measuring in script.
    The game keeps its own 16px edge, so only the part of a safe area beyond that is taken off. */
@@ -29,7 +29,7 @@ html, body { margin: 0; height: 100%; background: #07080d; overflow: hidden; ove
 /* held sideways, iPhone reports the same inset on both sides, but only the notch side needs it (the other is a
    rounded corner): turned left the notch is on the left, turned right on the right */
 html.nl { --R: 0px; } html.nr { --L: 0px; }
-#g { position: fixed; left: 0; top: 0; border: 0; display: block; transform-origin: 0 0; background: #07080d;
+#g { position: fixed; left: 0; top: 0; border: 0; display: block; transform-origin: 0 0; background: #000;
   width: calc(100vw - var(--L) - var(--R)); height: calc(var(--vh) - var(--t) - var(--b)); transform: translate(var(--L), var(--t)); }
 /* an upright phone: the game laid on its side, its top toward the right edge, its left edge clear of the status bar
    and the island */
@@ -37,7 +37,7 @@ html.up #g { width: calc(var(--vh) - var(--t) - var(--b)); height: 100vw; transf
 </style>
 </head>
 <body>
-<iframe id="g" src="game.html?v=f12303e689" title="DEADLiNE" allow="fullscreen; autoplay; clipboard-write; clipboard-read; web-share"></iframe>
+<iframe id="g" src="game.html?v=91ba946280" title="DEADLiNE" allow="fullscreen; autoplay; clipboard-write; clipboard-read; web-share"></iframe>
 <script>
 (() => {
   const g = document.getElementById('g'), root = document.documentElement;
@@ -48,6 +48,11 @@ html.up #g { width: calc(var(--vh) - var(--t) - var(--b)); height: 100vw; transf
     const ang = typeof window.orientation === 'number' ? window.orientation : screen.orientation ? (screen.orientation.angle > 180 ? -90 : screen.orientation.angle) : 0;
     root.classList.toggle('up', up);
     root.classList.toggle('nl', !up && ang === 90); root.classList.toggle('nr', !up && ang === -90);
+    // a phone held sideways keeps nothing back along its top and bottom (a home-screen launch reported a top inset
+    // there and the style rule alone did not take): set here, on the page itself, so it always wins
+    const side = coarse.matches && !portrait.matches;
+    root.style.setProperty('--t', side ? '0px' : ''); root.style.setProperty('--b', side ? '0px' : '');
+    if (!side) { root.style.removeProperty('--t'); root.style.removeProperty('--b'); }
   }
   addEventListener('resize', fit); addEventListener('orientationchange', () => { fit(); setTimeout(fit, 300); });
   for (const m of [coarse, portrait]) (m.addEventListener ? m.addEventListener('change', fit) : m.addListener(fit));
