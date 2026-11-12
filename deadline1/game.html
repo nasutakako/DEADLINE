@@ -940,8 +940,8 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 @media (max-width: 640px) { .shopbody { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; } .shopdetail { max-height: 46vh; } }
 
 /* ===== the play screen, DEADLINE2's look: square neon-edged panels and buttons, glowing pixel numbers ===== */
-body:not(.ontitle):not(.picking):not(.replaying) .stage { border-radius: 0; background: transparent; box-shadow: none; overflow: visible; }
-#mapEdge { position: absolute; pointer-events: none; box-shadow: 0 0 0 1px rgba(0,229,255,.4), 0 0 24px rgba(0,229,255,.18); }
+body:not(.ontitle):not(.picking):not(.replaying) .stage { border-radius: 0; background: transparent; box-shadow: none; }
+#mapEdge { position: absolute; pointer-events: none; box-shadow: inset 0 0 0 1px rgba(0,229,255,.45), inset 0 0 18px rgba(0,229,255,.12); }
 body.ontitle #mapEdge, body.picking #mapEdge, body.replaying #mapEdge { display: none; }
 .act { border-radius: 0; background: linear-gradient(180deg, rgba(10,16,34,.92), rgba(4,7,15,.92)); letter-spacing: .1em; }
 .act small { letter-spacing: .2em; }
@@ -963,7 +963,6 @@ body.ontitle #mapEdge, body.picking #mapEdge, body.replaying #mapEdge { display:
 .padknob { background: radial-gradient(circle at 35% 30%, #c4f9ff, #00a6c4 60%, #00323e); border-color: #7ff4ff; box-shadow: 0 0 14px rgba(0,229,255,.65); }
 /* in a run: DEADLINE2's night-blue glow from the top and its faint scanlines */
 body:not(.ontitle):not(.picking) { background: radial-gradient(ellipse at 50% -10%, #142456 0%, #05070d 60%) fixed, #05070d; }
-body:not(.ontitle):not(.picking)::after { content: ""; position: fixed; inset: 0; pointer-events: none; z-index: 60; background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 1px, transparent 1px 3px); }
 .misbox { border-radius: 0; border-color: rgba(255,210,63,.55); background: rgba(10,16,34,.9); box-shadow: 0 0 10px rgba(255,210,63,.2), inset 0 0 10px rgba(255,210,63,.08); }
 body:not(.ontitle) .pad { border-radius: 0; }
 </style>
