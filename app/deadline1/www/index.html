@@ -1056,6 +1056,26 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 }
 .barb { border: 1px solid #8fe9ff; color: #8fe9ff; box-shadow: 0 0 14px rgba(143,233,255,.3), inset 0 0 14px rgba(143,233,255,.12); }
 .rkb { border: 1px solid #c792ff; color: #d9b3ff; box-shadow: 0 0 14px rgba(199,146,255,.3), inset 0 0 14px rgba(199,146,255,.12); }
+/* the play buttons stand up off the screen: lit from above (a soft shine on the top half, a bright rim), shaded
+   underneath, and pressed in when touched */
+@media (min-aspect-ratio: 5/4) and (pointer: coarse) {
+  .controls .barb { --c: 143,233,255; } .controls .mine { --c: 255,210,63; } .controls .rkb { --c: 199,146,255; } .controls .dash { --c: 0,229,255; }
+  .controls .act {
+    background: radial-gradient(circle at 50% 28%, rgba(var(--c), .34) 0%, rgba(var(--c), .12) 38%, rgba(6,10,24,.98) 72%), #060a18;
+    border: 1px solid rgba(var(--c), .95); color: rgb(var(--c));
+    box-shadow: 0 0 14px rgba(var(--c), .35), 0 5px 0 rgba(var(--c), .28), 0 8px 12px rgba(0,0,0,.6),
+      inset 0 2px 2px rgba(255,255,255,.35), inset 0 -8px 12px rgba(0,0,0,.55);
+    text-shadow: 0 1px 0 rgba(0,0,0,.7), 0 0 8px rgba(var(--c), .6);
+    transition: transform .06s, box-shadow .06s;
+  }
+  .controls .act::before { content: ''; position: absolute; left: 17%; right: 17%; top: 5%; height: 40%; border-radius: 50% / 60% 60% 40% 40%; background: linear-gradient(180deg, rgba(255,255,255,.42), rgba(255,255,255,.06) 80%, rgba(255,255,255,0)); pointer-events: none; }
+  .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 18px rgba(var(--c), .5), 0 2px 0 rgba(var(--c), .28), 0 3px 6px rgba(0,0,0,.6), inset 0 2px 2px rgba(255,255,255,.2), inset 0 -4px 10px rgba(0,0,0,.6); }
+  .controls .act small { color: rgba(var(--c), .8); }
+  .controls .dash { font-size: 12px; letter-spacing: 0; }
+}
+/* 全画面 and 停止 alike: a glassy face with a bright top edge */
+.sys .btn { position: relative; overflow: hidden; background: linear-gradient(180deg, rgba(0,229,255,.26), rgba(0,229,255,.07) 48%, rgba(0,20,40,.55) 52%, rgba(0,0,0,.35)); box-shadow: 0 0 8px rgba(0,229,255,.3), 0 3px 0 rgba(0,229,255,.22), 0 5px 8px rgba(0,0,0,.5), inset 0 1px 1px rgba(255,255,255,.4), inset 0 -3px 6px rgba(0,0,0,.45); text-shadow: 0 1px 0 rgba(0,0,0,.7), 0 0 6px rgba(0,229,255,.6); }
+.sys .btn:active { transform: translateY(2px); box-shadow: 0 0 10px rgba(0,229,255,.4), 0 1px 0 rgba(0,229,255,.22), inset 0 1px 1px rgba(255,255,255,.2), inset 0 -2px 6px rgba(0,0,0,.5); }
 </style>
 <!--/THEME-C-->
 
