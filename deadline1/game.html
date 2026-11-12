@@ -1059,6 +1059,33 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 .celetag.on { display: inline-block; position: absolute; top: 14px; right: 18px; z-index: 6; padding: 2px 10px; border: 2px solid #ffd23f; border-radius: 4px; color: #ffd23f; font-family: var(--f-display); font-size: 14px; letter-spacing: .12em; transform: rotate(-6deg); text-shadow: 0 0 10px rgba(255,210,63,.7); box-shadow: 0 0 12px rgba(255,210,63,.4), inset 0 0 8px rgba(255,210,63,.25); animation: celestamp .45s cubic-bezier(.3, 1.8, .5, 1) .55s both; vertical-align: middle; }
 @keyframes celestamp { 0% { transform: rotate(-6deg) scale(2.6); opacity: 0; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .score.celepop b, .celetag.on { animation: none; } }
+/* ゲームセンター: a lever (a steel rod with a red ball on top, in a black panel with a chrome ring) and round red
+   arcade buttons set in black bezels with a chrome rim, the words in white on them */
+body.arcadeui .padbase { border: 0 !important; background: radial-gradient(circle, #050505 0 26%, #1b1b1d 27% 58%, #0c0c0d 60%) !important;
+  box-shadow: 0 0 0 3px #2a2a2c, 0 0 0 5px #8d8f94, 0 0 0 6px #3a3b3e, 0 6px 14px rgba(0,0,0,.7), inset 0 3px 8px rgba(0,0,0,.9) !important; }
+body.arcadeui .pad.on .padbase { box-shadow: 0 0 0 3px #2a2a2c, 0 0 0 5px #b5b7bc, 0 0 0 6px #3a3b3e, 0 6px 14px rgba(0,0,0,.7), inset 0 3px 8px rgba(0,0,0,.9) !important; }
+body.arcadeui .padshaft { position: absolute; left: 50%; top: 50%; width: 1px; height: 13px; margin-top: -6.5px; transform-origin: 0 50%; transform: scaleX(0); pointer-events: none;
+  background: linear-gradient(180deg, #5d6066, #d9dce2 40%, #8a8d93 60%, #3d3f44); border-radius: 5px; will-change: transform; }
+body.arcadeui .padknob { width: 42px !important; height: 42px !important; margin: -21px 0 0 -21px !important; border: 0 !important;
+  background: radial-gradient(circle at 36% 30%, #fff 0 6%, #ff8a80 12%, #ee2a1f 38%, #b3120c 70%, #5c0704 100%) !important;
+  box-shadow: 0 6px 10px rgba(0,0,0,.65), inset 0 -4px 8px rgba(0,0,0,.35) !important; }
+body.arcadeui .controls .act, body.arcadeui .controls .itemarr { border: 0 !important; border-radius: 50% !important; aspect-ratio: 1; align-self: center; padding: 0 !important; min-width: 0 !important;
+  background: radial-gradient(circle at 50% 30%, #ff8f85 0%, #f1372c 30%, #c11a12 62%, #6d0805 100%) !important;
+  box-shadow: 0 0 0 4px #111, 0 0 0 6px #9a9ca2, 0 0 0 7px #2c2d30, 0 6px 0 5px #0a0a0a, 0 9px 14px rgba(0,0,0,.6), inset 0 3px 3px rgba(255,255,255,.5), inset 0 -7px 10px rgba(0,0,0,.4) !important;
+  color: #fff !important; text-shadow: 0 1px 0 rgba(0,0,0,.6), 0 0 6px rgba(0,0,0,.4); letter-spacing: .04em; font-weight: 900; transition: transform .05s, box-shadow .05s; }
+body.arcadeui .controls .act:active, body.arcadeui .controls .itemarr:active { transform: translateY(4px); box-shadow: 0 0 0 4px #111, 0 0 0 6px #9a9ca2, 0 0 0 7px #2c2d30, 0 2px 0 5px #0a0a0a, 0 3px 6px rgba(0,0,0,.6), inset 0 3px 3px rgba(255,255,255,.3), inset 0 -4px 10px rgba(0,0,0,.5) !important; }
+body.arcadeui .controls .act small, body.arcadeui .controls #mineCount, body.arcadeui #itemName { color: #ffe1dc !important; }
+#itemLabel, #itemLabel.launcher, #itemLabel.barrier, #itemLabel.boost { color: #fff !important; }
+body.arcadeui .controls .itemarr { width: 24px; height: 24px !important; flex: 0 0 24px !important; font-size: 9px !important; }
+body.arcadeui .controls .itemrow { align-items: center; justify-content: center; gap: 9px !important; }
+body.arcadeui .controls .itemrow .act { flex: 0 0 auto !important; height: 100%; max-height: 64px; }
+body.arcadeui .controls .act.mine, body.arcadeui .controls .act.dash { height: 100%; max-height: 80px; }
+body.arcadeui .controls { gap: 14px !important; padding-bottom: 8px; }
+/* the dash's wait: a shade sweeping round the button like a clock hand */
+body.arcadeui .controls .dash::after { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 50%; box-shadow: none !important;
+  background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.55) 0) !important; }
+body.arcadeui .controls .act[aria-disabled="true"] { filter: saturate(.45) brightness(.6); opacity: 1 !important; }
+.padshaft { display: none; } body.arcadeui .padshaft { display: block; }
 </style>
 <!--/THEME-C-->
 
@@ -1103,7 +1130,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     <div class="pi oni"><span class="label">鬼</span><b id="pCount">0</b></div>
     <div class="misbox" id="misBox" hidden></div>
   </div>
-  <div class="padbase"><div class="padknob" id="padKnob"></div></div>
+  <div class="padbase"><div class="padshaft" id="padShaft"></div><div class="padknob" id="padKnob"></div></div>
 </div>
 
 <div class="intro" id="intro" hidden aria-hidden="true">
@@ -2435,6 +2462,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     { k: 'barrier', label: 'バリア', items: [
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
       ['br_emf', '電磁シールド', 500, 'まわる電磁の輪', 'radial-gradient(circle,rgba(60,90,220,.25) 38%,#7b5cff 58%,#3fd0ff 70%,rgba(0,0,0,0) 72%)'] ] },
+    { k: 'pad', label: '操作パネルのスキン', tab: 'skin', items: [
+      ['pad_arcade', 'ゲームセンター', 2000, '鉄のレバーに赤い玉のスティック、赤い丸ボタン。ゲームセンターの筐体のような操作パネル', 'radial-gradient(circle at 50% 38%,#ff8f85 0 14%,#e3261b 30%,#8a0c07 46%,#111 50% 60%,#9a9ca2 63%,#1b1b1d 68%)'],
+    ] },
     { k: 'skin', label: '逃走者のスキン', items: [
       ['sk_jade', '翡翠', 200, '深い緑の金属', ''], ['sk_sakura', '桜', 200, 'やわらかい桃色', ''], ['sk_shion', '紫苑', 200, '落ち着いた紫', ''],
       ['sk_silver', '白銀', 200, '磨いた銀', ''], ['sk_ai', '藍', 200, '夜より深い青', ''],
@@ -2493,6 +2523,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
   // each item's price in ★, set one by one (the skins not listed: 200円 -> ★100, 500円 -> ★250)
   const STAR_PRICE = {
+    pad_arcade: 1000,
     bomb_fw: 250, bomb_big: 500, bomb_emp: 500, bomb_ice: 500, bomb_grav: 500,
     rk_laser: 250, rk_ice: 500, rk_plasma: 500,
     bs_star: 250, bs_ice: 500, bs_thunder: 500, bs_blast: 750,
@@ -2795,7 +2826,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!clipUrls[k]) { const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i); clipUrls[k] = URL.createObjectURL(new Blob([u8], { type: 'video/mp4' })); }
     return clipUrls[k];
   }
-  const SHOP_STD = { skin: 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)', bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' };
+  const SHOP_STD = { pad: 'radial-gradient(circle at 50% 40%,#c4f9ff 0 12%,#00a6c4 30%,#00323e 48%,#0a1220 52%)', skin: 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)', bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' };
   function shopSwatch(el, id, sw, k) {
     const look = SKIN[id];
     el.style.background = sw || (look && look.m ? `radial-gradient(circle at 38% 35%,${look.m[0]},${look.m[1]} 45%,${look.m[2]})` : SHOP_STD[k]);
@@ -2811,7 +2842,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       b.addEventListener('click', () => { tap(); shopTab = k; shopSel = null; openShop(); }); tabs.append(b);
     }
     const list = $('shopList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
-    const cats = shopTab === 'star' ? [] : SHOP.filter(c => (c.k === 'skin') === (shopTab === 'skin'));
+    const cats = shopTab === 'star' ? [] : SHOP.filter(c => (c.k === 'skin' || c.tab === 'skin') === (shopTab === 'skin'));
     if (shopTab === 'star') shopPacks(list);
     else if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')); }
     for (const cat of cats) {
@@ -2954,7 +2985,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
   const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
-  const EQUIP_TABS = [['rocket', 'ランチャー', ['rocket']], ['barrier', 'バリア', ['barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']]];
+  const EQUIP_TABS = [['rocket', 'ランチャー', ['rocket']], ['barrier', 'バリア', ['barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']], ['pad', '操作パネル', ['pad']]];
   let equipTab = 'rocket';
   function openEquip() {
     const tabs = $('equipTabs'); tabs.textContent = '';
@@ -8165,7 +8196,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   }
 
   let last = performance.now();
+  let padLook = null;
   function frame(now) {
+    { const a = EQ('pad') === 'pad_arcade'; if (a !== padLook) { padLook = a; document.body.classList.toggle('arcadeui', a); } }
     const raw = (now - last) / 1000;
     const dt = Math.min(0.05, raw); last = now;
     // (measured in play only, over 3 s at a time, leaving out pauses such as a hidden tab; two slow spells in a row (under 45 frames a second) bring it down)
@@ -8252,6 +8285,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   const padDraw = s => {
     const R = padBase.offsetWidth / 2;
     padKnob.style.transform = `translate(${s.kx * (R - 14) / PAD_R}px, ${s.ky * (R - 14) / PAD_R}px)`;
+    { const kx = s.kx * (R - 14) / PAD_R, ky = s.ky * (R - 14) / PAD_R, sh = $('padShaft'); if (sh) sh.style.transform = `rotate(${Math.atan2(ky, kx)}rad) scaleX(${Math.hypot(kx, ky)})`; }   // (the lever's rod, ゲームセンター)
   };
   const padMove = e => {
     const s = input.stick;
@@ -8265,7 +8299,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     s.dx = s.kx; s.dy = s.ky;
     padDraw(s);
   };
-  const padReset = () => { padKnob.style.transform = ''; pad.classList.remove('on'); };
+  const padReset = () => { padKnob.style.transform = ''; { const sh = $('padShaft'); if (sh) sh.style.transform = 'scaleX(0)'; } pad.classList.remove('on'); };
   const padEnd = e => {
     if (input.stick && input.stick.pad && e.pointerId === input.stick.id) input.stick = null;
     if (!input.stick || !input.stick.pad) padReset();
