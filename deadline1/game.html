@@ -1053,6 +1053,17 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 .padbase { border: 1px solid #0a0b0d !important; background: radial-gradient(circle at 50% 50%, #15171b 0%, #1d2026 55%, #2c3038 78%, #1a1c21 100%) !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #23262d, 0 0 0 4px rgba(255,255,255,.06), 0 4px 10px rgba(0,0,0,.5) !important; }
 .pad.on .padbase { border-color: #0a0b0d !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #2b3a40, 0 0 0 4px rgba(87,194,210,.25), 0 4px 10px rgba(0,0,0,.5) !important; }
 .padknob { background: radial-gradient(circle at 40% 32%, #7a808b 0%, #474c55 30%, #2a2d34 62%, #15161a 100%) !important; border: 1px solid #0a0b0d !important; box-shadow: inset 0 1px 1px rgba(255,255,255,.35), inset 0 -3px 5px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.6), 0 0 0 2px rgba(87,194,210,.18) !important; }
+
+/* the result screen's celebration: confetti over the card, the score popping in with a sweep of light, a NEW RECORD stamp */
+.overlay canvas.cele { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
+.score.celepop b { display: inline-block; animation: celepop .7s cubic-bezier(.2, 1.6, .4, 1) both, celeglow 1.6s ease-out .2s both; }
+@keyframes celepop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.18); opacity: 1; } 100% { transform: scale(1); } }
+@keyframes celeglow { 0% { text-shadow: 0 0 0 rgba(255,220,120,0); } 30% { text-shadow: 0 0 22px rgba(255,220,120,.95), 0 0 44px rgba(255,180,60,.6); } 100% { text-shadow: 0 0 8px rgba(255,220,120,.35); } }
+.overlay > .card:has(.celetag.on) { position: relative; }
+.celetag { display: none; }
+.celetag.on { display: inline-block; position: absolute; top: 14px; right: 18px; z-index: 6; padding: 2px 10px; border: 2px solid #ffd23f; border-radius: 4px; color: #ffd23f; font-family: var(--f-display); font-size: 14px; letter-spacing: .12em; transform: rotate(-6deg); text-shadow: 0 0 10px rgba(255,210,63,.7); box-shadow: 0 0 12px rgba(255,210,63,.4), inset 0 0 8px rgba(255,210,63,.25); animation: celestamp .45s cubic-bezier(.3, 1.8, .5, 1) .55s both; vertical-align: middle; }
+@keyframes celestamp { 0% { transform: rotate(-6deg) scale(2.6); opacity: 0; } 100% { transform: rotate(-6deg) scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .score.celepop b, .celetag.on { animation: none; } }
 </style>
 <!--/THEME-C-->
 
@@ -2147,6 +2158,92 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     }
   }
   // a short chime as the plate lands, once the result screen is on show
+
+  // ---------- the result screen's celebration: an escape, or a new best in the ranking race ----------
+  // confetti and bursts of light over the card, the score popping in with a shine, and a fanfare (all made here)
+  let overCele = false;
+  function fanfare(kind) {
+    if (!ac || muted) return;
+    const N = (f, d, at, type = 'square', v = 0.045) => setTimeout(() => tone(f, d, type, v), at);
+    if (kind === 'clear') {
+      // ta-ta-ta-taaa: up the chord, then the high note held over a chord, a sparkle on top
+      [[523, 0], [659, 110], [784, 220]].forEach(([f, at]) => N(f, 0.12, at));
+      [1047, 1319, 1568].forEach((f, i) => N(f, 0.7, 360, i ? 'triangle' : 'square', i ? 0.035 : 0.05));
+      N(523, 0.7, 360, 'triangle', 0.04);
+      setTimeout(() => noise(0.4, 0.03), 360);
+      [2093, 2637, 3136, 4186].forEach((f, i) => N(f, 0.12, 700 + i * 70, 'sine', 0.03));
+    } else {
+      // a new record: a quick rising run, a bright bell twice, and the chord
+      [784, 988, 1175, 1568].forEach((f, i) => N(f, 0.08, i * 60, 'square', 0.04));
+      N(2093, 0.5, 300, 'sine', 0.05); N(2637, 0.5, 300, 'triangle', 0.03);
+      N(2093, 0.6, 620, 'sine', 0.045); N(3136, 0.6, 620, 'triangle', 0.03);
+      [784, 988, 1175].forEach(f => N(f, 0.8, 620, 'triangle', 0.03));
+      setTimeout(() => noise(0.35, 0.025), 620);
+    }
+  }
+  function celebrate(kind) {
+    fanfare(kind);
+    const host = kind === 'clear' ? ui.clear : ui.over, card = host && host.querySelector('.card');
+    if (!card) return;
+    const sc = card.querySelector('.score');
+    if (sc) { sc.classList.remove('celepop'); void sc.offsetWidth; sc.classList.add('celepop'); }
+    { const tg = card.querySelector('.celetag'); if (tg) tg.classList.remove('on'); }
+    if (kind === 'record' && sc) {
+      let tag = card.querySelector('.celetag'); if (!tag) { tag = document.createElement('span'); tag.className = 'celetag'; card.append(tag); }
+      tag.textContent = 'NEW RECORD'; tag.classList.remove('on'); void tag.offsetWidth; tag.classList.add('on');
+    }
+    if (reduceMotion) return;
+    const old = host.querySelector('canvas.cele'); if (old) old.remove();
+    const c = document.createElement('canvas'); c.className = 'cele'; host.append(c);
+    const r = host.getBoundingClientRect(), dpr = Math.min(2, window.devicePixelRatio || 1);
+    c.width = r.width * dpr; c.height = r.height * dpr;
+    const g = c.getContext('2d'); g.scale(dpr, dpr);
+    const COL = kind === 'clear' ? ['#5dff9e', '#ffd23f', '#8fe9ff', '#ffffff', '#ff8fd0'] : ['#ffd23f', '#ffcf5a', '#fff3c0', '#ffffff', '#ff9a3c'];
+    const parts = [];
+    // confetti: from both lower corners, thrown up and in
+    for (let i = 0; i < 90; i++) {
+      const left = i % 2 === 0, a = (left ? -1 : -1) * (Math.PI / 2) + (left ? 0.55 : -0.55) + (Math.random() - 0.5) * 0.7, v = 520 + Math.random() * 420;
+      parts.push({ x: left ? 0 : r.width, y: r.height, vx: Math.cos(a) * v * (left ? 1 : 1), vy: Math.sin(a) * v, w: 5 + Math.random() * 5, h: 3 + Math.random() * 4, rot: Math.random() * 6, vr: (Math.random() - 0.5) * 14, c: COL[i % COL.length], kind: 'paper', t0: Math.random() * 0.25 });
+    }
+    // bursts of light: three (a record: rays from the score instead of one of them)
+    const bursts = kind === 'clear' ? [[0.25, 0.3, 0.15], [0.75, 0.25, 0.45], [0.5, 0.18, 0.8]] : [[0.22, 0.28, 0.35], [0.78, 0.28, 0.6]];
+    for (const [bx, by, at] of bursts) {
+      const col = COL[Math.floor(Math.random() * 3)];
+      for (let k = 0; k < 36; k++) { const a = k / 36 * Math.PI * 2, v = 150 + Math.random() * 60; parts.push({ x: bx * r.width, y: by * r.height, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: col, kind: 'spark', t0: at, life: 1.1 }); }
+    }
+    let rays = null;
+    if (kind === 'record' && sc) { const sr = sc.getBoundingClientRect(); rays = { x: sr.left - r.left + Math.min(sr.width, 260) / 2, y: sr.top - r.top + sr.height / 2 }; }
+    const t0 = performance.now(), END = 3.2;
+    const step = now => {
+      const T = (now - t0) / 1000;
+      if (T > END || !c.isConnected || host.hidden) { c.remove(); return; }
+      g.clearRect(0, 0, r.width, r.height);
+      if (rays && T < 1.6) {
+        const k = T < 0.3 ? T / 0.3 : 1 - (T - 0.3) / 1.3;
+        g.save(); g.translate(rays.x, rays.y); g.rotate(T * 0.6); g.globalAlpha = 0.28 * k;
+        for (let i = 0; i < 12; i++) { g.rotate(Math.PI / 6); const gr = g.createLinearGradient(0, 0, 220, 0); gr.addColorStop(0, '#ffe58a'); gr.addColorStop(1, 'rgba(255,229,138,0)'); g.fillStyle = gr; g.beginPath(); g.moveTo(0, 0); g.lineTo(220, -16); g.lineTo(220, 16); g.fill(); }
+        g.restore();
+      }
+      for (const p of parts) {
+        const u = T - p.t0; if (u < 0) continue;
+        if (p.kind === 'paper') {
+          const x = p.x + p.vx * u * Math.exp(-u * 0.9) / 1, y = p.y + p.vy * u + 420 * u * u;
+          const vy = p.vy + 840 * u; if (vy > 160) { /* drifting down */ }
+          const fade = Math.max(0, Math.min(1, (END - T) / 0.6));
+          g.save(); g.translate(x + Math.sin(u * 5 + p.rot) * 10, Math.min(y, r.height + 20)); g.rotate(p.rot + p.vr * u); g.scale(1, Math.cos(u * 8 + p.rot));
+          g.globalAlpha = fade; g.fillStyle = p.c; g.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); g.restore();
+        } else {
+          if (u > p.life) continue;
+          const x = p.x + p.vx * u * (1 - u * 0.35), y = p.y + p.vy * u * (1 - u * 0.35) + 40 * u * u, a = 1 - u / p.life;
+          g.globalAlpha = a; g.fillStyle = p.c; g.beginPath(); g.arc(x, y, 2.2 * a + 0.6, 0, 7); g.fill();
+          g.globalAlpha = a * 0.35; g.beginPath(); g.arc(x, y, 6 * a + 1, 0, 7); g.fill();
+        }
+      }
+      g.globalAlpha = 1;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
   function titleChime(el) {
     if (!$(el) || $(el).hidden) return;
     setTimeout(() => { tone(1319, 0.12, 'triangle', 0.045); setTimeout(() => tone(1760, 0.12, 'triangle', 0.04), 90); setTimeout(() => tone(2637, 0.3, 'triangle', 0.035), 180); }, 380);
@@ -4931,7 +5028,6 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     misEnd();
     bgmStop();
     state = 'clear'; input.stick = null;
-    tone(523, 0.1, 'square', 0.05); setTimeout(() => tone(784, 0.1, 'square', 0.05), 110); setTimeout(() => tone(1047, 0.25, 'square', 0.05), 220);
     $('cKicker').textContent = `STAGE ${stageN} CLEAR`;
     $('cTime').textContent = t.toFixed(1) + '秒';
     $('cKills').textContent = kills + '体';
@@ -4964,7 +5060,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (!last) $('cMsg').textContent = (fcStars ? `初回クリア報酬 ★${fcStars}(✉️メールで受け取れる)。` : '') + (stageN === 1
       ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度挑むか、タイトルに戻るかを選べる。'
       : 'アイテムを選んでステージ3へ進むか、もう一度挑むか、タイトルに戻るかを選べる。');
-    ui.clear.hidden = false; titleChime('cTitles'); prepShare('clear');
+    ui.clear.hidden = false; celebrate('clear'); titleChime('cTitles'); prepShare('clear');
   }
   // a story's prize: into what the player owns, and on at once if that slot is still the standard one;
   // the prize's name if it is new
@@ -5137,6 +5233,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     if (isNew) { best = total; saveBest(); }
     records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
+    overCele = stageN === 3 && rankRun && rank === 1;   // (a new best in the ranking race: the result screen celebrates it)
     if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     recEnd();
@@ -8091,7 +8188,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     } else if (state === 'caught') {
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
-      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
+      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; if (overCele) celebrate('record'); fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     if (state === 'replay') repTick(dt);
     draw(); if (state !== 'replay') hud();
