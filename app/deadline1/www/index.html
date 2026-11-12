@@ -3659,7 +3659,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (roof(x, y)) m.fillRect(x + 0.14, y + 0.16, 1, 1);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (!roof(x, y)) continue;
-      const l = 14 + blockShade[idx(x, y)] * 7;
+      const l = 14;   // (every roof the darker shade)
       m.fillStyle = `hsl(258, 16%, ${l}%)`; m.fillRect(x, y, 1.002, 1.002);
       m.fillStyle = `hsl(258, 14%, ${l + 9}%)`;
       if (walk(x, y - 1)) m.fillRect(x, y, 1, 0.07);
