@@ -3169,6 +3169,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let mapSkin = 'd1';
   let courts = [], posts = [], goalT = new Uint8Array(0);
   let W = 0, H = 0, dpr = 1, T = 32, ox = 0, oy = 0;
+  // drawn as finely as the screen (iPhone: 3 to a point); if a run can't keep its frames up at that, back to 2 for the rest of the visit
+  let dprMax = 3, fpsN = 0, fpsT = 0, fpsSlow = 0;
   const SIZES = [13, 17, 21, 25, 29, 33, 37, 41];
   const nearest = v => SIZES.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
   const idx = (x, y) => y * COLS + x;
@@ -3401,7 +3403,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   function resize() {
     const r = stage.getBoundingClientRect();
-    dpr = Math.min(2, window.devicePixelRatio || 1);
+    dpr = Math.min(dprMax, window.devicePixelRatio || 1);
     W = r.width; H = r.height;
     cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
     T = Math.min(W / COLS, H / ROWS);
@@ -8013,7 +8015,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 
   let last = performance.now();
   function frame(now) {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    const raw = (now - last) / 1000;
+    const dt = Math.min(0.05, raw); last = now;
+    // (measured in play only, over 3 s at a time, leaving out pauses such as a hidden tab; two slow spells in a row (under 45 frames a second) bring it down)
+    if (dprMax > 2 && state === 'play' && raw < 0.1 && (window.devicePixelRatio || 1) > 2) {
+      fpsN++; fpsT += raw;
+      if (fpsT >= 3) { fpsSlow = fpsN / fpsT < 45 ? fpsSlow + 1 : 0; fpsN = fpsT = 0; if (fpsSlow >= 2) { dprMax = 2; resize(); } }
+    }
     alarmFx(now / 1000);
     if (pad.classList.contains('on') && !(input.stick && input.stick.pad)) padReset();
     if (state === 'count') tickCount(dt); else if (!$('countdown').hidden) $('countdown').hidden = true;
