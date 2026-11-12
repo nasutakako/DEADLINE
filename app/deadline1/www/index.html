@@ -1043,13 +1043,15 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   #startPickScreen .pick { padding: 4px 8px; }
   #startPickScreen .picks { gap: 5px; }
 }
-/* the play buttons and the stick in dark gunmetal: brushed metal, a soft bevel, only their words in colour */
-.act, .itemarr { border-radius: 8px !important; background: linear-gradient(180deg, #3a3f49 0%, #23262d 48%, #191b20 52%, #121317 100%) !important; border: 1px solid #0a0b0d !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 3px rgba(0,0,0,.5), 0 3px 0 #050506, 0 5px 10px rgba(0,0,0,.5) !important; text-shadow: 0 1px 0 #000; letter-spacing: .08em; }
-.act:active, .itemarr:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255,255,255,.1), inset 0 -1px 3px rgba(0,0,0,.6), 0 1px 0 #050506, 0 2px 5px rgba(0,0,0,.5) !important; }
-.dash { color: #57c2d2 !important; } .mine { color: #d4b157 !important; } .itemb, .itemarr { color: #bf8fbb !important; }
-.act small { color: #8a909b !important; }
-.dash::after { background: #57c2d2 !important; box-shadow: none !important; }
-#itemLabel.launcher, #itemLabel.barrier, #itemLabel.boost { color: #bf8fbb !important; }
+/* the play buttons: see-through dark, a coloured bar along the bottom only, the words in a muted colour */
+.act, .itemarr { border-radius: 4px !important; background: rgba(8,11,18,.7) !important; border: 1px solid rgba(255,255,255,.08) !important; border-bottom: 3px solid var(--ac) !important; box-shadow: none !important; letter-spacing: .12em; }
+.act:active, .itemarr:active { background: rgba(255,255,255,.06) !important; }
+.dash { --ac: #2a9fb0; color: #7fd0db !important; } .mine { --ac: #b08d2c; color: #d8bd6a !important; } .itemb, .itemarr { --ac: #8c3f86; color: #c79ac2 !important; }
+.act small { color: #7f8696 !important; }
+/* (the dash's wait: the button fills from the left as it comes back) */
+.dash::after { display: none; } .dash { background: linear-gradient(90deg, rgba(42,159,176,.22) calc(var(--p,1) * 100%), rgba(8,11,18,.7) 0) !important; }
+#itemLabel.launcher, #itemLabel.barrier, #itemLabel.boost { color: #c79ac2 !important; }
+/* the stick in dark gunmetal */
 .padbase { border: 1px solid #0a0b0d !important; background: radial-gradient(circle at 50% 50%, #15171b 0%, #1d2026 55%, #2c3038 78%, #1a1c21 100%) !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #23262d, 0 0 0 4px rgba(255,255,255,.06), 0 4px 10px rgba(0,0,0,.5) !important; }
 .pad.on .padbase { border-color: #0a0b0d !important; box-shadow: inset 0 2px 6px rgba(0,0,0,.75), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 3px #2b3a40, 0 0 0 4px rgba(87,194,210,.25), 0 4px 10px rgba(0,0,0,.5) !important; }
 .padknob { background: radial-gradient(circle at 40% 32%, #7a808b 0%, #474c55 30%, #2a2d34 62%, #15161a 100%) !important; border: 1px solid #0a0b0d !important; box-shadow: inset 0 1px 1px rgba(255,255,255,.35), inset 0 -3px 5px rgba(0,0,0,.55), 0 4px 8px rgba(0,0,0,.6), 0 0 0 2px rgba(87,194,210,.18) !important; }
