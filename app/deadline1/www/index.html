@@ -828,6 +828,10 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .setlist { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; min-height: 0; }
 .setrow { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 4px 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); cursor: pointer; text-align: left; color: inherit; font: inherit; }
 .setrow b { font-size: 15px; }
+.setrow.setq { cursor: default; }
+.setrow .seg { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 4px; }
+.setrow .seg button { padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: #1a1f2b; color: var(--muted); font: inherit; font-size: 13px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+.setrow .seg button[aria-checked="true"] { color: #fff; border-color: var(--runner); background: color-mix(in srgb, var(--runner) 35%, #1a1f2b); }
 .setrow .go2 { grid-column: 2; grid-row: 1 / span 2; font-style: normal; font-size: 26px; line-height: 1; color: var(--lamp); padding: 0 4px; }
 /* the layout editor: the play screen with its controls marked, a panel in the middle of the map */
 .layedit { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 20; width: min(300px, 92%); display: flex; flex-direction: column; align-items: center; gap: 7px;
@@ -3010,7 +3014,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     ['sound', 'サウンド', 'BGMと効果音を鳴らす'],
     ['vibe', '振動', '確保・バリア破壊・着地・ランチャーの着弾で端末を振動させる' + (canBuzz() ? '' : '(このブラウザは振動に対応していません。アプリ版では振動します)')],
   ];
-  const settings = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (_) {} return Object.assign({ swap: false, shake: true, sound: true, vibe: true }, v); })();
+  const settings = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (_) {} return Object.assign({ swap: false, shake: true, sound: true, vibe: true, q: 'auto' }, v); })();
   delete settings.order;   // (the old order-only ボタン配置 is gone)
   const setSave = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (_) {} };
   function applySettings() {
@@ -3034,6 +3038,18 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       });
       box.append(b);
     }
+    // 画質: 自動 / 高画質 / 標準
+    const q = document.createElement('div'); q.className = 'setrow setq';
+    const qt = document.createElement('b'); qt.textContent = '画質'; const qs = document.createElement('span'); qs.className = 'seg'; qs.setAttribute('role', 'radiogroup');
+    const qn = document.createElement('small');
+    const QS = [['auto', '自動', 'きれいに描き、動きが重いときは自動で標準に下げる'], ['high', '高画質', 'いつもきれいに描く(古い端末では動きが重くなることがある)'], ['std', '標準', '動きの軽さを優先する(電池も長持ち)']];
+    const qPaint = () => { for (const el of qs.children) el.setAttribute('aria-checked', String(el.dataset.q === settings.q)); qn.textContent = (QS.find(x => x[0] === settings.q) || QS[0])[2]; };
+    for (const [k, label] of QS) {
+      const o = document.createElement('button'); o.type = 'button'; o.dataset.q = k; o.textContent = label; o.setAttribute('role', 'radio');
+      o.addEventListener('click', () => { if (settings.q === k) return; tap(); settings.q = k; dprMax = k === 'std' ? 2 : 3; fpsN = fpsT = fpsSlow = 0; setSave(); qPaint(); try { resize(); } catch (_) {} });
+      qs.append(o);
+    }
+    q.append(qt, qs, qn); qPaint(); box.append(q);
     // ボタン配置: opens the play screen to place and size the controls
     const lay = document.createElement('button'); lay.type = 'button'; lay.className = 'setrow setlay';
     const lt = document.createElement('b'); lt.textContent = 'ボタン配置'; const la = document.createElement('i'); la.className = 'go2'; la.textContent = '›';
@@ -3170,7 +3186,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   let courts = [], posts = [], goalT = new Uint8Array(0);
   let W = 0, H = 0, dpr = 1, T = 32, ox = 0, oy = 0;
   // drawn as finely as the screen (iPhone: 3 to a point); if a run can't keep its frames up at that, back to 2 for the rest of the visit
-  let dprMax = 3, fpsN = 0, fpsT = 0, fpsSlow = 0;
+  // (設定の画質: 自動 as above, 高画質 always 3, 標準 always 2)
+  let dprMax = settings.q === 'std' ? 2 : 3, fpsN = 0, fpsT = 0, fpsSlow = 0;
   const SIZES = [13, 17, 21, 25, 29, 33, 37, 41];
   const nearest = v => SIZES.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
   const idx = (x, y) => y * COLS + x;
@@ -8018,7 +8035,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const raw = (now - last) / 1000;
     const dt = Math.min(0.05, raw); last = now;
     // (measured in play only, over 3 s at a time, leaving out pauses such as a hidden tab; two slow spells in a row (under 45 frames a second) bring it down)
-    if (dprMax > 2 && state === 'play' && raw < 0.1 && (window.devicePixelRatio || 1) > 2) {
+    if (settings.q === 'auto' && dprMax > 2 && state === 'play' && raw < 0.1 && (window.devicePixelRatio || 1) > 2) {
       fpsN++; fpsT += raw;
       if (fpsT >= 3) { fpsSlow = fpsN / fpsT < 45 ? fpsSlow + 1 : 0; fpsN = fpsT = 0; if (fpsSlow >= 2) { dprMax = 2; resize(); } }
     }
