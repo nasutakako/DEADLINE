@@ -1126,6 +1126,59 @@ body.arcadeui:not(.ontitle):not(.picking) .controls .mine { --f: 255,70,60; --r:
 body.arcadeui:not(.ontitle):not(.picking) .controls .barb { --f: 60,140,255; --r: 20,80,200; --s: 10,40,120; }
 body.arcadeui:not(.ontitle):not(.picking) .controls .dash { --f: 255,225,74; --r: 200,160,20; --s: 120,90,0; }
 body.arcadeui:not(.ontitle):not(.picking) .controls .rkb { --f: 70,220,110; --r: 20,150,60; --s: 10,90,30; }
+
+/* 携帯ゲーム機: a white shell, white face buttons, the map in a dark screen bezel, a cross-shaped direction pad (its centre dips
+   the way it is pushed) and four small round face buttons in a diamond (バリア above, 爆弾 left, ランチャー right,
+   ダッシュ below), the names printed beside them */
+body.handui:not(.ontitle):not(.picking) { background: radial-gradient(ellipse 120% 80% at 30% 0%, rgba(255,255,255,.7), transparent 55%), linear-gradient(180deg, #f3f4f6, #d6d9de) !important; }
+body.handui:not(.ontitle):not(.picking) .pi, body.handui:not(.ontitle):not(.picking) .sys .btn { background: linear-gradient(180deg, #ffffff, #eceef1) !important; border: 1px solid #b9bdc5 !important; border-radius: 8px !important; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.15) !important; text-shadow: none !important; }
+body.handui:not(.ontitle):not(.picking) .pi .label, body.handui:not(.ontitle):not(.picking) .sys .btn { color: #5a5f69 !important; letter-spacing: .04em; }
+body.handui:not(.ontitle):not(.picking) .pi b, body.handui:not(.ontitle):not(.picking) .time { color: #2a2e36 !important; text-shadow: none !important; font-family: "Share Tech Mono", monospace !important; }
+body.handui:not(.ontitle):not(.picking) .hud, body.handui:not(.ontitle):not(.picking) .hud * { color: #2a2e36; }
+body.handui:not(.ontitle):not(.picking) .pad { background: none !important; box-shadow: none !important; }
+body.handui:not(.ontitle):not(.picking) #mapEdge { box-shadow: 0 0 0 6px #2a2c31, 0 0 0 8px #aeb2ba !important; border-radius: 3px; }
+body.handui:not(.ontitle):not(.picking) .padbase { border: 0 !important; border-radius: 0 !important; background:
+  linear-gradient(#ffffff, #eceef1) 50% 50% / 34% 100% no-repeat, linear-gradient(#ffffff, #eceef1) 50% 50% / 100% 34% no-repeat !important;
+  filter: drop-shadow(0 0 1px #9ea2aa) drop-shadow(0 3px 0 #a9adb5) drop-shadow(0 4px 6px rgba(0,0,0,.25)); box-shadow: none !important; }
+body.handui:not(.ontitle):not(.picking) .pad.on .padbase { border: 0 !important; }
+body.handui:not(.ontitle):not(.picking) .padknob { width: 26px !important; height: 26px !important; margin: -13px 0 0 -13px !important; border: 0 !important; background: radial-gradient(circle, #d4d7dc 0 40%, #eceef1 70%) !important; box-shadow: inset 0 2px 3px rgba(0,0,0,.18) !important; }
+body.handui:not(.ontitle):not(.picking) .controls { display: block !important; position: relative; align-self: end; margin-bottom: 44px; width: 100%; aspect-ratio: 1 / 1; max-height: 100%; padding: 0 !important; background: none !important; box-shadow: none !important; }
+body.handui:not(.ontitle):not(.picking) .controls .itemrow { display: none !important; }
+body.handui:not(.ontitle):not(.picking) .controls .act { position: absolute !important; width: 27% !important; aspect-ratio: 1; height: auto !important; min-height: 0 !important; min-width: 0 !important; padding: 0 !important; margin: 0 !important; flex: none !important;
+  transform: translate(-50%, -50%); overflow: visible !important; border: 0 !important; border-radius: 50% !important; display: flex !important; align-items: center; justify-content: center;
+  background: radial-gradient(circle at 50% 35%, #ffffff, #f1f2f4 55%, #d9dce1) !important; box-shadow: 0 0 0 1px #aeb2ba, 0 3px 0 #9ea2aa, 0 4px 6px rgba(0,0,0,.25), inset 0 1px 1px #fff !important;
+  color: #2a2e36 !important; font-size: 0 !important; letter-spacing: 0 !important; text-shadow: none !important; transition: transform .05s, box-shadow .05s; }
+body.handui:not(.ontitle):not(.picking) .controls .act:active { transform: translate(-50%, calc(-50% + 2px)); box-shadow: 0 0 0 1px #aeb2ba, 0 1px 0 #9ea2aa, 0 2px 3px rgba(0,0,0,.25), inset 0 1px 2px rgba(0,0,0,.15) !important; }
+body.handui:not(.ontitle):not(.picking) .controls .act small, body.handui:not(.ontitle):not(.picking) .controls #mineCount { font-size: 12px !important; color: #2a2e36 !important; font-family: "Share Tech Mono", monospace; letter-spacing: 0 !important; }
+body.handui:not(.ontitle):not(.picking) .controls .act::before { content: attr(data-lbl); position: absolute; white-space: nowrap; font-size: 10px; font-weight: 700; color: #5a5f69; pointer-events: none; }
+body.handui:not(.ontitle):not(.picking) .controls .barb, body.handui:not(.ontitle):not(.picking) .controls .rkb { display: flex !important; }
+body.handui:not(.ontitle):not(.picking) .controls .barb { left: 50%; top: 23%; } body.handui:not(.ontitle):not(.picking) .controls .barb::before { bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); }
+body.handui:not(.ontitle):not(.picking) .controls .rkb { left: 83%; top: 52%; } body.handui:not(.ontitle):not(.picking) .controls .rkb::before { bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); }
+body.handui:not(.ontitle):not(.picking) .controls .dash { left: 50%; top: 81%; } body.handui:not(.ontitle):not(.picking) .controls .dash::before { top: calc(100% + 4px); left: 50%; transform: translateX(-50%); }
+body.handui:not(.ontitle):not(.picking) .controls .mine { left: 17%; top: 52%; } body.handui:not(.ontitle):not(.picking) .controls .mine::before { bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%); }
+body.handui:not(.ontitle):not(.picking) .controls .dash::after { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 50%; box-shadow: none !important; background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.22) 0) !important; }
+body.handui:not(.ontitle):not(.picking) .controls .act[aria-disabled="true"] { opacity: .5 !important; }
+body.handui.ontitle .controls, body.handui.picking .controls { display: none !important; }
+/* the white one's speaker: a small neat grille of dark holes in the shell above the buttons (rows of 5, 4, 5, offset) */
+body.handui:not(.darkhand):not(.ontitle):not(.picking) .controls::after { content: ''; position: absolute; left: 50%; bottom: calc(100% + 18px); width: 58px; height: 28px; transform: translateX(-50%); pointer-events: none;
+  background: radial-gradient(circle at 3px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 16px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 29px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 42px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 55px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 9.5px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 22.5px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 35.5px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 48.5px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 3px 25px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 16px 25px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 29px 25px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 42px 25px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 55px 25px, #3a3d44 0 2px, transparent 2.6px); opacity: .8; }
+/* 携帯ゲーム機(黒): the same layout in glossy black, with a small flat analog nub in place of the cross pad */
+body.handui.darkhand:not(.ontitle):not(.picking) { background: radial-gradient(ellipse 120% 80% at 30% 0%, rgba(255,255,255,.10), transparent 55%), linear-gradient(180deg, #1c1d21, #0a0a0c) !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .pi, body.handui.darkhand:not(.ontitle):not(.picking) .sys .btn { background: linear-gradient(180deg, #2a2b30, #17181b) !important; border: 1px solid #3a3c42 !important; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.5) !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .pi .label, body.handui.darkhand:not(.ontitle):not(.picking) .sys .btn { color: #a9adb6 !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .pi b, body.handui.darkhand:not(.ontitle):not(.picking) .time { color: #eef0f4 !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .hud, body.handui.darkhand:not(.ontitle):not(.picking) .hud * { color: #d8dbe1; }
+body.handui.darkhand:not(.ontitle):not(.picking) #mapEdge { box-shadow: 0 0 0 6px #050506, 0 0 0 7px #3a3c42 !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .padbase { width: 96px !important; height: 96px !important; border-radius: 50% !important; filter: none !important;
+  background: radial-gradient(circle, #050506 0 52%, #1a1b1f 54% 66%, #26272c 68%, #0d0d0f 72%) !important; box-shadow: 0 0 0 1px rgba(255,255,255,.1), inset 0 2px 5px rgba(0,0,0,.8) !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .padknob { width: 48px !important; height: 48px !important; margin: -24px 0 0 -24px !important;
+  background: radial-gradient(circle at 50% 40%, #6a6d75, #44474e 45%, #2a2c31 75%, #1b1c20) !important; box-shadow: 0 0 0 2px #0d0d0f, 0 3px 6px rgba(0,0,0,.7), inset 0 1px 1px rgba(255,255,255,.3), inset 0 -2px 4px rgba(0,0,0,.4) !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .controls .act { background: radial-gradient(circle at 50% 38%, #4c4f57, #2e3036 60%, #1f2025) !important; box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 3px 0 #000, 0 4px 6px rgba(0,0,0,.6), inset 0 1px 1px rgba(255,255,255,.25) !important; color: #fff !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .controls .act:active { box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 1px 0 #000, 0 2px 3px rgba(0,0,0,.6), inset 0 1px 2px rgba(0,0,0,.5) !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .controls .act small, body.handui.darkhand:not(.ontitle):not(.picking) .controls #mineCount { color: #fff !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .controls .act::before { color: #b5b9c2 !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.5) 0) !important; }
+
 </style>
 <!--/THEME-C-->
 
@@ -2505,6 +2558,8 @@ body.arcadeui:not(.ontitle):not(.picking) .controls .rkb { --f: 70,220,110; --r:
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
       ['br_emf', '電磁シールド', 500, 'まわる電磁の輪', 'radial-gradient(circle,rgba(60,90,220,.25) 38%,#7b5cff 58%,#3fd0ff 70%,rgba(0,0,0,0) 72%)'] ] },
     { k: 'pad', label: '操作パネルのスキン', tab: 'skin', items: [
+      ['pad_hand', '携帯ゲーム機', 2000, '十字キーと、ひし形に並んだ4つの丸ボタン。白い携帯ゲーム機のような操作パネル', 'linear-gradient(#3a3d44,#3a3d44) 50% 50%/24% 70% no-repeat,linear-gradient(#3a3d44,#3a3d44) 50% 50%/70% 24% no-repeat,linear-gradient(160deg,#ffffff,#d6d9de)'],
+      ['pad_hand_k', '携帯ゲーム機(黒)', 2000, 'つやのある黒い本体に、小さなアナログスティックとひし形の4つの丸ボタン。黒い携帯ゲーム機のような操作パネル', 'radial-gradient(circle at 34% 50%,#6a6d75 0 9%,#050506 10% 14%,transparent 15%),radial-gradient(circle at 74% 40%,#4c4f57 0 6%,transparent 7%),radial-gradient(circle at 66% 60%,#4c4f57 0 6%,transparent 7%),linear-gradient(160deg,#2a2b30,#0a0a0c)'],
       ['pad_arcade', 'ゲームセンター', 2000, '鉄のレバーに赤い玉のスティック、赤い丸ボタン。ゲームセンターの筐体のような操作パネル', 'radial-gradient(circle at 50% 38%,#ff8f85 0 14%,#e3261b 30%,#8a0c07 46%,#111 50% 60%,#9a9ca2 63%,#1b1b1d 68%)'],
     ] },
     { k: 'skin', label: '逃走者のスキン', items: [
@@ -2565,7 +2620,7 @@ body.arcadeui:not(.ontitle):not(.picking) .controls .rkb { --f: 70,220,110; --r:
   }
   // each item's price in ★, set one by one (the skins not listed: 200円 -> ★100, 500円 -> ★250)
   const STAR_PRICE = {
-    pad_arcade: 1000,
+    pad_arcade: 1000, pad_hand: 1000, pad_hand_k: 1000,
     bomb_fw: 250, bomb_big: 500, bomb_emp: 500, bomb_ice: 500, bomb_grav: 500,
     rk_laser: 250, rk_ice: 500, rk_plasma: 500,
     bs_star: 250, bs_ice: 500, bs_thunder: 500, bs_blast: 750,
@@ -8252,7 +8307,7 @@ body.arcadeui:not(.ontitle):not(.picking) .controls .rkb { --f: 70,220,110; --r:
   let last = performance.now();
   let padLook = null;
   function frame(now) {
-    { const a = EQ('pad') === 'pad_arcade'; if (a !== padLook) { padLook = a; document.body.classList.toggle('arcadeui', a); } }
+    { const a = EQ('pad'); if (a !== padLook) { padLook = a; document.body.classList.toggle('arcadeui', a === 'pad_arcade'); document.body.classList.toggle('handui', a === 'pad_hand' || a === 'pad_hand_k'); document.body.classList.toggle('darkhand', a === 'pad_hand_k'); } }
     const raw = (now - last) / 1000;
     const dt = Math.min(0.05, raw); last = now;
     // (measured in play only, over 3 s at a time, leaving out pauses such as a hidden tab; two slow spells in a row (under 45 frames a second) bring it down)
@@ -8338,7 +8393,7 @@ body.arcadeui:not(.ontitle):not(.picking) .controls .rkb { --f: 70,220,110; --r:
   const pad = $('pad'), padBase = pad.querySelector('.padbase'), padKnob = $('padKnob'), PAD_R = STICK_R;
   const padDraw = s => {
     const R = padBase.offsetWidth / 2;
-    const lean = document.body.classList.contains('arcadeui') ? 0.7 : 1;   // (the arcade lever leans only so far: its black well barely shows)
+    const lean = document.body.classList.contains('arcadeui') ? 0.7 : document.body.classList.contains('darkhand') ? 0.55 : document.body.classList.contains('handui') ? 0.32 : 1;   // (the arcade lever leans only so far: its black well barely shows)
     padKnob.style.transform = `translate(${s.kx * (R - 14) / PAD_R * lean}px, ${s.ky * (R - 14) / PAD_R * lean}px)`;
     { const kx = s.kx * (R - 14) / PAD_R * lean, ky = s.ky * (R - 14) / PAD_R * lean, sh = $('padShaft'); if (sh) sh.style.transform = `rotate(${Math.atan2(ky, kx)}rad) scaleX(${Math.hypot(kx, ky)})`; }   // (the lever's rod, ゲームセンター)
   };
