@@ -1159,6 +1159,20 @@ body.handui:not(.ontitle):not(.picking) .controls .mine { left: 17%; top: 52%; }
 body.handui:not(.ontitle):not(.picking) .controls .dash::after { inset: 0 !important; width: auto !important; height: auto !important; border-radius: 50%; box-shadow: none !important; background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.22) 0) !important; }
 body.handui:not(.ontitle):not(.picking) .controls .act[aria-disabled="true"] { opacity: .5 !important; }
 body.handui.ontitle .controls, body.handui.picking .controls { display: none !important; }
+/* the white one's cross pad is a separate piece that tips and sinks on the side it is pushed (its centre stays put) */
+.padcross { display: none; }
+body.handui:not(.darkhand):not(.ontitle):not(.picking) .padbase { background: none !important; filter: none !important; }
+body.handui:not(.darkhand):not(.ontitle):not(.picking) .padcross { display: block; position: absolute; inset: 0; pointer-events: none; --dx: 0; --dy: 0;
+  background: linear-gradient(#ffffff, #eceef1) 50% 50% / 34% 100% no-repeat, linear-gradient(#ffffff, #eceef1) 50% 50% / 100% 34% no-repeat;
+  transform: perspective(260px) rotateY(calc(var(--dx) * 16deg)) rotateX(calc(var(--dy) * -16deg)) translate(calc(var(--dx) * 1px), calc(var(--dy) * 1px));
+  filter: drop-shadow(0 0 1px #9ea2aa) drop-shadow(calc(var(--dx) * -1px) calc(3px - var(--dy) * 1.5px) 0 #a9adb5) drop-shadow(0 4px 6px rgba(0,0,0,.25));
+  transition: transform .06s; }
+/* (the pushed arm shaded as it goes down) */
+body.handui:not(.darkhand):not(.ontitle):not(.picking) .padcross::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at calc(50% + var(--dx) * 38%) calc(50% + var(--dy) * 38%), rgba(0,0,0,.16) 0, rgba(0,0,0,0) 28%);
+  -webkit-mask: linear-gradient(#000,#000) 50% 50% / 34% 100% no-repeat, linear-gradient(#000,#000) 50% 50% / 100% 34% no-repeat;
+          mask: linear-gradient(#000,#000) 50% 50% / 34% 100% no-repeat, linear-gradient(#000,#000) 50% 50% / 100% 34% no-repeat; }
+body.handui:not(.darkhand):not(.ontitle):not(.picking) .padknob { transform: none !important; z-index: 1; }
 /* the white one's speaker: a small neat grille of dark holes in the shell above the buttons (two rows of four) */
 body.handui:not(.darkhand):not(.ontitle):not(.picking) .controls::after { content: ''; position: absolute; left: 50%; bottom: calc(100% + 28px); width: 45px; height: 17px; transform: translateX(-50%); pointer-events: none;
   background: radial-gradient(circle at 3px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 16px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 29px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 42px 3px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 3px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 16px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 29px 14px, #3a3d44 0 2px, transparent 2.6px), radial-gradient(circle at 42px 14px, #3a3d44 0 2px, transparent 2.6px); opacity: .8; }
@@ -1177,6 +1191,7 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .act { background: ra
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .act:active { box-shadow: 0 0 0 1px rgba(255,255,255,.18), 0 1px 0 #000, 0 2px 3px rgba(0,0,0,.6), inset 0 1px 2px rgba(0,0,0,.5) !important; }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .act small, body.handui.darkhand:not(.ontitle):not(.picking) .controls #mineCount { color: #fff !important; }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .act::before { color: #b5b9c2 !important; }
+body.handui.darkhand:not(.ontitle):not(.picking) .controls { margin-bottom: 84px; }
 body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.5) 0) !important; }
 
 </style>
@@ -1223,7 +1238,7 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { backgr
     <div class="pi oni"><span class="label">鬼</span><b id="pCount">0</b></div>
     <div class="misbox" id="misBox" hidden></div>
   </div>
-  <div class="padbase"><div class="padshaft" id="padShaft"></div><div class="padknob" id="padKnob"></div></div>
+  <div class="padbase"><div class="padcross" id="padCross"></div><div class="padshaft" id="padShaft"></div><div class="padknob" id="padKnob"></div></div>
 </div>
 
 <div class="intro" id="intro" hidden aria-hidden="true">
@@ -2558,7 +2573,6 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { backgr
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
       ['br_emf', '電磁シールド', 500, 'まわる電磁の輪', 'radial-gradient(circle,rgba(60,90,220,.25) 38%,#7b5cff 58%,#3fd0ff 70%,rgba(0,0,0,0) 72%)'] ] },
     { k: 'pad', label: '操作パネルのスキン', tab: 'skin', items: [
-      ['pad_hand', '携帯ゲーム機', 2000, '十字キーと、ひし形に並んだ4つの丸ボタン。白い携帯ゲーム機のような操作パネル', 'linear-gradient(#3a3d44,#3a3d44) 50% 50%/24% 70% no-repeat,linear-gradient(#3a3d44,#3a3d44) 50% 50%/70% 24% no-repeat,linear-gradient(160deg,#ffffff,#d6d9de)'],
       ['pad_hand_k', '携帯ゲーム機(黒)', 2000, 'つやのある黒い本体に、小さなアナログスティックとひし形の4つの丸ボタン。黒い携帯ゲーム機のような操作パネル', 'radial-gradient(circle at 34% 50%,#6a6d75 0 9%,#050506 10% 14%,transparent 15%),radial-gradient(circle at 74% 40%,#4c4f57 0 6%,transparent 7%),radial-gradient(circle at 66% 60%,#4c4f57 0 6%,transparent 7%),linear-gradient(160deg,#2a2b30,#0a0a0c)'],
       ['pad_arcade', 'ゲームセンター', 2000, '鉄のレバーに赤い玉のスティック、赤い丸ボタン。ゲームセンターの筐体のような操作パネル', 'radial-gradient(circle at 50% 38%,#ff8f85 0 14%,#e3261b 30%,#8a0c07 46%,#111 50% 60%,#9a9ca2 63%,#1b1b1d 68%)'],
     ] },
@@ -2592,7 +2606,7 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { backgr
     sk_finale: { m: ['#ffe2c8', '#d8232f', '#3a0306'], glow: '255,120,90', fx: 'star' },
   };
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
-  const SHOP_GONE = ['bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'bomb_hole', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
+  const SHOP_GONE = ['pad_hand', 'bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'bomb_hole', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   // ハイジャンプ is gone from the game, and its looks from the shop
   SHOP.splice(SHOP.findIndex(c => c.k === 'boost'), 1);
@@ -2620,7 +2634,7 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { backgr
   }
   // each item's price in ★, set one by one (the skins not listed: 200円 -> ★100, 500円 -> ★250)
   const STAR_PRICE = {
-    pad_arcade: 1000, pad_hand: 1000, pad_hand_k: 1000,
+    pad_arcade: 1000, pad_hand_k: 1000,
     bomb_fw: 250, bomb_big: 500, bomb_emp: 500, bomb_ice: 500, bomb_grav: 500,
     rk_laser: 250, rk_ice: 500, rk_plasma: 500,
     bs_star: 250, bs_ice: 500, bs_thunder: 500, bs_blast: 750,
@@ -8395,6 +8409,7 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { backgr
     const R = padBase.offsetWidth / 2;
     const lean = document.body.classList.contains('arcadeui') ? 0.7 : document.body.classList.contains('darkhand') ? 0.55 : document.body.classList.contains('handui') ? 0.32 : 1;   // (the arcade lever leans only so far: its black well barely shows)
     padKnob.style.transform = `translate(${s.kx * (R - 14) / PAD_R * lean}px, ${s.ky * (R - 14) / PAD_R * lean}px)`;
+    { const c = $('padCross'); if (c) { const m = Math.hypot(s.kx, s.ky) || 1, k = Math.min(1, m / PAD_R); c.style.setProperty('--dx', (s.kx / m * k).toFixed(3)); c.style.setProperty('--dy', (s.ky / m * k).toFixed(3)); } }   // (the cross pad tips the way it is pushed)
     { const kx = s.kx * (R - 14) / PAD_R * lean, ky = s.ky * (R - 14) / PAD_R * lean, sh = $('padShaft'); if (sh) sh.style.transform = `rotate(${Math.atan2(ky, kx)}rad) scaleX(${Math.hypot(kx, ky)})`; }   // (the lever's rod, ゲームセンター)
   };
   const padMove = e => {
@@ -8409,7 +8424,7 @@ body.handui.darkhand:not(.ontitle):not(.picking) .controls .dash::after { backgr
     s.dx = s.kx; s.dy = s.ky;
     padDraw(s);
   };
-  const padReset = () => { padKnob.style.transform = ''; { const sh = $('padShaft'); if (sh) sh.style.transform = 'scaleX(0)'; } pad.classList.remove('on'); };
+  const padReset = () => { { const c = $('padCross'); if (c) { c.style.setProperty('--dx', 0); c.style.setProperty('--dy', 0); } } padKnob.style.transform = ''; { const sh = $('padShaft'); if (sh) sh.style.transform = 'scaleX(0)'; } pad.classList.remove('on'); };
   const padEnd = e => {
     if (input.stick && input.stick.pad && e.pointerId === input.stick.id) input.stick = null;
     if (!input.stick || !input.stick.pad) padReset();
