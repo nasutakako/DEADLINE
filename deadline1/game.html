@@ -1089,6 +1089,8 @@ body.arcadeui .controls .act::before { content: attr(data-lbl); position: absolu
 body.arcadeui .controls .act small, body.arcadeui .controls #mineCount { color: #fff !important; font-size: 13px !important; font-family: "Share Tech Mono", var(--f-num); letter-spacing: 0 !important; font-weight: 700; text-shadow: none !important; }
 body.arcadeui .controls .barb, body.arcadeui .controls .rkb { display: flex !important; }
 body.arcadeui .controls .mine { left: 63%; top: 66%; }
+/* (操作の左右交換: the four mirrored, so the rows lean the other way) */
+body.arcadeui.swap .controls .rkb { left: 63%; } body.arcadeui.swap .controls .barb { left: 19%; } body.arcadeui.swap .controls .dash { left: 81%; } body.arcadeui.swap .controls .mine { left: 37%; }
 body.arcadeui .controls .barb { left: 81%; top: 22%; }
 body.arcadeui .controls .dash { left: 19%; top: 66%; }
 body.arcadeui .controls .rkb { left: 37%; top: 22%; }
