@@ -927,7 +927,7 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 @media (prefers-reduced-motion: reduce) { .mrow { transition: none; } .mrow:active { transform: none; } }
 /* the tutorial points at the button it is teaching: it blinks in the button's own colour */
 .act.tutglow { animation: tutblink-w .8s step-end infinite; z-index: 1; }
-.act.dash.tutglow { animation-name: tutblink-d; } .act.mine.tutglow { animation-name: tutblink-m; } .act.itemb.tutglow { animation-name: tutblink-i; }
+.act.dash.tutglow { animation-name: tutblink-d; } .act.mine.tutglow { animation-name: tutblink-m; } .act.itemb.tutglow, .act.rkb.tutglow, .act.barb.tutglow { animation-name: tutblink-i; }
 @keyframes tutblink-w { 0% { box-shadow: 0 0 0 4px rgba(232,235,242,.7), 0 0 26px 8px rgba(232,235,242,.75); background-color: rgba(232,235,242,.3); border-color: #e8ebf2; } 50% { box-shadow: none; } }
 @keyframes tutblink-d { 0% { box-shadow: 0 0 0 4px rgba(143,233,255,.7), 0 0 26px 8px rgba(143,233,255,.75); background-color: rgba(143,233,255,.3); border-color: #8fe9ff; } 50% { box-shadow: none; } }
 @keyframes tutblink-m { 0% { box-shadow: 0 0 0 4px rgba(255,207,90,.7), 0 0 26px 8px rgba(255,207,90,.75); background-color: rgba(255,207,90,.3); border-color: #ffcf5a; } 50% { box-shadow: none; } }
@@ -1038,6 +1038,24 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   #startPickScreen .pick { padding: 4px 8px; }
   #startPickScreen .picks { gap: 5px; }
 }
+
+/* PSP-style diamond on the right: barrier on top, bomb left, launcher right, dash below; each a round button */
+.barb, .rkb, .dash .dsp { display: none; }
+@media (min-aspect-ratio: 5/4) and (pointer: coarse) {
+  .controls { display: block; position: relative; align-self: center; width: 100%; aspect-ratio: 1 / 1.24; max-height: 100%; margin-bottom: 12%; }
+  .controls .itemrow { display: none; }
+  .controls .act { position: absolute; width: 46%; aspect-ratio: 1; height: auto; min-height: 0; padding: 0; border-radius: 50%; font-size: 13px; letter-spacing: .02em; transform: translate(-50%, -50%); flex: none; background: radial-gradient(circle at 50% 35%, rgba(18,28,56,.98), rgba(4,7,15,.98)); }
+  .controls .act small { font-size: 11px; letter-spacing: .05em; }
+  .controls .barb, .controls .rkb { display: flex; }
+  .controls .barb { left: 50%; top: 18.5%; }
+  .controls .mine { left: 23%; top: 50%; }
+  .controls .rkb { left: 77%; top: 50%; font-size: 10.5px; letter-spacing: 0; }
+  .controls .dash { left: 50%; top: 81.5%; }
+  .controls .dash .dsp { display: block; visibility: hidden; }
+  .controls .act[aria-disabled="true"] { opacity: .5; }
+}
+.barb { border: 1px solid #8fe9ff; color: #8fe9ff; box-shadow: 0 0 14px rgba(143,233,255,.3), inset 0 0 14px rgba(143,233,255,.12); }
+.rkb { border: 1px solid #c792ff; color: #d9b3ff; box-shadow: 0 0 14px rgba(199,146,255,.3), inset 0 0 14px rgba(199,146,255,.12); }
 </style>
 <!--/THEME-C-->
 
@@ -1362,7 +1380,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 <footer class="controls">
   <div class="itemrow" id="itemRow"><button class="itemarr" id="itemPrev" type="button" aria-label="前のアイテム">◀</button><button class="act itemb" id="itemBtn" type="button" aria-disabled="true"><b id="itemLabel">アイテム</b><small id="itemName">なし</small></button><button class="itemarr" id="itemNext" type="button" aria-label="次のアイテム">▶</button></div>
   <button class="act mine" id="mineBtn" type="button">爆弾 <span id="mineCount">×1</span></button>
-  <button class="act dash" id="dashBtn" type="button">ダッシュ</button>
+  <button class="act dash" id="dashBtn" type="button">ダッシュ<small class="dsp" aria-hidden="true">×0</small></button>
+  <button class="act barb" id="barBtn" type="button" aria-disabled="true">バリア<small id="barN">×0</small></button>
+  <button class="act rkb" id="rkBtn" type="button" aria-disabled="true">ランチャー<small id="rkN">×0</small></button>
 </footer>
 
 <script>
@@ -6155,6 +6175,9 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       $('itemLabel').textContent = bag.length ? ITEM_SHORT[k] : 'アイテム'; $('itemLabel').className = bag.length ? k : '';
       ui.itemName.textContent = bag.length ? `×${n}` : 'なし'; ui.itemName.className = bag.length ? k : '';
       $('itemPrev').disabled = $('itemNext').disabled = kinds < 2; }
+    { const nb = bag.filter(x => x === 'barrier').length, nr = bag.filter(x => x === 'launcher').length, on = state === 'play';
+      $('barN').textContent = '×' + nb; $('rkN').textContent = '×' + nr;
+      $('barBtn').setAttribute('aria-disabled', String(!(on && nb && !(P && P.barrier)))); $('rkBtn').setAttribute('aria-disabled', String(!(on && nr))); }
     // (dim too while the chosen one is a barrier and a barrier is already on: ◀ ▶ picks another)
     ui.item.setAttribute('aria-disabled', bag.length && state === 'play' && !(itemCur() === 'barrier' && P && P.barrier) ? 'false' : 'true');
     if (playing && P) {
@@ -6180,7 +6203,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const ida = P && state !== 'title' && skillOn('skill_idaten'), dn = ida ? (P.dashN == null ? IDATEN_N : P.dashN) : 0;
     if (ida && dn < IDATEN_N) ui.dash.style.setProperty('--p', (1 - (P.chargeT || 0) / DASH_CD).toFixed(3));
     ui.dash.setAttribute('aria-disabled', P && P.cd > 0 && !(dn > 0) ? 'true' : 'false');
-    { const lb = ida ? `ダッシュ ×${dn}` : 'ダッシュ'; if (ui.dash.textContent !== lb) ui.dash.textContent = lb; }
+    { const lb = ida ? `ダッシュ ×${dn}` : 'ダッシュ', tn = ui.dash.firstChild; if (tn && tn.nodeType === 3 && tn.nodeValue !== lb) tn.nodeValue = lb; }   // (only its name: the blank line under it stays)
     const stock = P ? P.stock : 1;
     ui.mineCount.textContent = '×' + stock;
     ui.mine.setAttribute('aria-disabled', stock > 0 ? 'false' : 'true');
@@ -7417,7 +7440,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
-      { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
+      { btn: 'item', say: 'バリアとランチャーは、それぞれのボタンで使う。ランチャーを使ってみよう', set: () => { if (!bag.includes('launcher')) bag.push('launcher'); }, go: () => S3.items > 0 },
       { say: 'ときどき道にランチャーが落ちている。10秒で消えるので、見つけたら拾おう', info: true },
       { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと30秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
@@ -7577,7 +7600,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   // the buttons a step teaches ('dash', 'mine', 'item', space-separated) glow until it is done
   function tutGlow(which) {
     const on = String(which || '').split(' ');
-    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item], ['pad', document.querySelector('#pad .padbase')]]) if (b) b.classList.toggle('tutglow', on.includes(k));
+    for (const [k, b] of [['dash', ui.dash], ['mine', ui.mine], ['item', ui.item], ['item', $('rkBtn')], ['item', $('barBtn')], ['pad', document.querySelector('#pad .padbase')]]) if (b) b.classList.toggle('tutglow', on.includes(k));
   }
   const tutQuit = () => { tutGlow(''); tut = null; tutReplay = 0; $('tutBar').hidden = true; $('tutScreen').hidden = true; };
   // each practice and the stage it belongs to
@@ -9085,6 +9108,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     el.addEventListener('click', e => { if (e.detail === 0) fn(); });
   }
   press(ui.item, () => useItem(itemCur()));
+  press($('barBtn'), () => useItem('barrier')); press($('rkBtn'), () => useItem('launcher'));
   for (const [id, d] of [['itemPrev', -1], ['itemNext', 1]]) press($(id), () => itemStep(d));
   $('resumeBtn').addEventListener('click', () => { if (state === 'pause') tap(); setPause(false); });
   // the stop button answers on touch-down, so it works with a thumb still on the stick
