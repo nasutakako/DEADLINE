@@ -975,7 +975,8 @@ body:not(.ontitle) .pad { border-radius: 0; }
 <style>
 /* DEADLINE's own touches over the shared look (DEADLINE 3D's manner): the world shows through the title and the
    stand-by screens, and the map drifts slowly behind the title */
-#titleScreen { background: rgba(8, 10, 15, .5); }
+#titleScreen { background: linear-gradient(180deg, rgba(14, 36, 92, .62), rgba(6, 16, 46, .58)); }
+body.ontitle { background: radial-gradient(ellipse at 50% -10%, #1c3a8a 0%, #071233 60%) fixed, #071233; }
 #titleScreen .card, :is(#briefScreen, #startPickScreen) .card { text-shadow: 0 1px 6px rgba(0,0,0,.6); }
 body.ontitle #cv { transform-origin: 50% 50%; animation: titledrift 46s ease-in-out infinite alternate; }
 @keyframes titledrift { from { transform: scale(1.18) translate(-2.5%, -1.5%); } to { transform: scale(1.3) translate(2.5%, 1.5%); } }
@@ -3179,6 +3180,8 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     dailyLook = all[Math.floor(Math.random() * all.length)];
     return dailyLook;
   }
+  // the map-making rules a run is built under (a replay brings its own: 1 for the ones made before 4 to 5 plazas)
+  let mapGen = 2;
   function genMap() {
     grid = new Uint8Array(COLS * ROWS);           // 0 road, 1 building, 2 plaza
     blockShade = new Float32Array(COLS * ROWS);
@@ -3198,17 +3201,19 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         for (let y = 0; y < 2; y++) for (let x = 0; x < 2; x++) grid[idx(bx + cx + x, by + cy + y)] = 0;
       }
     }
-    // every map has 3 to 5 open plazas (the stage 3 pit squares among them), never two side by side
+    // every map has 4 to 5 open plazas (the stage 3 pit squares among them), never two side by side; on 4-3 none in
+    // the top row of blocks, where the river runs. (A replay made before this keeps the old rule, 3 to 5: mapGen 1)
     {
+      const river = mapGen >= 2 && mapSkin === 'd4' && mapStage() === 3, MIN = mapGen >= 2 ? 4 : 3;
       const all = [];
-      for (let by = 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) all.push([bx, by]);
+      for (let by = 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) if (!(river && by === 1)) all.push([bx, by]);
       const isPlaza = ([bx, by]) => grid[idx(bx + 1, by + 1)] === 2;
       const fill = ([bx, by], v) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) grid[idx(x, y)] = v; };
       const nextTo = ([ax, ay], l) => l.some(([bx, by]) => Math.abs(ax - bx) + Math.abs(ay - by) === 4);
       const pl = [];
       for (const b of all.filter(isPlaza).sort(() => Math.random() - 0.5)) if (nextTo(b, pl)) fill(b, 1); else pl.push(b);
       const rest = all.filter(b => !isPlaza(b)).sort(() => Math.random() - 0.5);
-      while (pl.length < 3 && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
+      while (pl.length < MIN && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
       while (pl.length > 5) fill(pl.pop(), 1);
     }
     // 花火の夜: a river along the top: the far bank's road (row 0), the water (rows 1-2), the grass bank (row 3),
@@ -3258,15 +3263,31 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
       for (let y = cy - 3; y <= cy + 3; y++) for (let x = cx - 3; x <= cx + 3; x++) grid[idx(x, y)] = Math.abs(x - cx) <= 1 && Math.abs(y - cy) <= 1 ? 1 : 0;
       yagura = { x: cx - 1, y: cy - 1 };
     }
-    courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS);
+    // the count again, after the river, the tutorial's pit square and the yagura have had their say: 4 to 5 plazas
+    // (a pit's plaza is never the one taken away; a new one is never beside another, nor where the yagura stands)
+    if (mapGen >= 2) {
+      const all = [];
+      for (let by = 1; by < ROWS - 3; by += 4) for (let bx = 1; bx < COLS - 3; bx += 4) all.push([bx, by]);
+      const isPl = ([bx, by]) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 2) return false; return true; };
+      const solid = ([bx, by]) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 1) return false; return true; };
+      const fill = ([bx, by], v) => { for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) grid[idx(x, y)] = v; };
+      const nextTo = ([ax, ay], l) => l.some(([bx, by]) => Math.abs(ax - bx) + Math.abs(ay - by) === 4);
+      const pitIn = ([bx, by]) => holes.some(h => h.x > bx && h.x < bx + 3 && h.y > by && h.y < by + 3);
+      const pl = all.filter(isPl);
+      for (let i = pl.length - 1; i >= 0 && pl.length > 5; i--) if (!pitIn(pl[i])) { fill(pl[i], 1); pl.splice(i, 1); }
+      const rest = all.filter(b => solid(b) && !(riverOn && b[1] === 1)).sort(() => Math.random() - 0.5);
+      while (pl.length < 4 && rest.length) { const b = rest.pop(); if (nextTo(b, pl)) continue; fill(b, 2); pl.push(b); }
+    }
+    courts = []; posts = []; goalT = new Uint8Array(COLS * ROWS); let courtDeal = -1;
     if (PITCHES && mapSkin === 'd1' && mapStage() >= 2) {
       const isPl = (bx, by) => { if (bx + 3 > COLS || by + 3 > ROWS) return false; for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 2) return false; return true; };
       const used = new Set();
       for (let by = 1; by < ROWS - 2; by += 4) for (let bx = 1; bx < COLS - 2; bx += 4) {
         if (!isPl(bx, by) || used.has(bx + ',' + by)) continue;
         used.add(bx + ',' + by);
-        // a car park, a bare paved square or a basketball court
-        const r = Math.random(), c = { t: r < 1 / 3 ? 'court' : r < 2 / 3 ? 'park' : 'plain', x: bx, y: by, w: 3, h: 3, hor: Math.random() < 0.5 };
+        // a car park, a lawn or a basketball court, dealt in turn from a random start so the three come up alike
+        const r = Math.random(); if (courtDeal < 0) courtDeal = Math.floor(r * 3);
+        const c = { t: ['court', 'park', 'lawn'][courtDeal++ % 3], x: bx, y: by, w: 3, h: 3, hor: Math.random() < 0.5 };
         courts.push(c);
         if (c.t !== 'pitch') continue;
         // a goal at each end, standing just inside the end line
@@ -3834,7 +3855,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     const rnd = (seed => () => (seed = (seed * 16807) % 2147483647) / 2147483647)(COLS * 131 + ROWS * 7 + 11);
     const onPitch = (x, y) => courts.some(c => c.t === 'pitch' && x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h);
     // car parks and bare squares are paved and lit as the streets are
-    const paved = (x, y) => grid[idx(x, y)] === 0 ? !onPitch(x, y) : grid[idx(x, y)] === 2 && courts.some(c => (c.t === 'park' || c.t === 'plain') && x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h);
+    const paved = (x, y) => grid[idx(x, y)] === 0 ? !onPitch(x, y) : grid[idx(x, y)] === 2 && courts.some(c => (c.t === 'park' || c.t === 'plain' || c.t === 'lawn') && x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h);
     m.fillStyle = '#1d2029'; m.fillRect(0, 0, COLS, ROWS);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const v = grid[idx(x, y)];
@@ -3911,8 +3932,13 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
         continue;
       }
       if (c.t === 'lawn') {
-        m.fillStyle = '#2e323c'; m.fillRect(x + 0.08, y + 0.08, w - 0.16, h - 0.16);
-        for (let k = 0; k < 6; k++) { m.fillStyle = k % 2 ? '#1f3a28' : '#22402c'; m.fillRect(x + 0.16, y + 0.16 + k * (h - 0.32) / 6, w - 0.32, (h - 0.32) / 6 + 0.01); }
+        // grass as on 4-3's river bank: dark green tiles, short blades
+        for (let ty = y; ty < y + h; ty++) for (let tx = x; tx < x + w; tx++) {
+          m.fillStyle = `rgb(${26 + rnd() * 5},${38 + rnd() * 6},${30 + rnd() * 5})`; m.fillRect(tx, ty, 1, 1);
+          m.strokeStyle = 'rgba(90,140,90,0.35)'; m.lineWidth = 0.025; m.beginPath();
+          for (let k = 0; k < 5; k++) { const gx = tx + rnd(), gy = ty + 0.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
+          m.stroke();
+        }
       } else if (c.t === 'pitch') {
         const long = w > h, n = 10;
         for (let k = 0; k < n; k++) { m.fillStyle = k % 2 ? '#22412c' : '#26482f'; if (long) m.fillRect(x + k * w / n, y, w / n + 0.01, h); else m.fillRect(x, y + k * h / n, w, h / n + 0.01); }
@@ -8568,7 +8594,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     try { fn(); } finally { Math.random = keep; }
   }
   function recStart() {
-    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), cols: COLS, rows: ROWS,
+    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), g: mapGen, cols: COLS, rows: ROWS,
       eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash') } } : null;
   }
   function recFrame(last) {
@@ -8605,7 +8631,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
   async function repPack(r, len) {
     let fr = r.fr, hz = REC_HZ;
     for (let k = 0; k < 4; k++) {
-      const head = JSON.stringify({ v: 1, skin: r.skin, n: r.n || 3, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len });
+      const head = JSON.stringify({ v: 1, skin: r.skin, n: r.n || 3, g: r.g || 1, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len });
       const raw = head + '\n' + fr.join(';');
       let out = 'p:' + raw;
       try {
@@ -8641,7 +8667,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
     $('rankScreen').hidden = true; ui.title.hidden = true;
     document.body.classList.add('replaying');
     stageN = 3; daily = null; rankRun = false; tut = null; mapSkin = h.skin; COLS = h.cols; ROWS = h.rows;
-    repN = h.n || 3; repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; } resize();
+    repN = h.n || 3; mapGen = h.g || 1; repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; mapGen = 2; } resize();
     repEq = h.eq || {};
     P = { x: 0, y: 0, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock: 0, barrier: false, inv: 0, boostT: 0, jumpT: 0, saveT: 0, flT: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
