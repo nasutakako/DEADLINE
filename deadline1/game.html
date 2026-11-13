@@ -108,6 +108,40 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,59,48,.85); animation: cdpop .9s ease-out both; }
 @keyframes cdpop { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .countdown { animation: none; } }
+/* the 3-2-1 in the サイバー skin: a mono readout, cyan with a red/blue split, a broken ring turning round it, a
+   system line above, and a short glitch as each number lands */
+body.cyberui .countdown { font-family: "Share Tech Mono", monospace; font-weight: 700; font-size: clamp(70px, 21vmin, 150px); color: #e9feff;
+  text-shadow: -3px 0 0 rgba(255,42,61,.85), 3px 0 0 rgba(58,107,255,.85), 0 0 18px #00f0ff, 0 0 40px rgba(0,240,255,.6);
+  width: 1.6em; height: 1.6em; display: grid; place-items: center; animation: cdglitch .9s steps(1, end) both; }
+body.cyberui .countdown[hidden] { display: none; }
+body.cyberui .countdown::before { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from 0deg, #00f0ff 0 22%, transparent 22% 28%, #00f0ff 28% 52%, transparent 52% 58%, #ff2a3d 58% 72%, transparent 72%);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 5px), #000 calc(100% - 4px) 100%, transparent 100%); mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 5px), #000 calc(100% - 4px) 100%, transparent 100%);
+  filter: drop-shadow(0 0 6px #00f0ff); animation: cdspin .9s linear both; }
+body.cyberui .countdown::after { content: 'DEADLINE//SYS  BOOT'; position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); white-space: pre;
+  font: 700 12px/1 "Share Tech Mono", monospace; letter-spacing: .3em; color: #ff2a3d; text-shadow: 0 0 6px rgba(255,42,61,.7); }
+@keyframes cdspin { from { transform: rotate(-90deg); } to { transform: rotate(90deg); } }
+@keyframes cdglitch {
+  0% { transform: translate(-50%, -50%) scale(1.25); opacity: 0; clip-path: inset(40% 0 45% 0); }
+  6% { transform: translate(calc(-50% - 6px), -50%) scale(1.1) skewX(-12deg); opacity: 1; clip-path: inset(10% 0 55% 0); }
+  12% { transform: translate(calc(-50% + 5px), -50%) scale(1); clip-path: inset(50% 0 5% 0); }
+  18% { transform: translate(-50%, -50%) scale(1); clip-path: none; }
+  60% { transform: translate(-50%, -50%); opacity: 1; clip-path: none; }
+  64% { transform: translate(calc(-50% + 4px), -50%) skewX(8deg); clip-path: inset(30% 0 40% 0); }
+  68% { transform: translate(-50%, -50%); clip-path: none; }
+  88% { opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(.96); opacity: 0; } }
+/* the 3-2-1 in the ゲームセンター skin: an old arcade game's — a chunky yellow number with a hard red block outline and
+   a black drop, popping in steps (no smooth scaling), and a blinking READY! under it */
+body.arcadeui .countdown { font-family: var(--f-display, sans-serif); font-size: clamp(76px, 23vmin, 168px); color: #ffe23a; letter-spacing: 0;
+  text-shadow: 4px 0 0 #d1180f, -4px 0 0 #d1180f, 0 4px 0 #d1180f, 0 -4px 0 #d1180f, 4px 4px 0 #d1180f, -4px -4px 0 #d1180f, 4px -4px 0 #d1180f, -4px 4px 0 #d1180f,
+    10px 10px 0 #000, 8px 10px 0 #000, 10px 8px 0 #000; animation: cdretro .9s steps(1, end) both; }
+body.arcadeui .countdown::after { content: 'READY!'; position: absolute; left: 50%; top: calc(100% + 10px); transform: translateX(-50%); white-space: nowrap;
+  font: 700 clamp(14px, 4.4vmin, 24px)/1 "Share Tech Mono", monospace; letter-spacing: .2em; color: #fff; text-shadow: 2px 0 0 #1f3ec4, -2px 0 0 #1f3ec4, 0 2px 0 #1f3ec4, 0 -2px 0 #1f3ec4, 4px 4px 0 #000;
+  animation: cdblink .3s steps(1, end) infinite; }
+@keyframes cdretro { 0% { transform: translate(-50%, -50%) scale(2); opacity: 1; } 8% { transform: translate(-50%, -50%) scale(1.5); } 16% { transform: translate(-50%, -50%) scale(1); } 80% { opacity: 1; } 90% { opacity: 0; } 95% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+@keyframes cdblink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { body.cyberui .countdown, body.cyberui .countdown::before, body.arcadeui .countdown, body.arcadeui .countdown::after { animation: none; } }
 /* ---- the opening (about 4.5 s; a tap skips it): the red line drawn across, a runner chased along it by three oni,
    the name dropping in letter by letter, and an oni falling into place as the dot of the i ---- */
 .intro { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; align-content: center; gap: 12px; background: #07080d; overflow: hidden; cursor: pointer; animation: introOut .5s ease-in 4.1s forwards; }
