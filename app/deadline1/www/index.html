@@ -1005,7 +1005,8 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 #shopScreen .shophead .shopnote { grid-column: 3; grid-row: 1; }
 #shopScreen .shophead .shoprestore { grid-column: 4; grid-row: 1; }
 #shopScreen .shophead .shopclose { grid-column: 5; grid-row: 1; }
-#shopScreen .shophead > .ranktabs { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
+#shopScreen .shophead > .ranktabs { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(4, minmax(0, max-content)); justify-content: start; gap: 6px; }   /* (two rows: ランチャー バリア 爆弾 ダッシュ / スキン 操作パネル ★を買う) */
+#shopScreen .shophead > .ranktabs button { text-align: center; }
 #shopScreen .shophead .shopmsg { grid-column: 1 / -1; grid-row: 3; }
 /* the heading at its old size (as on the other cards), 閉じる beside it, and the slot tabs on a row of their own under it */
 #equipScreen .shophead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; }
