@@ -4965,8 +4965,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // a little faster (about 5.0 by its exit at 4:30) and world 4 a little faster again (about 5.3), never up to the top speed.
   // A world's difficulty is in its own oni and ground (the shadows, the bombers), not in the speed
   const STEP2 = { d3: 0.15, d4: 0.173 };
-  const enemyStep = () => !capRun() && stageN === 2 && MAP_CHOICE && STEP2[mapSkin] || ENEMY_STEP_LONG;
-  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(ENEMY_MAX, ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
+  // the weekly ranking tops out lower (the old 7:00 speed, 3.05 + 21 x 0.125), still reached at 8:00 (24 steps of 20 s)
+  const RANK_MAX = 3.05 + 21 * ENEMY_STEP_LONG, RANK_STEP = (RANK_MAX - 3.05) / 24;
+  const rankPace = () => stageN === 3 && rankRun;
+  const enemyStep = () => rankPace() ? RANK_STEP : !capRun() && stageN === 2 && MAP_CHOICE && STEP2[mapSkin] || ENEMY_STEP_LONG;
+  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(rankPace() ? RANK_MAX : ENEMY_MAX, ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
@@ -5515,6 +5518,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     else if (it === 'barrier') { P.barrier = true; tone(660, 0.12, 'triangle', 0.06, 1320); }
     else {
       rockets.push(fireRocket(P.fx, P.fy));
+      { const r = rockets[rockets.length - 1]; recEv(['r', r.x, r.y, r.dx, r.dy, r.left, r.fx || '']); }   // (the replay flies it again)
       const rk = EQ('rocket');
       if (rk === 'rk_laser') sfx.laserFire(); else if (rk === 'rk_plasma') sfx.plasmaFire(); else if (rk === 'rk_ice') sfx.iceFire(); else { tone(520, 0.3, 'sawtooth', 0.06, 140); noise(0.2, 0.06); }
     }
@@ -5530,7 +5534,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
 
   function explode(m) {
-    m.gone = true;
+    m.gone = true; recEv(['x', m.x, m.y, m.fx || '']);   // (the replay throws its sparks again)
     if (m.fx === 'bomb_fw') { const cols = fwBoom(m.x, m.y, blastR(m.fx), 2.4); for (let i = 0; i < 24; i++) { const a = Math.random() * Math.PI * 2, sp = 3 + Math.random() * 6; sparks.push({ x: m.x, y: m.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: `rgb(${cols[i % 2]})` }); } }
     else booms.push({ x: m.x, y: m.y, t: 0, fx: m.fx, life: m.fx === 'bomb_grav' ? 0.7 : undefined, seed: Math.random() * 6.28 });
     if (m.fx !== 'bomb_fw') for (let i = 0; i < 26; i++) {
@@ -9257,9 +9261,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     try { fn(); } finally { Math.random = keep; }
   }
   function recStart() {
-    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), g: mapGen, cols: COLS, rows: ROWS,
-      eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash'), pad: EQ('pad') } } : null;
+    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], ev: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), g: mapGen, cols: COLS, rows: ROWS,
+      eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash'), pad: EQ('pad'), rocket: EQ('rocket') } } : null;
   }
+  // a launcher shot or a bomb going off, kept with its time: too quick for the 8-a-second notes, the replay plays it
+  // back from here (the round flying down the street, the blast's sparks)
+  const recEv = a => { if (rec) rec.ev.push([Math.round(t * 100), a[0], ...a.slice(1).map(v => typeof v === 'number' ? Math.round(v * 100) / 100 : v)]); };
   function recFrame(last) {
     const q = v => Math.round(v * 20), fxi = v => { v = v || ''; let i = rec.fx.indexOf(v); if (i < 0) { i = rec.fx.length; rec.fx.push(v); } return i; };
     const id = o => { let i = rec.ids.get(o); if (!i) { i = rec.nid++; rec.ids.set(o, i); } return i; };
@@ -9294,7 +9301,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   async function repPack(r, len) {
     let fr = r.fr, hz = REC_HZ;
     for (let k = 0; k < 4; k++) {
-      const head = JSON.stringify({ v: 1, skin: r.skin, n: r.n || 3, g: r.g || 1, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len });
+      const head = JSON.stringify({ v: 1, skin: r.skin, n: r.n || 3, g: r.g || 1, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len, ev: r.ev || [] });
       const raw = head + '\n' + fr.join(';');
       let out = 'p:' + raw;
       try {
@@ -9351,7 +9358,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (!rp) return;
     const board = rp.board; rp = null; repEq = null; repN = null;
     $('repBar').hidden = true; $('repShow').hidden = true; $('countdown').hidden = true; document.body.classList.remove('replaying');
-    P = null; enemies = []; mines = []; booms = []; items = []; pending = [];
+    P = null; enemies = []; mines = []; booms = []; items = []; pending = []; rockets = []; sparks = [];
     toTitle();
     try { Rank.open(board); } catch (e) {}
   }
@@ -9376,6 +9383,25 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pads.forEach((o, k) => { o.cool = A.d ? A.d[k] || 0 : 0; o.flash = 0; });
     falls = A.f.map(f => ({ x: z(f[0]), y: z(f[1]), hx: z(f[2]), hy: z(f[3]), t: z(f[4]) + u / h.hz, tough: !!f[5] })).filter(f => f.t < 0.7);
     elems = A.c.map(c => ({ k: 'clone', x: z(c[0]), y: z(c[1]), t: z(c[2]) + u / h.hz, life: z(c[3]), el: c[4] ? 'water' : 'dark' })).filter(c => c.t < c.life);
+    // the launcher rounds in flight now, and the sparks of whatever went off since the last look (a jump of the bar
+    // clears them: only played-through moments throw sparks)
+    const ev = h.ev || [];
+    rockets = [];
+    for (const e of ev) if (e[1] === 'r') {
+      const t0 = e[0] / 100, [, , x, y, dx, dy, left, fx] = e, d = (time - t0) * ROCKET_SPEED;
+      if (d >= 0 && d < left) rockets.push({ x: x + dx * d, y: y + dy * d, dx, dy, left: left - d, t: time - t0, sx: x, sy: y, fx, el: EL_ROCKET[fx] });
+    }
+    const prev = rp.evAt ?? time;
+    if (time < prev || time - prev > 0.5) sparks = [];
+    else for (const e of ev) {
+      const te = e[0] / 100 + (e[1] === 'r' ? e[6] / ROCKET_SPEED : 0);
+      if (te <= prev || te > time) continue;
+      const x = e[1] === 'r' ? e[2] + e[4] * e[6] : e[2], y = e[1] === 'r' ? e[3] + e[5] * e[6] : e[3], fw = e[1] === 'x' && e[4] === 'bomb_fw', cols = fw ? FW_COLS[Math.floor(Math.random() * FW_COLS.length)] : null;
+      for (let i = 0, n = e[1] === 'r' ? 18 : 26; i < n; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * (fw ? 7 : 6);
+        sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 1, c: fw ? `rgb(${cols[i % 2]})` : Math.random() < 0.5 ? '#ffcf5a' : '#ff6a3d' }); }
+      flash = Math.max(flash, 0.15);
+    }
+    rp.evAt = time;
   }
   function repTick(dt) {
     if (!rp) return;
@@ -9386,6 +9412,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       repApply(0); return;
     }
     if (rp.playing) { rp.time = Math.min(rp.len, rp.time + dt * rp.speed); if (rp.time >= rp.len) { rp.playing = false; } }
+    { const sd = rp.playing ? dt * rp.speed : 0; for (const s of sparks) { s.x += s.vx * sd; s.y += s.vy * sd; s.vx *= Math.pow(0.9, sd * 60); s.vy *= Math.pow(0.9, sd * 60); s.a -= sd * (s.fd || 1.8); } sparks = sparks.filter(s => s.a > 0); flash = Math.max(0, flash - dt * 2); }
     repApply(rp.time); repPaintBar();
   }
   function repPaintBar() {
