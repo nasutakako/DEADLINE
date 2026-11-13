@@ -320,6 +320,7 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .sprow { width: 100%; }
 .sprow .toright { margin-left: auto; }
 #spItemMsg { margin: 0; color: var(--muted); }
+.result b .besc { font-size: .55em; margin-left: .35em; letter-spacing: .05em; opacity: .85; vertical-align: .15em; }
 #spItemMsg .spnote { display: block; margin-top: 2px; font-size: .8em; opacity: .85; }
 #spRankBtn[hidden], #overRankBtn[hidden] { display: none !important; }
 #overScreen .row:has(#overRankBtn:not([hidden])) { flex-wrap: nowrap; }
@@ -1526,12 +1527,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <p class="mono" id="cMono" hidden></p>
       <div class="score"><span class="label" id="cScoreLabel">逃走時間</span><b id="cScore">0:00.0</b><em id="cRank"></em></div>
       <div class="result">
-        <div><span class="label">このステージ</span><b id="cTime">0.0秒</b></div>
+        <div><span class="label">到達</span><b id="cTime">ステージ1</b></div>
         <div><span class="label">撃破</span><b id="cKills">0体</b></div>
-        <div><span class="label">合計時間</span><b id="cTotal">0.0秒</b></div>
-        <div><span class="label">持ち越す爆弾</span><b id="cNext">×1</b></div>
+        <div><span class="label">阻止</span><b id="cTotal">0回</b></div>
+        <div><span class="label">ベスト</span><b id="cNext">--</b></div>
       </div>
-      <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。爆弾とアイテムは持ち越し。</p>
+      <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。</p>
       <div class="award" id="cTitles" hidden></div>
       <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button></div>
       <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="cShare" type="button">X</button><button class="ghost share" id="cInsta" type="button">Instagram</button><button class="ghost share" id="cLine" type="button">LINE</button><span class="sharestar" id="cShareStar"></span></div>
@@ -1885,6 +1886,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     saveRecords(); renderRecords();
     return records.stages[n].indexOf(rec) + 1;
   }
+  // a result's ベスト box: an escape as its time with a small 脱出, a caught best in seconds
+  const bestCell = (el, top) => { el.textContent = top ? (top.escaped ? fmtTime(top.time) : top.time.toFixed(1) + '秒') : '--'; if (top && top.escaped) { const m = document.createElement('small'); m.className = 'besc'; m.textContent = '脱出'; el.append(m); } };
   const rankText = (n, rank) => rank === 1 ? `${stageLabel(n)} ベスト更新!` : rank ? `${stageLabel(n)} ${rank}位` : '';
   (async () => {
     try {
@@ -5425,9 +5428,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     bgmStop();
     state = 'clear'; input.stick = null;
     $('cKicker').textContent = `STAGE ${stageN} CLEAR`;
-    $('cTime').textContent = t.toFixed(1) + '秒';
+    $('cTime').textContent = 'ステージ' + stageN;   // (the same four as the caught screen: 到達 撃破 阻止 ベスト)
     $('cKills').textContent = kills + '体';
-    $('cTotal').textContent = total.toFixed(1) + '秒';
+    $('cTotal').textContent = (P && P.stompN || 0) + '回';
     const fcFirst = !mapCleared(stageN, mapSkin);   // (asked before this clear is written down)
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
     if (mapSkin in MCLEAR) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
@@ -5451,7 +5454,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     $('againBtn').textContent = `もう一度ステージ${stageN}`;
     $('cRank').textContent = rankText(stageN, crank);
-    $('cNext').textContent = '×' + P.stock;
+    { const top = stageBest(recKey(stageN)); bestCell($('cNext'), top); $('cNext').className = crank === 1 ? 'new' : ''; }
     if (fcStars && !last) $('cMsg').classList.add('story');
     if (!last) $('cMsg').textContent = (fcStars ? `初回クリア報酬 ★${fcStars}(✉️メールで受け取れる)。` : '') + (stageN === 1
       ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度挑むか、タイトルに戻るかを選べる。'
@@ -5662,7 +5665,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rCount').textContent = stageN === 4 ? '生存課題' : 'ステージ' + stageN;
     // ベスト: this stage's (or this race's) own best, the one 自己ベスト更新 is judged against
     const top = stageBest(recKey(stageN)), isNew = rank === 1;
-    $('rBest').textContent = top ? (top.escaped ? fmtTime(top.time) + ' 脱出' : top.time.toFixed(1) + '秒') : '--';
+    bestCell($('rBest'), top);
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
