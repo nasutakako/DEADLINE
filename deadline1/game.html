@@ -108,12 +108,11 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,59,48,.85); animation: cdpop .9s ease-out both; }
 @keyframes cdpop { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .countdown { animation: none; } }
-.stompmsg { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); z-index: 4; pointer-events: none; display: grid; justify-items: center; gap: 2px;
-  padding: 6px 16px 7px; border-radius: 10px; background: rgba(6,10,18,.82); border: 1px solid rgba(93,255,158,.7); box-shadow: 0 0 16px rgba(93,255,158,.35);
-  animation: stompmsg 2.3s ease-out both; white-space: nowrap; }
-.stompmsg b { font-size: 13px; color: #ffd0cc; letter-spacing: .06em; } .stompmsg span { font-size: 15px; font-weight: 700; color: #5dff9e; letter-spacing: .1em; }
-.stompmsg[hidden] { display: none; }
-@keyframes stompmsg { 0% { opacity: 0; transform: translate(-50%, 8px) scale(.9); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
+.gainpop { position: fixed; z-index: 45; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap; font-weight: 700; font-size: 15px; letter-spacing: .06em;
+  color: #fff; text-shadow: 0 0 6px rgba(0,0,0,.9), 0 1px 0 #000; animation: gainpop 1.4s ease-out both; }
+.gainpop.barrier { color: #7fe8ff; } .gainpop.launcher { color: #ff9bd6; }
+@keyframes gainpop { 0% { opacity: 0; transform: translate(-50%, -60%); } 15% { opacity: 1; transform: translate(-50%, -100%); } 60% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -190%); } }
+@media (prefers-reduced-motion: reduce) { .gainpop { animation: gainpop-fade 1.4s ease-out both; } @keyframes gainpop-fade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } } }
 /* the 3-2-1 in the サイバー skin: a mono readout, cyan with a red/blue split, a broken ring turning round it, a
    system line above, and a short glitch as each number lands */
 body.cyberui .countdown { font-family: "Share Tech Mono", monospace; font-weight: 700; font-size: clamp(70px, 21vmin, 150px); color: #e9feff;
@@ -1372,7 +1371,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
-  <div class="stompmsg" id="stompMsg" hidden><b>! を全部踏んだ</b><span>バリア補給</span></div>
   <button class="repshow" id="repShow" type="button" hidden aria-label="操作バーを出す">▲ 操作</button>
   <div class="repbar" id="repBar" hidden>
     <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span class="reppad" id="repPad" hidden></span><span id="repInfo"></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
@@ -4859,26 +4857,36 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     return { x: c % COLS + 0.5, y: ((c / COLS) | 0) + 0.5 };
   }
   // (never on the same spot as another warning: two oni out of one "!" would look like one that split)
-  function queueSpawn() {
+  function queueSpawn(wave = waveSeq) {
     let p = randomRoad(10, true);
     for (let k = 0; k < 12 && pending.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 1.5); k++) p = randomRoad(10, true);
     // 導火線: whether this one is a bomber is settled here, at the warning, so it can be warned where the runner is not
     const n = Math.min(3, stageN) - 1;
     const bomber = fuseStory() && enemies.filter(o => o.bomber).length + pending.filter(o => o.bomber).length < BOMBER_MAX[n] && Math.random() < BOMBER_RATE[n];
     if (bomber) p = farRoad();
-    pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, bomber, wave: waveSeq });
-    const w = waveTally[waveSeq] || (waveTally[waveSeq] = { n: 0, st: 0 }); w.n++;
+    pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, bomber, wave });
+    if (wave) { const w = waveTally[wave] || (waveTally[wave] = { n: 0, st: 0 }); w.n++; }
   }
   // every ! of one wave stamped out (none of it got out): a barrier. One at most in the items; with one already
   // there it is put on at once (worn already as well: nothing more)
   let waveSeq = 0, waveTally = {};
+  // a barrier or a launcher come in: "バリア+1" / "ランチャー+1" rises off the item button and fades (on the panel skins
+  // without the item row, off that item's own button)
+  function gainPop(kind) {
+    if (tut || state === 'replay') return;
+    const row = $('itemRow'), at = row && row.offsetParent ? row : $(kind === 'barrier' ? 'barBtn' : 'rkBtn');
+    if (!at || !at.offsetParent) return;
+    const r = at.getBoundingClientRect(), el = document.createElement('div');
+    el.className = 'gainpop ' + kind; el.textContent = (kind === 'barrier' ? 'バリア' : 'ランチャー') + '+1';
+    el.style.left = (r.left + r.width / 2) + 'px'; el.style.top = (r.top - 4) + 'px';
+    document.body.append(el); setTimeout(() => el.remove(), 1500);
+  }
   function stompPrize() {
     if (!bag.includes('barrier')) bag.push('barrier');
     else if (!P.barrier) P.barrier = true;
     else return;
+    gainPop('barrier');
     flash = Math.max(flash, 0.25); tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120); setTimeout(() => tone(1320, 0.2, 'triangle', 0.04), 240);
-    const m = $('stompMsg'); m.hidden = false; m.style.animation = 'none'; void m.offsetWidth; m.style.animation = '';
-    clearTimeout(stompPrize.tm); stompPrize.tm = setTimeout(() => { m.hidden = true; }, 2300);
   }
   // a bomber steps out as far from the runner as the streets go (by the way round, not as the crow flies), so it never
   // comes out and goes off right in front of them: one of the farthest road tiles, not on another warning
@@ -4971,7 +4979,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (stageN >= 2) {
         if (P.killPrize == null) P.killPrize = 40;
         while (kills - stageKillStart >= P.killPrize) {
-          bag.push('launcher'); P.killPrize += 40; flash = Math.max(flash, 0.2);
+          bag.push('launcher'); gainPop('launcher'); P.killPrize += 40; flash = Math.max(flash, 0.2);
           tone(880, 0.1, 'triangle', 0.05); setTimeout(() => tone(1175, 0.1, 'triangle', 0.05), 90); setTimeout(() => tone(1760, 0.18, 'triangle', 0.05), 180);
         }
       }
@@ -4988,7 +4996,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const minute = Math.round((P.nextR - 60) / 60), bombsOnly = (stageN >= 3 || stageN === 2) && minute % 2 === 1;
       // (a barrier already on: this one goes into the items, to be put on later)
       // (a barrier in the items: one at most; with one already there the new one is not kept)
-      if (!bombsOnly) { P.gotBarrier = true; if (!P.barrier) P.barrier = true; else if (!bag.includes('barrier')) bag.push('barrier'); }
+      if (!bombsOnly) { P.gotBarrier = true; if (!P.barrier) { P.barrier = true; gainPop('barrier'); } else if (!bag.includes('barrier')) { bag.push('barrier'); gainPop('barrier'); } }
       P.stock = Math.min(MINE_MAX, P.stock + (stageN >= 3 || (stageN === 2 && minute >= 3) ? 2 : 1)); /* +1 bomb at 2:00 on stages 1 and 2, +2 after (and on stage 3) */ flash = Math.max(flash, 0.25);
       tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120);
     }
@@ -5009,7 +5017,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.alarmT <= 0) { klaxon(2, 0.018); P.alarmT = hasKey ? 1.4 : 2.4; }
     }
     // stage 2: when the exit opens, one black oni (faster than you) joins the chase
-    if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; waveSeq++; queueSpawn(); pending[pending.length - 1].black = true; }
+    if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; queueSpawn(0); pending[pending.length - 1].black = true; }
     if (t >= nextSpawn) {
       let batch = spawnBatch();
       // the weekly ranking and the survival nights: at most 6 a wave, and never more than 25 on the map (counting the
@@ -5135,7 +5143,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
     for (const it of items) if (!air && Math.hypot(it.x - P.x, it.y - P.y) < 0.6 && (it.rk || P.stock < MINE_MAX)) {
       it.taken = true;
-      if (it.rk) { bag.push('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
+      if (it.rk) { bag.push('launcher'); gainPop('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
       P.stock++; tone(990, 0.08, 'square', 0.04); setTimeout(() => tone(1320, 0.1, 'square', 0.04), 70);
     }
     items = items.filter(it => !it.taken && t - it.born < (it.rk ? RK_LIFE : ITEM_LIFE));
