@@ -482,6 +482,27 @@ body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0
 .repbar { position: absolute; left: 50%; bottom: max(8px, var(--sa-bottom)); transform: translateX(-50%); width: min(560px, calc(100% - 20px)); z-index: 5; display: grid; gap: 6px; padding: 8px 12px; border: 1px solid rgba(255,255,255,.14); border-radius: 12px; background: rgba(10,13,20,.72); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); color: var(--ink); }
 .repbar .rptop { display: flex; align-items: center; gap: 10px; font-size: 13px; min-width: 0; }
 .repbar .rptop .kicker { margin: 0; font-size: 10px; }
+.repbar .rptop .reppad { flex: none; padding: 1px 7px; border-radius: 99px; border: 1px solid rgba(255,255,255,.2); font-size: 10.5px; color: var(--ink); letter-spacing: .04em; }
+/* a replay played with a control panel skin: the bar and the map's frame in that skin's look */
+body.replaying.cyberui .repbar { border: 1px solid #00f0ff; border-radius: 0; background: linear-gradient(90deg, rgba(0,240,255,.12), rgba(0,240,255,.02)), rgba(2,20,23,.94); box-shadow: 0 0 14px rgba(0,240,255,.35); font-family: "Share Tech Mono", var(--f-body), monospace;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
+body.replaying.cyberui .repbar .kicker, body.replaying.cyberui .repbar .rptime { color: #00f0ff; text-shadow: 0 0 6px rgba(0,240,255,.7); }
+body.replaying.cyberui .repbar .reppad { border-color: #ff2a3d; color: #ff8a95; border-radius: 0; }
+body.replaying.cyberui .repbar button { border-radius: 0 !important; border-color: rgba(0,240,255,.6) !important; color: #bff9ff !important; background: rgba(0,240,255,.08) !important; }
+body.replaying.cyberui .repbar input[type=range] { accent-color: #00f0ff; }
+body.replaying.cyberui .stage { outline: 2px solid rgba(0,240,255,.7); outline-offset: -2px; }
+body.replaying.arcadeui .repbar { border: 0; border-radius: 12px; background: linear-gradient(180deg, #1e1f22, #0c0c0d); box-shadow: 0 0 0 2px #050505, 0 0 0 4px #8e9096, 0 0 0 5px #2a2a2d, 0 8px 18px rgba(0,0,0,.6); }
+body.replaying.arcadeui .repbar .kicker { color: #ff3b2f; }
+body.replaying.arcadeui .repbar .rptime { color: #5dff9e; text-shadow: 0 0 6px rgba(93,255,158,.6); font-family: "Share Tech Mono", monospace; }
+body.replaying.arcadeui .repbar .reppad { border-color: #e82c24; color: #ffb3ad; }
+body.replaying.arcadeui .repbar .rprow button { border-radius: 99px; border: 0; background: radial-gradient(circle at 50% 35%, #ff5a4f, #c8170e 70%); color: #fff; box-shadow: 0 2px 0 #6a0a05; }
+body.replaying.arcadeui .repbar input[type=range] { accent-color: #e82c24; }
+body.replaying.arcadeui .stage { outline: 3px solid #8e9096; outline-offset: -3px; }
+body.replaying.handui:not(.cyberui) .repbar { border: 0; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 46%), linear-gradient(180deg, #1c1d21, #060608); box-shadow: 0 0 0 1px #000, 0 0 0 2.5px #9ca0a8, 0 0 0 3.5px #2c2e33, 0 8px 18px rgba(0,0,0,.6); }
+body.replaying.handui:not(.cyberui) .repbar .kicker, body.replaying.handui:not(.cyberui) .repbar .rptime { color: #e6e8ec; }
+body.replaying.handui:not(.cyberui) .repbar .reppad { border-color: #9ca0a8; color: #d8dbe1; }
+body.replaying.handui:not(.cyberui) .repbar input[type=range] { accent-color: #c9ccd2; }
+body.replaying.handui:not(.cyberui) .stage { outline: 2px solid #9ca0a8; outline-offset: -2px; }
 .repbar .rptop b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .repbar .rptop span { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .repbar .rptop button { padding: 4px 12px; font-size: 12.5px; }
@@ -1334,7 +1355,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   <div class="countdown" id="countdown" hidden></div>
   <button class="repshow" id="repShow" type="button" hidden aria-label="操作バーを出す">▲ 操作</button>
   <div class="repbar" id="repBar" hidden>
-    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span id="repInfo"></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
+    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span class="reppad" id="repPad" hidden></span><span id="repInfo"></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
     <div class="rprow"><button id="repPlay" type="button" aria-label="一時停止">❚❚</button><input type="range" id="repSeek" min="0" max="1000" value="0" aria-label="再生位置"><span class="rptime" id="repTime">0:00</span><button id="repSpeed" type="button">1x</button></div>
   </div>
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
@@ -8475,7 +8496,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     alarmFx(now / 1000);
     if (pad.classList.contains('on') && !(input.stick && input.stick.pad)) padReset();
-    if (state === 'count') tickCount(dt); else if (!$('countdown').hidden) $('countdown').hidden = true;
+    if (state === 'count') tickCount(dt); else if (!(rp && rp.intro > 0) && !$('countdown').hidden) $('countdown').hidden = true;
     if (demoOn()) demoTick(dt);
     if (state === 'play') {
       // fixed small steps keep movement and collisions smooth at any frame rate
@@ -9095,7 +9116,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   function recStart() {
     rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], fx: [''], ids: new WeakMap(), nid: 1, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), g: mapGen, cols: COLS, rows: ROWS,
-      eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash') } } : null;
+      eq: { skin: EQ('skin'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash'), pad: EQ('pad') } } : null;
   }
   function recFrame(last) {
     const q = v => Math.round(v * 20), fxi = v => { v = v || ''; let i = rec.fx.indexOf(v); if (i < 0) { i = rec.fx.length; rec.fx.push(v); } return i; };
@@ -9165,7 +9186,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     rp = Object.assign(data, { time: 0, speed: 1, playing: true, name, board, best: r.best, len: h.len || data.fr.length / h.hz });
     $('rankScreen').dataset.back = ''; $('startPickScreen').hidden = true; ui.over.hidden = true;
     $('rankScreen').hidden = true; ui.title.hidden = true;
-    document.body.classList.add('replaying');
     stageN = 3; daily = null; rankRun = false; tut = null; mapSkin = h.skin; COLS = h.cols; ROWS = h.rows;
     repN = h.n || 3; mapGen = h.g || 1; repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; mapGen = 2; } resize();
     repEq = h.eq || {};
@@ -9175,12 +9195,20 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     state = 'replay';
     rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][(h.n || 3) - 1] : '';
     $('repName').textContent = name;
-    $('repBar').hidden = false; repPaintBar(); repApply(0);
+    { const pad = repEq.pad && SHOP.find(c => c.k === 'pad').items.find(i => i[0] === repEq.pad); $('repPad').textContent = pad ? pad[1] : ''; $('repPad').title = pad ? '操作パネル：' + pad[1] : ''; $('repPad').hidden = !pad; }
+    // first the 3-2-1 on the play screen as it was played (its control panel skin), then the map full screen
+    rp.intro = 3; rp.introN = 0; $('repBar').hidden = true; resize(); repApply(0);
+    t = 0; kills = 0; try { hud(); } catch (e) {}   // (the counters as at a run's start, not what was last on screen)
+  }
+  function repIntroEnd() {
+    rp.intro = 0; $('countdown').hidden = true;
+    document.body.classList.add('replaying'); resize();
+    $('repBar').hidden = false; repPaintBar(); repApply(rp.time);
   }
   function repClose() {
     if (!rp) return;
     const board = rp.board; rp = null; repEq = null; repN = null;
-    $('repBar').hidden = true; $('repShow').hidden = true; document.body.classList.remove('replaying');
+    $('repBar').hidden = true; $('repShow').hidden = true; $('countdown').hidden = true; document.body.classList.remove('replaying');
     P = null; enemies = []; mines = []; booms = []; items = []; pending = [];
     toTitle();
     try { Rank.open(board); } catch (e) {}
@@ -9209,6 +9237,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   function repTick(dt) {
     if (!rp) return;
+    if (rp.intro > 0) {
+      rp.intro -= dt; const el = $('countdown'), n = Math.ceil(rp.intro);
+      if (rp.intro <= 0) { repIntroEnd(); return; }
+      if (n !== rp.introN) { rp.introN = n; el.textContent = n; el.dataset.n = n; el.hidden = false; el.style.animation = 'none'; void el.offsetWidth; el.style.animation = ''; tone(523, 0.12, 'square', 0.05); }
+      repApply(0); return;
+    }
     if (rp.playing) { rp.time = Math.min(rp.len, rp.time + dt * rp.speed); if (rp.time >= rp.len) { rp.playing = false; } }
     repApply(rp.time); repPaintBar();
   }
