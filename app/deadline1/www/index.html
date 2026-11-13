@@ -1770,7 +1770,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const TOP_N = 5;
   // escapes rank above captures; faster escapes first, then longer survivals
   // the score is the time you stayed free: longer is better, escaped or caught alike
-  const better = (x, y) => y.time - x.time;
+  // which of two records ranks higher: an escape above any run that was caught; between escapes the quicker one (out
+  // sooner once the exit opened); between caught runs, as ever, the longer one
+  const better = (x, y) => (y.escaped ? 1 : 0) - (x.escaped ? 1 : 0) || (x.escaped ? x.time - y.time : y.time - x.time);
   const fmtTime = s => `${Math.floor(s / 60)}:${(s % 60).toFixed(1).padStart(4, '0')}`;
   const mergeTop = (a, b) => {
     const seen = new Set(), out = [];
@@ -2462,14 +2464,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       setTimeout(() => noise(0.35, 0.025), 620);
     }
   }
-  function celebrate(kind) {
-    fanfare(kind);
-    const host = kind === 'clear' ? ui.clear : ui.over, card = host && host.querySelector('.card');
+  // one show for every result worth one: the escape's (its fanfare, confetti and bursts), on the escape screen or (a
+  // race's new best) on the caught one; rec: a new best, which adds the NEW RECORD stamp
+  function celebrate(where, rec) {
+    fanfare('clear');
+    const kind = 'clear', host = where === 'clear' ? ui.clear : ui.over, card = host && host.querySelector('.card');
     if (!card) return;
     const sc = card.querySelector('.score');
     if (sc) { sc.classList.remove('celepop'); void sc.offsetWidth; sc.classList.add('celepop'); }
     { const tg = card.querySelector('.celetag'); if (tg) tg.classList.remove('on'); }
-    if (kind === 'record' && sc) {
+    if (rec && sc) {
       let tag = card.querySelector('.celetag'); if (!tag) { tag = document.createElement('span'); tag.className = 'celetag'; card.append(tag); }
       tag.textContent = 'NEW RECORD'; tag.classList.remove('on'); void tag.offsetWidth; tag.classList.add('on');
     }
@@ -2493,7 +2497,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       for (let k = 0; k < 36; k++) { const a = k / 36 * Math.PI * 2, v = 150 + Math.random() * 60; parts.push({ x: bx * r.width, y: by * r.height, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: col, kind: 'spark', t0: at, life: 1.1 }); }
     }
     let rays = null;
-    if (kind === 'record' && sc) { const sr = sc.getBoundingClientRect(); rays = { x: sr.left - r.left + Math.min(sr.width, 260) / 2, y: sr.top - r.top + sr.height / 2 }; }
+    if (false && sc) { const sr = sc.getBoundingClientRect(); rays = { x: sr.left - r.left + Math.min(sr.width, 260) / 2, y: sr.top - r.top + sr.height / 2 }; }
     const t0 = performance.now(), END = 3.2;
     const step = now => {
       const T = (now - t0) / 1000;
@@ -5450,7 +5454,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (!last) $('cMsg').textContent = (fcStars ? `初回クリア報酬 ★${fcStars}(✉️メールで受け取れる)。` : '') + (stageN === 1
       ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度挑むか、タイトルに戻るかを選べる。'
       : 'アイテムを選んでステージ3へ進むか、もう一度挑むか、タイトルに戻るかを選べる。');
-    ui.clear.hidden = false; celebrate('clear'); titleChime('cTitles'); prepShare('clear');
+    ui.clear.hidden = false; celebrate('clear', crank === 1); titleChime('cTitles'); prepShare('clear');
   }
   // a story's prize: into what the player owns, and on at once if that slot is still the standard one;
   // the prize's name if it is new
@@ -5629,11 +5633,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     state = 'caught';
     caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1;
     tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
-    const isNew = total > best;
-    if (isNew) { best = total; saveBest(); }
+    if (total > best) { best = total; saveBest(); }   // (the longest run ever, kept as before)
     records.plays++;
     const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, stomps: P && P.stompN || 0, escaped: false, at: new Date().toISOString() });
-    overCele = stageN === 3 && rankRun && rank === 1;   // (a new best in the ranking race: the result screen celebrates it)
+    overCele = rank === 1 && ((stageN === 3 && rankRun) || stageN === 4);   // (a race's new best is celebrated; caught on a story stage is not)
     if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, stomps: P && P.stompN || 0, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     recEnd();
@@ -5655,11 +5658,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rTime').textContent = (P && P.stompN || 0) + '回';   // (阻止: the ! stamped out this run; the old 合計時間 matched the score above)
     $('rKills').textContent = kills + '体';
     $('rCount').textContent = stageN === 4 ? '生存課題' : 'ステージ' + stageN;
-    $('rBest').textContent = best.toFixed(1) + '秒';
+    // ベスト: this stage's (or this race's) own best, the one 自己ベスト更新 is judged against
+    const top = stageBest(recKey(stageN)), isNew = rank === 1;
+    $('rBest').textContent = top ? (top.escaped ? fmtTime(top.time) + ' 脱出' : top.time.toFixed(1) + '秒') : '--';
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
       ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
-      : `${stageLabel(stageN)}で確保された。ベストまであと ${(best - total).toFixed(1)} 秒。`;
+      : top && top.escaped ? `${stageLabel(stageN)}で確保された。このステージは ${fmtTime(top.time)} で脱出済み。`
+      : `${stageLabel(stageN)}で確保された。ベストまであと ${Math.max(0, (top ? top.time : 0) - t).toFixed(1)} 秒。`;
     tip('rMono', stageN);
     showTitles('rTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, !!P.pit, true));
   }
@@ -8641,7 +8647,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     } else if (state === 'caught') {
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
-      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; if (overCele) celebrate('record'); fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
+      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; if (overCele) celebrate('over', true); else { const tg = ui.over.querySelector('.celetag'); if (tg) tg.classList.remove('on'); } fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     if (state === 'replay') repTick(dt);
     draw(); if (state !== 'replay') hud();
