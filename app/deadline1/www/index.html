@@ -1507,9 +1507,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <p class="mono" id="rMono" hidden></p>
       <div class="score"><span class="label" id="rScoreLabel">逃走時間</span><b id="rScore">0:00.0</b><em id="rRank"></em></div>
       <div class="result">
-        <div><span class="label">合計時間</span><b id="rTime">0.0秒</b></div>
-        <div><span class="label">撃破</span><b id="rKills">0体</b></div>
         <div><span class="label">到達</span><b id="rCount">1</b></div>
+        <div><span class="label">撃破</span><b id="rKills">0体</b></div>
+        <div><span class="label">阻止</span><b id="rTime">0回</b></div>
         <div><span class="label">ベスト</span><b id="rBest">0.0秒</b></div>
       </div>
       <p id="rMsg"></p>
@@ -5426,8 +5426,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     records.cleared = Object.assign(records.cleared || {}, { [stageN]: true });
     if (mapSkin in MCLEAR) records.mclear = Object.assign(records.mclear || {}, { [MCLEAR[mapSkin] + stageN]: true });
     const fcStars = fcFirst ? firstClearPrize(stageN, mapSkin) : 0;
-    const crank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
-    if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: true, at: new Date().toISOString() });
+    const crank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, stomps: P && P.stompN || 0, escaped: true, at: new Date().toISOString() });
+    if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, stomps: P && P.stompN || 0, escaped: true, at: new Date().toISOString() });
     mono('cMono', stageN, 'clear');
     showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
     $('cScoreLabel').textContent = `ステージ${stageN} 逃走時間`;
@@ -5632,9 +5632,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const isNew = total > best;
     if (isNew) { best = total; saveBest(); }
     records.plays++;
-    const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
+    const rank = addRecord(recKey(stageN), { time: +t.toFixed(1), kills: kills - stageKillStart, stomps: P && P.stompN || 0, escaped: false, at: new Date().toISOString() });
     overCele = stageN === 3 && rankRun && rank === 1;   // (a new best in the ranking race: the result screen celebrates it)
-    if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, escaped: false, at: new Date().toISOString() });
+    if (stageN <= 2) addRecord(mapRecKey(stageN, mapSkin), { time: +t.toFixed(1), kills: kills - stageKillStart, stomps: P && P.stompN || 0, escaped: false, at: new Date().toISOString() });
     if (stageN >= 3) Rank.sync();
     recEnd();
     // a survival night: the stars its missions paid
@@ -5652,7 +5652,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rScore').textContent = fmtTime(t);
     $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
     $('rRank').textContent = rankText(stageN, rank);
-    $('rTime').textContent = total.toFixed(1) + '秒';
+    $('rTime').textContent = (P && P.stompN || 0) + '回';   // (阻止: the ! stamped out this run; the old 合計時間 matched the score above)
     $('rKills').textContent = kills + '体';
     $('rCount').textContent = stageN === 4 ? '生存課題' : 'ステージ' + stageN;
     $('rBest').textContent = best.toFixed(1) + '秒';
@@ -8818,7 +8818,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const r = stageBest(key);
     el.textContent = '';
     if (!r) el.textContent = '自己ベスト まだ記録なし';
-    else { const b = document.createElement('b'); b.textContent = fmtTime(r.time); el.append('自己ベスト', b, `撃破${r.kills || 0}` + (n <= 3 && !rankRun && r.escaped ? ' ・ 脱出' : '')); }
+    else { const b = document.createElement('b'); b.textContent = fmtTime(r.time); el.append('自己ベスト', b, `撃破${r.kills || 0} ・ 阻止${r.stomps || 0}` + (n <= 3 && !rankRun && r.escaped ? ' ・ 脱出' : '')); }
     el.hidden = false;
   }
   function showBrief() {
@@ -9318,7 +9318,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]), h: g[8] ? g[8].split(',').map(Number) : null, f: list(g[9]), d: g[10] ? g[10].split(',').map(Number) : null }; });
     // when each oni first showed (it grows in over 0.3 s, as in the game)
     const seen = new Map(); fr.forEach((f, n) => { for (const e of f.e) if (!seen.has(e[0])) seen.set(e[0], n / head.hz); });
-    return { head, fr, seen };
+    const st = []; { let n = 0; for (let i = 0; i < fr.length; i++) { if (i + 1 < fr.length) { const nx = new Set(fr[i + 1].w.map(w => w[0] + ',' + w[1])); for (const w of fr[i].w) if (!nx.has(w[0] + ',' + w[1]) && w[2] / 20 > 1.5 / head.hz) n++; } st.push(n); } }
+    return { head, fr, seen, st };
   }
   async function repOpen(r, name, board) {
     const data = await repUnpack(r.d), h = data.head;
@@ -9412,7 +9413,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('repPlay').textContent = rp.playing ? '❚❚' : rp.time >= rp.len ? '↺' : '▶';
     $('repPlay').setAttribute('aria-label', rp.playing ? '一時停止' : '再生');
     $('repSpeed').textContent = rp.speed + 'x';
-    $('repInfo').textContent = (rp.time >= rp.len ? '確保 ・ ' : `${rp.map} ・ `) + `撃破${kills} ・ 記録 ${fmtTime(rp.best)}`;
+    $('repInfo').textContent = (rp.time >= rp.len ? '確保 ・ ' : `${rp.map} ・ `) + `撃破${kills} ・ 阻止${rp.st[Math.min(rp.st.length - 1, Math.floor(rp.time * rp.head.hz))] || 0} ・ 記録 ${fmtTime(rp.best)}`;
   }
   $('repPlay').addEventListener('click', () => { if (!rp) return; if (rp.time >= rp.len) rp.time = 0; rp.playing = !rp.playing; repPaintBar(); });
   $('repSpeed').addEventListener('click', () => { if (!rp) return; rp.speed = rp.speed >= 4 ? 1 : rp.speed * 2; repPaintBar(); });
