@@ -3678,8 +3678,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const r = { width: r0.width, height: r0.height + sy };
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
-    // (one more column of blocks than the screen's shape would give: the tiles a little smaller to fit)
-    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a) + 4); }
+    // (the columns of blocks the screen's shape gives: the extra one tried before is gone again)
+    if (a >= 1) { ROWS = r.height < 440 ? 17 : 21; COLS = Math.min(SIZES[SIZES.length - 1], nearest(ROWS * a)); }
     else { COLS = r.width < 440 ? 17 : 21; ROWS = nearest(COLS / a); }
   }
 
