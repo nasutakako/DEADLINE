@@ -1005,9 +1005,14 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 #shopScreen .shophead .shopnote { grid-column: 3; grid-row: 1; }
 #shopScreen .shophead .shoprestore { grid-column: 4; grid-row: 1; }
 #shopScreen .shophead .shopclose { grid-column: 5; grid-row: 1; }
-#shopScreen .shophead > .ranktabs { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: repeat(4, minmax(0, max-content)); justify-content: start; gap: 6px; }   /* (two rows: ランチャー バリア 爆弾 ダッシュ / スキン 操作パネル ★を買う) */
-#shopScreen .shophead > .ranktabs button { text-align: center; }
-#shopScreen .shophead .shopmsg { grid-column: 1 / -1; grid-row: 3; }
+#shopScreen .shophead .shopmsg { grid-column: 1 / -1; grid-row: 2; }
+/* the tabs over the list on the left (two rows: ランチャー バリア 爆弾 ダッシュ / スキン 操作パネル ★を買う), so the detail panel
+   on the right runs from just under 閉じる to the bottom, with room for its clip */
+#shopScreen .shopleft { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
+#shopScreen .shopleft .shoplist { flex: 1 1 auto; }
+#shopTabs { display: grid; grid-template-columns: repeat(4, minmax(0, max-content)); justify-content: start; gap: 6px; flex: none; }
+#shopTabs button { text-align: center; }
+#shopScreen .shopdetail .clip, #equipScreen .shopdetail .clip { height: clamp(80px, 34vh, 220px); }
 /* the heading at its old size (as on the other cards), 閉じる beside it, and the slot tabs on a row of their own under it */
 #equipScreen .shophead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; }
 #equipScreen .shophead h2 { grid-column: 1; grid-row: 1; font-size: clamp(26px, 6vw, 38px); line-height: 1.1; }
@@ -1476,13 +1481,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     <div class="shopwrap">
       <div class="shophead">
         <h2>ショップ</h2>
-        <div class="ranktabs" id="shopTabs" role="tablist"></div>
         <span class="shopstars" id="shopStars"></span><span class="shopnote">★はミッション・ログインボーナス・ランクレース・共有で獲得できます</span>
         <button class="ghost shoprestore" id="shopRestore" type="button">購入を復元</button><button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
         <span class="shopmsg" id="shopMsg" role="status" hidden></span>
       </div>
       <div class="shopbody">
-        <div class="shoplist" id="shopList"></div>
+        <div class="shopleft"><div class="ranktabs" id="shopTabs" role="tablist"></div><div class="shoplist" id="shopList"></div></div>
         <aside class="shopdetail" id="shopDetail" aria-live="polite"></aside>
       </div>
     </div>
@@ -3131,7 +3135,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     list.scrollTop = keep;
     shopDetail();
-    ui.title.hidden = true; $('shopScreen').hidden = false;
+    ui.title.hidden = true; { const sc = $('shopScreen'); if (sc.parentElement !== document.body) document.body.append(sc); sc.hidden = false; }   // (under the body: in the game area a phone's browser can hold a fixed screen inside that area)
     $('shopStars').textContent = `★ ${starHave()}`;
     bgmStart(SONGS.shop);
   }
@@ -3285,7 +3289,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     list.scrollTop = keep;
     equipDetail();
-    ui.title.hidden = true; $('equipScreen').hidden = false;
+    ui.title.hidden = true; { const sc = $('equipScreen'); if (sc.parentElement !== document.body) document.body.append(sc); sc.hidden = false; }
   }
   // the detail panel, as the shop's: the swatch and name, the play clip (or a picture), the look, the effect, and 装備する
   function equipDetail() {
