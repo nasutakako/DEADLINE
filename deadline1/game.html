@@ -2465,9 +2465,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
   }
   // one show for every result worth one: the escape's (its fanfare, confetti and bursts), on the escape screen or (a
-  // race's new best) on the caught one; rec: a new best, which adds the NEW RECORD stamp
+  // race's new best) on the caught one; rec: a new best, which adds the NEW RECORD stamp, the rays behind the time
+  // and the record's fanfare after the escape's
   function celebrate(where, rec) {
     fanfare('clear');
+    if (rec) setTimeout(() => fanfare('record'), 1150);
     const kind = 'clear', host = where === 'clear' ? ui.clear : ui.over, card = host && host.querySelector('.card');
     if (!card) return;
     const sc = card.querySelector('.score');
@@ -2497,7 +2499,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       for (let k = 0; k < 36; k++) { const a = k / 36 * Math.PI * 2, v = 150 + Math.random() * 60; parts.push({ x: bx * r.width, y: by * r.height, vx: Math.cos(a) * v, vy: Math.sin(a) * v, c: col, kind: 'spark', t0: at, life: 1.1 }); }
     }
     let rays = null;
-    if (false && sc) { const sr = sc.getBoundingClientRect(); rays = { x: sr.left - r.left + Math.min(sr.width, 260) / 2, y: sr.top - r.top + sr.height / 2 }; }
+    if (rec && sc) { const sr = sc.getBoundingClientRect(); rays = { x: sr.left - r.left + Math.min(sr.width, 260) / 2, y: sr.top - r.top + sr.height / 2 }; }
     const t0 = performance.now(), END = 3.2;
     const step = now => {
       const T = (now - t0) / 1000;
