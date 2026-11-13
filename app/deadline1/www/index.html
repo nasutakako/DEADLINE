@@ -917,12 +917,15 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 /* the high-score box is gone from the title: the player's name opens the records */
 #records { display: none !important; }
 /* the equip screen */
-.eqlist { width: 100%; box-sizing: border-box; margin: 0; padding: 0 2px 0 0; display: grid; gap: 12px; align-content: start; max-height: min(56vh, 380px); overflow-y: auto; overscroll-behavior: contain; text-align: left; }
+#equipScreen { position: fixed; inset: 0; z-index: 50; padding: max(10px, var(--sa-top)) max(12px, var(--sa-right)) max(10px, var(--sa-bottom)) max(12px, var(--sa-left)); background: rgba(6, 8, 12, .97); }
+#equipScreen .shophead h2 { color: var(--lamp); }
 .eqlist .shopsec { width: 100%; }
 .eqlist .shoptile { cursor: pointer; }
 .eqlist .shoptile.on { border-color: #5dff9e; box-shadow: inset 0 0 0 1px #5dff9e; }
 .eqlist .shoptile.on .pr { color: #5dff9e; }
 .eqlist .shoptile.on::after { display: none; }
+.eqlist .shoptile.sel { border-color: #ff9bd6; box-shadow: inset 0 0 0 1px #ff9bd6; background: rgba(255,120,200,.07); }
+.eqlist .shoptile.on.sel { border-color: #5dff9e; box-shadow: inset 0 0 0 1px #5dff9e, 0 0 0 2px #ff9bd6; }
 .eqlist .eqhint { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); }
 .who.inline .idcard { flex: 1 1 140px; }
 .who.inline .menu { flex: 2 1 260px; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
@@ -1350,12 +1353,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   </div>
 
   <div class="overlay" id="equipScreen" hidden>
-    <div class="card rankcard">
-      <h2>装備</h2>
-      <div class="ranktabs" id="equipTabs" role="tablist"></div>
-      <div class="eqlist" id="equipList"></div>
-      <div class="row"><button class="ghost" id="equipClose" type="button">閉じる</button></div>
+    <div class="shopwrap">
+      <div class="shophead">
+        <h2>装備</h2>
+        <div class="ranktabs" id="equipTabs" role="tablist"></div>
+        <span class="shopnote"></span>
+        <button class="ghost shopclose" id="equipClose" type="button">閉じる</button>
+      </div>
+      <div class="shopbody">
+        <div class="shoplist eqlist" id="equipList"></div>
+        <aside class="shopdetail" id="equipDetail" aria-live="polite"></aside>
+      </div>
     </div>
+  </div>
   </div>
 
   </div>
@@ -3144,33 +3154,69 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
   // the equip screen: one tab per slot, the shop's tiles in the shop's order, only what is owned
   const EQUIP_TABS = [['rocket', 'ランチャー'], ['barrier', 'バリア'], ['bomb', '爆弾'], ['dash', 'ダッシュ'], ['skin', 'スキン'], ['pad', '操作パネル']];
-  let equipTab = 'rocket';
+  let equipTab = 'rocket', equipSel = null;   // (the tile picked for the detail panel: {cat, id, name, desc, sw})
   function openEquip() {
     const tabs = $('equipTabs'); tabs.textContent = '';
     for (const [k, label] of EQUIP_TABS) {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(equipTab === k));
-      b.addEventListener('click', () => { if (equipTab !== k) { tap(); equipTab = k; list.scrollTop = 0; openEquip(); } }); tabs.append(b);
+      b.addEventListener('click', () => { if (equipTab !== k) { tap(); equipTab = k; equipSel = null; list.scrollTop = 0; openEquip(); } }); tabs.append(b);
     }
     const list = $('equipList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
     const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
     for (const cat of SHOP.filter(c => c.k === equipTab)) {
-      const opts = [['', '標準', '', '']].concat(cat.items.filter(it => sd.owned.includes(it[0])));
+      const opts = [['', '標準', 'はじめから使える、いつもの見た目。', '']].concat(cat.items.filter(it => sd.owned.includes(it[0])))
+        .map(it => ({ cat, id: it[0], name: it[1], desc: it[3], sw: it[4], price: it[2] }));
+      if (!equipSel || equipSel.cat !== cat || !opts.some(o => o.id === equipSel.id)) equipSel = opts.find(o => o.id === (sd.eq[cat.k] || '')) || opts[0];
       const sec = mk('section', 'shopsec'), grid = mk('div', 'shopgrid' + (cat.items.length === 2 ? ' three' : ''));
       sec.append(mk('h3', '', cat.label), grid);
       for (const it of opts) {
-        const id = it[0], on = (sd.eq[cat.k] || '') === id, b = mk('button', 'shoptile owned' + (on ? ' on' : ''));
+        const on = (sd.eq[cat.k] || '') === it.id, b = mk('button', 'shoptile owned' + (on ? ' on' : '') + (equipSel.id === it.id ? ' sel' : ''));
         b.type = 'button';
-        const sw = mk('span', 'sw'); shopSwatch(sw, id, it[4], cat.k);
-        b.append(sw, mk('b', '', it[1]), mk('span', 'pr', on ? '装備中' : '装備する'));
-        if (SHOP_FX[id]) b.append(mk('span', 'fxtag', '効果'));
-        b.addEventListener('click', () => { if (on) return; tap(); shopData().eq[cat.k] = id; saveRecords(); openEquip(); });
+        const sw = mk('span', 'sw'); shopSwatch(sw, it.id, it.sw, cat.k);
+        b.append(sw, mk('b', '', it.name), mk('span', 'pr', on ? '装備中' : '所持'));
+        if (SHOP_FX[it.id]) b.append(mk('span', 'fxtag', '効果'));
+        b.addEventListener('click', () => { if (equipSel.id === it.id) return; tap(); equipSel = it; openEquip(); });
         grid.append(b);
       }
       if (opts.length === 1) sec.append(mk('span', 'eqhint', 'ショップで手に入れたものがここに並ぶ'));
       list.append(sec);
     }
     list.scrollTop = keep;
+    equipDetail();
     ui.title.hidden = true; $('equipScreen').hidden = false;
+  }
+  // the detail panel, as the shop's: the swatch and name, the play clip (or a picture), the look, the effect, and 装備する
+  function equipDetail() {
+    const it = equipSel, box = $('equipDetail'), sd = shopData(); box.textContent = '';
+    if (!it) return;
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const on = (sd.eq[it.cat.k] || '') === it.id;
+    const big = mk('div', 'big'), sw = mk('span', 'sw'), head = mk('div');
+    shopSwatch(sw, it.id, it.sw, it.cat.k);
+    head.append(mk('div', 'cat', it.cat.label), mk('h3', null, it.name), mk('div', 'price', on ? '装備中' : '所持しています'));
+    big.append(sw, head);
+    const src = shopClip(it);
+    let clip = null;
+    if (src) {
+      const v = document.createElement('video'), cw = mk('div', 'clip');
+      v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true;
+      v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-label', it.name + 'のプレイ映像');
+      v.src = src; cw.append(v, mk('span', null, 'プレイ映像'));
+      clip = cw;
+    } else if (SHOP_PICS[it.id || 'std_' + it.cat.k]) {
+      const im = document.createElement('img'), cw = mk('div', 'clip pic');
+      im.src = SHOP_PICS[it.id || 'std_' + it.cat.k]; im.alt = it.name + 'のプレイ画面'; cw.append(im, mk('span', null, 'プレイ画面'));
+      clip = cw;
+    }
+    const look = mk('div', 'blk'); look.append(mk('span', null, '見た目'), mk('p', null, it.id ? it.desc : 'はじめから使える、いつもの見た目。'));
+    const fx = mk('div', 'blk fx' + (SHOP_FX[it.id] ? '' : ' none'));
+    fx.append(mk('span', null, SHOP_FX[it.id] ? '効果' : '効果なし'), mk('p', null, SHOP_FX[it.id] || '見た目だけが変わる。遊び方への影響はない。'));
+    const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
+    btn.type = 'button'; btn.textContent = on ? '装備中' : it.id ? '装備する' : '標準に戻す'; btn.disabled = on;
+    btn.addEventListener('click', () => { tap(); shopData().eq[it.cat.k] = it.id; saveRecords(); openEquip(); });
+    act.append(btn, mk('span', 'state', on ? 'いま使っている' : '持っている'));
+    box.append(big, ...(clip ? [clip] : []), look, fx, act);
+    if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
   // watching an ad, three for two ads in a row. The 無制限パス (bought once) does away with the count. Kept on this
