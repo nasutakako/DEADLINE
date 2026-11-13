@@ -108,6 +108,12 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,59,48,.85); animation: cdpop .9s ease-out both; }
 @keyframes cdpop { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .countdown { animation: none; } }
+.stompmsg { position: absolute; left: 50%; top: 14%; transform: translateX(-50%); z-index: 4; pointer-events: none; display: grid; justify-items: center; gap: 2px;
+  padding: 6px 16px 7px; border-radius: 10px; background: rgba(6,10,18,.82); border: 1px solid rgba(93,255,158,.7); box-shadow: 0 0 16px rgba(93,255,158,.35);
+  animation: stompmsg 2.3s ease-out both; white-space: nowrap; }
+.stompmsg b { font-size: 13px; color: #ffd0cc; letter-spacing: .06em; } .stompmsg span { font-size: 15px; font-weight: 700; color: #5dff9e; letter-spacing: .1em; }
+.stompmsg[hidden] { display: none; }
+@keyframes stompmsg { 0% { opacity: 0; transform: translate(-50%, 8px) scale(.9); } 12% { opacity: 1; transform: translate(-50%, 0) scale(1); } 80% { opacity: 1; } 100% { opacity: 0; } }
 /* the 3-2-1 in the サイバー skin: a mono readout, cyan with a red/blue split, a broken ring turning round it, a
    system line above, and a short glitch as each number lands */
 body.cyberui .countdown { font-family: "Share Tech Mono", monospace; font-weight: 700; font-size: clamp(70px, 21vmin, 150px); color: #e9feff;
@@ -1366,6 +1372,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   <canvas id="cv"></canvas>
   <div class="alarmfx" id="alarmFx"></div>
   <div class="countdown" id="countdown" hidden></div>
+  <div class="stompmsg" id="stompMsg" hidden><b>! を全部踏んだ</b><span>バリア補給</span></div>
   <button class="repshow" id="repShow" type="button" hidden aria-label="操作バーを出す">▲ 操作</button>
   <div class="repbar" id="repBar" hidden>
     <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span class="reppad" id="repPad" hidden></span><span id="repInfo"></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
@@ -4821,7 +4828,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   // a fresh map for each stage; mines in hand and the kill count carry over
   function newStage(stock) {
-    placeWho(); pickDims();
+    placeWho(); pickDims(); waveTally = {};
     // a ranking run's map comes from a seed kept with it, so its replay can build the same streets
     if (rankRun && stageN === 3) { repSeed = (Math.random() * 4294967296) >>> 0; seeded(repSeed, genMap); } else genMap();
     resize();
@@ -4859,7 +4866,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const n = Math.min(3, stageN) - 1;
     const bomber = fuseStory() && enemies.filter(o => o.bomber).length + pending.filter(o => o.bomber).length < BOMBER_MAX[n] && Math.random() < BOMBER_RATE[n];
     if (bomber) p = farRoad();
-    pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, bomber });
+    pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, bomber, wave: waveSeq });
+    const w = waveTally[waveSeq] || (waveTally[waveSeq] = { n: 0, st: 0 }); w.n++;
+  }
+  // every ! of one wave stamped out (none of it got out): a barrier. One at most in the items; with one already
+  // there it is put on at once (worn already as well: nothing more)
+  let waveSeq = 0, waveTally = {};
+  function stompPrize() {
+    if (!bag.includes('barrier')) bag.push('barrier');
+    else if (!P.barrier) P.barrier = true;
+    else return;
+    flash = Math.max(flash, 0.25); tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120); setTimeout(() => tone(1320, 0.2, 'triangle', 0.04), 240);
+    const m = $('stompMsg'); m.hidden = false; m.style.animation = 'none'; void m.offsetWidth; m.style.animation = '';
+    clearTimeout(stompPrize.tm); stompPrize.tm = setTimeout(() => { m.hidden = true; }, 2300);
   }
   // a bomber steps out as far from the runner as the streets go (by the way round, not as the crow flies), so it never
   // comes out and goes off right in front of them: one of the farthest road tiles, not on another warning
@@ -4990,13 +5009,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.alarmT <= 0) { klaxon(2, 0.018); P.alarmT = hasKey ? 1.4 : 2.4; }
     }
     // stage 2: when the exit opens, one black oni (faster than you) joins the chase
-    if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; queueSpawn(); pending[pending.length - 1].black = true; }
+    if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; waveSeq++; queueSpawn(); pending[pending.length - 1].black = true; }
     if (t >= nextSpawn) {
       let batch = spawnBatch();
       // the weekly ranking and the survival nights: at most 6 a wave, and never more than 25 on the map (counting the
       // warned ones); the kinds that must be about still come when the map is full
       if (capRun()) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length), stageN === 3 ? kindShort() : 0);
-      for (let i = 0; i < batch; i++) queueSpawn();
+      waveSeq++; for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
     if (stageN === 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
@@ -5129,6 +5148,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; sparks.push({ x: s.x, y: s.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: Math.random() < 0.5 ? '#ffffff' : '#ff6a5a' }); }
       flash = Math.max(flash, 0.12); tone(1568, 0.09, 'triangle', 0.05, 784);
       if (S3) S3.stomps++;
+      if (s.wave && waveTally[s.wave]) { const w = waveTally[s.wave]; if (++w.st === w.n) { delete waveTally[s.wave]; stompPrize(); } }
       return false;
     });
     for (const s of pending) if (!s.hold) s.t -= dt;
@@ -7940,6 +7960,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '後ろから赤い鬼、建物の向こうから黄色い鬼。このままだと角で挟まれる。光る脇道に入って止まろう', set: tutFeint, go: tutFeintGo },
       { say: '黄色い鬼は脇道に釣られて後ろに回った。挟まれそうなときは、脇道に入って止まり、元の道に戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
+      { say: '一度に出る ! を全部踏んで、鬼を1体も出させなかったら、バリアが1個届く。バリアは1個まで持てて、すでに持っていたら自動で装着される', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
@@ -8161,6 +8182,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       'バリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯む',
       '怯んでいる鬼に触れても確保されない',
       '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾で倒そう',
+      '一度に出る ! を全部踏んだら、バリアが1個届く。持っていたら自動で装着される',
       '鬼を40体倒すごとに、ランチャーが届く',
       'バリアは鬼に触れられても1回だけ守ってくれて、触れた鬼を倒す',
       'ランチャーは向いている方向に弾を撃ち、着弾した場所の鬼を倒す',
@@ -9487,7 +9509,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '一度に出る「!」を全部踏んで1体も出させなかったら、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着)', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
@@ -9525,7 +9547,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : ''])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li([...(n === 4 ? [`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`] : []), '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([...(n === 4 ? [`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`] : []), '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '一度に出る「!」を全部踏んで1体も出させなかったら、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着)', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
