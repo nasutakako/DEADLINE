@@ -108,11 +108,6 @@ button:focus-visible { outline: 2px solid var(--lamp); outline-offset: 2px; }
   text-shadow: 0 4px 0 #000, 0 0 30px rgba(255,59,48,.85); animation: cdpop .9s ease-out both; }
 @keyframes cdpop { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; } 18% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(.85); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .countdown { animation: none; } }
-.gainpop { position: fixed; z-index: 45; transform: translate(-50%, -100%); pointer-events: none; white-space: nowrap; font-weight: 700; font-size: 15px; letter-spacing: .06em;
-  color: #fff; text-shadow: 0 0 6px rgba(0,0,0,.9), 0 1px 0 #000; animation: gainpop 1.4s ease-out both; }
-.gainpop.barrier { color: #7fe8ff; } .gainpop.launcher { color: #ff9bd6; }
-@keyframes gainpop { 0% { opacity: 0; transform: translate(-50%, -60%); } 15% { opacity: 1; transform: translate(-50%, -100%); } 60% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -190%); } }
-@media (prefers-reduced-motion: reduce) { .gainpop { animation: gainpop-fade 1.4s ease-out both; } @keyframes gainpop-fade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } } }
 /* the 3-2-1 in the サイバー skin: a mono readout, cyan with a red/blue split, a broken ring turning round it, a
    system line above, and a short glitch as each number lands */
 body.cyberui .countdown { font-family: "Share Tech Mono", monospace; font-weight: 700; font-size: clamp(70px, 21vmin, 150px); color: #e9feff;
@@ -4902,22 +4897,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // already as well: nothing more)
   const STOMP_PRIZE = 5;
   let waveSeq = 0, waveTally = {};
-  // a barrier or a launcher come in: "バリア+1" / "ランチャー+1" rises off the item button and fades (on the panel skins
-  // without the item row, off that item's own button)
-  function gainPop(kind) {
-    if (tut || state === 'replay') return;
-    const row = $('itemRow'), at = row && row.offsetParent ? row : $(kind === 'barrier' ? 'barBtn' : 'rkBtn');
-    if (!at || !at.offsetParent) return;
-    const r = at.getBoundingClientRect(), el = document.createElement('div');
-    el.className = 'gainpop ' + kind; el.textContent = (kind === 'barrier' ? 'バリア' : 'ランチャー') + '+1';
-    el.style.left = (r.left + r.width / 2) + 'px'; el.style.top = (r.top - 4) + 'px';
-    document.body.append(el); setTimeout(() => el.remove(), 1500);
-  }
   function stompPrize() {
     if (!bag.includes('barrier')) bag.push('barrier');
     else if (!P.barrier) P.barrier = true;
     else return;
-    gainPop('barrier');
+   
     flash = Math.max(flash, 0.25); tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120); setTimeout(() => tone(1320, 0.2, 'triangle', 0.04), 240);
   }
   // a bomber steps out as far from the runner as the streets go (by the way round, not as the crow flies), so it never
@@ -5017,7 +5001,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (stageN >= 2) {
         if (P.killPrize == null) P.killPrize = 40;
         while (kills - stageKillStart >= P.killPrize) {
-          bag.push('launcher'); gainPop('launcher'); P.killPrize += 40; flash = Math.max(flash, 0.2);
+          bag.push('launcher'); P.killPrize += 40; flash = Math.max(flash, 0.2);
           tone(880, 0.1, 'triangle', 0.05); setTimeout(() => tone(1175, 0.1, 'triangle', 0.05), 90); setTimeout(() => tone(1760, 0.18, 'triangle', 0.05), 180);
         }
       }
@@ -5034,7 +5018,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const minute = Math.round((P.nextR - 60) / 60), bombsOnly = (stageN >= 3 || stageN === 2) && minute % 2 === 1;
       // (a barrier already on: this one goes into the items, to be put on later)
       // (a barrier in the items: one at most; with one already there the new one is not kept)
-      if (!bombsOnly) { P.gotBarrier = true; if (!P.barrier) { P.barrier = true; gainPop('barrier'); } else if (!bag.includes('barrier')) { bag.push('barrier'); gainPop('barrier'); } }
+      if (!bombsOnly) { P.gotBarrier = true; if (!P.barrier) { P.barrier = true; } else if (!bag.includes('barrier')) { bag.push('barrier'); } }
       P.stock = Math.min(MINE_MAX, P.stock + (stageN >= 3 || (stageN === 2 && minute >= 3) ? 2 : 1)); /* +1 bomb at 2:00 on stages 1 and 2, +2 after (and on stage 3) */ flash = Math.max(flash, 0.25);
       tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120);
     }
@@ -5060,7 +5044,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       let batch = spawnBatch();
       // the weekly ranking and the survival nights: at most 6 a wave, and never more than 25 on the map (counting the
       // warned ones); the kinds that must be about still come when the map is full
-      if (capRun()) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length), stageN === 3 ? kindShort() : 0);
+      // (the survival nights: at most 6 a wave and 25 on the map; the weekly ranking has no cap now)
+      if (stageN === 4) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length));
       waveSeq++; for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
@@ -5181,7 +5166,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
     for (const it of items) if (!air && Math.hypot(it.x - P.x, it.y - P.y) < 0.6 && (it.rk || P.stock < MINE_MAX)) {
       it.taken = true;
-      if (it.rk) { bag.push('launcher'); gainPop('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
+      if (it.rk) { bag.push('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
       P.stock++; tone(990, 0.08, 'square', 0.04); setTimeout(() => tone(1320, 0.1, 'square', 0.04), 70);
     }
     items = items.filter(it => !it.taken && t - it.born < (it.rk ? RK_LIFE : ITEM_LIFE));
@@ -9577,7 +9562,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the weekly ranking's details: what comes when, from the game's own numbers
   function rankInfo() {
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
-    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
+    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', 6], ['7:00', 7], ['10:00', 8], ['11:00', 9], ['12:00', 10]];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
@@ -9588,7 +9573,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+        ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '8分からは2分ごとに、常にいる黒い鬼と黄色い鬼が1体ずつ増える(8分で2体、10分で3体、12分で4体…)', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
