@@ -1697,7 +1697,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
-  const RK_TXT = () => `ランチャー: 1分〜2分に1回道に落ちる(${RK_LIFE}秒で消える。1-1では落ちない)`;
+  const RK_TXT = none => none ? 'ランチャー: 1-1では道に落ちない' : `ランチャー: 1分〜2分に1回道に落ちる(${RK_LIFE}秒で消える)`;
   const RK_GAP = [60, 120], RK_LIFE = 10;   // a launcher lies in the street every 1 to 2 minutes (the first between 1:00 and 2:00; lying 10 s, as a bomb box); none on 1-1
   const STICK_R = 34;
   // the exit opens at 2:30 on stage 1, 4:30 on stage 2 (stage 3: STORY_EXIT)
@@ -3683,9 +3683,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const r = { width: r0.width, height: r0.height + sy };
     const a = Math.max(0.3, r.width / Math.max(1, r.height));
     // one size finer than before: smaller blocks and streets, more buildings on screen
-    // six columns of buildings across on every device (25 tiles); the rows down are the ones that best suit the area's
-    // shape (17 on a phone on its side), and the tiles stretch a little to fill what is left (resize)
-    COLS = 25; ROWS = Math.min(25, nearest(COLS / a));
+    // the same map on every device: six columns of buildings across and four rows down (25 x 17 tiles); the tiles
+    // stretch or shrink across and down to fill the area, whatever its size or shape (resize)
+    COLS = 25; ROWS = 17;
   }
 
   // 生存課題: a map drawn at random from the ones open (any story's stage 1, 2 or 3), rolled on each stand-by screen;
@@ -3917,10 +3917,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     W = r.width; H = r.height;
     cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
     T = Math.min(W / COLS, H / ROWS);
-    // the map fills its whole area: the tiles stretch a little across or down (streets and buildings a touch wider or
-    // taller) rather than leave a band; only on an odd-shaped area (more than 30% off) do they stay square, centred
-    TX = W / COLS; TY = H / ROWS;
-    if (Math.max(TX, TY) / Math.min(TX, TY) > 1.3) TX = TY = T;
+    // the tiles stay square (buildings and players never look stretched): the map is as big as fits, centred
+    TX = TY = T;
     ox = (W - COLS * TX) / 2; oy = (H - ROWS * TY) / 2;
     renderMapCache();
     sideFill();
@@ -9627,7 +9625,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
-      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}
+      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(n === 1 && mapSkin === 'd1'), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([...(n === 4 ? [`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`] : []), '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
