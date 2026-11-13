@@ -1059,7 +1059,7 @@ body.ontitle .who .whonote { text-shadow: 0 1px 4px rgba(0,0,0,.8); }
 @media (prefers-reduced-motion: reduce) { .score.celepop b, .celetag.on { animation: none; } }
 /* ゲームセンター: a lever (a steel rod with a red ball on top, in a black panel with a chrome ring) and round red
    arcade buttons set in black bezels with a chrome rim, the words in white on them */
-body.arcadeui .padbase { border: 0 !important; background: radial-gradient(circle, #101012 0 7%, #1b1b1d 9% 58%, #0c0c0d 60%) !important;
+body.arcadeui .padbase { border: 0 !important; background: radial-gradient(circle, #0a0a0b 0 15%, #1b1b1d 17% 58%, #0c0c0d 60%) !important;
   box-shadow: 0 0 0 3px #2a2a2c, 0 0 0 5px #8d8f94, 0 0 0 6px #3a3b3e, 0 6px 14px rgba(0,0,0,.7), inset 0 3px 8px rgba(0,0,0,.9) !important; }
 body.arcadeui .pad.on .padbase { box-shadow: 0 0 0 3px #2a2a2c, 0 0 0 5px #b5b7bc, 0 0 0 6px #3a3b3e, 0 6px 14px rgba(0,0,0,.7), inset 0 3px 8px rgba(0,0,0,.9) !important; }
 body.arcadeui .padshaft { position: absolute; left: 50%; top: 50%; width: 1px; height: 13px; margin-top: -6.5px; transform-origin: 0 50%; transform: scaleX(0); pointer-events: none;
@@ -8456,7 +8456,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls::after { display: none !impor
   const pad = $('pad'), padBase = pad.querySelector('.padbase'), padKnob = $('padKnob'), PAD_R = STICK_R;
   const padDraw = s => {
     const R = padBase.offsetWidth / 2;
-    const lean = document.body.classList.contains('arcadeui') ? 0.7 : document.body.classList.contains('darkhand') ? 0.55 : document.body.classList.contains('handui') ? 0.32 : 1;   // (the arcade lever leans only so far: its black well barely shows)
+    const lean = document.body.classList.contains('arcadeui') ? 0.5 : document.body.classList.contains('darkhand') ? 0.55 : document.body.classList.contains('handui') ? 0.32 : 1;   // (the arcade lever leans only so far: its black well barely shows)
     padKnob.style.transform = `translate(${s.kx * (R - 14) / PAD_R * lean}px, ${s.ky * (R - 14) / PAD_R * lean}px)`;
     { const c = $('padCross'); if (c) { const m = Math.hypot(s.kx, s.ky) || 1, k = Math.min(1, m / PAD_R); c.style.setProperty('--dx', (s.kx / m * k).toFixed(3)); c.style.setProperty('--dy', (s.ky / m * k).toFixed(3)); } }   // (the cross pad tips the way it is pushed)
     { const kx = s.kx * (R - 14) / PAD_R * lean, ky = s.ky * (R - 14) / PAD_R * lean, sh = $('padShaft'); if (sh) sh.style.transform = `rotate(${Math.atan2(ky, kx)}rad) scaleX(${Math.hypot(kx, ky)})`; }   // (the lever's rod, ゲームセンター)
