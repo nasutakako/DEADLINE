@@ -3661,7 +3661,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const MAP_CHOICE = true;
   let mapSkin = 'd1';
   let courts = [], posts = [], goalT = new Uint8Array(0);
-  let W = 0, H = 0, dpr = 1, T = 32, ox = 0, oy = 0;
+  let W = 0, H = 0, dpr = 1, T = 32, TX = 32, TY = 32, ox = 0, oy = 0;   // (TX, TY: a tile's width and height on screen)
   // drawn as finely as the screen (iPhone: 3 to a point); if a run can't keep its frames up at that, back to 2 for the rest of the visit
   // (設定の画質: 自動 as above, 高画質 always 3, 標準 always 2)
   let dprMax = settings.q === 'std' ? 2 : 3, fpsN = 0, fpsT = 0, fpsSlow = 0;
@@ -3910,12 +3910,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     W = r.width; H = r.height;
     cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
     T = Math.min(W / COLS, H / ROWS);
-    ox = (W - COLS * T) / 2; oy = (H - ROWS * T) / 2;
+    // the map fills its whole area: the tiles stretch a little across or down (streets and buildings a touch wider or
+    // taller) rather than leave a band; only on an odd-shaped area (more than 12% off) do they stay square, centred
+    TX = W / COLS; TY = H / ROWS;
+    if (Math.max(TX, TY) / Math.min(TX, TY) > 1.12) TX = TY = T;
+    ox = (W - COLS * TX) / 2; oy = (H - ROWS * TY) / 2;
     renderMapCache();
     sideFill();
     // the neon edge, round the map (not the whole stage)
     let e = $('mapEdge'); if (!e) { e = document.createElement('div'); e.id = 'mapEdge'; cv.after(e); }   // (right over the map, under everything shown on top of it)
-    Object.assign(e.style, { left: ox + 'px', top: oy + 'px', width: COLS * T + 'px', height: ROWS * T + 'px' });
+    Object.assign(e.style, { left: ox + 'px', top: oy + 'px', width: COLS * TX + 'px', height: ROWS * TY + 'px' });
   }
   // (the side columns keep their full height: the map's own bands above and below stay as they are)
   function sideFill() {}
@@ -3923,10 +3927,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
   function renderMapCache() {
     mapCache = document.createElement('canvas');
-    mapCache.width = Math.max(1, Math.round(COLS * T * dpr));
-    mapCache.height = Math.max(1, Math.round(ROWS * T * dpr));
+    mapCache.width = Math.max(1, Math.round(COLS * TX * dpr));
+    mapCache.height = Math.max(1, Math.round(ROWS * TY * dpr));
     const m = mapCache.getContext('2d');
-    m.scale(T * dpr, T * dpr);
+    m.scale(TX * dpr, TY * dpr);
     if (mapSkin === 'd2') { if (mapStage() === 1) renderVault(m); else renderNeon(m); return; }
     if (mapSkin === 'd3') { renderShadow(m); return; }
     if (mapSkin === 'd4') { renderFest(m); return; }
@@ -4988,7 +4992,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (m > 5) { const mag = clamp((m - 5) / (STICK_R * 0.3), 0, 1); ix = s.dx / m * mag; iy = s.dy / m * mag; }
     } else if (!ix && !iy && input.hover && P) {
       // PC: run toward the touchpad / mouse cursor; stop when it sits on the runner
-      const dx = (input.hover.x - ox) / T - P.x, dy = (input.hover.y - oy) / T - P.y, m = Math.hypot(dx, dy);
+      const dx = (input.hover.x - ox) / TX - P.x, dy = (input.hover.y - oy) / TY - P.y, m = Math.hypot(dx, dy);
       if (m > 0.3) { const mag = clamp((m - 0.3) / 0.9, 0, 1); ix = dx / m * mag; iy = dy / m * mag; }
     }
     const im = Math.hypot(ix, iy);
@@ -6406,10 +6410,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (shake > 0 && settings.vibe) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
     if (mapCache) ctx.drawImage(mapCache, Math.round((ox + sx) * dpr), Math.round((oy + sy) * dpr));
     // the title and the stand-by screens: the attract mode instead of the last game's leftovers
-    if (demoOn()) { ctx.setTransform(T * dpr, 0, 0, T * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
+    if (demoOn()) { ctx.setTransform(TX * dpr, 0, 0, TY * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
     if (!P) return;
-    const s = T * dpr;
-    ctx.setTransform(s, 0, 0, s, (ox + sx) * dpr, (oy + sy) * dpr);
+    ctx.setTransform(TX * dpr, 0, 0, TY * dpr, (ox + sx) * dpr, (oy + sy) * dpr);
     const now = performance.now() / 1000;
 
     // warp points: a swirl in cyan and magenta while usable, dark while resting (the arc shows the minute running down)
@@ -8264,7 +8267,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const TUT_U = 1;
   const tutFrame = () => cv.getBoundingClientRect();
   // where a map point shows on screen (stage pixels)
-  const tutScreenAt = (x, y) => ({ x: ox + x * T, y: oy + y * T });
+  const tutScreenAt = (x, y) => ({ x: ox + x * TX, y: oy + y * TY });
   function tutSpot(lo, hi) {
     flow(Math.floor(P.x), Math.floor(P.y));
     const c = [];
