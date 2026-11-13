@@ -3126,17 +3126,18 @@ body.handui.darkhand.cyberui:not(.ontitle):not(.picking) .controls::after { cont
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
   const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
-  // the equip screen: the same tabs, sections and tiles as the shop, only what is owned
-  let equipTab = 'fx';
+  // the equip screen: one tab per slot, the shop's tiles in the shop's order, only what is owned
+  const EQUIP_TABS = [['rocket', 'ランチャー'], ['barrier', 'バリア'], ['bomb', '爆弾'], ['dash', 'ダッシュ'], ['skin', 'スキン'], ['pad', '操作パネル']];
+  let equipTab = 'rocket';
   function openEquip() {
     const tabs = $('equipTabs'); tabs.textContent = '';
-    for (const [k, label] of [['fx', 'アイテム'], ['skin', 'スキン']]) {
+    for (const [k, label] of EQUIP_TABS) {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(equipTab === k));
-      b.addEventListener('click', () => { if (equipTab !== k) { tap(); equipTab = k; openEquip(); } }); tabs.append(b);
+      b.addEventListener('click', () => { if (equipTab !== k) { tap(); equipTab = k; list.scrollTop = 0; openEquip(); } }); tabs.append(b);
     }
     const list = $('equipList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
     const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-    for (const cat of SHOP.filter(c => (c.k === 'skin' || c.tab === 'skin') === (equipTab === 'skin'))) {
+    for (const cat of SHOP.filter(c => c.k === equipTab)) {
       const opts = [['', '標準', '', '']].concat(cat.items.filter(it => sd.owned.includes(it[0])));
       const sec = mk('section', 'shopsec'), grid = mk('div', 'shopgrid' + (cat.items.length === 2 ? ' three' : ''));
       sec.append(mk('h3', '', cat.label), grid);
