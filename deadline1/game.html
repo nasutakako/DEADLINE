@@ -5205,10 +5205,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // a practice oni is exactly the kind the tutorial asked for
       let bomber = !!s.bomber && !black && !daily;
       if (bomber) tough = amb = false;
-      // (the runner may have come toward its warning meanwhile: if it is no longer well away, it steps out at the farthest spot)
-      let sx = s.x, sy = s.y;
-      if (bomber && !s.tut) { flow(Math.floor(P.x), Math.floor(P.y)); let maxD = 0; for (let i = 0; i < dist.length; i++) if (dist[i] > maxD) maxD = dist[i];
-        if (dist[idx(Math.floor(sx), Math.floor(sy))] < maxD * 0.6) { const q = farRoad(); sx = q.x; sy = q.y; } }
+      const sx = s.x, sy = s.y;   // (every oni, a bomber too, steps out of its own !)
       if (s.tut) { black = !!s.black; tough = !!s.tough; amb = !!s.amb; bomber = !!s.bomber; }
       if (tough) toughWave = true;
       enemies.push({ x: sx, y: sy, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
@@ -8030,6 +8027,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ],
     b1: [
       { say: '4-1には、自爆する橙色の鬼がいる。黒い鬼よりも速い', info: true },
+      { say: '自爆鬼の ! は、逃走者からいちばん遠い場所に出る。ただし ! が出ている間に近づくと、近くで出てくるので気をつけよう', info: true },
       { say: '近づくと点滅して、1秒後に爆弾の1.2倍の大きさで爆発する。巻き込まれると確保', info: true },
       { say: '点滅中は足が少し遅くなる(逃走者の0.9倍)。点滅したら、すぐまっすぐ円の外へ逃げよう', info: true },
       { say: '自爆では他の鬼は倒れない。でも爆弾で倒すと誘爆して、まわりの鬼も吹き飛ぶ', info: true },
