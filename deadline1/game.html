@@ -917,16 +917,13 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 /* the high-score box is gone from the title: the player's name opens the records */
 #records { display: none !important; }
 /* the equip screen */
-.eqlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: min(56vh, 380px); overflow-y: auto; overscroll-behavior: contain; text-align: left; }
-.eqlist h4 { margin: 4px 0 0; font-size: 11px; letter-spacing: .12em; color: var(--lamp); }
-.eqlist button { width: 100%; display: grid; grid-template-columns: 30px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--ink); font: inherit; cursor: pointer; }
-.eqlist button.on { border-color: #5dff9e; box-shadow: 0 0 0 1px #5dff9e inset; }
-.eqlist .sw { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); }
-.eqlist .et { display: grid; min-width: 0; }
-.eqlist b { font-size: 14px; }
-.eqlist small { font-size: 11px; line-height: 1.4; color: var(--muted); }
-.eqlist em { font-style: normal; font-size: 11px; color: #5dff9e; white-space: nowrap; }
-.eqlist .eqhint { font-size: 11px; color: var(--muted); padding: 2px 2px 0; }
+.eqlist { width: 100%; box-sizing: border-box; margin: 0; padding: 0 2px 0 0; display: grid; gap: 12px; align-content: start; max-height: min(56vh, 380px); overflow-y: auto; overscroll-behavior: contain; text-align: left; }
+.eqlist .shopsec { width: 100%; }
+.eqlist .shoptile { cursor: pointer; }
+.eqlist .shoptile.on { border-color: #5dff9e; box-shadow: inset 0 0 0 1px #5dff9e; }
+.eqlist .shoptile.on .pr { color: #5dff9e; }
+.eqlist .shoptile.on::after { display: none; }
+.eqlist .eqhint { display: block; margin-top: 6px; font-size: 11px; color: var(--muted); }
 .who.inline .idcard { flex: 1 1 140px; }
 .who.inline .menu { flex: 2 1 260px; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); }
 @media (prefers-reduced-motion: reduce) { .mrow { transition: none; } .mrow:active { transform: none; } }
@@ -3129,33 +3126,33 @@ body.handui.darkhand.cyberui:not(.ontitle):not(.picking) .controls::after { cont
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
   const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
-  const EQUIP_TABS = [['rocket', 'ランチャー', ['rocket']], ['barrier', 'バリア', ['barrier']], ['bomb', '爆弾', ['bomb']], ['dash', 'ダッシュ', ['dash']], ['skin', 'スキン', ['skin']], ['pad', '操作パネル', ['pad']]];
-  let equipTab = 'rocket';
+  // the equip screen: the same tabs, sections and tiles as the shop, only what is owned
+  let equipTab = 'fx';
   function openEquip() {
     const tabs = $('equipTabs'); tabs.textContent = '';
-    for (const [k, label] of EQUIP_TABS) {
+    for (const [k, label] of [['fx', 'アイテム'], ['skin', 'スキン']]) {
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(equipTab === k));
       b.addEventListener('click', () => { if (equipTab !== k) { tap(); equipTab = k; openEquip(); } }); tabs.append(b);
     }
-    const list = $('equipList'), sd = shopData(); list.textContent = '';
+    const list = $('equipList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
     const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
-    const slots = EQUIP_TABS.find(x => x[0] === equipTab)[2];
-    for (const slot of slots) {
-      const cat = SHOP.find(c => c.k === slot);
-      if (slots.length > 1) list.append(mk('h4', '', cat ? cat.label : slot));
-      const opts = slot === 'skill' ? [['', 'なし', 'スキルを使わない', '']].concat(SKILLS.filter(x => sd.owned.includes(x[0])))
-        : [['', '標準', 'はじめから使える', '']].concat(cat.items.filter(it => sd.owned.includes(it[0])).map(it => [it[0], it[1], it[3], it[4]]));
-      for (const [id, name, desc, sw] of opts) {
-        const on = (sd.eq[slot] || '') === id, b = mk('button', on ? 'on' : '');
+    for (const cat of SHOP.filter(c => (c.k === 'skin' || c.tab === 'skin') === (equipTab === 'skin'))) {
+      const opts = [['', '標準', '', '']].concat(cat.items.filter(it => sd.owned.includes(it[0])));
+      const sec = mk('section', 'shopsec'), grid = mk('div', 'shopgrid' + (cat.items.length === 2 ? ' three' : ''));
+      sec.append(mk('h3', '', cat.label), grid);
+      for (const it of opts) {
+        const id = it[0], on = (sd.eq[cat.k] || '') === id, b = mk('button', 'shoptile owned' + (on ? ' on' : ''));
         b.type = 'button';
-        const swe = mk('span', 'sw'); if (slot === 'skill') swe.style.background = sw || 'var(--panel)'; else shopSwatch(swe, id, sw, slot);
-        const tx = mk('span', 'et'); tx.append(mk('b', '', name), mk('small', '', SHOP_FX[id] || desc));
-        b.append(swe, tx, mk('em', '', on ? '装備中' : ''));
-        b.addEventListener('click', () => { if (on) return; tap(); shopData().eq[slot] = id; saveRecords(); openEquip(); });
-        list.append(b);
+        const sw = mk('span', 'sw'); shopSwatch(sw, id, it[4], cat.k);
+        b.append(sw, mk('b', '', it[1]), mk('span', 'pr', on ? '装備中' : '装備する'));
+        if (SHOP_FX[id]) b.append(mk('span', 'fxtag', '効果'));
+        b.addEventListener('click', () => { if (on) return; tap(); shopData().eq[cat.k] = id; saveRecords(); openEquip(); });
+        grid.append(b);
       }
-      if (opts.length === 1 && slot !== 'skill') list.append(mk('span', 'eqhint', 'ショップで手に入れたものがここに並ぶ'));
+      if (opts.length === 1) sec.append(mk('span', 'eqhint', 'ショップで手に入れたものがここに並ぶ'));
+      list.append(sec);
     }
+    list.scrollTop = keep;
     ui.title.hidden = true; $('equipScreen').hidden = false;
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
