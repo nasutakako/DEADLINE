@@ -3485,12 +3485,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   const SETS = [
     ['swap', '操作の左右交換', '移動スティックを右側に、ダッシュ・爆弾・アイテムのボタンを左側にする'],
-    ['shake', '画面の揺れ', '爆発や確保のときに画面を揺らす'],
     ['sound', 'サウンド', 'BGMと効果音を鳴らす'],
-    ['vibe', '振動', '確保・バリア破壊・着地・ランチャーの着弾で端末を振動させる' + (canBuzz() ? '' : '(このブラウザは振動に対応していません。アプリ版では振動します)')],
+    // (one switch for both: the screen shaking and the phone buzzing)
+    ['vibe', '振動', '爆発や確保のときに画面を揺らし、端末も振動させる' + (canBuzz() ? '' : '(このブラウザでは端末は振動しません。アプリ版では振動します)')],
   ];
   const settings = (() => { let v = {}; try { v = JSON.parse(localStorage.getItem(SET_KEY)) || {}; } catch (_) {} return Object.assign({ swap: false, shake: true, sound: true, vibe: true, q: 'auto' }, v); })();
   delete settings.order;   // (the old order-only ボタン配置 is gone)
+  if (settings.shake === false) settings.vibe = false; delete settings.shake;   // (画面の揺れ is now part of 振動: one turned off keeps it off)
   const setSave = () => { try { localStorage.setItem(SET_KEY, JSON.stringify(settings)); } catch (_) {} };
   function applySettings() {
     document.body.classList.toggle('swap', !!settings.swap);
@@ -6395,7 +6396,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (playLook()) ctx.clearRect(0, 0, cv.width, cv.height);   // (in a run the page's background shows round the map)
     else { ctx.fillStyle = '#0c0f16'; ctx.fillRect(0, 0, cv.width, cv.height); }
     let sx = 0, sy = 0;
-    if (shake > 0 && settings.shake) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
+    if (shake > 0 && settings.vibe) { sx = (Math.random() - 0.5) * 14 * shake; sy = (Math.random() - 0.5) * 14 * shake; }
     if (mapCache) ctx.drawImage(mapCache, Math.round((ox + sx) * dpr), Math.round((oy + sy) * dpr));
     // the title and the stand-by screens: the attract mode instead of the last game's leftovers
     if (demoOn()) { ctx.setTransform(T * dpr, 0, 0, T * dpr, ox * dpr, oy * dpr); demoDraw(performance.now() / 1000); return; }
