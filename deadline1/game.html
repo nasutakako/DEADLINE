@@ -118,11 +118,16 @@ body.cyberui .countdown::before { content: ''; position: absolute; inset: 0; bor
   background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, #ff2a3d 66.6% 92.6%, transparent 92.6%);
   -webkit-mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 5px), #000 calc(100% - 4px) 100%, transparent 100%); mask: radial-gradient(circle closest-side, transparent 0 calc(100% - 5px), #000 calc(100% - 4px) 100%, transparent 100%);
   filter: drop-shadow(0 0 6px #00f0ff); animation: cdspin .9s linear both; }
-/* three tiles round the number: one comes off with each count (it flashes white, then is gone) */
-body.cyberui .countdown[data-n="2"]::before { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); animation: cdspin2 .9s linear both, cdseg2 .9s steps(1, end) both; }
-body.cyberui .countdown[data-n="1"]::before { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, transparent 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); animation: cdspin1 .9s linear both, cdseg1 .9s steps(1, end) both; }
-@keyframes cdseg2 { 0% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, #ffffff 66.6% 92.6%, transparent 92.6%); } 6% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, #ff2a3d 66.6% 92.6%, transparent 92.6%); } 12% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, #ffffff 66.6% 92.6%, transparent 92.6%); } 18% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } 100% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } }
-@keyframes cdseg1 { 0% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #ffffff 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } 6% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #00f0ff 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } 12% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, #ffffff 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } 18% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, transparent 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } 100% { background: conic-gradient(from 0deg, #00f0ff 0% 26%, transparent 26% 33.3%, transparent 33.3% 59.3%, transparent 59.3% 66.6%, transparent 66.6% 92.6%, transparent 92.6%); } }
+/* three tiles round the number: one comes off with each count. Each tile's colour is its own registered property, so
+   the one leaving fades smoothly (a flare of white as it lets go, then gone) while the ring keeps turning */
+@property --g1 { syntax: '<color>'; inherits: false; initial-value: #00f0ff; }
+@property --g2 { syntax: '<color>'; inherits: false; initial-value: #00f0ff; }
+@property --g3 { syntax: '<color>'; inherits: false; initial-value: #ff2a3d; }
+body.cyberui .countdown::before { background: conic-gradient(from 0deg, var(--g1) 0% 26%, transparent 26% 33.3%, var(--g2) 33.3% 59.3%, transparent 59.3% 66.6%, var(--g3) 66.6% 92.6%, transparent 92.6%) !important; }
+body.cyberui .countdown[data-n="2"]::before { --g3: rgba(255,42,61,0); animation: cdspin2 .9s linear both, cdoff3 .45s ease-out both; }
+body.cyberui .countdown[data-n="1"]::before { --g2: rgba(0,240,255,0); --g3: rgba(255,42,61,0); animation: cdspin1 .9s linear both, cdoff2 .45s ease-out both; }
+@keyframes cdoff3 { 0% { --g3: #ff2a3d; } 25% { --g3: #ffffff; } 100% { --g3: rgba(255,255,255,0); } }
+@keyframes cdoff2 { 0% { --g2: #00f0ff; } 25% { --g2: #ffffff; } 100% { --g2: rgba(255,255,255,0); } }
 body.cyberui .countdown::after { content: 'DEADLINE//SYS  BOOT'; position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); white-space: pre;
   font: 700 12px/1 "Share Tech Mono", monospace; letter-spacing: .3em; color: #ff2a3d; text-shadow: 0 0 6px rgba(255,42,61,.7); }
 @keyframes cdspin { from { transform: rotate(-90deg); } to { transform: rotate(90deg); } }
@@ -4850,7 +4855,26 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function queueSpawn() {
     let p = randomRoad(10, true);
     for (let k = 0; k < 12 && pending.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 1.5); k++) p = randomRoad(10, true);
-    pending.push({ x: p.x, y: p.y, t: SPAWN_WARN });
+    // 導火線: whether this one is a bomber is settled here, at the warning, so it can be warned where the runner is not
+    const n = Math.min(3, stageN) - 1;
+    const bomber = fuseStory() && enemies.filter(o => o.bomber).length + pending.filter(o => o.bomber).length < BOMBER_MAX[n] && Math.random() < BOMBER_RATE[n];
+    if (bomber) p = farRoad();
+    pending.push({ x: p.x, y: p.y, t: SPAWN_WARN, bomber });
+  }
+  // a bomber steps out as far from the runner as the streets go (by the way round, not as the crow flies), so it never
+  // comes out and goes off right in front of them: one of the farthest road tiles, not on another warning
+  function farRoad() {
+    flow(Math.floor(P.x), Math.floor(P.y));
+    const edge = i => { const x = i % COLS, y = (i / COLS) | 0; return x < 1 || y < 1 || x > COLS - 2 || y > ROWS - 2; };
+    const ok = i => dist[i] > 0 && grid[i] !== 1 && !goalT[i] && !holes.some(h => h.i === i) && !edge(i);
+    let maxD = 0;
+    for (let i = 0; i < dist.length; i++) if (ok(i) && dist[i] > maxD) maxD = dist[i];
+    const at = i => ({ x: i % COLS + 0.5, y: ((i / COLS) | 0) + 0.5 });
+    for (let slack = 1; slack <= 6; slack++) {
+      const cand = []; for (let i = 0; i < dist.length; i++) if (ok(i) && dist[i] >= maxD - slack) { const q = at(i); if (!pending.some(o => Math.hypot(o.x - q.x, o.y - q.y) < 1.5)) cand.push(q); }
+      if (cand.length) return cand[Math.floor(Math.random() * cand.length)];
+    }
+    return randomRoad(10, true);
   }
 
   // oni per wave: 1 at first, +1 every 40 sec, up to 3 at once
@@ -4984,7 +5008,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const free = pending.filter(p => !p.black && !p.tough && !p.amb && !p.bomber).sort(() => Math.random() - 0.5);
       for (const k of t >= 360 ? ['black', 'tough', 'amb', ...(t >= 480 && fuseStory() ? ['bomber'] : [])] : ['tough']) {
         const have = enemies.filter(e => e[k]).length + pending.filter(p => p[k]).length;
-        for (let n = kindNeed(k) - have; n > 0; n--) { const p = free.pop(); if (p) p[k] = true; }
+        for (let n = kindNeed(k) - have; n > 0; n--) { const p = free.pop(); if (p) { p[k] = true; if (k === 'bomber') { const q = farRoad(); p.x = q.x; p.y = q.y; } } }
       }
     }
     }
@@ -5122,10 +5146,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // a practice oni is exactly the kind the tutorial asked for
-      let bomber = !!s.bomber || fuseStory() && !black && !tough && !amb && enemies.filter(o => o.bomber).length + pending.filter(o => o !== s && o.bomber).length < BOMBER_MAX[Math.min(3, stageN) - 1] && Math.random() < BOMBER_RATE[Math.min(3, stageN) - 1];
+      let bomber = !!s.bomber && !black && !daily;
+      if (bomber) tough = amb = false;
+      // (the runner may have come toward its warning meanwhile: if it is no longer well away, it steps out at the farthest spot)
+      let sx = s.x, sy = s.y;
+      if (bomber && !s.tut) { flow(Math.floor(P.x), Math.floor(P.y)); let maxD = 0; for (let i = 0; i < dist.length; i++) if (dist[i] > maxD) maxD = dist[i];
+        if (dist[idx(Math.floor(sx), Math.floor(sy))] < maxD * 0.6) { const q = farRoad(); sx = q.x; sy = q.y; } }
       if (s.tut) { black = !!s.black; tough = !!s.tough; amb = !!s.amb; bomber = !!s.bomber; }
       if (tough) toughWave = true;
-      enemies.push({ x: s.x, y: s.y, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
+      enemies.push({ x: sx, y: sy, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
       if (s.tut && tut) { enemies[enemies.length - 1].tut = true; tut.oni.push(enemies[enemies.length - 1]); }
       tone(140, 0.25, 'sawtooth', 0.05, 70);
     }
