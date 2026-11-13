@@ -4860,7 +4860,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     stageN = n; if (n !== 4) daily = null; total = 0; kills = 0; bag = item ? [item] : [];
     newStage(1);
   }
-  // a fresh map for each stage; mines in hand and the kill count carry over
+  // a fresh map for each stage (one bomb in hand: nothing is carried over from the stage before)
   function newStage(stock) {
     placeWho(); pickDims(); waveTally = {};
     // a ranking run's map comes from a seed kept with it, so its replay can build the same streets
@@ -5474,11 +5474,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (state !== 'clear' || stageN >= 3) return;
     // every stage played uses one play, the next one after a clear too (none left: the recovery screen, the clear screen stays)
     if (!lifeUse()) return;
-    if (item && !(item === 'barrier' && bag.includes('barrier'))) bag.push(item);
-    const stock = P.stock;
+    // nothing is carried over: the next stage starts as a fresh one does, one bomb and the item just chosen
+    bag = item ? [item] : [];
     stageN++;
     ui.clear.hidden = true; bgmStop();
-    newStage(stock);
+    newStage(1);
     misLive = false; misFlash = null; misQ = [];
     tutNeed(stageN) ? tutBegin() : startCount();
     misLive = !tut && !tutReplay; misRender();
