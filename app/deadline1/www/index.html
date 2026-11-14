@@ -1567,8 +1567,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <span class="kicker">TUTORIAL</span>
       <h2 class="clear">チュートリアル一覧</h2>
       <div class="picks" id="tutPicks">
-        <button class="pick" data-tut="1" type="button"><b>1-1</b><span><i>黄色い鬼(先回り)・</i><i>「!」を踏む・</i><i>5回踏むとバリア</i></span></button>
-        <button class="pick" data-tut="2" type="button"><b>1-2</b><span><i>加速装置・</i><i>バリア鬼・</i><i>黒い鬼・</i><i>落ちているランチャー</i></span></button>
+        <button class="pick" data-tut="1" type="button"><b>1-1</b><span><i>黄色い鬼(先回り)・</i><i>「!」を踏む・</i><i>5回踏むとバリア・</i><i>落ちているランチャー</i></span></button>
+        <button class="pick" data-tut="2" type="button"><b>1-2</b><span><i>加速装置・</i><i>バリア鬼・</i><i>黒い鬼</i></span></button>
         <button class="pick" data-tut="3h" type="button"><b>1-3</b><span><i>落とし穴</i></span></button>
         <button class="pick" data-tut="w" type="button"><b>2-1</b><span><i>ワープポイント</i></span></button>
         <button class="pick" data-tut="c2" type="button"><b>2-2</b></button>
@@ -1702,7 +1702,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const SPAWN_WARN = 2.3;
   const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
-  const RK_TXT = none => none ? 'ランチャー: 1-1では道に落ちない' : `ランチャー: 1分〜2分に1回道に落ちる(${RK_LIFE}秒で消える)`;
+  const RK_TXT = () => `ランチャー: 1分〜2分に1回道に落ちる(${RK_LIFE}秒で消える)`;
   const RK_GAP = [60, 120], RK_LIFE = 10;   // a launcher lies in the street every 1 to 2 minutes (the first between 1:00 and 2:00; lying 10 s, as a bomb box); none on 1-1
   const STICK_R = 34;
   // the exit opens at 2:30 on stage 1, 4:30 on stage 2 (stage 3: STORY_EXIT)
@@ -5407,7 +5407,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // warned ones); the kinds that must be about still come when the map is full
       // (the survival nights: at most 6 a wave and 25 on the map; the weekly ranking: at most 6 a wave, no cap on the map)
       if (stageN === 4) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length));
-      else if (stageN === 3 && rankRun) batch = Math.min(batch, ONI_WAVE_MAX);
+      else batch = Math.min(batch, ONI_WAVE_MAX);   // (every stage: at most 6 a wave)
       waveSeq++; for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
@@ -5430,7 +5430,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (a drop due with one still lying waits for it to go; the next is reckoned from when this one drops)
     const rkGap = () => RK_GAP[0] + Math.random() * (RK_GAP[1] - RK_GAP[0]);
     if (P.nextRk == null) P.nextRk = rkGap();
-    if (!tut && t >= P.nextRk && !items.some(it => it.rk) && !(stageN === 1 && mapSkin === 'd1' && !rankRun && !daily)) {
+    if (!tut && t >= P.nextRk && !items.some(it => it.rk)) {
       P.nextRk = t + rkGap();
       { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
     }
@@ -8369,11 +8369,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '黄色い鬼は脇道に釣られて後ろに回った。挟まれそうなときは、脇道に入って止まり、元の道に戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
       { say: '! を5回踏むごとに、バリアが1個届く。バリアは1個まで持てて、すでに持っていたら自動で装着される', info: true },
+      { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
+      { say: '1〜2分に1回、道にランチャーが落ちる。10秒で消えるので、見つけたら拾おう', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
-      { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
-      { say: '1〜2分に1回、道にランチャーが落ちる。10秒で消えるので、見つけたら拾おう', info: true },
       { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと30秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
@@ -8400,7 +8400,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
     ],
     b1: [
-      { say: '4-1には、自爆する橙色の鬼がいる。黒い鬼よりも速い', info: true },
+      { say: '4-1には、自爆する橙色の鬼がいる。時間がたつにつれて、だんだん黒い鬼より速くなる', info: true },
       { say: '自爆鬼の ! は、まわりの輪がオレンジ色で火花が走る。逃走者からいちばん遠い場所に出るが、! が出ている間に近づくと、近くで出てくるので気をつけよう', info: true },
       { say: '近づくと点滅して、1秒後に爆弾の1.2倍の大きさで爆発する。巻き込まれると確保', info: true },
       { say: '点滅中は足が少し遅くなる(逃走者の0.9倍)。点滅したら、すぐまっすぐ円の外へ逃げよう', info: true },
@@ -8414,7 +8414,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '分裂した影の鬼は、逃走者の進む先へ回り込み、黄色い鬼と挟み撃ちにしてくる', info: true },
       { btn: 'mine', say: '影の鬼に触れても確保される。本体を爆弾で倒すと、影の鬼も一緒に消える。倒してみよう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
       { say: '建物の影(暗いところ)に入ると、影の鬼は逃走者を見失う。影のまわりまでは来るが、中には入ってこない。影に1秒入ってみよう', set: tutShade, go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
-      { say: '3-1からは、影分身ダッシュが自動で使える(3-3のランクレースでも)', info: true, set: () => { tut.want = null; tut.hidT = null; enemies.length = 0; tut.oni = []; } },
+      { say: '3-1からは、影分身ダッシュが自動で使える', info: true, set: () => { tut.want = null; tut.hidT = null; enemies.length = 0; tut.oni = []; } },
       { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
       { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影はすぐ消える', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true, set: () => { enemies.length = 0; tut.oni = []; } },
@@ -8580,7 +8580,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     1: [
       '2分経過でバリアと爆弾1個が支給される',
       '2分30秒で右端に出口が開く。鍵を拾ってから出口へ',
-      '出口が開くと鬼が一度に5体出て、30秒ごとに1体増える',
+      '出口が開くと鬼が一度に5体出て、30秒後からは6体',
     ],
     2: [
       '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される',
@@ -9935,7 +9935,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
-      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。黒い鬼より速く、近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍(4-1・4-2のマップでも同じ)', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
+      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。だんだん黒い鬼より速くなる。近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍(4-1・4-2のマップでも同じ)', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>ランクレース ${weekMapName()}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
@@ -9961,7 +9961,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       : n === 3 ? [`${mmss(STORY_EXIT)}で右端に出口が開く。鍵を拾って出口から脱出`, MAP_CHOICE ? `初回クリアで★${FIRST_STARS[3]}` + (STORY_NOTE[route] ? '・' + STORY_NOTE[route].replace(/^クリアで/, '') : '') : '']
       : ['出口は開かない。捕まるまで逃げ続ける', '疾風の夜・先回りの夜・鉄壁の夜の3種類が日替わりで登場', 'マップは解放済みのマップからランダムに選ばれる', '1日10個のミッションがあり、1つ達成ごとに★1'];
     const supply = n === 1 ? ['2分: バリア + 爆弾1個'] : n === 2 ? ['2分: バリア + 爆弾1個', '3分: 爆弾2個', '4分: バリア + 爆弾2個'] : ['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個'];
-    const waves = n === 1 ? [['0:00', '1体'], ['0:40', '2体'], ['1:20', '3体'], [mmss(EXIT_AT).replace('分', ':').replace('秒', '') + ' (出口が開く)', '5体(以降30秒ごとに+1体)']]
+    const waves = n === 1 ? [['0:00', '1体'], ['0:40', '2体'], ['1:20', '3体'], [mmss(EXIT_AT).replace('分', ':').replace('秒', '') + ' (出口が開く)', '5体(30秒後から6体)']]
       : n === 2 ? [['0:00', '2体'], ['1:20', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']]
       : [['0:00', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']];
     const kinds = n === 4 ? [daily ? daily.rule.split('\n')[0].replace(/^・/, '') : '']
@@ -9975,13 +9975,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
-    if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', n >= 2 ? 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)' : '');
+    if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)');
     if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾の${n >= 3 ? '1.5' : '1.2'}倍`, '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
-      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(n === 1 && mapSkin === 'd1'), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li([...(n === 4 ? [`一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体`] : []), '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
