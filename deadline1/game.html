@@ -5310,16 +5310,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const spawnBatch = () => stageN === 1 && exitOpen ? 5 + Math.floor((t - alarmAt) / 30) : stageN >= 3 || (stageN === 2 && t >= 240) ? wave3() : Math.min(3, Math.max(stageN, 1 + Math.floor(t / 40)));
   // stage 3 starts at the stage 2 speed
   // (the tutorial: the oni at stage 3's opening speed, whatever stage it is taught on)
-  // how fast the oni speed up every 20 s. Stage 1 (every world) and stage 3 climb as slowly as the ranking (stage 1 starting
-  // lower, so it stays under the ranking throughout); only stage 2 differs by world: worlds 1 and 2 as the ranking, world 3
-  // a little faster (about 5.0 by its exit at 4:30) and world 4 a little faster again (about 5.3), never up to the top speed.
-  // A world's difficulty is in its own oni and ground (the shadows, the bombers), not in the speed
-  const STEP2 = { d3: 0.15, d4: 0.173 };
+  // how fast the oni speed up every 20 s. Stage 1 (every world) as ever. Stages 2 and 3 of a story start at 3.05 and climb
+  // by the world: the first story's stay under the runner's own speed (4.4) to the end, each story after a little
+  // faster, the fourth's (祭) the same as the weekly ranking. Their top is where the climb would be at 8:00 (24 steps).
+  // At the exit: stage 2 (4:30) 3.8 / 4.0 / 4.25 / 4.47, stage 3 (6:30) 4.3 / 4.6 / 4.85 / 5.13
+  const STORY_TO = { 2: [3.8, 4.0, 4.25, 3.05 + 13 * ((3.05 + 21 * ENEMY_STEP_LONG - 3.05) / 24)], 3: [4.3, 4.6, 4.85, 3.05 + 19 * ((3.05 + 21 * ENEMY_STEP_LONG - 3.05) / 24)] };
+  const storyStep = () => { const w = MAP_CHOICE ? Math.max(0, ['d1', 'd2', 'd3', 'd4'].indexOf(mapSkin)) : 0; return (STORY_TO[stageN][w] - 3.05) / (stageN === 2 ? 13 : 19); };
+  const storyPace = () => !capRun() && (stageN === 2 || stageN === 3);
   // the weekly ranking tops out lower (the old 7:00 speed, 3.05 + 21 x 0.125), still reached at 8:00 (24 steps of 20 s)
   const RANK_MAX = 3.05 + 21 * ENEMY_STEP_LONG, RANK_STEP = (RANK_MAX - 3.05) / 24;
   const rankPace = () => stageN === 3 && rankRun;
-  const enemyStep = () => rankPace() ? RANK_STEP : !capRun() && stageN === 2 && MAP_CHOICE && STEP2[mapSkin] || ENEMY_STEP_LONG;
-  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(rankPace() ? RANK_MAX : ENEMY_MAX, ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
+  const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
+  const enemyTop = () => rankPace() ? RANK_MAX : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
+  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(enemyTop(), ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
