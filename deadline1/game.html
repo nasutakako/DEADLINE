@@ -3919,8 +3919,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     W = r.width; H = r.height;
     cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
     T = Math.min(W / COLS, H / ROWS);
-    // the tiles stay square (buildings and players never look stretched): the map is as big as fits, centred
-    TX = TY = T;
+    // the tiles stay square (buildings and players never look stretched): the map is as big as fits, centred; behind a
+    // stand-by screen it is only a backdrop, so there it covers the whole screen instead (its edges cut off, no bands)
+    TX = TY = document.body.classList.contains('picking') ? Math.max(W / COLS, H / ROWS) : T;
     ox = (W - COLS * TX) / 2; oy = (H - ROWS * TY) / 2;
     renderMapCache();
     sideFill();
@@ -9698,7 +9699,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the lines are measured again, or a line fitted with the stand-in font would wrap with the real one)
   const refitStandby = () => { if (!$('startPickScreen').hidden) fitStandby(); if (!$('briefScreen').hidden) fitBrief(); };
   if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', refitStandby);
-  const pickingOn = () => document.body.classList.toggle('picking', !$('startPickScreen').hidden || !$('briefScreen').hidden);
+  const pickingOn = () => { const on = !$('startPickScreen').hidden || !$('briefScreen').hidden; if (document.body.classList.contains('picking') === on) return; document.body.classList.toggle('picking', on); if (grid) resize(); };   // (the map: a full-screen backdrop behind them)
   for (const id of ['startPickScreen', 'briefScreen']) new MutationObserver(pickingOn).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
   for (const id of ['startPickScreen', 'briefScreen']) new MutationObserver(() => { if (!$(id).hidden) { setTimeout(refitStandby, 300); setTimeout(refitStandby, 1200); } }).observe($(id), { attributes: true, attributeFilter: ['hidden'] });
   $('startBtn').addEventListener('click', showBrief);
