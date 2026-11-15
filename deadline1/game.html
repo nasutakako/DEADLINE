@@ -8907,7 +8907,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let lastTip = '';
   function tip(id, n) {
     const el = $(id); if (!el) return;
-    const pool = [...TIPS.all, ...(n === 1 ? TIPS[1] : []), ...(n === 2 ? TIPS[2] : []), ...(n >= 2 ? TIPS.mid : []), ...(n >= 3 ? TIPS[3] : [])].filter(s => s !== lastTip);
+    // (a survival night has one kind of oni: no tips about the kinds it does not bring)
+    const kinds = n === 4 && daily ? { d1: '黒い鬼', d2: '黄色い鬼', d3: 'バリア' }[daily.key] : null, offKind = t => kinds && ['黒い鬼', '黄色い鬼', 'バリア鬼', 'バリアが割れた'].some(w => t.includes(w)) && !t.includes(kinds);
+    const pool = [...TIPS.all, ...(n === 1 ? TIPS[1] : []), ...(n === 2 ? TIPS[2] : []), ...(n >= 2 ? TIPS.mid : []), ...(n >= 3 ? TIPS[3] : [])].filter(s => s !== lastTip && !offKind(s));
     // the stage's own tips come up more often than the ones every stage shares
     const own = pool.filter(s => !TIPS.all.includes(s));
     const from = own.length && Math.random() < 0.7 ? own : pool;
@@ -10230,7 +10232,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   // the weekly ranking's details: what comes when, from the game's own numbers
   function rankInfo() {
-    const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.map(x => `<li>${x}</li>`).join('') + '</ul>';
+    const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.filter(Boolean).map(x => `<li>${x}</li>`).join('') + '</ul>';
     const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
@@ -10242,13 +10244,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
   }
   // a story stage's (or tonight's survival night's) details, the same way: from the game's own numbers, for the map picked
+  // the line about the warnings' rings: only the oni that can come on that stage
+  const ringLine = (black, bomber) => black && bomber ? '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色' : black ? '黒い鬼の「!」はまわりの輪が黒' : bomber ? '自爆鬼の「!」は輪がオレンジ色' : '';
   function stageInfo(n) {
     const li = a => '<ul>' + a.filter(Boolean).map(x => `<li>${x}</li>`).join('') + '</ul>', sec = (h, a) => `<section><h3>${h}</h3>${li(a)}</section>`;
     const route = MAP_CHOICE ? ROUTE[mapSkin] : 'home', ms = n === 4 ? (dailyLook ? dailyLook.n : 3) : n;
@@ -10281,7 +10285,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', '黒い鬼の「!」はまわりの輪が黒、自爆鬼の「!」は輪がオレンジ色', '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
