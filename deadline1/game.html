@@ -2782,6 +2782,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (衝撃波爆弾 became 大爆発: whoever had it has 大爆発 instead, worn if it was worn)
     { const sd = records.shop; if (sd.owned.includes('bomb_big') && !sd.owned.includes('bomb_grav')) sd.owned.push('bomb_grav'); if (sd.eq && sd.eq.bomb === 'bomb_big') sd.eq.bomb = 'bomb_grav'; }
     for (const k in records.shop.eq) if (SHOP_GONE.includes(records.shop.eq[k])) records.shop.eq[k] = '';
+    // (the plain-colour runner skins are free: everyone has them)
+    for (const id of FREE_SKINS) if (!records.shop.owned.includes(id)) records.shop.owned.push(id);
     return records.shop;
   };
   // stars: earned on the survival nights (★1 for each of the day's missions), spent on the items that only change the look.
@@ -2801,16 +2803,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function starChime() {
     for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
   }
-  // each item's price in ★, set one by one (the skins not listed: 200円 -> ★100, 500円 -> ★250)
+  // each item's price in ★ (★1 = 1円), set one by one: the control panels ★1000 (for the ones who buy ★); the rest ★50,
+  // ★120 or ★250; the plain-colour runner skins free (everyone has them). Skins not listed: 500円 -> ★120
   const STAR_PRICE = {
     pad_arcade: 1000, pad_hand_k: 1000, pad_cyber: 1000,
-    bomb_fw: 250, bomb_big: 500, bomb_emp: 500, bomb_ice: 500, bomb_grav: 500,
-    rk_laser: 250, rk_ice: 500, rk_plasma: 500,
-    bs_star: 250, bs_ice: 500, bs_thunder: 500, bs_blast: 750,
-    dash_petal: 100, dash_frost: 250, dash_bolt: 250, dash_shadow: 500, dash_warp: 500,
-    br_glass: 100, br_emf: 100,
+    bomb_fw: 120, bomb_big: 250, bomb_emp: 250, bomb_ice: 250, bomb_grav: 250,
+    rk_laser: 120, rk_ice: 250, rk_plasma: 250,
+    bs_star: 120, bs_ice: 250, bs_thunder: 250, bs_blast: 380,
+    dash_petal: 50, dash_frost: 120, dash_bolt: 120, dash_shadow: 250, dash_warp: 250,
+    br_glass: 50, br_emf: 50,
   };
-  const starPrice = it => STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : Math.round(it.price / 2);
+  const FREE_SKINS = ['sk_jade', 'sk_sakura', 'sk_shion', 'sk_silver', 'sk_ai'];
+  const starPrice = it => FREE_SKINS.includes(it.id) ? 0 : STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : it.price >= 500 ? 120 : 50;
 
   // ---------- today's missions (every run counts: stages, ランクレース): ten a day, easiest first, three on show at a time, ★1 each ----------
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
@@ -3180,8 +3184,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       saveRecords(); openShop(); shopSay(n ? `${n}個のアイテムを復元しました` : '復元するアイテムはありませんでした');
     } catch (e) { shopSay('復元できませんでした。通信状態を確認してね'); }
   });
-  // ★ in packs (4円 a star); free while testing
-  const STAR_PACKS = [50, 100, 250, 500, 750, 1000].map(n => ({ pack: n, yen: n * 4 }));
+  // ★ in packs (about 1円 a star: the smallest a little dearer, the two biggest with extra); free while testing
+  const STAR_PACKS = [[100, 120], [300, 300], [500, 500], [1000, 1000], [2200, 2000], [3500, 3000]].map(([pack, yen]) => ({ pack, yen }));
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
     const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
@@ -3207,7 +3211,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
-    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(★100〜★500。どれも見た目だけが変わる)。今日のミッション(毎日10個まで)・ログインボーナス(毎日★5)・ランクレースの報酬・共有でも集められる。'));
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(★50〜★1000。どれも見た目だけが変わる)。今日のミッション(毎日10個まで)・ログインボーナス(毎日★5)・ランクレースの報酬・共有でも集められる。'));
     const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
     btn.addEventListener('click', async () => {
       tap(); btn.disabled = true;
