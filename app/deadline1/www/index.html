@@ -1807,7 +1807,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const weekSkin = (w = WEEK()) => MAP_CHOICE ? ['d1', 'd2', 'd3', 'd4'][w % 4] : 'd1';
   // which of its series' maps this week runs on: in turn, so each of the 12 comes once in 12 weeks (week 2967, when
   // this began, still ran 4-3)
-  const weekStage = (w = WEEK()) => MAP_CHOICE ? ((Math.floor(w / 4) + 2) % 3) + 1 : 3;
+  // (帰り道 and 祭 race on their stage 3 maps only (1-3, 4-3); 電脳都市 and 影の街 go round all three)
+  const weekStage = (w = WEEK()) => !MAP_CHOICE || ['d1', 'd4'].includes(weekSkin(w)) ? 3 : ((Math.floor(w / 4) + 2) % 3) + 1;
   const weekMapName = (w = WEEK()) => MAP_NAMES[weekSkin(w)][weekStage(w) - 1];
   // a replay's map (its stage within the series), while one is being watched
   let repN = null;
