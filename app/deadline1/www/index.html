@@ -5340,8 +5340,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const STOMP_PRIZE = 5;
   let waveSeq = 0, waveTally = {};
   function stompPrize() {
+    // (a barrier; with both barriers held, two bombs instead, as far as the bombs go (3 at most))
     if (!bag.includes('barrier')) bag.push('barrier');
     else if (!P.barrier) P.barrier = true;
+    else if (P.stock < MINE_MAX) P.stock = Math.min(MINE_MAX, P.stock + 2);
     else return;
    
     flash = Math.max(flash, 0.25); tone(660, 0.12, 'triangle', 0.06, 1320); setTimeout(() => tone(990, 0.18, 'triangle', 0.05), 120); setTimeout(() => tone(1320, 0.2, 'triangle', 0.04), 240);
@@ -7377,9 +7379,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (the runner, drawn here on the ground; up in a ハイジャンプ, over the oni after them, its shadow left down here)
     const drawRunner = () => {
       thunderAura(now);
-      const look = runnerLook(now), g = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 0.95);
-      g.addColorStop(0, look.glow(0.28)); g.addColorStop(1, look.glow(0));
-      ctx.fillStyle = g; ctx.fillRect(P.x - 1, P.y - 1, 2, 2);
+      const look = runnerLook(now), g = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 0.375);
+      g.addColorStop(0, look.glow(0.16)); g.addColorStop(1, look.glow(0));
+      ctx.fillStyle = g; ctx.fillRect(P.x - 0.4, P.y - 0.4, 0.8, 0.8);
       const down = state === 'caught' || state === 'over';
       if (!down) skinUnder(look, P.x, P.y, P.r, now, P.fx || P.fy ? Math.atan2(P.fy, P.fx) : -Math.PI / 2);
       // 瞬身: while dashing the runner is gone, and there for an instant now and then
@@ -7426,9 +7428,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const e of enemies) {
       const age = Math.min(1, (t - e.born) / 0.3);
       const r = e.r * (0.5 + 0.5 * age);
-      const eg = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, 0.75);
+      const eg = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, 0.375);
       eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
-      ctx.fillStyle = eg; ctx.fillRect(e.x - 0.8, e.y - 0.8, 1.6, 1.6);
+      ctx.fillStyle = eg; ctx.fillRect(e.x - 0.4, e.y - 0.4, 0.8, 0.8);
       // same figure as the runner, in red and black (the ambush oni in yellow)
       if (e.shade) {
         // the yellow oni's shadow: a smoky dark twin, flickering, a wisp trailing behind
@@ -8829,7 +8831,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '後ろから赤い鬼、建物の向こうから黄色い鬼。このままだと角で挟まれる。光る脇道に入って止まろう', set: tutFeint, go: tutFeintGo },
       { say: '黄色い鬼は脇道に釣られて後ろに回った。挟まれそうなときは、脇道に入って止まり、元の道に戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
       { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
-      { say: '! を5回踏むごとに、バリアが1個届く。バリアは1個まで持てて、すでに持っていたら自動で装着される', info: true },
+      { say: '! を5回踏むごとに、バリアが1個届く。バリアは1個まで持てて、すでに持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く', info: true },
       { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
       { say: '1〜2分に1回、道にランチャーが落ちる。10秒で消えるので、見つけたら拾おう', info: true },
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
@@ -9052,7 +9054,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       'バリア鬼は爆発に1回耐える。バリアが割れた鬼はしばらく怯む',
       '怯んでいる鬼に触れても確保されない',
       '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾で倒そう',
-      '! を5回踏むごとに、バリアが1個届く。持っていたら自動で装着される',
+      '! を5回踏むごとに、バリアが1個届く。持っていたら自動で装着される。バリアがいっぱいなら爆弾2個',
       '鬼を40体倒すごとに、ランチャーが届く',
       'バリアは鬼に触れられても1回だけ守ってくれて、触れた鬼を倒す',
       'ランチャーは向いている方向に弾を撃ち、着弾した場所の鬼を倒す',
@@ -9406,9 +9408,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const q of demo.trail) { ctx.globalAlpha = Math.max(0, q.a) * 0.3; metalBall(q.x, q.y, 0.3, look.m); }
     ctx.globalAlpha = 1;
     // the runner in the look it wears in the shop
-    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 0.95);
-    g.addColorStop(0, look.glow(0.28)); g.addColorStop(1, look.glow(0));
-    ctx.fillStyle = g; ctx.fillRect(r.x - 1, r.y - 1, 2, 2);
+    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 0.375);
+    g.addColorStop(0, look.glow(0.16)); g.addColorStop(1, look.glow(0));
+    ctx.fillStyle = g; ctx.fillRect(r.x - 0.4, r.y - 0.4, 0.8, 0.8);
     const down = demo.caught > 0;
     if (down) {
       // caught: a red ring spreads from the runner, which goes grey
@@ -9427,9 +9429,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (demo.shield) drawBarrier(r.x, r.y, now);
     for (const o of demo.oni) {
       const age = Math.min(1, (now - o.born) / 0.4), rr = 0.34 * (0.4 + 0.6 * age);
-      const eg = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 0.75);
+      const eg = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 0.375);
       eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
-      ctx.fillStyle = eg; ctx.fillRect(o.x - 0.8, o.y - 0.8, 1.6, 1.6);
+      ctx.fillStyle = eg; ctx.fillRect(o.x - 0.4, o.y - 0.4, 0.8, 0.8);
       metalBall(o.x, o.y, rr, o.kind === 'amb' ? METAL.amb : METAL.oni);
       const vl = Math.hypot(o.vx, o.vy) || 1;
       ctx.fillStyle = '#0c0f16'; ctx.beginPath(); ctx.arc(o.x + o.vx / vl * rr * 0.4, o.y + o.vy / vl * rr * 0.4, rr * 0.24, 0, Math.PI * 2); ctx.fill();
@@ -10405,7 +10407,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>ランクレース ${weekMapName()}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
-      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}</section>
+      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
@@ -10447,7 +10449,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
-      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される)'])}
+      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
