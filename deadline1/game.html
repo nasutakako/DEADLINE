@@ -5852,9 +5852,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (!air && nearestD < CATCH && P.inv <= 0 && tut) tutCaught();
     else if (!air && nearestD < CATCH && P.inv <= 0 && !tut) {
       if (P.barrier) {
-        // the barrier takes the hit and blows away every oni touching it
+        // the barrier takes the hit and blows away the one oni that touched it (only ever one, however many are close)
         P.barrier = false; P.inv = INV_TIME; P.saveT = INV_TIME; if (S3) S3.saves++; buzz('barrier'); barrierSfx();
-        for (const e of enemies) if (Math.hypot(e.x - P.x, e.y - P.y) < CATCH + 0.6) { bomberPop(e); e.dead = true; kills++; tally(e); }
+        { let hit = null, hd = Infinity; for (const e of enemies) { if (e.dead) continue; const d = Math.hypot(e.x - P.x, e.y - P.y); if (d < hd) { hd = d; hit = e; } }
+          if (hit) { bomberPop(hit); hit.dead = true; kills++; tally(hit); } }
         enemies = enemies.filter(e => !e.dead);
         booms.push({ x: P.x, y: P.y, t: 0, barrier: true, fx: EQ('barrier'), life: EQ('barrier') === 'br_comic' ? 0.75 : AURA[EQ('barrier')] ? 0.7 : undefined, seed: Math.random() * 6.28 }); if (EQ('barrier')) fxBurst(EQ('barrier'), P.x, P.y);
         if (!['br_emf', 'br_comic'].includes(EQ('barrier')) && !AURA[EQ('barrier')]) for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 6; sparks.push({ x: P.x, y: P.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, a: 1, c: Math.random() < 0.5 ? '#8fe9ff' : '#ffffff' }); }
