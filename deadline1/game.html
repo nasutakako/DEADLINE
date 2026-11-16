@@ -5371,13 +5371,21 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // stages 1 and 2, once the exit is open: 5 a wave (+1 every 30 s) on stage 1, 7 a wave (+1 every 15 s) on stage 2
   // the weekly ranking and the survival nights: a cap on a wave and on the map
   const ONI_WAVE_MAX = 6, ONI_MAP_MAX = 25;
+  const LATE_BLACK = 0.06;   // (stage 3 from 6:00: the chance an oni is black, on top of the one always about)
   const capRun = () => (stageN === 3 && rankRun) || stageN === 4;
-  // stage 3's kinds that must be about: barrier oni 2 from 4:00; black and yellow 1 from 6:00 (and no more after)
+  // stage 3's kinds that must be about: barrier oni 2 from 4:00; black and yellow 1 from 6:00 (and more by chance)
+  // a light round the runner and each oni on the ground, a little smaller than a street light's pool
+  function lightPool(x, y, col, a) {
+    const g = ctx.createRadialGradient(x, y, 0, x, y, 1.05);
+    g.addColorStop(0, col(a)); g.addColorStop(0.45, col(a * 0.4)); g.addColorStop(1, col(0));
+    ctx.fillStyle = g; ctx.fillRect(x - 1.05, y - 1.05, 2.1, 2.1);
+  }
+  const ONI_LIGHT = a => `rgba(255,59,48,${a})`;
   function kindNeed(k) {
     if (k === 'tough') return t >= 240 ? 2 : 0;
     if (k === 'bomber') return 0;   // (no bomber is ever made to be about: they come by chance)
     if (t < 360) return 0;
-    return 1;   // (from 6:00 one of each, and no more as time goes on: past 8:00 the run is a matter of holding out)
+    return 1;   // (from 6:00 one of each always about; more of them come by chance, so ones left alive pile up)
   }
   // how many of those are short (on the map and warned), for a wave that would otherwise not come
   function kindShort() {
@@ -5641,10 +5649,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
       // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1). Stage 2: one barrier oni
       // at a time; stage 3: at most one per wave but no limit on the map. Only one yellow oni at a time
-      let black = !!s.black;
+      // from 6:00 on stage 3: a black or yellow oni also comes by chance, however many are about already
+      const late = stageN === 3 && t >= 360;
+      let black = !!s.black || (late && Math.random() < LATE_BLACK);
       let tough = !black && (!!s.tough || (stageN >= 2 && (stageN >= 3 ? !toughWave : !enemies.some(o => o.tough)) && Math.random() < baseRate));
       // (the yellow one a little more often on stage 2, where no black oni comes before the exit opens: 12% -> 15% an oni)
-      let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : stageN === 2 ? 1.25 : 1)));
+      let amb = !black && !tough && (!!s.amb || ((late || !enemies.some(o => o.amb)) && Math.random() < baseRate * (stageN === 1 ? 0.5 : stageN === 2 ? 1.25 : 1)));
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // a practice oni is exactly the kind the tutorial asked for
@@ -7379,9 +7389,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (the runner, drawn here on the ground; up in a ハイジャンプ, over the oni after them, its shadow left down here)
     const drawRunner = () => {
       thunderAura(now);
-      const look = runnerLook(now), g = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 0.375);
-      g.addColorStop(0, look.glow(0.16)); g.addColorStop(1, look.glow(0));
-      ctx.fillStyle = g; ctx.fillRect(P.x - 0.4, P.y - 0.4, 0.8, 0.8);
+      const look = runnerLook(now);
       const down = state === 'caught' || state === 'over';
       if (!down) skinUnder(look, P.x, P.y, P.r, now, P.fx || P.fy ? Math.atan2(P.fy, P.fx) : -Math.PI / 2);
       // 瞬身: while dashing the runner is gone, and there for an instant now and then
@@ -7421,6 +7429,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.inv > 0 && Math.sin(now * 30) > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 0.12, 0, Math.PI * 2); ctx.stroke(); }
     };
     const up = P.jumpT > 0;
+    for (const e of enemies) if (!e.dead) lightPool(e.x, e.y, ONI_LIGHT, 0.26 * Math.min(1, (t - e.born) / 0.3));
+    if (state !== 'caught' && state !== 'over') lightPool(P.x, P.y, runnerLook(now).glow, 0.24);
     if (!up) drawRunner();
     else { const u = clamp(1 - P.jumpT / JUMP_T, 0, 1), k = Math.sin(Math.PI * u); ctx.fillStyle = `rgba(0,0,0,${0.45 - 0.2 * k})`; ctx.beginPath(); ctx.ellipse(P.x, P.y, P.r * (1 - 0.3 * k), P.r * 0.6 * (1 - 0.3 * k), 0, 0, Math.PI * 2); ctx.fill(); }
 
@@ -7428,9 +7438,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const e of enemies) {
       const age = Math.min(1, (t - e.born) / 0.3);
       const r = e.r * (0.5 + 0.5 * age);
-      const eg = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, 0.375);
-      eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
-      ctx.fillStyle = eg; ctx.fillRect(e.x - 0.4, e.y - 0.4, 0.8, 0.8);
       // same figure as the runner, in red and black (the ambush oni in yellow)
       if (e.shade) {
         // the yellow oni's shadow: a smoky dark twin, flickering, a wisp trailing behind
@@ -9408,10 +9415,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const q of demo.trail) { ctx.globalAlpha = Math.max(0, q.a) * 0.3; metalBall(q.x, q.y, 0.3, look.m); }
     ctx.globalAlpha = 1;
     // the runner in the look it wears in the shop
-    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 0.375);
-    g.addColorStop(0, look.glow(0.16)); g.addColorStop(1, look.glow(0));
-    ctx.fillStyle = g; ctx.fillRect(r.x - 0.4, r.y - 0.4, 0.8, 0.8);
     const down = demo.caught > 0;
+    for (const o of demo.oni) lightPool(o.x, o.y, ONI_LIGHT, 0.26 * Math.min(1, (now - o.born) / 0.4));
+    if (!down) lightPool(r.x, r.y, look.glow, 0.24);
     if (down) {
       // caught: a red ring spreads from the runner, which goes grey
       const k = Math.min(1, (now - demo.caughtAt) / 0.6);
@@ -9429,9 +9435,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (demo.shield) drawBarrier(r.x, r.y, now);
     for (const o of demo.oni) {
       const age = Math.min(1, (now - o.born) / 0.4), rr = 0.34 * (0.4 + 0.6 * age);
-      const eg = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 0.375);
-      eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
-      ctx.fillStyle = eg; ctx.fillRect(o.x - 0.4, o.y - 0.4, 0.8, 0.8);
       metalBall(o.x, o.y, rr, o.kind === 'amb' ? METAL.amb : METAL.oni);
       const vl = Math.hypot(o.vx, o.vy) || 1;
       ctx.fillStyle = '#0c0f16'; ctx.beginPath(); ctx.arc(o.x + o.vx / vl * rr * 0.4, o.y + o.vy / vl * rr * 0.4, rr * 0.24, 0, Math.PI * 2); ctx.fill();
