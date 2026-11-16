@@ -7377,9 +7377,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (the runner, drawn here on the ground; up in a ハイジャンプ, over the oni after them, its shadow left down here)
     const drawRunner = () => {
       thunderAura(now);
-      const look = runnerLook(now), g = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 1.4);
+      const look = runnerLook(now), g = ctx.createRadialGradient(P.x, P.y, 0, P.x, P.y, 0.95);
       g.addColorStop(0, look.glow(0.28)); g.addColorStop(1, look.glow(0));
-      ctx.fillStyle = g; ctx.fillRect(P.x - 1.5, P.y - 1.5, 3, 3);
+      ctx.fillStyle = g; ctx.fillRect(P.x - 1, P.y - 1, 2, 2);
       const down = state === 'caught' || state === 'over';
       if (!down) skinUnder(look, P.x, P.y, P.r, now, P.fx || P.fy ? Math.atan2(P.fy, P.fx) : -Math.PI / 2);
       // 瞬身: while dashing the runner is gone, and there for an instant now and then
@@ -7426,9 +7426,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const e of enemies) {
       const age = Math.min(1, (t - e.born) / 0.3);
       const r = e.r * (0.5 + 0.5 * age);
-      const eg = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, 1.1);
+      const eg = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, 0.75);
       eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
-      ctx.fillStyle = eg; ctx.fillRect(e.x - 1.2, e.y - 1.2, 2.4, 2.4);
+      ctx.fillStyle = eg; ctx.fillRect(e.x - 0.8, e.y - 0.8, 1.6, 1.6);
       // same figure as the runner, in red and black (the ambush oni in yellow)
       if (e.shade) {
         // the yellow oni's shadow: a smoky dark twin, flickering, a wisp trailing behind
@@ -9406,9 +9406,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const q of demo.trail) { ctx.globalAlpha = Math.max(0, q.a) * 0.3; metalBall(q.x, q.y, 0.3, look.m); }
     ctx.globalAlpha = 1;
     // the runner in the look it wears in the shop
-    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 1.4);
+    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, 0.95);
     g.addColorStop(0, look.glow(0.28)); g.addColorStop(1, look.glow(0));
-    ctx.fillStyle = g; ctx.fillRect(r.x - 1.5, r.y - 1.5, 3, 3);
+    ctx.fillStyle = g; ctx.fillRect(r.x - 1, r.y - 1, 2, 2);
     const down = demo.caught > 0;
     if (down) {
       // caught: a red ring spreads from the runner, which goes grey
@@ -9427,9 +9427,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (demo.shield) drawBarrier(r.x, r.y, now);
     for (const o of demo.oni) {
       const age = Math.min(1, (now - o.born) / 0.4), rr = 0.34 * (0.4 + 0.6 * age);
-      const eg = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 1.1);
+      const eg = ctx.createRadialGradient(o.x, o.y, 0, o.x, o.y, 0.75);
       eg.addColorStop(0, 'rgba(255,59,48,0.25)'); eg.addColorStop(1, 'rgba(255,59,48,0)');
-      ctx.fillStyle = eg; ctx.fillRect(o.x - 1.2, o.y - 1.2, 2.4, 2.4);
+      ctx.fillStyle = eg; ctx.fillRect(o.x - 0.8, o.y - 0.8, 1.6, 1.6);
       metalBall(o.x, o.y, rr, o.kind === 'amb' ? METAL.amb : METAL.oni);
       const vl = Math.hypot(o.vx, o.vy) || 1;
       ctx.fillStyle = '#0c0f16'; ctx.beginPath(); ctx.arc(o.x + o.vx / vl * rr * 0.4, o.y + o.vy / vl * rr * 0.4, rr * 0.24, 0, Math.PI * 2); ctx.fill();
