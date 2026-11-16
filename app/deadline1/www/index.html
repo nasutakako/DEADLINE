@@ -6754,14 +6754,22 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // 闘気エネルギー: a smooth shell of gold energy, the standard barrier's size, its edge gently rippling, light swirling
       // round inside it and motes drifting up off it
       const R = 0.56;
+      // a deep halo of the colour on the ground round it (outside the shell only, so the runner is untouched)
+      ctx.save();
+      const dh = ctx.createRadialGradient(x, y, R * 0.92, x, y, R * 1.55); dh.addColorStop(0, `rgba(${W[2]},0.75)`); dh.addColorStop(0.35, `rgba(${W[2]},0.4)`); dh.addColorStop(1, `rgba(${W[2]},0)`);
+      ctx.fillStyle = dh; ctx.beginPath(); ctx.arc(x, y, R * 1.55, 0, Math.PI * 2); ctx.arc(x, y, R * 0.92, 0, Math.PI * 2, true); ctx.fill();
+      // and inside the shell, deepening toward its edge, leaving the runner itself clear
+      const di = ctx.createRadialGradient(x, y, R * 0.58, x, y, R * 0.95); di.addColorStop(0, `rgba(${W[2]},0)`); di.addColorStop(0.5, `rgba(${W[2]},0.3)`); di.addColorStop(1, `rgba(${W[2]},0.6)`);
+      ctx.fillStyle = di; ctx.beginPath(); ctx.arc(x, y, R * 0.95, 0, Math.PI * 2); ctx.arc(x, y, R * 0.58, 0, Math.PI * 2, true); ctx.fill();
+      ctx.restore();
       ctx.save(); ctx.globalCompositeOperation = 'lighter';
       const edge = a => R + 0.012 * Math.sin(a * 6 + now * 7) + 0.008 * Math.sin(a * 9 - now * 5);
       ctx.beginPath(); for (let i = 0; i <= 48; i++) { const a = i / 48 * Math.PI * 2, rr = edge(a); i ? ctx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr) : ctx.moveTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } ctx.closePath();
-      const g = ctx.createRadialGradient(x, y, R * 0.25, x, y, R * 1.05); g.addColorStop(0, `rgba(${W[0]},0.04)`); g.addColorStop(0.62, `rgba(${W[1]},0.22)`); g.addColorStop(0.9, `rgba(${W[1]},0.6)`); g.addColorStop(1, `rgba(${W[5]},0.85)`);
+      const g = ctx.createRadialGradient(x, y, R * 0.25, x, y, R * 1.05); g.addColorStop(0, `rgba(${W[0]},0.04)`); g.addColorStop(0.62, `rgba(${W[1]},0.3)`); g.addColorStop(0.9, `rgba(${W[1]},0.6)`); g.addColorStop(1, `rgba(${W[5]},0.85)`);
       ctx.fillStyle = g; ctx.fill();
       // the edge as a neon tube: a wide glow in the colour, then a bright core, then a hot white line
       const pulse = 0.85 + 0.15 * Math.sin(now * 8);
-      ctx.strokeStyle = `rgba(${W[1]},${0.55 * pulse})`; ctx.lineWidth = 0.16; ctx.stroke();
+      ctx.strokeStyle = `rgba(${W[1]},${0.75 * pulse})`; ctx.lineWidth = 0.16; ctx.stroke();
       ctx.strokeStyle = `rgba(${W[3]},${0.95 * pulse})`; ctx.lineWidth = 0.06; ctx.stroke();
       ctx.strokeStyle = `rgba(255,255,255,${0.75 * pulse})`; ctx.lineWidth = 0.018; ctx.stroke();
       // a glossy shine at the top-left, as on glass
