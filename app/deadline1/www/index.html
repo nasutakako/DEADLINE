@@ -1601,7 +1601,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -1799,6 +1799,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let daily = null;   // the night being played on stage 4
   // ---------- weekly ranking: stage 3 with no way out, on one map a week (Japan time, the week from Monday) ----------
   let rankRun = false;
+  // (a try-out for the late game, not kept: a ranking run that starts at 12:00, nothing of it saved or sent)
+  let testLate = 0;
   // replays (see the recorder further down): the ranking run's map seed, its notes, the one playing, what its runner wore
   let repSeed = 0, rec = null, rp = null, repEq = null;
   // whether the map's first pit was moved for the stage 3 tutorial (kept with a replay, so it builds the same pits)
@@ -1821,7 +1823,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // stage 2 opens once stage 1 is escaped, stage 3 once stage 2 is; the daily nights (生存課題) once stage 1 is
   const unlocked = n => n <= 1 || isCleared(n === 4 ? 1 : Math.min(n, 3) - 1);
   // ランクレース: open once 1-1 is escaped (whatever this week's map)
-  function rankOpen() { try { return isCleared(1); } catch (e) { return false; } }
+  // (the artifact only: the ranking open from the start, and the 12:00 try-out; the site and the app build set this false)
+  const ART_ONLY = false;
+  function rankOpen() { if (ART_ONLY) return true; try { return isCleared(1); } catch (e) { return false; } }
   function updateLocks() {
     const locked = [];
     { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランクレース'; }
@@ -5278,6 +5282,118 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let fxp = [];   // the shop looks' particles (smoke, embers, shards, glints, rings, ...): looks only, they touch nothing
   const PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45, PIT_FLASH = 1.5, PIT_LID = 0.48;   // (the lid's radius as drawn)
   let holes = [], falls = [], pendingStart = 2, rockets = [];
+  // 地形変化: on stage 3 (and the weekly ranking), at 15:00 the streets change. Some stretches of road are shut off and
+  // some blocks open a way through, warned 5 s before. { at, block: [tile index], open: [tile index], on }
+  // (on in the artifact only for now: the site and the app build set it false)
+  const SHIFT_ON = false;
+  const SHIFT_AT = 900, SHIFT_WARN = 5, SHIFT_BLOCK = 5, SHIFT_OPEN = 4;
+  let shift = null;
+  // every open tile reachable from every other (the streets must stay one piece)
+  function allJoined() {
+    let start = -1, total = 0; for (let i = 0; i < COLS * ROWS; i++) if (grid[i] !== 1) { total++; if (start < 0) start = i; }
+    if (start < 0) return true;
+    const seen = new Uint8Array(COLS * ROWS), q = [start]; seen[start] = 1; let n = 0;
+    while (q.length) { const i = q.pop(); n++; const x = i % COLS, y = (i - x) / COLS;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const X = x + dx, Y = y + dy; if (X < 0 || Y < 0 || X >= COLS || Y >= ROWS) continue; const j = idx(X, Y); if (!seen[j] && grid[j] !== 1) { seen[j] = 1; q.push(j); } } }
+    return n === total;
+  }
+  // which stretches shut and which blocks open: picked 5 s ahead, clear of the runner, the pads, the warp points,
+  // the pits, the goals, the river and the yagura
+  function planShift() {
+    const busy = (x, y) => goalT[idx(x, y)] || (riverOn && y >= 3 && y <= 7) || Math.hypot(P.x - x - 0.5, P.y - y - 0.5) < 3
+      || pads.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5)
+      || holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || (yagura && Math.abs(x - yagura.x - 1) < 4 && Math.abs(y - yagura.y - 1) < 4)
+      || (keyPos && Math.hypot(keyPos.x - x - 0.5, keyPos.y - y - 0.5) < 1.5);
+    const segs = [];
+    for (let cy = 0; cy < ROWS; cy += 4) for (let cx = 0; cx + 4 < COLS; cx += 4) segs.push([[cx + 1, cy], [cx + 2, cy], [cx + 3, cy]]);
+    for (let cx = 0; cx < COLS; cx += 4) for (let cy = 0; cy + 4 < ROWS; cy += 4) segs.push([[cx, cy + 1], [cx, cy + 2], [cx, cy + 3]]);
+    const block = [];
+    for (const sg of segs.sort(() => Math.random() - 0.5)) {
+      if (block.length >= SHIFT_BLOCK * 3) break;
+      if (!sg.every(([x, y]) => x < COLS && y < ROWS && grid[idx(x, y)] === 0 && !busy(x, y))) continue;
+      // (not right beside a stretch already shut)
+      if (sg.some(([x, y]) => block.some(i => Math.abs(i % COLS - x) + Math.abs(Math.floor(i / COLS) - y) <= 2))) continue;
+      // (tried with the ones already picked shut too, so that all of them together still leave the streets one piece)
+      for (const [x, y] of sg) grid[idx(x, y)] = 1;
+      if (allJoined()) for (const [x, y] of sg) block.push(idx(x, y));
+      else for (const [x, y] of sg) grid[idx(x, y)] = 0;
+    }
+    for (const i of block) grid[i] = 0;
+    const open = [];
+    const blocks = []; for (let by = 1; by + 3 < ROWS; by += 4) for (let bx = 1; bx + 3 < COLS; bx += 4) blocks.push([bx, by]);
+    for (const [bx, by] of blocks.sort(() => Math.random() - 0.5)) {
+      if (open.length >= SHIFT_OPEN * 3) break;
+      const row = Math.random() < 0.5, line = row ? [[bx, by + 1], [bx + 1, by + 1], [bx + 2, by + 1]] : [[bx + 1, by], [bx + 1, by + 1], [bx + 1, by + 2]];
+      const ends = row ? [[bx - 1, by + 1], [bx + 3, by + 1]] : [[bx + 1, by - 1], [bx + 1, by + 3]];
+      let ok = true; for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 1 || (shadeMap && shadeMap[idx(x, y)] === 2) || busy(x, y)) ok = false;
+      if (!ok || !ends.every(([x, y]) => walk(x, y) && !block.includes(idx(x, y)))) continue;
+      for (const [x, y] of line) open.push(idx(x, y));
+    }
+    return { at: SHIFT_AT, block, open, on: false };
+  }
+  // the nearest open tile's middle to a point (for whatever stood where the road shut)
+  function nearOpen(x, y) {
+    const tx = Math.floor(x), ty = Math.floor(y);
+    for (let r = 0; r < Math.max(COLS, ROWS); r++) { let best = null, bd = Infinity;
+      for (let Y = ty - r; Y <= ty + r; Y++) for (let X = tx - r; X <= tx + r; X++) { if (Math.max(Math.abs(X - tx), Math.abs(Y - ty)) !== r || !walk(X, Y)) continue; const d = Math.hypot(X + 0.5 - x, Y + 0.5 - y); if (d < bd) { bd = d; best = { x: X + 0.5, y: Y + 0.5 }; } }
+      if (best) return best; }
+    return { x, y };
+  }
+  // put the change into the streets (or take it back, for a replay wound back past it)
+  function setShift(on) {
+    if (!shift || shift.on === on) return;
+    shift.on = on;
+    for (const i of shift.block) grid[i] = on ? 1 : 0;
+    for (const i of shift.open) grid[i] = on ? 0 : 1;
+    if (on) windows = windows.filter(([x, y]) => !shift.open.includes(idx(Math.floor(x), Math.floor(y))));
+    flowKey = -1; shadeKey = ''; renderMapCache();
+  }
+  function doShift() {
+    setShift(true);
+    recEv(['g', shift.block.join(','), shift.open.join(',')]);
+    const out = o => { if (!walk(Math.floor(o.x), Math.floor(o.y))) { const q = nearOpen(o.x, o.y); o.x = q.x; o.y = q.y; } };
+    out(P); for (const e of enemies) out(e); for (const q of pending) out(q); for (const q of items) out(q); for (const q of mines) out(q); for (const q of decoys) out(q);
+    if (keyPos) out(keyPos);
+    flow(Math.floor(P.x), Math.floor(P.y));
+    shake = reduceMotion ? 0 : Math.max(shake, 0.45); flash = Math.max(flash, 0.3); buzz('barrier');
+    tone(70, 0.6, 'sawtooth', 0.12, 35); noise(0.5, 0.14);
+    // dust off the new walls and the broken blocks
+    for (const i of [...shift.block, ...shift.open]) { const x = i % COLS + 0.5, y = Math.floor(i / COLS) + 0.5;
+      for (let k = 0; k < 4; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.6; sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 0.8, c: shift.open.includes(i) ? '#9a8f84' : '#ffcf5a' }); } }
+  }
+  // the warning (red hatching on the road that shuts, cracks on the blocks that open, a count overhead) and, once
+  // changed, the barriers across the shut roads
+  function drawShift(now) {
+    if (!shift) return;
+    const T = rp ? rp.time : t, left = shift.at - T;
+    if (!shift.on && left > SHIFT_WARN) return;
+    for (const i of shift.block) { const x = i % COLS, y = Math.floor(i / COLS);
+      if (!shift.on) {
+        const a = 0.35 + 0.3 * Math.sin(now * 10);
+        ctx.fillStyle = `rgba(255,59,48,${a * 0.5})`; ctx.fillRect(x, y, 1, 1);
+        ctx.save(); ctx.beginPath(); ctx.rect(x, y, 1, 1); ctx.clip(); ctx.strokeStyle = `rgba(255,90,70,${a + 0.2})`; ctx.lineWidth = 0.07;
+        for (let k = -1; k < 2; k += 0.34) { ctx.beginPath(); ctx.moveTo(x + k, y + 1); ctx.lineTo(x + k + 1, y); ctx.stroke(); } ctx.restore();
+      } else {
+        // a barrier: a dark base with yellow and black bands
+        ctx.fillStyle = '#1b1c22'; ctx.fillRect(x + 0.04, y + 0.04, 0.92, 0.92);
+        ctx.save(); ctx.beginPath(); ctx.rect(x + 0.1, y + 0.32, 0.8, 0.36); ctx.clip(); ctx.fillStyle = '#ffcf2a'; ctx.fillRect(x + 0.1, y + 0.32, 0.8, 0.36); ctx.fillStyle = '#16161a';
+        for (let k = -0.4; k < 1.2; k += 0.24) { ctx.beginPath(); ctx.moveTo(x + k, y + 0.68); ctx.lineTo(x + k + 0.12, y + 0.68); ctx.lineTo(x + k + 0.48, y + 0.32); ctx.lineTo(x + k + 0.36, y + 0.32); ctx.closePath(); ctx.fill(); }
+        ctx.restore();
+        ctx.fillStyle = `rgba(255,80,60,${0.6 + 0.4 * Math.sin(now * 5 + i)})`; ctx.beginPath(); ctx.arc(x + 0.5, y + 0.2, 0.06, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    if (!shift.on) {
+      for (const i of shift.open) { const x = i % COLS, y = Math.floor(i / COLS), a = 0.5 + 0.4 * Math.sin(now * 12 + i);
+        ctx.strokeStyle = `rgba(255,236,190,${a})`; ctx.lineWidth = 0.05; ctx.beginPath();
+        ctx.moveTo(x + 0.15, y + 0.2); ctx.lineTo(x + 0.45, y + 0.45); ctx.lineTo(x + 0.35, y + 0.7); ctx.lineTo(x + 0.6, y + 0.9);
+        ctx.moveTo(x + 0.45, y + 0.45); ctx.lineTo(x + 0.8, y + 0.35); ctx.stroke(); }
+      const n = Math.max(1, Math.ceil(left)), fs = Math.min(1.4, COLS / 12);
+      ctx.save(); ctx.font = `900 ${fs}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+      const msg = `地形が変わる！ ${n}`; ctx.lineWidth = fs * 0.22; ctx.strokeStyle = 'rgba(10,8,14,0.9)'; ctx.strokeText(msg, COLS / 2, fs * 1.1);
+      ctx.fillStyle = Math.floor(now * 4) % 2 ? '#ff4a3a' : '#ffd23a'; ctx.fillText(msg, COLS / 2, fs * 1.1); ctx.restore();
+    }
+  }
+
   // warp points (the DEADLINE2 maps): stand on one for 0.5 sec to come out of the other; both rest a minute and a half after a jump
   let warps = [];
   // 加速装置: two plates on straight streets (from 1-2 on), far apart; stepping on one runs the runner as a dash would
@@ -5305,10 +5421,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     recStart();
+    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true; }
   }
 
   // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
@@ -5371,9 +5488,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // stages 1 and 2, once the exit is open: 5 a wave (+1 every 30 s) on stage 1, 7 a wave (+1 every 15 s) on stage 2
   // the weekly ranking and the survival nights: a cap on a wave and on the map
   const ONI_WAVE_MAX = 6, ONI_MAP_MAX = 25;
-  const LATE_BLACK = 0.06;   // (stage 3 from 6:00: the chance an oni is black, on top of the one always about)
+  // stage 3 (and the weekly ranking) past 8:00, where the speed stops climbing: bigger waves, 8 at 8:00, 9 at 10:00,
+  // 10 from 12:00 (no cap on the map), so a run cannot go on for ever
+  const lateWave = () => stageN === 3 && t >= 480 ? (t >= 720 ? 10 : t >= 600 ? 9 : 8) : 0;
+  // stage 3 from 6:00: the chance an oni is black, on top of the ones always about: 6% at 6:00, rising to 20% at 12:00
+  const lateBlack = () => 0.06 + 0.14 * Math.max(0, Math.min(1, (t - 360) / 360));
   const capRun = () => (stageN === 3 && rankRun) || stageN === 4;
-  // stage 3's kinds that must be about: barrier oni 2 from 4:00; black and yellow 1 from 6:00 (and more by chance)
+  // stage 3's kinds that must be about: barrier oni 2 from 4:00; black and yellow 1 from 6:00 (and more black ones by chance)
   // a light round the runner and each oni on the ground, a little smaller than a street light's pool
   function lightPool(x, y, col, a) {
     const g = ctx.createRadialGradient(x, y, 0, x, y, 1.05);
@@ -5385,7 +5506,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (k === 'tough') return t >= 240 ? 2 : 0;
     if (k === 'bomber') return 0;   // (no bomber is ever made to be about: they come by chance)
     if (t < 360) return 0;
-    return 1;   // (from 6:00 one of each always about; more of them come by chance, so ones left alive pile up)
+    if (k === 'black' && t >= 600) return 2;   // (from 10:00 two black ones always about)
+    return 1;   // (from 6:00 one of each always about; more black ones come by chance, so ones left alive pile up)
   }
   // how many of those are short (on the map and warned), for a wave that would otherwise not come
   function kindShort() {
@@ -5494,13 +5616,17 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     // stage 2: when the exit opens, one black oni (faster than you) joins the chase
     if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; queueSpawn(0); pending[pending.length - 1].black = true; }
+    if (SHIFT_ON && stageN === 3 && !tut) {
+      if (!shift && t >= SHIFT_AT - SHIFT_WARN) { shift = planShift(); klaxon(2, 0.03); }
+      if (shift && !shift.on && t >= shift.at) doShift();
+    }
     if (t >= nextSpawn) {
       let batch = spawnBatch();
       // the weekly ranking and the survival nights: at most 6 a wave, and never more than 25 on the map (counting the
       // warned ones); the kinds that must be about still come when the map is full
       // (the survival nights: at most 6 a wave and 25 on the map; the weekly ranking: at most 6 a wave, no cap on the map)
       if (stageN === 4) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length));
-      else batch = Math.min(batch, ONI_WAVE_MAX);   // (every stage: at most 6 a wave)
+      else batch = lateWave() || Math.min(batch, ONI_WAVE_MAX);   // (every stage: at most 6 a wave; stage 3 more past 8:00)
       waveSeq++; for (let i = 0; i < batch; i++) queueSpawn();
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
@@ -5649,12 +5775,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
       // barrier oni and yellow oni: same rate (the yellow one a bit rarer on stage 1). Stage 2: one barrier oni
       // at a time; stage 3: at most one per wave but no limit on the map. Only one yellow oni at a time
-      // from 6:00 on stage 3: a black or yellow oni also comes by chance, however many are about already
+      // from 6:00 on stage 3: a black oni also comes by chance, however many are about already (the yellow one stays
+      // one at a time: on the shadow weeks each yellow one brings a shadow twin)
       const late = stageN === 3 && t >= 360;
-      let black = !!s.black || (late && Math.random() < LATE_BLACK);
+      let black = !!s.black || (late && Math.random() < lateBlack());
       let tough = !black && (!!s.tough || (stageN >= 2 && (stageN >= 3 ? !toughWave : !enemies.some(o => o.tough)) && Math.random() < baseRate));
       // (the yellow one a little more often on stage 2, where no black oni comes before the exit opens: 12% -> 15% an oni)
-      let amb = !black && !tough && (!!s.amb || ((late || !enemies.some(o => o.amb)) && Math.random() < baseRate * (stageN === 1 ? 0.5 : stageN === 2 ? 1.25 : 1)));
+      let amb = !black && !tough && (!!s.amb || (!enemies.some(o => o.amb) && Math.random() < baseRate * (stageN === 1 ? 0.5 : stageN === 2 ? 1.25 : 1)));
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // a practice oni is exactly the kind the tutorial asked for
@@ -6090,7 +6217,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rMsg').textContent = `${stageLabel(stageN)}で落とし穴に落ちた。`;
   }
   function caught() {
-    bgmStop();
+    if (testLate) {
+      // the try-out: only the time, nothing recorded
+      bgmStop(); state = 'caught'; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1; tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
+      document.querySelector('#overScreen h2').textContent = '確保';
+      const from = testLate === 720 ? '12分' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
+      $('rStars').hidden = true; $('rShare').closest('.sharerow').hidden = true; $('rTime').textContent = (P && P.stompN || 0) + '回'; $('rKills').textContent = kills + '体'; $('retryBtn').textContent = 'もう一度テスト';
+      return;
+    }
+    bgmStop(); $('rShare').closest('.sharerow').hidden = false;
     document.querySelector('#overScreen h2').textContent = '確保';
     state = 'caught';
     caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1;
@@ -7219,6 +7354,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (!P) return;
     ctx.setTransform(TX * dpr, 0, 0, TY * dpr, (ox + sx) * dpr, (oy + sy) * dpr);
     const now = performance.now() / 1000;
+    drawShift(now);
 
     // warp points: a swirl in cyan and magenta while usable, dark while resting (the arc shows the minute running down)
     for (const w of warps) {
@@ -9600,7 +9736,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; testLate = 0; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -10176,6 +10312,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     P = { x: 0, y: 0, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock: 0, barrier: false, inv: 0, boostT: 0, jumpT: 0, saveT: 0, flT: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; fxp = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
     shake = 0; flash = 0; danger = 0; exitOpen = false; keyPos = null; stageKillStart = 0;
+    { const g = (h.ev || []).find(e => e[1] === 'g'); shift = g ? { at: g[0] / 100, block: String(g[2]).split(',').filter(v => v !== '').map(Number), open: String(g[3]).split(',').filter(v => v !== '').map(Number), on: false } : null; }
     state = 'replay';
     rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][(h.n || 3) - 1] : '';
     $('repName').textContent = name;
@@ -10238,6 +10375,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       flash = Math.max(flash, 0.15);
     }
     rp.evAt = time;
+    if (shift) setShift(time >= shift.at);
   }
   function repTick(dt) {
     if (!rp) return;
@@ -10375,7 +10513,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function begin(n) {
     tap(); daily = null; rankRun = false;
     if (n < 2) { start(n); return; }
-    pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
+    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -10408,7 +10546,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the weekly ranking's details: what comes when, from the game's own numbers
   function rankInfo() {
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.filter(Boolean).map(x => `<li>${x}</li>`).join('') + '</ul>';
-    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX]];
+    const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX], ['8:00', 8], ['10:00', 9], ['12:00', 10]];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
       cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
@@ -10419,8 +10557,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
-      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
+        ${li([`一度に出る鬼は8分まで${ONI_WAVE_MAX}体まで。そこから増えて、12分からは10体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼(黄色)が常に1体以上いる', '6分から: 黒い鬼がだんだんまざりやすくなる(12分で約20%)', '10分から: 黒い鬼が常に2体以上いる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -10442,11 +10580,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const supply = n === 1 ? ['2分: バリア + 爆弾1個'] : n === 2 ? ['2分: バリア + 爆弾1個', '3分: 爆弾2個', '4分: バリア + 爆弾2個'] : ['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個'];
     const waves = n === 1 ? [['0:00', '1体'], ['0:40', '2体'], ['1:20', '3体'], [mmss(EXIT_AT).replace('分', ':').replace('秒', '') + ' (出口が開く)', '5体(30秒後から6体)']]
       : n === 2 ? [['0:00', '2体'], ['1:20', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']]
-      : [['0:00', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体']];
+      : [['0:00', '3体'], ['4:00', '4体'], ['5:00', '5体'], ['6:00', '6体'], ['8:00', '8体'], ['10:00', '9体'], ['12:00', '10体']];
     const kinds = n === 4 ? [daily ? daily.rule.split('\n')[0].replace(/^・/, '') : '']
       : n === 1 ? ['ふつうの鬼(赤)がほとんど', '先回りの鬼(黄色): まれにまざる(約6%)。逃走者の行く先に回り込む']
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
-      : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる'];
+      : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が常に2体以上いる', '6分から: 黒い鬼と先回りの鬼が常に1体以上いる', '6分から: 黒い鬼がだんだんまざりやすくなる(12分で約20%)', '10分から: 黒い鬼が常に2体以上いる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])];
     const own = [];
     if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     // (the survival nights always have their two pits, on whichever map they are played)
@@ -10460,7 +10598,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を40体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : n === 3 ? `一度に出る鬼は8分まで${ONI_WAVE_MAX}体まで。そこから増えて、12分からは10体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
@@ -10509,7 +10647,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false;
+    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = !ART_ONLY; testLate = 0;
     $('spMsg').textContent = `ランクレース。今週のマップは${weekMapName()}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
@@ -10541,7 +10679,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   { const b = $('specialBtn'); b.classList.add('locked'); b.setAttribute('aria-disabled', 'true'); b.textContent = '🔒 スペシャル(準備中)'; b.addEventListener('click', () => lockedTap('special')); }
   $('rankPlayBtn').addEventListener('click', () => rankOpen() ? beginRank() : lockedTap('rankPlay'));
   updateLocks();
-  $('retryBtn').addEventListener('click', () => stageN === 3 && rankRun ? beginRank() : begin(stageN));
+  $('retryBtn').addEventListener('click', () => testLate ? (rankRun = true, state = 'startpick', spStart(), misLive = false, misRender()) : stageN === 3 && rankRun ? beginRank() : begin(stageN));
   $('menuBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('againBtn').addEventListener('click', () => begin(stageN));
   $('clearTitleBtn').addEventListener('click', () => { tap(); toTitle(); });
@@ -10552,6 +10690,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
   $('spGoBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStart(); });
+  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || !rankRun) return; tap(); testLate = at; spStart(); misLive = false; misRender(); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
   // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
   // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
