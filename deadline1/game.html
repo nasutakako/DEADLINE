@@ -1886,7 +1886,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   async function saveRecords() {
     try { localStorage.setItem(REC_KEY, JSON.stringify(records)); } catch (e) {}
-    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {}, rkPaid: records.rkPaid || 0, mail: records.mail || [] }); } catch (e) {} }
+    if (recDoc) { try { await recDoc.set({ stages: records.stages, plays: records.plays, bestTime: records.bestTime, cleared: records.cleared || {}, titles: records.titles || [], title: records.title || '', s3: records.s3 || { plays: 0, time: 0, kills: 0 }, dstat: records.dstat || {}, shop: records.shop || {}, star: records.star || { e: 0, s: 0 }, mclear: records.mclear || {}, rkPaid: records.rkPaid || 0, mail: records.mail || [], shopReset: records.shopReset || 0 }); } catch (e) {} }
   }
   // records this stage's result; returns its rank (1-3) within that stage, or 0
   function addRecord(n, rec) {
@@ -1911,6 +1911,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         records = { stages: mergeStages(records.stages, d.stages), plays: Math.max(records.plays, d.plays || 0), bestTime: Math.max(records.bestTime || 0, d.bestTime || 0), cleared: Object.assign({}, records.cleared, d.cleared),
           titles: [...new Set([...(records.titles || []), ...(d.titles || [])])], title: records.title != null ? records.title : d.title,
           dstat: pickD(records.dstat, d.dstat), shop: mergeShop(records.shop, d.shop), star: mergeStar(records.star, d.star), mclear: Object.assign({}, d.mclear, records.mclear), rkPaid: Math.max(records.rkPaid || 0, d.rkPaid || 0) || records.rkPaid, mail: mergeMail(records.mail, d.mail), shareDay: [records.shareDay, d.shareDay].filter(Boolean).sort().pop() || '', s3: (x => { const o = {}; for (const k of new Set([...Object.keys(x.a), ...Object.keys(x.b), 'plays', 'time', 'kills'])) o[k] = Math.max(+x.a[k] || 0, +x.b[k] || 0); return o; })({ a: records.s3 || {}, b: d.s3 || {} }) };
+        // (a shop reset this copy has not had yet: the merged one is reset, so the old items and stars do not come back)
+        records.shopReset = Math.max(records.shopReset || 0, d.shopReset || 0);
+        if ((d.shopReset || 0) < SHOP_RESET_N) { shopResetApply(records); saveRecords(); }
         paintTitle();
       } else if (Object.keys(records.stages).length) saveRecords();
       // (the fresh start goes for the saved copy too)
@@ -2801,6 +2804,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // (the plain football is off sale: the balls are all comic-book ones now; sk_soccer kept drawable for anyone it was given to)
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
   const SHOP_GONE = ['sk_soccer', 'bomb_big', 'pad_hand', 'bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'bomb_hole', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
+  const SHOP_SOLD = SHOP.flatMap(c => c.items.map(it => it[0]));
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   // ハイジャンプ is gone from the game, and its looks from the shop
   SHOP.splice(SHOP.findIndex(c => c.k === 'boost'), 1);
@@ -2841,6 +2845,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     br_glass: 50, br_emf: 50, br_comic: 120, br_aura: 250,
   };
   const FREE_SKINS = ['sk_jade', 'sk_sakura', 'sk_shion', 'sk_silver', 'sk_ai'];
+  // a one-time shop reset for every player (bump SHOP_RESET_N for another): every item sold in the shop back to not owned
+  // and taken off, the stars to 0. Story prizes, the free skins, the play pass and the mail are kept
+  const SHOP_RESET_N = 1;
+  function shopResetApply(r) {
+    // (電磁爆弾 is also 電脳都市's prize: kept for whoever cleared its stage 3)
+    const won = id => id === 'bomb_emp' && !!(r.mclear || {})['3'];
+    const sold = new Set([...SHOP_GONE, ...SHOP_SOLD].filter(id => !SHOP_PRIZE_ONLY.includes(id) && !FREE_SKINS.includes(id) && !won(id)));
+    r.shop = Object.assign({ owned: [], eq: {} }, r.shop);
+    r.shop.owned = (r.shop.owned || []).filter(id => !sold.has(id));
+    for (const k in r.shop.eq) if (sold.has(r.shop.eq[k])) r.shop.eq[k] = '';
+    r.star = { e: 0, s: 0 }; r.shopReset = SHOP_RESET_N;
+  }
   const starPrice = it => FREE_SKINS.includes(it.id) ? 0 : STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : it.price >= 500 ? 120 : 50;
 
   // ---------- today's missions (every run counts: stages, ランクレース): ten a day, easiest first, three on show at a time, ★1 each ----------
@@ -3148,6 +3164,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   // a story's prize is won, not sold: it stays in the catalog (装備 lists it) but not on the shop's shelves
   const SHOP_PRIZE_ONLY = ['sk_dawn', 'sk_finale'];
+  // (the shop reset on this device's copy; the saved copy elsewhere gets it when it is read)
+  try { if ((records.shopReset || 0) < SHOP_RESET_N) { shopResetApply(records); localStorage.setItem(REC_KEY, JSON.stringify(records)); } } catch (e) {}
   const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
