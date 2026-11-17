@@ -1011,8 +1011,9 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
    on the right runs from just under 閉じる to the bottom, with room for its clip */
 #shopScreen .shopleft { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
 #shopScreen .shopleft .shoplist { flex: 1 1 auto; }
-#shopTabs { display: grid; grid-template-columns: repeat(4, minmax(0, max-content)); justify-content: start; gap: 6px; flex: none; }
-#shopTabs button { text-align: center; }
+#shopTabs { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(4, minmax(0, 1fr)) minmax(0, 1.3fr); justify-content: start; gap: 6px; flex: none; }
+#shopTabs button { text-align: center; padding-left: 4px !important; padding-right: 4px !important; white-space: nowrap; }
+@media (max-width: 760px) { #shopTabs button { letter-spacing: 0 !important; font-size: 12px !important; } }
 /* a control panel's picture shown whole: as wide as the panel allows at its own shape (never cut to fit a height) */
 .shopdetail .clip.pic { height: auto; width: 100%; max-height: none; } .shopdetail .clip.pic img { object-fit: contain; }
 /* the heading at its old size (as on the other cards), 閉じる beside it, and the slot tabs on a row of their own under it */
