@@ -2816,7 +2816,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   };
   // (the plain football is off sale: the balls are all comic-book ones now; sk_soccer kept drawable for anyone it was given to)
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
-  const SHOP_GONE = ['sk_soccer', 'bomb_big', 'pad_hand', 'bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
+  const SHOP_GONE = ['dash_blink', 'sk_soccer', 'bomb_big', 'pad_hand', 'bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
   const SHOP_SOLD = SHOP.flatMap(c => c.items.map(it => it[0]));
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   // ハイジャンプ is gone from the game, and its looks from the shop
@@ -2851,11 +2851,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ★120 or ★250; the plain-colour runner skins free (everyone has them). Skins not listed: 500円 -> ★120
   const STAR_PRICE = {
     pad_arcade: 1000, pad_hand_k: 1000, pad_cyber: 1000,
-    bomb_fw: 120, bomb_comic: 250, bomb_energy: 250, bomb_energy_r: 250, bomb_energy_b: 250, bomb_big: 250, bomb_emp: 250, bomb_ice: 250, bomb_grav: 250, bomb_hole: 250,
-    rk_laser: 120, rk_ice: 250, rk_plasma: 250, rk_comic: 250, rk_energy: 250, rk_energy_r: 250, rk_energy_y: 250,
+    bomb_fw: 120, bomb_comic: 250, bomb_energy: 500, bomb_energy_r: 500, bomb_energy_b: 500, bomb_big: 250, bomb_emp: 250, bomb_ice: 250, bomb_grav: 250, bomb_hole: 250,
+    rk_laser: 120, rk_ice: 250, rk_plasma: 250, rk_comic: 250, rk_energy: 500, rk_energy_r: 500, rk_energy_y: 500,
     bs_star: 120, bs_ice: 250, bs_thunder: 250, bs_blast: 380,
-    dash_petal: 50, dash_frost: 120, dash_bolt: 120, dash_shadow: 250, dash_warp: 250, dash_steam: 250, dash_blink: 250, dash_comic: 250, dash_nitro_y: 250, dash_nitro_r: 250, dash_nitro_b: 250,
-    br_glass: 50, br_emf: 50, br_comic: 120, br_aura: 250, br_aura_r: 250, br_aura_b: 250,
+    dash_petal: 50, dash_frost: 120, dash_bolt: 120, dash_shadow: 250, dash_warp: 250, dash_steam: 250, dash_blink: 250, dash_comic: 250, dash_nitro_y: 500, dash_nitro_r: 500, dash_nitro_b: 500,
+    br_glass: 50, br_emf: 50, br_comic: 120, br_aura: 500, br_aura_r: 500, br_aura_b: 500,
   };
   const FREE_SKINS = ['sk_jade', 'sk_sakura', 'sk_shion', 'sk_silver', 'sk_ai'];
   // a one-time shop reset for every player (bump SHOP_RESET_N for another): every item sold in the shop back to not owned
