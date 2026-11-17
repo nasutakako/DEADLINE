@@ -3256,7 +3256,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
-    for (const [k, label] of [...EQUIP_TABS, ['star', '★を買う']]) {
+    for (const [k, label] of EQUIP_TABS) {   // (★ is bought through the + by the stars, or the short-of-stars button)
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(shopTab === k));
       b.addEventListener('click', () => { tap(); shopTab = k; shopSel = null; openShop(); }); tabs.append(b);
     }
@@ -3321,7 +3321,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
     const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
-    sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = '★をまとめて手に入れる';
+    sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = '★を買う';
     sec.append(h, grid);
     for (const pk of STAR_PACKS) {
       const b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile' + (shopSel === pk ? ' sel' : '');
@@ -3343,7 +3343,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     else price.append(mk('s', null, pk.yen.toLocaleString() + '円'), document.createTextNode('いまは無料'));
     head.append(mk('div', 'cat', '★'), mk('h3', null, '★' + pk.pack), price);
     big.append(sw, head);
-    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(★50〜★1000。どれも見た目だけが変わる)。今日のミッション(毎日10個まで)・ログインボーナス(毎日★5)・ランクレースの報酬・共有でも集められる。'));
+    const what = mk('div', 'blk'); what.append(mk('span', null, '使いみち'), mk('p', null, '★はショップのアイテムやスキンとの交換に使える(★120〜★1500。どれも見た目だけが変わる)。今日のミッション(毎日10個まで)・ログインボーナス(毎日★5)・ランクレースの報酬・共有でも集められる。'));
     const act = mk('div', 'shopact'), btn = mk('button', 'go', Store.live() ? `${pp || pk.yen.toLocaleString() + '円'}で購入` : '無料で受け取る（テスト中）'); btn.type = 'button';
     btn.addEventListener('click', async () => {
       tap(); btn.disabled = true;
