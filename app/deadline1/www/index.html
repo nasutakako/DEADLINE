@@ -3317,7 +3317,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     } catch (e) { shopSay('復元できませんでした。通信状態を確認してね'); }
   });
   // ★ in packs (about 1円 a star: the smallest a little dearer, the two biggest with extra); free while testing
-  const STAR_PACKS = [[100, 120], [300, 300], [500, 500], [1000, 1000], [2200, 2000], [3500, 3000]].map(([pack, yen]) => ({ pack, yen }));
+  // (bigger packs, better value: 0.9, 0.88, 1.08, 1.15, 1.3 and 1.5 ★ a yen)
+  const STAR_PACKS = [[180, 200], [350, 400], [650, 600], [1150, 1000], [2600, 2000], [4500, 3000]].map(([pack, yen]) => ({ pack, yen }));
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
     const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
