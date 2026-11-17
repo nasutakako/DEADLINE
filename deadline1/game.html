@@ -683,7 +683,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 /* the header keeps 購入を復元 and 閉じる together at the right end: the note gives way (cut short) when the row is tight */
 .shophead .shopnote { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .shophead .shoprestore { margin-left: 0; }
-.shophead > h2, .shophead > .ranktabs, .shophead > .shopstars, .shophead > .shoprestore, .shophead > .shopclose { flex-shrink: 0; }
+.shophead > h2, .shophead > .ranktabs, .shophead > .shopstars, .shophead > .starplus, .shophead > .shoprestore, .shophead > .shopclose { flex-shrink: 0; }
 .shophead > .ranktabs { flex-wrap: nowrap; }
 .shopclose { padding: 8px 16px; }
 .shoprestore { margin-left: auto; padding: 8px 12px; font-size: 12px; }
@@ -723,6 +723,9 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .clip.pic { aspect-ratio: 844 / 390; } .shopdetail .clip img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .shopdetail .clip span { position: absolute; left: 8px; top: 6px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,.6); font-size: 10px; letter-spacing: .1em; color: #fff; }
 .shopstars { font-weight: 800; color: var(--lamp); letter-spacing: .04em; white-space: nowrap; }
+/* (the gold + by the stars: straight to buying ★) */
+.starplus { flex: none; width: 26px; height: 26px; min-height: 0 !important; padding: 0 !important; border-radius: 50%; border: 1px solid #7a4a08; background: radial-gradient(circle at 40% 32%, #fff3c0, #ffcf5a 45%, #b07a14); color: #3a1a00; font: 900 18px/1 var(--f-num, sans-serif); box-shadow: 0 2px 0 #4a2a04, 0 0 8px rgba(255,200,80,.45); cursor: pointer; display: inline-grid; place-items: center; margin-left: 6px; }
+.starplus:active { transform: translateY(2px); box-shadow: 0 0 0 #4a2a04; }
 /* today's missions: three at a time in the left panel (or over the map's corner without the thumb pad) */
 .misbox { width: 100%; display: flex; flex-direction: column; gap: 3px; padding: 6px 8px; border: 1px solid rgba(255,207,90,.35); border-radius: 6px; background: var(--panel); font-size: 11px; line-height: 1.25; }
 .misbox[hidden] { display: none; }
@@ -996,12 +999,13 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 #equipScreen .shophead h2 { color: var(--lamp); }
 /* the shop's head as the equip screen's: ショップ at the cards' heading size with the ★, the note, 購入を復元 and 閉じる
    on its row, and a tab per kind on a row of its own under it */
-#shopScreen .shophead { display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto auto; align-items: center; gap: 6px 12px; }
+#shopScreen .shophead { display: grid; grid-template-columns: auto auto auto minmax(0, 1fr) auto auto; align-items: center; gap: 6px 12px; }
 #shopScreen .shophead h2 { grid-column: 1; grid-row: 1; font-size: clamp(26px, 6vw, 38px); line-height: 1.1; }
 #shopScreen .shophead .shopstars { grid-column: 2; grid-row: 1; }
-#shopScreen .shophead .shopnote { grid-column: 3; grid-row: 1; }
-#shopScreen .shophead .shoprestore { grid-column: 4; grid-row: 1; }
-#shopScreen .shophead .shopclose { grid-column: 5; grid-row: 1; }
+#shopScreen .shophead .starplus { grid-column: 3; grid-row: 1; margin-left: -6px; }
+#shopScreen .shophead .shopnote { grid-column: 4; grid-row: 1; }
+#shopScreen .shophead .shoprestore { grid-column: 5; grid-row: 1; }
+#shopScreen .shophead .shopclose { grid-column: 6; grid-row: 1; }
 #shopScreen .shophead .shopmsg { grid-column: 1 / -1; grid-row: 2; }
 /* the tabs over the list on the left (two rows: ランチャー バリア 爆弾 ダッシュ / スキン 操作パネル ★を買う), so the detail panel
    on the right runs from just under 閉じる to the bottom, with room for its clip */
@@ -1544,7 +1548,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     <div class="shopwrap">
       <div class="shophead">
         <h2>ショップ</h2>
-        <span class="shopstars" id="shopStars"></span><span class="shopnote">★はミッション・ログインボーナス・ランクレース・共有で獲得できます</span>
+        <span class="shopstars" id="shopStars"></span><button class="starplus" id="shopStarPlus" type="button" aria-label="★を買う">＋</button><span class="shopnote">★はミッション・ログインボーナス・ランクレース・共有で獲得できます</span>
         <button class="ghost shoprestore" id="shopRestore" type="button">購入を復元</button><button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
         <span class="shopmsg" id="shopMsg" role="status" hidden></span>
       </div>
@@ -3248,6 +3252,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // (the shop reset on this device's copy; the saved copy elsewhere gets it when it is read)
   try { if ((records.shopReset || 0) < SHOP_RESET_N) { shopResetApply(records); localStorage.setItem(REC_KEY, JSON.stringify(records)); } } catch (e) {}
   const shopItems = () => SHOP.flatMap(c => [['', '標準', 0, 'はじめから使える', ''], ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
+  // (the gold + by the stars opens the ★ shop)
+  document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
     for (const [k, label] of [...EQUIP_TABS, ['star', '★を買う']]) {
@@ -3385,9 +3391,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     btn.type = 'button';
     const cost = !have && it.id ? starPrice(it) : 0, short = cost > starHave();
     btn.textContent = on ? '装備中' : have ? (it.id ? '装備する' : '標準に戻す') : cost ? (short ? `★があと${cost - starHave()}個たりない` : `★${cost}で交換して装備`) : Store.live() ? `${Store.price(PRODUCT.item(it.id)) || it.price + '円'}で購入して装備` : '無料で手に入れて装備（テスト中）';
-    btn.disabled = on || (cost > 0 && short);
+    btn.disabled = on;
+    if (cost > 0 && short) { btn.textContent = `★があと${cost - starHave()}個たりない ・ ★を買う`; btn.classList.add('toBuy'); }
     btn.addEventListener('click', async () => {
       tap();
+      if (cost > 0 && short) { shopTab = 'star'; shopSel = null; openShop(); return; }
       const s2 = shopData();
       if (it.id && !s2.owned.includes(it.id)) { if (cost) starW().s += cost; s2.owned.push(it.id); }
       s2.eq[it.cat.k] = it.id; saveRecords(); openShop(); shopSay('');
