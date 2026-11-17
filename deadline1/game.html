@@ -2848,14 +2848,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (let i = 0; i < Math.min(starGot, STAR_SHOW); i++) setTimeout(() => { tone(1568 + i * 70, 0.07, 'triangle', 0.05); setTimeout(() => tone(2637 + i * 90, 0.12, 'sine', 0.035), 45); }, (0.25 + i * STAR_GAP) * 1000 + 180);
   }
   // each item's price in ★ (★1 = 1円), set one by one: the control panels ★1000 (for the ones who buy ★); the rest ★50,
-  // ★120 or ★250; the plain-colour runner skins free (everyone has them). Skins not listed: 500円 -> ★120
+  // ★120 or ★250; the plain-colour runner skins free (everyone has them). Skins not listed: 500円 -> ★250
   const STAR_PRICE = {
     pad_arcade: 1000, pad_hand_k: 1000, pad_cyber: 1000,
-    bomb_fw: 120, bomb_comic: 250, bomb_energy: 500, bomb_energy_r: 500, bomb_energy_b: 500, bomb_big: 250, bomb_emp: 250, bomb_ice: 250, bomb_grav: 250, bomb_hole: 250,
+    bomb_fw: 250, bomb_comic: 250, bomb_energy: 500, bomb_energy_r: 500, bomb_energy_b: 500, bomb_big: 250, bomb_emp: 250, bomb_ice: 250, bomb_grav: 120, bomb_hole: 250,
     rk_laser: 120, rk_ice: 250, rk_plasma: 250, rk_comic: 250, rk_energy: 500, rk_energy_r: 500, rk_energy_y: 500,
     bs_star: 120, bs_ice: 250, bs_thunder: 250, bs_blast: 380,
-    dash_petal: 50, dash_frost: 120, dash_bolt: 120, dash_shadow: 250, dash_warp: 250, dash_steam: 250, dash_blink: 250, dash_comic: 250, dash_nitro_y: 500, dash_nitro_r: 500, dash_nitro_b: 500,
-    br_glass: 50, br_emf: 50, br_comic: 120, br_aura: 500, br_aura_r: 500, br_aura_b: 500,
+    dash_petal: 120, dash_frost: 250, dash_bolt: 250, dash_shadow: 250, dash_warp: 250, dash_steam: 250, dash_blink: 250, dash_comic: 250, dash_nitro_y: 500, dash_nitro_r: 500, dash_nitro_b: 500,
+    br_glass: 120, br_emf: 50, br_comic: 250, br_aura: 500, br_aura_r: 500, br_aura_b: 500,
   };
   const FREE_SKINS = ['sk_jade', 'sk_sakura', 'sk_shion', 'sk_silver', 'sk_ai'];
   // a one-time shop reset for every player (bump SHOP_RESET_N for another): every item sold in the shop back to not owned
@@ -2870,7 +2870,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const k in r.shop.eq) if (sold.has(r.shop.eq[k])) r.shop.eq[k] = '';
     r.star = { e: 0, s: 0 }; r.shopReset = SHOP_RESET_N;
   }
-  const starPrice = it => FREE_SKINS.includes(it.id) ? 0 : STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : it.price >= 500 ? 120 : 50;
+  const starPrice = it => FREE_SKINS.includes(it.id) ? 0 : STAR_PRICE[it.id] != null ? STAR_PRICE[it.id] : it.price >= 500 ? 250 : 50;
 
   // ---------- today's missions (every run counts: stages, ランクレース): ten a day, easiest first, three on show at a time, ★1 each ----------
   // Each rung has a few variants; which one is up changes with the date (Japan time). 'sum' adds up every survival night
