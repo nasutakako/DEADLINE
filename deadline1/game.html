@@ -3650,7 +3650,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function lifeRender() {
     const n = lifeNow();
     $('lifeHearts').innerHTML = lifeHearts(n);
-    $('lifeNext').textContent = n >= LIFE_MAX ? (n > LIFE_MAX ? '+' + (n - LIFE_MAX) : '満タン') : lifeClock(lifeLeft());
+    $('lifeNext').textContent = n >= LIFE_MAX ? '満タン' : lifeClock(lifeLeft());   // (the hearts beside it already show any +N over the three)
     if ($('lifeScreen').hidden) return;
     $('lifeBig').innerHTML = lifeHearts(n);
     $('lifeRule').textContent = n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
