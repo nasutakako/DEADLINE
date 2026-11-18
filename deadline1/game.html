@@ -1011,16 +1011,19 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
    on the right runs from just under 閉じる to the bottom, with room for its clip */
 #shopScreen .shopleft { display: flex; flex-direction: column; gap: 8px; min-height: 0; min-width: 0; }
 #shopScreen .shopleft .shoplist { flex: 1 1 auto; }
-#shopTabs { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(4, minmax(0, 1fr)) minmax(0, 1.3fr); justify-content: start; gap: 6px; flex: none; }
-#shopTabs button { text-align: center; padding-left: 4px !important; padding-right: 4px !important; white-space: nowrap; }
-@media (max-width: 760px) { #shopTabs button { letter-spacing: 0 !important; font-size: 12px !important; } }
+/* two rows: the four items on the first, the looks (skin, accessory, panel) on the second */
+#shopTabs, #equipTabs { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; flex: none; }
+#shopTabs button, #equipTabs button { grid-column: span 3; }
+#shopTabs button:nth-child(n+5), #equipTabs button:nth-child(n+5) { grid-column: span 4; }
+#shopTabs button, #equipTabs button { text-align: center; padding-left: 4px !important; padding-right: 4px !important; white-space: nowrap; }
+@media (max-width: 760px) { #shopTabs button, #equipTabs button { letter-spacing: 0 !important; font-size: 12px !important; } }
 /* a control panel's picture shown whole: as wide as the panel allows at its own shape (never cut to fit a height) */
 .shopdetail .clip.pic { height: auto; width: 100%; max-height: none; } .shopdetail .clip.pic img { object-fit: contain; }
 /* the heading at its old size (as on the other cards), 閉じる beside it, and the slot tabs on a row of their own under it */
-#equipScreen .shophead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; }
+#equipScreen .shophead { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 12px; }
 #equipScreen .shophead h2 { grid-column: 1; grid-row: 1; font-size: clamp(26px, 6vw, 38px); line-height: 1.1; }
-#equipScreen .shophead .shopclose { grid-column: 2; grid-row: 1; }
-#equipScreen .shophead > .ranktabs { grid-column: 1 / -1; grid-row: 2; flex-wrap: wrap; }
+#equipScreen .shophead .shopclose { grid-column: 3; grid-row: 1; }
+#equipScreen .shophead > .ranktabs { grid-column: 2; grid-row: 1; }   /* (the two rows of tabs beside the heading, so the lists keep their height) */
 #equipScreen .shophead .shopnote { display: none; }
 .eqlist .shopsec { width: 100%; }
 .eqlist .shoptile { cursor: pointer; }
@@ -2857,8 +2860,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['sk_neon', 'ネオン', 500, '光る桃色の輪をまとう', ''], ['sk_star', '星屑', 500, 'まわりに星がまたたく', ''],
       ['sk_bluefire', '蒼炎', 500, '青い炎が揺らめく', ''], ['sk_moon', '月光', 500, '淡い月の光をまとう', ''],
       ['sk_dawn', '夜明け', 500, '1-3クリアの証。朝日の金色', ''], ['sk_finale', '大輪', 500, '4-3クリアの証。紅と金に星がまたたく', ''] ] },
-    // accessories: worn over any skin (shown under the スキン tab, after the skins)
-    { k: 'acc', under: 'skin', label: 'アクセサリー', items: [
+    // accessories: worn over any skin
+    { k: 'acc', label: 'アクセサリー', items: [
       ['ac_toki', '闘気(金)', 500, '金色の闘気をまとう。ふちがメラメラと燃え、走ると後ろへたなびき、光の粒が舞う。どのスキンにも重ねられる', 'radial-gradient(circle,#fff6c0 0 28%,#ffc21a 40%,#ff8a00 52%,rgba(255,140,0,.5) 62%,rgba(0,0,0,0) 74%)'],
       ['ac_toki_r', '闘気(赤)', 500, '赤い闘気をまとう。ふちがメラメラと燃え、走ると後ろへたなびき、光の粒が舞う。どのスキンにも重ねられる', 'radial-gradient(circle,#ffd0c0 0 28%,#ff3a24 40%,#d00000 52%,rgba(230,0,0,.5) 62%,rgba(0,0,0,0) 74%)'],
       ['ac_toki_b', '闘気(青)', 500, '青い闘気をまとう。ふちがメラメラと燃え、走ると後ろへたなびき、光の粒が舞う。どのスキンにも重ねられる', 'radial-gradient(circle,#d0ecff 0 28%,#2a7cff 40%,#0030d0 52%,rgba(0,60,255,.5) 62%,rgba(0,0,0,0) 74%)'] ] },
@@ -3400,7 +3403,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       im.src = SHOP_PICS[it.id || 'std_' + it.cat.k]; im.alt = it.name + 'のプレイ画面'; cw.append(im, mk('span', null, 'プレイ画面'));
       clip = cw;
     }
-    const look = mk('div', 'blk'); look.append(mk('span', null, '見た目'), mk('p', null, it.id ? it.desc : 'はじめから使える、いつもの見た目。'));
+    const look = mk('div', 'blk'); look.append(mk('span', null, '見た目'), mk('p', null, it.id ? it.desc : it.cat.k === 'acc' ? 'アクセサリーをつけない。' : 'はじめから使える、いつもの見た目。'));
     const fx = mk('div', 'blk fx' + (SHOP_FX[it.id] ? '' : ' none'));
     fx.append(mk('span', null, SHOP_FX[it.id] ? '効果' : '効果なし'), mk('p', null, SHOP_FX[it.id] || '見た目だけが変わる。遊び方への影響はない。'));
     const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
@@ -3427,7 +3430,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ---------- equip: what is worn, chosen from what is owned (the shop sells; this only puts on) ----------
   const SKILLS = [['skill_idaten', '韋駄天', 'ダッシュを2回まで続けて使える。1回分は5秒で戻る(2回分で10秒)', 'radial-gradient(circle,#fff 12%,#ffb347 45%,#8a2a00 85%)'], ['skill_luck', '九死に一生', 'ダッシュのたびに10%の確率で、通常の1.5倍の距離を走る', 'radial-gradient(circle,#fff 12%,#ffec96 40%,#3a8ca3 80%)']];
   // the equip screen: one tab per slot, the shop's tiles in the shop's order, only what is owned
-  const EQUIP_TABS = [['rocket', 'ランチャー'], ['barrier', 'バリア'], ['bomb', '爆弾'], ['dash', 'ダッシュ'], ['skin', 'スキン'], ['pad', '操作パネル']];
+  const EQUIP_TABS = [['rocket', 'ランチャー'], ['barrier', 'バリア'], ['bomb', '爆弾'], ['dash', 'ダッシュ'], ['skin', 'スキン'], ['acc', 'アクセサリー'], ['pad', '操作パネル']];
   let equipTab = 'rocket', equipSel = null;   // (the tile picked for the detail panel: {cat, id, name, desc, sw})
   function openEquip() {
     const tabs = $('equipTabs'); tabs.textContent = '';
@@ -3483,7 +3486,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       im.src = SHOP_PICS[it.id || 'std_' + it.cat.k]; im.alt = it.name + 'のプレイ画面'; cw.append(im, mk('span', null, 'プレイ画面'));
       clip = cw;
     }
-    const look = mk('div', 'blk'); look.append(mk('span', null, '見た目'), mk('p', null, it.id ? it.desc : 'はじめから使える、いつもの見た目。'));
+    const look = mk('div', 'blk'); look.append(mk('span', null, '見た目'), mk('p', null, it.id ? it.desc : it.cat.k === 'acc' ? 'アクセサリーをつけない。' : 'はじめから使える、いつもの見た目。'));
     const fx = mk('div', 'blk fx' + (SHOP_FX[it.id] ? '' : ' none'));
     fx.append(mk('span', null, SHOP_FX[it.id] ? '効果' : '効果なし'), mk('p', null, SHOP_FX[it.id] || '見た目だけが変わる。遊び方への影響はない。'));
     const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
