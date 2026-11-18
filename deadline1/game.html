@@ -694,6 +694,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopsec h3 small { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0; }
 .shopgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
 .shopgrid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.shopgrid.five .shoptile b { letter-spacing: -0.04em; white-space: nowrap; }   /* (five to a row: the longest names kept on one line) */
 .shoptile { position: relative; display: grid; justify-items: center; gap: 4px; padding: 10px 6px 8px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--ink); font: inherit; text-align: center; }
 .shoptile .sw { width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); }
 .shoptile b { font-size: 13px; line-height: 1.25; }
@@ -2816,9 +2817,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['dash_petal', '桜吹雪', 200, '駆け抜けたあとに花びらが舞う', 'radial-gradient(circle at 40% 40%,#fff0f5,#ffb7d0 45%,#e2558a)'],
       ['dash_warp', '時空の裂け目', 500, '空間をゆがめて駆ける', 'radial-gradient(circle,#0a0018 30%,#7b3cff 55%,#3fe0ff 68%,rgba(0,0,0,0) 72%)'],
       ['dash_dragon', '龍の疾走', 500, '金色の炎をまとって駆け、龍のうろこと瑞雲を残していく', 'radial-gradient(circle at 40% 40%,#fff3b0,#ffc21a 35%,#ff7a1a 60%,#b05a00)'],
-      ['dash_nitro_y', 'ニトロダッシュ(金)', 500, '背中から金色の炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#9a3a00 22%,#ffa000 45%,#ffffff 62%,#ffd21a 74%,rgba(0,0,0,0) 90%)'],
-      ['dash_nitro_r', 'ニトロダッシュ(赤)', 500, '背中から赤い炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#7a0000 22%,#ff1a00 45%,#ffffff 62%,#ff5a3a 74%,rgba(0,0,0,0) 90%)'],
-      ['dash_nitro_b', 'ニトロダッシュ(青)', 500, '背中から青い炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#00199a 22%,#0a5aff 45%,#ffffff 62%,#3a9bff 74%,rgba(0,0,0,0) 90%)'],
+      ['dash_nitro_y', 'ニトロ(金)', 500, '背中から金色の炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#9a3a00 22%,#ffa000 45%,#ffffff 62%,#ffd21a 74%,rgba(0,0,0,0) 90%)'],
+      ['dash_nitro_r', 'ニトロ(赤)', 500, '背中から赤い炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#7a0000 22%,#ff1a00 45%,#ffffff 62%,#ff5a3a 74%,rgba(0,0,0,0) 90%)'],
+      ['dash_nitro_b', 'ニトロ(青)', 500, '背中から青い炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#00199a 22%,#0a5aff 45%,#ffffff 62%,#3a9bff 74%,rgba(0,0,0,0) 90%)'],
       ['dash_comic', 'コミックダッシュ', 500, '集中線と「ZOOM!」の文字で、マンガのように駆け抜ける', 'repeating-conic-gradient(#ffffff 0 4deg,#ffe23a 4deg 14deg)'],
       ['dash_frost', '氷華ダッシュ', 500, '駆け抜けたあとに氷の結晶がきらめく', 'radial-gradient(circle at 40% 35%,#ffffff,#bff4ff 40%,#3fb8e8 75%,#0a3a52)'],
       ['dash_bolt', '雷光ダッシュ', 500, '駆け抜けたあとに稲妻が走る', 'linear-gradient(135deg,#fffbd0,#ffe35a 40%,#7a6bff)'],
@@ -3261,6 +3262,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     return clipUrls[k];
   }
   const SHOP_STD = { acc: 'radial-gradient(circle,#1a1e27 40%,#596273 43%,#1a1e27 47%)', pad: 'radial-gradient(circle at 50% 40%,#c4f9ff 0 12%,#00a6c4 30%,#00323e 48%,#0a1220 52%)', skin: 'radial-gradient(circle at 38% 35%,#bfe4ee,#3a8ca3 45%,#0b2c37)', bomb: 'radial-gradient(circle,#3a3f4d 45%,#ffcf5a 50%,#3a3f4d 56%)', rocket: 'linear-gradient(90deg,#ffcf5a,#d9dce3 40%,#ff3b30)', boost: 'linear-gradient(90deg,rgba(255,179,71,.1),#ffb347)', dash: 'linear-gradient(90deg,rgba(143,233,255,.1),#8fe9ff)', barrier: 'radial-gradient(circle,rgba(143,233,255,.15) 55%,#8fe9ff 60%,rgba(0,0,0,0) 64%)' };
+  // tiles per row by how many there are: 4 while they fit in three rows, 5 past that (a pair stays at three)
+  const gridCols = (grid, n) => { if (n === 3) return; grid.style.gridTemplateColumns = `repeat(${n > 12 ? 5 : 4}, minmax(0, 1fr))`; grid.classList.toggle('five', n > 12); };
   function shopSwatch(el, id, sw, k) {
     const look = SKIN[id];
     el.style.background = sw || (look && look.m ? `radial-gradient(circle at 38% 35%,${look.m[0]},${look.m[1]} 45%,${look.m[2]})` : SHOP_STD[k]);
@@ -3289,6 +3292,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const cat of cats) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
       sec.className = 'shopsec'; grid.className = 'shopgrid' + (cat.items.length === 2 ? ' three' : ''); h.textContent = cat.label;
+      gridCols(grid, shopItems().filter(x => x.cat === cat).length);
       const fxN = cat.items.filter(it => SHOP_FX[it[0]]).length;
       if (fxN) { const sm = document.createElement('small'); sm.textContent = `効果つき ${fxN}`; h.append(sm); }
       sec.append(h, grid);
@@ -3449,7 +3453,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const opts = [cat.k === 'acc' ? ['', 'なし', 'アクセサリーをつけない。', ''] : ['', '標準', 'はじめから使える、いつもの見た目。', '']].concat(cat.items.filter(it => sd.owned.includes(it[0])))
         .map(it => ({ cat, id: it[0], name: it[1], desc: it[3], sw: it[4], price: it[2] }));
       if (!equipSel || !tabCats.includes(equipSel.cat) ? cat === tabCats[0] : equipSel.cat === cat && !opts.some(o => o.id === equipSel.id)) equipSel = opts.find(o => o.id === (sd.eq[cat.k] || '')) || opts[0];
-      const sec = mk('section', 'shopsec'), grid = mk('div', 'shopgrid' + (cat.items.length === 2 ? ' three' : ''));
+      const sec = mk('section', 'shopsec'), grid = mk('div', 'shopgrid' + (cat.items.length === 2 ? ' three' : '')); gridCols(grid, opts.length);
       sec.append(mk('h3', '', cat.label), grid);
       for (const it of opts) {
         const on = (sd.eq[cat.k] || '') === it.id, b = mk('button', 'shoptile owned' + (on ? ' on' : '') + (equipSel.id === it.id ? ' sel' : ''));
