@@ -863,9 +863,6 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifestarbtns button b { font-size: 15px; color: #ffcf5a; }
 .lifestarbtns button small { font-size: 11.5px; color: var(--muted); }
 .lifestarbtns button em { font-style: normal; font-size: 10.5px; color: #7dffb0; }
-.lifeact.pass { border-color: #c792ff; background: linear-gradient(135deg, rgba(199,146,255,.22), rgba(199,146,255,.05)); }
-.lifeact.pass b { color: #e2c8ff; }
-.lifebig.inf, .lifepill .hearts.inf { color: #d9b3ff; }
 .lifeact.line small { color: rgba(255,255,255,.85); }
 .lifeact:disabled { opacity: .45; cursor: default; }
 .adov .card { align-items: center; }
@@ -2919,6 +2916,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (the 闘気 skins became accessories: whoever had one has the accessory instead, worn if it was worn)
     { const sd = records.shop; sd.eq = sd.eq || {}; for (const c of ['', '_r', '_b']) { if (sd.owned.includes('sk_toki' + c) && !sd.owned.includes('ac_toki' + c)) sd.owned.push('ac_toki' + c); if (sd.eq.skin === 'sk_toki' + c) { sd.eq.skin = ''; sd.eq.acc = 'ac_toki' + c; } } }
     for (const k in records.shop.eq) if (SHOP_GONE.includes(records.shop.eq[k])) records.shop.eq[k] = '';
+    // (the 無制限パス is gone: taken back from whoever had it)
+    records.shop.owned = records.shop.owned.filter(id => id !== 'pass_unlimited');
     // (the plain-colour runner skins are free: everyone has them)
     for (const id of FREE_SKINS) if (!records.shop.owned.includes(id)) records.shop.owned.push(id);
     return records.shop;
@@ -2959,7 +2958,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   };
   const FREE_SKINS = ['sk_jade', 'sk_sakura', 'sk_shion', 'sk_silver', 'sk_ai'];
   // a one-time shop reset for every player (bump SHOP_RESET_N for another): every item sold in the shop back to not owned
-  // and taken off, the stars to 0. Story prizes, the free skins, the play pass and the mail are kept
+  // and taken off, the stars to 0. Story prizes, the free skins and the mail are kept
   const SHOP_RESET_N = 1;
   function shopResetApply(r) {
     // (電磁爆弾 is also 電脳都市's prize: kept for whoever cleared its stage 3)
@@ -3514,11 +3513,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
-  // watching an ad, three for two ads in a row, or bought with ★ (5, 10 or 20, the more the cheaper each). The old
-  // 無制限パス is no longer sold; whoever has it keeps it (no count for them). Kept on this device. ----------
+  // watching an ad, three for two ads in a row, or bought with ★ (5, 10 or 20, the more the cheaper each). (The old
+  // 無制限パス is gone, also from whoever had it.) Kept on this device. ----------
   const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 10 * 60 * 1000, AD_SEC = 5;
-  const PASS_ID = 'pass_unlimited', PASS_YEN = 480;
-  const passOn = () => shopData().owned.includes(PASS_ID);
   const lifeData = (() => { let v = null; try { v = JSON.parse(localStorage.getItem(LIFE_KEY)); } catch (_) {} return Object.assign({ n: LIFE_MAX, at: Date.now(), inv: '' }, v || {}); })();
   const lifeSave = () => { try { localStorage.setItem(LIFE_KEY, JSON.stringify(lifeData)); } catch (_) {} };
   // the time recovery: one per 15 minutes while below 3 (what was earned on top of 3 is kept)
@@ -3534,17 +3531,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const lifeHearts = n => '<span>♥</span>'.repeat(Math.min(n, LIFE_MAX)) + '<i>♥</i>'.repeat(Math.max(0, LIFE_MAX - n)) + (n > LIFE_MAX ? `<em>+${n - LIFE_MAX}</em>` : '');
   const todayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
   function lifeRender() {
-    const n = lifeNow(), pass = passOn();
-    $('lifeHearts').innerHTML = pass ? '∞' : lifeHearts(n); $('lifeHearts').classList.toggle('inf', pass);
-    $('lifeNext').textContent = pass ? '無制限' : n >= LIFE_MAX ? (n > LIFE_MAX ? '+' + (n - LIFE_MAX) : '満タン') : lifeClock(lifeLeft());
+    const n = lifeNow();
+    $('lifeHearts').innerHTML = lifeHearts(n);
+    $('lifeNext').textContent = n >= LIFE_MAX ? (n > LIFE_MAX ? '+' + (n - LIFE_MAX) : '満タン') : lifeClock(lifeLeft());
     if ($('lifeScreen').hidden) return;
-    $('lifeBig').innerHTML = pass ? '∞' : lifeHearts(n); $('lifeBig').classList.toggle('inf', pass);
-    $('lifeRule').textContent = pass ? '無制限パスで、何回でも遊べる' : n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
-    $('lifeAd').hidden = $('lifeAd3').hidden = pass;
+    $('lifeBig').innerHTML = lifeHearts(n);
+    $('lifeRule').textContent = n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
     $('lifeAd').disabled = n >= LIFE_MAX; $('lifeAd3').disabled = n >= LIFE_MAX || ad3Used();
     $('lifeAd3Sub').textContent = ad3Used() ? '今日はもう使った(1日1回まで。明日また使える)' : '続けて2本見ると3回復(1日1回まで)';
     // ★ for hearts: what is held, and each pack (marked if it is short of stars or would go past the most that can be held)
-    $('lifeStar').hidden = pass; $('lifeStarHave').textContent = `★でハートを買う(所持 ★${starHave()})`;
+    $('lifeStarHave').textContent = `★でハートを買う(所持 ★${starHave()})`;
     const box = $('lifeStarBtns'); box.textContent = '';
     for (const [k, cost] of HEART_STAR) {
       const b = document.createElement('button'); b.type = 'button';
@@ -3565,7 +3561,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function lifeGive(k) { lifeNow(); const was = lifeData.n; lifeData.n += k; if (was >= LIFE_MAX) lifeData.at = Date.now(); lifeSave(); lifeRender(); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); }
   // a run starts: one play used (the tutorial list's replays are free); none left: the recovery screen instead
   function lifeUse() {
-    if (passOn()) return true;
     if (lifeNow() <= 0) { lifeOpen('遊べる回数がありません。回復してから遊ぼう'); return false; }
     if (lifeData.n >= LIFE_MAX) lifeData.at = Date.now();
     lifeData.n--; lifeSave(); lifeRender(); return true;
@@ -3591,7 +3586,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }, 1000);
   }
   function adStart(of) {
-    if (passOn() || lifeNow() >= LIFE_MAX || (of > 1 && ad3Used())) return;
+    if (lifeNow() >= LIFE_MAX || (of > 1 && ad3Used())) return;
     tap(); adRun = { n: 0, of }; adPlay();
   }
   $('lifeAd').addEventListener('click', () => adStart(1));
