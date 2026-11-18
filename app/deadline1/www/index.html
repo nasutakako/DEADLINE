@@ -5371,6 +5371,21 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // some blocks open a way through, warned 5 s before. { at, block: [tile index], open: [tile index], on }
   // (on in the artifact only for now: the site and the app build set it false)
   const SHIFT_ON = false;
+  // 停電: on stage 3 (and the weekly ranking) the street lights fail for 15 s at 10:00, then every 2 min (12:00, 14:00, ...).
+  // Not black: the lights stutter, mostly out with clicks of light coming back now and then, a quick stutter as it
+  // starts and as it ends. outageLevel(T) is how dark it is at run time T (0 lit .. 1 out)
+  const OUTAGE_AT = 600, OUTAGE_EVERY = 120, OUTAGE_LEN = 15, OUTAGE_DARK = 0.72;
+  function outageAt(T) {   // (seconds into the outage going on at T, or -1)
+    if (stageN !== 3 || tut || T < OUTAGE_AT) return -1;
+    const k = Math.floor((T - OUTAGE_AT) / OUTAGE_EVERY), u = T - OUTAGE_AT - k * OUTAGE_EVERY;
+    return u < OUTAGE_LEN ? u : -1;
+  }
+  function outageLevel(T) {
+    const u = outageAt(T); if (u < 0) return 0;
+    const k = Math.floor((T - OUTAGE_AT) / OUTAGE_EVERY), seg = Math.floor(u * 9), h = Math.abs(Math.sin(seg * 12.9898 + k * 78.233) * 43758.5453) % 1;
+    const edge = u < 1.1 || u > OUTAGE_LEN - 1.1;   // (a stutter as it fails and as it comes back)
+    return (edge ? h < 0.5 : h < 0.12) ? 0.12 : 1;
+  }
   const SHIFT_AT = 900, SHIFT_WARN = 5, SHIFT_BLOCK = 5, SHIFT_OPEN = 4;
   let shift = null;
   // every open tile reachable from every other (the streets must stay one piece)
@@ -5700,6 +5715,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     // stage 2: when the exit opens, one black oni (faster than you) joins the chase
     if (stageN === 2 && t >= EXIT_AT2 && !P.black2) { P.black2 = true; queueSpawn(0); pending[pending.length - 1].black = true; }
+    { const lv = outageLevel(t); if (lv !== (P.outLv ?? 0)) { if (!(P.outLv > 0) && lv > 0 && outageAt(t) < 0.2) { noise(0.25, 0.06); tone(60, 0.4, 'sawtooth', 0.04, 40); } tone(lv > 0.5 ? 1400 : 2100, 0.02, 'square', 0.03); P.outLv = lv; } }
     if (SHIFT_ON && stageN === 3 && !tut) {
       if (!shift && t >= SHIFT_AT - SHIFT_WARN) { shift = planShift(); klaxon(2, 0.03); }
       if (shift && !shift.on && t >= shift.at) doShift();
@@ -8042,6 +8058,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.inv > 0 && Math.sin(now * 30) > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 0.12, 0, Math.PI * 2); ctx.stroke(); }
     };
     const up = P.jumpT > 0;
+    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); } }
     for (const e of enemies) if (!e.dead) lightPool(e.x, e.y, ONI_LIGHT, 0.26 * Math.min(1, (t - e.born) / 0.3));
     if (state !== 'caught' && state !== 'over') lightPool(P.x, P.y, runnerLook(now).glow, 0.24);
     if (!up) drawRunner();
@@ -11028,7 +11045,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を40体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は9分まで${ONI_WAVE_MAX}体まで。9分から8体、12分からは9体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
-      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '12分から: 黒い鬼が、マップに必ず3体はいるように出てくる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
+      <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '12分から: 黒い鬼が、マップに必ず3体はいるように出てくる', '10分から: 2分ごとに15秒の停電。街の明かりがちらついて暗くなる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -11054,7 +11071,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const kinds = n === 4 ? [daily ? daily.rule.split('\n')[0].replace(/^・/, '') : '']
       : n === 1 ? ['ふつうの鬼(赤)がほとんど', '先回りの鬼(黄色): まれにまざる(約6%)。逃走者の行く先に回り込む']
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
-      : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '12分から: 黒い鬼が、マップに必ず3体はいるように出てくる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])];
+      : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '12分から: 黒い鬼が、マップに必ず3体はいるように出てくる', '10分から: 2分ごとに15秒の停電。街の明かりがちらついて暗くなる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])];
     const own = [];
     if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
     // (the survival nights always have their two pits, on whichever map they are played)
