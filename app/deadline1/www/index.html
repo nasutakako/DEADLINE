@@ -3275,7 +3275,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   try { if ((records.shopReset || 0) < SHOP_RESET_N) { shopResetApply(records); localStorage.setItem(REC_KEY, JSON.stringify(records)); } } catch (e) {}
   const stdItem = c => c.k === 'acc' ? ['', 'なし', 0, 'アクセサリーをつけない', ''] : ['', '標準', 0, 'はじめから使える', ''];
   // taken off the shelves: no longer sold, but whoever bought one keeps it (装備 still lists it)
-  const SHOP_RETIRED = ['sk_mouse', 'sk_lady_y', 'sk_lady_b'];
+  const SHOP_RETIRED = ['sk_mouse', 'sk_lady_y', 'sk_lady_b', 'sk_budo', 'sk_kaizoku'];
   const shopItems = () => SHOP.flatMap(c => [stdItem(c), ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]) && !SHOP_RETIRED.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   // (the gold + by the stars opens the ★ shop)
   document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
