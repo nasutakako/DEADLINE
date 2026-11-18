@@ -5500,7 +5500,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // 加速装置: two plates on straight streets (from 1-2 on), far apart; stepping on one runs the runner as a dash would
   // (the dash button's own wait untouched); then 30 s before it works again
   let pads = [];
-  const PAD_COOL = 30, BOOSTPAD_R = 0.42;
+  const PAD_COOL = 20, BOOSTPAD_R = 0.42;   // (20 s: two pads taken in turn give a boost about every 10 s, one a wave)
   const WARP_HOLD = 0.08, WARP_COOL = 90, WARP_R = 0.46;   // (the hold counts only off a dash: a dash runs straight over)
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
@@ -9479,7 +9479,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
     ],
     2: [
-      { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと30秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
+      { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと20秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
       { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
       { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
@@ -11051,7 +11051,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は9分まで${ONI_WAVE_MAX}体まで。9分から7体、12分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '10分から: 2分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'])}</section>
+      <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと20秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
   }
@@ -11078,7 +11078,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       : n === 2 ? ['先回りの鬼(黄色): ときどきまざる(約13%)', 'バリア鬼: 爆発に1回耐える。マップにいないとき、ときどきまざる', `${mmss(EXIT_AT2)}(出口が開くとき): 逃走者より速い黒い鬼が1体現れる`]
       : ['先回りの鬼(黄色)とバリア鬼がよくまざる', '2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '10分から: 2分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])];
     const own = [];
-    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと30秒使えない');
+    if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと20秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと20秒使えない');
     // (the survival nights always have their two pits, on whichever map they are played)
     if (ms >= 3 || n === 4) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
     if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
