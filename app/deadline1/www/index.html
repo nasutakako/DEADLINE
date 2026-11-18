@@ -34,8 +34,11 @@ body #shopList .shoptile.owned .pr, body #equipList .shoptile.owned .pr { color:
 body #shopList, body #equipList { padding-right: 12px; scrollbar-width: none; }
 body #shopList::-webkit-scrollbar, body #equipList::-webkit-scrollbar { display: none; }
 /* the play clip in the detail panel as wide as the panel (the set panel keeps its clip beside the list) */
-body .shopdetail > .clip { width: 100%; height: auto; max-height: none; aspect-ratio: 2.2 / 1; align-self: stretch; }   /* (a little cropped top and bottom, so the whole of it sits above the buy button) */
-body .shopdetail > .clip.pic { aspect-ratio: 844 / 390; }
+/* the clip (or picture) whole, uncropped: as wide as the panel unless that would push it under the buy bar, then as
+   tall as fits there (and narrower, centred) */
+body .shopdetail > .clip { align-self: center; aspect-ratio: 1.6; width: 100%; height: auto; max-height: none; flex: none; }
+body .shopdetail > .clip.pic { aspect-ratio: 2.164; }
+body .shopdetail > .clip video, body .shopdetail > .clip img { object-fit: contain; }
 body .shopdetail .big .sw { width: 48px; height: 48px; }   /* (a smaller swatch in the head, to leave the wide clip room) */
 body .shopdetail { gap: 8px; }
 .listbar { position: absolute; right: 0; width: 5px; border-radius: 3px; background: rgba(255,255,255,.08); pointer-events: none; }
@@ -733,6 +736,7 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .big.setbig { flex-direction: column; align-items: flex-start; gap: 6px; }
 .shopdetail .big.setbig > div { min-width: 0; width: 100%; }
 .shoptile.settile b { letter-spacing: -0.04em; white-space: nowrap; }   /* (the long set names kept on one line) */
+.shopsec .nofx { margin: -4px 0 6px; font-size: 10.5px; line-height: 1.3; color: var(--muted); }
 .setlist { gap: 4px; }
 .shopdetail .setlist .setrow { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; grid-template-rows: auto; width: 100%; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .setrow.on { border-color: #ff9bd6; }
@@ -1606,7 +1610,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     <div class="shopwrap">
       <div class="shophead">
         <h2>ショップ</h2>
-        <span class="shopstars" id="shopStars"></span><button class="starplus" id="shopStarPlus" type="button" aria-label="★を買う">＋</button><span class="shopnote">見た目が変わるだけ。強さは変わらない</span>
+        <span class="shopstars" id="shopStars"></span><button class="starplus" id="shopStarPlus" type="button" aria-label="★を買う">＋</button><span class="shopnote">★はミッションやログインボーナスでも集まる</span>
         <button class="ghost shoprestore" id="shopRestore" type="button">購入を復元</button><button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
         <span class="shopmsg" id="shopMsg" role="status" hidden></span>
       </div>
@@ -3357,7 +3361,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       gridCols(grid, shopItems().filter(x => x.cat === cat).length);
       const fxN = cat.items.filter(it => SHOP_FX[it[0]]).length;
       if (fxN) { const sm = document.createElement('small'); sm.textContent = `効果つき ${fxN}`; h.append(sm); }
-      sec.append(h, grid);
+      const nofx = document.createElement('p'); nofx.className = 'nofx'; nofx.textContent = '全アイテム特別な効果なし(見た目だけ)';
+      sec.append(h, nofx, grid);
       for (const it of shopItems().filter(x => x.cat === cat)) {
         const have = !it.id || sd.owned.includes(it.id), on = (sd.eq[cat.k] || '') === it.id, sel = shopSel && shopSel.cat === cat && shopSel.id === it.id;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile' + (have ? ' owned' : '') + (on ? ' on' : '') + (sel ? ' sel' : '');
@@ -3493,6 +3498,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const row = mk('div', 'setside'); if (clip) row.append(clip); row.append(what);   // (the clip and its list side by side)
     box.append(big, row, act);
   }
+  // the detail panel's clip (or picture): whole, as wide as the panel unless that would run under the buy bar at the
+  // bottom, then as tall as the room above it allows (narrower, centred)
+  function clipFit(box) {
+    const c = box.querySelector(':scope > .clip'), a = box.querySelector('.shopact'); if (!c || !a) return;
+    c.style.width = ''; const ar = c.classList.contains('pic') ? 2.164 : 1.6;
+    const room = a.getBoundingClientRect().top - c.getBoundingClientRect().top - 6, w = c.getBoundingClientRect().width;
+    if (room > 40 && w / ar > room) c.style.width = Math.floor(room * ar) + 'px';
+  }
+  addEventListener('resize', () => { for (const id of ['shopDetail', 'equipDetail']) { const b = $(id); if (b && b.offsetParent) clipFit(b); } });
   // a list's scroll bar: a thin track on its right edge with a thumb for the part on screen (hidden when it all fits)
   function listBar(list) {
     let bar = list.parentElement.querySelector(':scope > .listbar');
@@ -3592,6 +3606,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_LAST[r]}クリアで獲得`)); }
     { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}でまとめて買うと${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); look.append(g); } }   // (with the look, not the buy bar, so the clip keeps its room)
     box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
+    clipFit(box); requestAnimationFrame(() => clipFit(box));   // (again once the screen is laid out: the first time it opens it is not yet)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
@@ -3663,6 +3678,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     btn.addEventListener('click', () => { tap(); shopData().eq[it.cat.k] = it.id; saveRecords(); openEquip(); });
     act.append(btn, mk('span', 'state', on ? 'いま使っている' : '持っている'));
     box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
+    clipFit(box); requestAnimationFrame(() => clipFit(box));   // (again once the screen is laid out: the first time it opens it is not yet)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
