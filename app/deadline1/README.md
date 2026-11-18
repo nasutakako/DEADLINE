@@ -29,7 +29,7 @@ npx cap open ios             # Xcode が開く → ▶ で実機/シミュレー
 | 商品ID | 種類 | 値段 |
 |---|---|---|
 | deadline1.item.bomb_grav / rk_plasma / bs_after / bs_thunder / dash_warp | 非消耗型 | 500円 |
-| deadline1.stars.180 / 350 / 650 / 1150 / 2600 / 4500 | 消耗型 | 200 / 400 / 600 / 1,000 / 2,000 / 3,000円（App Store の価格の段階でいちばん近いもの） |
+| deadline1.stars.350 / 650 / 1150 / 2600 / 4500 | 消耗型 | 400 / 600 / 1,000 / 2,000 / 3,000円（App Store の価格の段階でいちばん近いもの） |
 
 - 購入は `www/iap.js`（cordova-plugin-purchase）が受け持つ。ゲーム側は `window.DEADLINE_IAP` だけを見る
 - 課金の動作確認は Xcode の StoreKit 設定ファイル、または TestFlight（お金はかからない）で行う

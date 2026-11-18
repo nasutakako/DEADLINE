@@ -855,6 +855,14 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifeact.line { background: #06c755; border-color: #06c755; color: #fff; }
 .lifeact.ad3 { border-color: rgba(255,207,90,.55); background: rgba(255,207,90,.08); }
 .lifeact.ad3 b { color: var(--lamp); }
+.lifestar { display: grid; gap: 6px; margin-top: 8px; }
+.lifestar[hidden] { display: none; }
+.lifestarbtns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.lifestarbtns button { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px; border-radius: 8px; border: 1px solid rgba(255,207,90,.55); background: linear-gradient(rgba(255,207,90,.1), rgba(255,207,90,.1)), var(--panel); color: var(--ink); font: inherit; cursor: pointer; }
+.lifestarbtns button:disabled { opacity: .4; cursor: default; }
+.lifestarbtns button b { font-size: 15px; color: #ffcf5a; }
+.lifestarbtns button small { font-size: 11.5px; color: var(--muted); }
+.lifestarbtns button em { font-style: normal; font-size: 10.5px; color: #7dffb0; }
 .lifeact.pass { border-color: #c792ff; background: linear-gradient(135deg, rgba(199,146,255,.22), rgba(199,146,255,.05)); }
 .lifeact.pass b { color: #e2c8ff; }
 .lifebig.inf, .lifepill .hearts.inf { color: #d9b3ff; }
@@ -1719,8 +1727,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <div class="lifeacts">
         <button class="lifeact ad" id="lifeAd" type="button"><b>広告を見て 1回復</b><small>広告を1本、最後まで見る</small></button>
         <button class="lifeact ad3" id="lifeAd3" type="button"><b>広告を2本見て 3回復</b><small id="lifeAd3Sub">続けて2本見ると3回復(1日1回まで)</small></button>
-        <button class="lifeact pass" id="lifePass" type="button"><b>無制限パス</b><small id="lifePassSub">遊べる回数を気にせず、何回でも遊べる(買い切り)</small></button>
       </div>
+      <div class="lifestar" id="lifeStar"><span class="label" id="lifeStarHave"></span><div class="lifestarbtns" id="lifeStarBtns"></div></div>
       <div class="row"><button class="ghost" id="lifeClose" type="button">閉じる</button></div>
     </div>
   </div>
@@ -3345,7 +3353,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   });
   // ★ in packs (about 1円 a star: the smallest a little dearer, the two biggest with extra); free while testing
   // (bigger packs, better value: 0.9, 0.88, 1.08, 1.15, 1.3 and 1.5 ★ a yen)
-  const STAR_PACKS = [[180, 200], [350, 400], [650, 600], [1150, 1000], [2600, 2000], [4500, 3000]].map(([pack, yen]) => ({ pack, yen }));
+  const STAR_PACKS = [[350, 400], [650, 600], [1150, 1000], [2600, 2000], [4500, 3000]].map(([pack, yen]) => ({ pack, yen }));
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
     const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
@@ -3506,8 +3514,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
-  // watching an ad, three for two ads in a row. The 無制限パス (bought once) does away with the count. Kept on this
-  // device. ----------
+  // watching an ad, three for two ads in a row, or bought with ★ (5, 10 or 20, the more the cheaper each). The old
+  // 無制限パス is no longer sold; whoever has it keeps it (no count for them). Kept on this device. ----------
   const LIFE_KEY = REC_KEY + '-life', LIFE_MAX = 3, LIFE_EVERY = 10 * 60 * 1000, AD_SEC = 5;
   const PASS_ID = 'pass_unlimited', PASS_YEN = 480;
   const passOn = () => shopData().owned.includes(PASS_ID);
@@ -3535,9 +3543,24 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('lifeAd').hidden = $('lifeAd3').hidden = pass;
     $('lifeAd').disabled = n >= LIFE_MAX; $('lifeAd3').disabled = n >= LIFE_MAX || ad3Used();
     $('lifeAd3Sub').textContent = ad3Used() ? '今日はもう使った(1日1回まで。明日また使える)' : '続けて2本見ると3回復(1日1回まで)';
-    $('lifePass').disabled = pass;
-    const pp = Store.price(PRODUCT.item(PASS_ID));
-    $('lifePass').querySelector('b').textContent = pass ? '無制限パス(購入済み)' : `無制限パス ${Store.live() ? pp || PASS_YEN + '円' : PASS_YEN + '円(いまは無料)'}`;
+    // ★ for hearts: what is held, and each pack (marked if it is short of stars or would go past the most that can be held)
+    $('lifeStar').hidden = pass; $('lifeStarHave').textContent = `★でハートを買う(所持 ★${starHave()})`;
+    const box = $('lifeStarBtns'); box.textContent = '';
+    for (const [k, cost] of HEART_STAR) {
+      const b = document.createElement('button'); b.type = 'button';
+      const off = Math.round((1 - cost / (k * HEART_ONE)) * 100);
+      b.innerHTML = `<b>♥×${k}</b><small>★${cost}</small>` + (off > 0 ? `<em>${off}%おトク</em>` : '');
+      b.disabled = n + k > HEART_HOLD;
+      b.addEventListener('click', () => heartBuy(k, cost)); box.append(b);
+    }
+  }
+  // ★ for hearts. Free ★ come in at about 20 a day, so one heart costs two and a half days of them: the ads stay the free way back
+  // (no single heart for ★: an ad gives one for nothing; the discount is against ★50 a heart)
+  const HEART_ONE = 50, HEART_STAR = [[5, 220], [10, 400], [20, 720]], HEART_HOLD = 99;
+  function heartBuy(k, cost) {
+    tap();
+    if (starHave() < cost) { $('lifeMsg').textContent = `★があと${cost - starHave()}個たりない`; $('lifeScreen').hidden = true; shopTab = 'star'; shopSel = null; openShop(); return; }
+    starW().s += cost; saveRecords(); lifeGive(k); $('lifeMsg').textContent = `★${cost}で ${k}回復した!`;
   }
   function lifeGive(k) { lifeNow(); const was = lifeData.n; lifeData.n += k; if (was >= LIFE_MAX) lifeData.at = Date.now(); lifeSave(); lifeRender(); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); }
   // a run starts: one play used (the tutorial list's replays are free); none left: the recovery screen instead
@@ -3579,15 +3602,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const k = adRun.of > 1 ? 3 : 1; adRun = null;
     if (k === 3) lifeData.ad3Day = todayKey();
     $('adScreen').hidden = true; lifeGive(k); $('lifeMsg').textContent = `${k}回復した!`;
-  });
-  // the 無制限パス: bought once (free while testing), restorable with the shop's 購入を復元
-  $('lifePass').addEventListener('click', async () => {
-    if (passOn()) return;
-    tap(); $('lifePass').disabled = true;
-    const r = await Store.buy(PRODUCT.item(PASS_ID));
-    if (!r.ok) { $('lifePass').disabled = false; $('lifeMsg').textContent = r.msg || ''; return; }
-    shopData().owned.push(PASS_ID); saveRecords(); lifeRender(); $('lifeMsg').textContent = '無制限パスを手に入れた! 何回でも遊べる';
-    tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.14, 'triangle', 0.05), 80); setTimeout(() => tone(1760, 0.2, 'triangle', 0.05), 170);
   });
   setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
   lifeRender();
