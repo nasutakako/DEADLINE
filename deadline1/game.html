@@ -3376,8 +3376,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ★ in packs (about 1円 a star: the smallest a little dearer, the two biggest with extra); free while testing
   // (bigger packs, better value: 0.9, 0.88, 1.08, 1.15, 1.3 and 1.5 ★ a yen)
   const STAR_PACKS = [[350, 400], [650, 600], [1150, 1000], [2600, 2000], [4500, 3000]].map(([pack, yen]) => ({ pack, yen }));
-  // sets: a few looks of one theme together, 25% off what they cost one by one; what is already owned is left out of the
-  // price (all owned: nothing to buy). Bought with ★, everything in it worn at once
+  // sets: a few looks of one theme together, 25% off what they cost one by one, but only when none of it is owned yet
+  // (with some owned, the rest costs what it does one by one: no cheaper than buying them singly). Bought with ★,
+  // everything in it worn at once
   const SHOP_SETS = [
     ['set_elec', '電気セット', ['bomb_emp', 'br_emf', 'rk_plasma', 'dash_bolt']],
     ['set_comic', 'コミックセット', ['bomb_comic', 'rk_comic', 'dash_comic', 'br_comic', 'sk_comic']],
@@ -3389,7 +3390,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const SET_OFF = 0.25;
   const setItems = S => S.ids.map(id => shopItems().find(x => x.id === id)).filter(Boolean);
   const setCost = S => { const own = shopData().owned, its = setItems(S), left = its.filter(x => !own.includes(x.id)), sum = left.reduce((a, x) => a + starPrice(x), 0);
-    return { sum, cost: Math.round(sum * (1 - SET_OFF) / 10) * 10, left }; };
+    const whole = left.length === its.length;
+    return { sum, whole, cost: whole ? Math.round(sum * (1 - SET_OFF) / 10) * 10 : sum, left }; };
   const setOf = id => SHOP_SETS.find(S => S.ids.includes(id));
   function setSwatches(el, S, big) { el.className = 'setsw' + (big ? ' big' : ''); for (const x of setItems(S)) { const d = document.createElement('i'); shopSwatch(d, x.id, x.sw, x.cat.k); el.append(d); } }
   function shopSets(list) {
@@ -3403,7 +3405,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const n = document.createElement('b'); n.textContent = S.name;
       const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = c.left.length ? '★' + c.cost : '所持';
       b.append(sw, n, pr);
-      if (c.left.length) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = SET_OFF * 100 + '%OFF'; b.append(t); }
+      if (c.whole) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = SET_OFF * 100 + '%OFF'; b.append(t); }
       b.addEventListener('click', () => { tap(); shopSel = S; setClipAt = 0; openShop(); });
       grid.append(b);
     }
@@ -3416,7 +3418,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (no swatch row here: the tile on the left shows them, and the panel keeps its height for the clip)
     const big = mk('div', 'big setbig'), head = mk('div'), price = mk('div', 'price');
     if (!c.left.length) price.textContent = '全部持っています';
-    else price.append(mk('s', null, '★' + c.sum), document.createTextNode(` ★${c.cost} (${SET_OFF * 100}%おトク)`));
+    else if (c.whole) price.append(mk('s', null, '★' + c.sum), document.createTextNode(` ★${c.cost} (${SET_OFF * 100}%おトク)`));
+    else price.textContent = `残り${c.left.length}品 ★${c.cost}(割引なし)`;
     head.append(mk('div', 'cat', 'セット'), mk('h3', null, S.name), price);
     big.append(head);
     // the clips of its items, one after another (each played through once, then the next); the list below jumps to one
@@ -3444,7 +3447,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       r.addEventListener('click', () => { tap(); setClipAt = i; shopDetail(); }); what.append(r); });
     const act = mk('div', 'shopact'), btn = mk('button', c.left.length ? 'go' : 'ghost'); btn.type = 'button';
     const short = c.cost > starHave();
-    btn.textContent = !c.left.length ? '全部持っている' : short ? `★があと${c.cost - starHave()}個たりない ・ ★を買う` : `★${c.cost}で交換して全部装備`;
+    btn.textContent = !c.left.length ? '全部持っている' : short ? `★があと${c.cost - starHave()}個たりない ・ ★を買う` : c.whole ? `★${c.cost}で交換して全部装備` : `残りを★${c.cost}で交換して全部装備`;
     btn.disabled = !c.left.length; if (c.left.length && short) btn.classList.add('toBuy');
     btn.addEventListener('click', () => {
       tap();
@@ -3544,7 +3547,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // a story's prize: also won by clearing that story's stage 3
     { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
       if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_LAST[r]}クリアで獲得`)); }
-    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).left.length > 1) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}に入っています(${SET_OFF * 100}%おトク) ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); act.append(g); } }
+    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}に入っています(${SET_OFF * 100}%おトク) ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); act.append(g); } }
     box.append(big, ...(clip ? [clip] : []), look, fx, act);
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
