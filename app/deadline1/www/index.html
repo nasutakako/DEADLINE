@@ -17,6 +17,25 @@ try { if (window.parent !== window && window.parent.DEADLINE_SHELL) document.doc
 <style>
 :root { --sa-top: env(safe-area-inset-top, 0px); --sa-bottom: env(safe-area-inset-bottom, 0px); --sa-left: env(safe-area-inset-left, 0px); --sa-right: env(safe-area-inset-right, 0px); }
 html.inshell { --sa-top: 0px; --sa-bottom: 0px; --sa-left: 0px; --sa-right: 0px; }
+
+/* the shop and equip screens: a slim top (no note), the tabs down the left, the list three to a row, a wide detail
+   panel, gold prices and green 所持; a bar on the list's right edge shows how far down it goes */
+body #shopScreen .shophead .shopnote { display: none; }
+body #shopScreen .shophead h2, body #equipScreen .shophead h2 { font-size: 24px; }
+body #shopScreen .shopwrap, body #equipScreen .shopwrap { gap: 6px; }
+body #shopScreen .shopleft, body #equipScreen .shopleft { flex-direction: row; position: relative; }
+body #shopTabs, body #equipTabs { display: flex !important; flex-direction: column; width: 92px; flex: none; gap: 4px; overflow-y: auto; }
+body #shopTabs button, body #equipTabs button { grid-column: auto !important; padding: 7px 8px !important; font-size: 12px; text-align: left !important; }
+body #shopScreen .shopbody, body #equipScreen .shopbody { grid-template-columns: minmax(0, 1fr) minmax(260px, 44%); }
+body #shopList .shopgrid, body #equipList .shopgrid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+body #shopList .shopgrid.setgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+body #shopList .shoptile .pr, body #equipList .shoptile .pr { color: #ffcf5a; font-size: 12px; font-weight: 700; }
+body #shopList .shoptile.owned .pr, body #equipList .shoptile.owned .pr { color: #5dff9e; }
+body #shopList, body #equipList { padding-right: 12px; scrollbar-width: none; }
+body #shopList::-webkit-scrollbar, body #equipList::-webkit-scrollbar { display: none; }
+.listbar { position: absolute; right: 0; width: 5px; border-radius: 3px; background: rgba(255,255,255,.08); pointer-events: none; }
+.listbar[hidden] { display: none; }
+.listbar i { position: absolute; left: 0; right: 0; border-radius: 3px; background: rgba(255,207,90,.75); }
 </style>
 </head>
 <body>
@@ -3348,6 +3367,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       list.append(sec);
     }
     list.scrollTop = keep;
+    requestAnimationFrame(() => listBar(list));
     shopDetail();
     ui.title.hidden = true; { const sc = $('shopScreen'); if (sc.parentElement !== document.body) document.body.append(sc); sc.hidden = false; }   // (under the body: in the game area a phone's browser can hold a fixed screen inside that area)
     $('shopStars').textContent = `★ ${starHave()}`;
@@ -3404,7 +3424,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (!shopSel || !shopSel.set) shopSel = SHOP_SETS[0];
     const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
     sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = `セット(バラで買うより${SET_OFF * 100}%おトク)`;
-    grid.style.gridTemplateColumns = 'repeat(3, minmax(0, 1fr))'; sec.append(h, grid);   // (three to a row: the set names are long)
+    grid.classList.add('setgrid'); sec.append(h, grid);   // (two to a row: the set names are long)
     for (const S of SHOP_SETS) {
       const c = setCost(S), b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile settile' + (c.left.length ? '' : ' owned') + (shopSel === S ? ' sel' : '');
       const sw = document.createElement('span'); setSwatches(sw, S);
@@ -3467,6 +3487,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     act.append(btn, mk('span', 'state', `所持 ★${starHave()}`));
     const row = mk('div', 'setside'); if (clip) row.append(clip); row.append(what);   // (the clip and its list side by side)
     box.append(big, row, act);
+  }
+  // a list's scroll bar: a thin track on its right edge with a thumb for the part on screen (hidden when it all fits)
+  function listBar(list) {
+    let bar = list.parentElement.querySelector(':scope > .listbar');
+    if (!bar) { bar = document.createElement('span'); bar.className = 'listbar'; bar.append(document.createElement('i')); list.parentElement.append(bar);
+      list.addEventListener('scroll', () => listBar(list), { passive: true }); addEventListener('resize', () => listBar(list)); }
+    const H = list.clientHeight, S = list.scrollHeight; bar.hidden = S <= H + 2; if (bar.hidden) return;
+    bar.style.top = list.offsetTop + 'px'; bar.style.height = H + 'px';
+    const th = Math.max(24, H * H / S), t = (H - th) * list.scrollTop / Math.max(1, S - H);
+    bar.firstChild.style.height = th + 'px'; bar.firstChild.style.top = t + 'px';
   }
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
@@ -3593,6 +3623,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       list.append(sec);
     }
     list.scrollTop = keep;
+    requestAnimationFrame(() => listBar(list));
     equipDetail();
     ui.title.hidden = true; { const sc = $('equipScreen'); if (sc.parentElement !== document.body) document.body.append(sc); sc.hidden = false; }
   }
