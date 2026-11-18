@@ -3380,7 +3380,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // price (all owned: nothing to buy). Bought with ★, everything in it worn at once
   const SHOP_SETS = [
     ['set_elec', '電気セット', ['bomb_emp', 'br_emf', 'rk_plasma', 'dash_bolt']],
-    ['set_comic', 'コミックセット', ['bomb_comic', 'rk_comic', 'dash_comic', 'br_comic']],
+    ['set_comic', 'コミックセット', ['bomb_comic', 'rk_comic', 'dash_comic', 'br_comic', 'sk_comic']],
     ['set_energy_y', 'エネルギーセット(金)', ['bomb_energy', 'rk_energy_y', 'br_aura', 'dash_nitro_y', 'ac_toki']],
     ['set_energy_r', 'エネルギーセット(赤)', ['bomb_energy_r', 'rk_energy_r', 'br_aura_r', 'dash_nitro_r', 'ac_toki_r']],
     ['set_energy_b', 'エネルギーセット(青)', ['bomb_energy_b', 'rk_energy', 'br_aura_b', 'dash_nitro_b', 'ac_toki_b']],
@@ -3422,9 +3422,21 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // the clips of its items, one after another (each played through once, then the next); the list below jumps to one
     const at = Math.min(setClipAt, its.length - 1), src = its[at] && shopClip(its[at]);
     let clip = null;
-    if (src) { const v = document.createElement('video'), cw = mk('div', 'clip'), lab = mk('span', null, its[at].name); v.muted = true; v.loop = false; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.src = src; cw.append(v, lab); clip = cw;
-      v.addEventListener('ended', () => { for (let k = 1; k <= its.length; k++) { const j = (setClipAt + k) % its.length, u = shopClip(its[j]); if (!u) continue;
-        setClipAt = j; v.src = u; lab.textContent = its[j].name; box.querySelectorAll('.setrow').forEach((r, i) => r.classList.toggle('on', i === j)); v.play().catch(() => {}); return; } v.currentTime = 0; v.play().catch(() => {}); }); }
+    if (src) {
+      // a fresh video for each item (swapping the src of one does not always carry on playing on phones); it moves on when
+      // the clip ends, or after its length if the end never comes, and stops once the panel is redrawn
+      const cw = mk('div', 'clip'), lab = mk('span', null, its[at].name); clip = cw;
+      const show = j => {
+        const v = document.createElement('video'); v.muted = true; v.loop = false; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', '');
+        v.src = shopClip(its[j]); const old = cw.querySelector('video'); if (old) old.replaceWith(v); else cw.prepend(v);
+        lab.textContent = its[j].name; box.querySelectorAll('.setrow').forEach((r, i) => r.classList.toggle('on', i === j));
+        let gone = false; const next = () => { if (gone || !v.isConnected) return; gone = true; clearTimeout(t);
+          for (let k = 1; k <= its.length; k++) { const n = (j + k) % its.length; if (shopClip(its[n])) { setClipAt = n; show(n); return; } } };
+        let t = setTimeout(next, 4000); v.addEventListener('loadedmetadata', () => { if (isFinite(v.duration) && v.duration > 0) { clearTimeout(t); t = setTimeout(next, v.duration * 1000 + 300); } });
+        v.addEventListener('ended', next); v.play && v.play().catch(() => {});
+      };
+      cw.append(lab); requestAnimationFrame(() => show(at));
+    }
     const what = mk('div', 'blk setlist'); what.append(mk('span', null, '中身(映像は順番に流れる。タップでその品へ)'));
     its.forEach((x, i) => { const own = sd.owned.includes(x.id), r = mk('button', 'setrow' + (i === at ? ' on' : '')); r.type = 'button';
       const d = mk('i'); shopSwatch(d, x.id, x.sw, x.cat.k);
@@ -3444,7 +3456,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     });
     act.append(btn, mk('span', 'state', `所持 ★${starHave()}`));
     box.append(big, ...(clip ? [clip] : []), what, act);
-    if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
