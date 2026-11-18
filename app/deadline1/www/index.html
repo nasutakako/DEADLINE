@@ -703,8 +703,11 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shoptile .pr { font-size: 11px; color: var(--muted); }
 .setsw { display: flex; justify-content: center; height: 44px; align-items: center; }
 .setsw i { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); margin: 0 -4px; box-shadow: 0 1px 3px rgba(0,0,0,.6); }
-.setsw.big i { width: 40px; height: 40px; margin: 0 -7px; }
-.setsw.big { height: 76px; flex: none; padding: 0 8px; }
+.setsw.big i { width: 36px; height: 36px; margin: 0 -5px; }
+.setsw.big { height: 40px; flex: none; justify-content: flex-start; padding-left: 5px; }
+/* (a set's head: its swatches on a row of their own above the name, so the name and price have the full width) */
+.shopdetail .big.setbig { flex-direction: column; align-items: flex-start; gap: 6px; }
+.shopdetail .big.setbig > div { min-width: 0; width: 100%; }
 .setlist { gap: 4px; }
 .shopdetail .setlist .setrow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; grid-template-rows: auto; width: 100%; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .setrow.on { border-color: #ff9bd6; }
@@ -3407,10 +3410,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function setDetail(box) {
     const S = shopSel && shopSel.set ? shopSel : SHOP_SETS[0], sd = shopData(), c = setCost(S), its = setItems(S);
     const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
-    const big = mk('div', 'big'), sw = mk('span'), head = mk('div'), price = mk('div', 'price');
+    const big = mk('div', 'big setbig'), sw = mk('span'), head = mk('div'), price = mk('div', 'price');
     setSwatches(sw, S, true);
     if (!c.left.length) price.textContent = '全部持っています';
-    else price.append(mk('s', null, '★' + c.sum), document.createTextNode(`★${c.cost}(${SET_OFF * 100}%おトク)`));
+    else price.append(mk('s', null, '★' + c.sum), document.createTextNode(` ★${c.cost} (${SET_OFF * 100}%おトク)`));
     head.append(mk('div', 'cat', 'セット'), mk('h3', null, S.name), price);
     big.append(sw, head);
     // the clip of one of its items; the list below picks which
