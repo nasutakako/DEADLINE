@@ -4,7 +4,7 @@
 // until the store is ready.
 (() => {
   const ITEMS = ['bomb_grav', 'rk_plasma', 'bs_after', 'bs_thunder', 'dash_warp'].map(id => 'deadline1.item.' + id);
-  const PACKS = [350, 650, 1150, 2600, 4500].map(n => 'deadline1.stars.' + n);
+  const PACKS = [420, 1100, 2500, 4500].map(n => 'deadline1.stars.' + n);
   let store = null, waiting = null, readyFn;
   const ready = new Promise(r => { readyFn = r; });
   document.addEventListener('deviceready', () => {
