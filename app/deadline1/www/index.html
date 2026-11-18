@@ -701,6 +701,20 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shoptile .sw.star, .shopdetail .big .sw.star { display: grid; place-items: center; background: radial-gradient(circle at 38% 32%, #fff6c8, #ffcf5a 45%, #a86e08); color: #5a3800; font-size: 24px; line-height: 1; }
 .shopdetail .big .sw.star { font-size: 38px; }
 .shoptile .pr { font-size: 11px; color: var(--muted); }
+.setsw { display: flex; justify-content: center; height: 44px; align-items: center; }
+.setsw i { width: 24px; height: 24px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25); margin: 0 -4px; box-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.setsw.big i { width: 40px; height: 40px; margin: 0 -7px; }
+.setsw.big { height: 76px; flex: none; padding: 0 8px; }
+.setlist { gap: 4px; }
+.shopdetail .setlist .setrow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; grid-template-rows: auto; width: 100%; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.setrow.on { border-color: #ff9bd6; }
+.setrow i { width: 22px; height: 22px; border-radius: 50%; }
+.setrow b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shopdetail .setlist .setrow small { grid-column: auto; grid-row: auto; font-size: 11px; color: var(--muted); }
+.setrow em { font-style: normal; font-size: 12px; color: var(--lamp); }
+.setrow em.have { color: #5dff9e; }
+.setnote { width: 100%; margin-top: 4px; padding: 6px 10px; border-radius: 8px; border: 1px dashed rgba(255,207,90,.6); background: rgba(255,207,90,.06); color: var(--lamp); font: inherit; font-size: 12.5px; cursor: pointer; text-align: center; }
+.shopdetail .price s { color: var(--muted); margin-right: 4px; }
 .shoptile.owned .pr { color: var(--runner); }
 .shoptile .fxtag { position: absolute; top: 5px; right: 5px; font-size: 9.5px; font-weight: 700; padding: 1px 5px; border-radius: 99px; background: rgba(255,207,90,.16); color: var(--lamp); border: 1px solid rgba(255,207,90,.45); }
 .shoptile.sel { border-color: #ff9bd6; box-shadow: inset 0 0 0 1px #ff9bd6; background: rgba(255,120,200,.07); }
@@ -1021,6 +1035,7 @@ body.swap:not(.ontitle) { grid-template-columns: minmax(0, 1fr) auto; grid-templ
 #shopTabs, #equipTabs { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 6px; flex: none; }
 #shopTabs button, #equipTabs button { grid-column: span 3; }
 #shopTabs button:nth-child(n+5), #equipTabs button:nth-child(n+5) { grid-column: span 4; }
+#shopTabs.eight button:nth-child(n+5) { grid-column: span 3; }   /* (the shop's eight: four on each row) */
 #shopTabs button, #equipTabs button { text-align: center; padding-left: 4px !important; padding-right: 4px !important; white-space: nowrap; }
 @media (max-width: 760px) { #shopTabs button, #equipTabs button { letter-spacing: 0 !important; font-size: 12px !important; } }
 /* a control panel's picture shown whole: as wide as the panel allows at its own shape (never cut to fit a height) */
@@ -3289,13 +3304,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
   function openShop() {
     const tabs = $('shopTabs'); tabs.textContent = '';
-    for (const [k, label] of EQUIP_TABS) {   // (★ is bought through the + by the stars, or the short-of-stars button)
+    tabs.classList.add('eight');
+    for (const [k, label] of [...EQUIP_TABS, ['set', 'セット']]) {   // (★ is bought through the + by the stars, or the short-of-stars button)
       const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(shopTab === k));
       b.addEventListener('click', () => { tap(); shopTab = k; shopSel = null; openShop(); }); tabs.append(b);
     }
     const list = $('shopList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
-    const cats = shopTab === 'star' ? [] : SHOP.filter(c => (c.under || c.k) === shopTab);
+    const cats = shopTab === 'star' || shopTab === 'set' ? [] : SHOP.filter(c => (c.under || c.k) === shopTab);
     if (shopTab === 'star') shopPacks(list);
+    else if (shopTab === 'set') shopSets(list);
     else if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')) || shopItems().find(x => x.cat === c); }
     for (const cat of cats) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
@@ -3353,6 +3370,74 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ★ in packs (about 1円 a star: the smallest a little dearer, the two biggest with extra); free while testing
   // (bigger packs, better value: 0.9, 0.88, 1.08, 1.15, 1.3 and 1.5 ★ a yen)
   const STAR_PACKS = [[350, 400], [650, 600], [1150, 1000], [2600, 2000], [4500, 3000]].map(([pack, yen]) => ({ pack, yen }));
+  // sets: a few looks of one theme together, 25% off what they cost one by one; what is already owned is left out of the
+  // price (all owned: nothing to buy). Bought with ★, everything in it worn at once
+  const SHOP_SETS = [
+    ['set_elec', '電気セット', ['bomb_emp', 'br_emf', 'rk_plasma', 'dash_bolt']],
+    ['set_comic', 'コミックセット', ['bomb_comic', 'rk_comic', 'dash_comic', 'br_comic']],
+    ['set_energy_y', 'エネルギーセット(金)', ['bomb_energy', 'rk_energy_y', 'br_aura', 'dash_nitro_y', 'ac_toki']],
+    ['set_energy_r', 'エネルギーセット(赤)', ['bomb_energy_r', 'rk_energy_r', 'br_aura_r', 'dash_nitro_r', 'ac_toki_r']],
+    ['set_energy_b', 'エネルギーセット(青)', ['bomb_energy_b', 'rk_energy', 'br_aura_b', 'dash_nitro_b', 'ac_toki_b']],
+    ['set_dragon', 'ドラゴンセット', ['bomb_dragon', 'rk_dragon', 'dash_dragon', 'br_dragon']],
+  ].map(([id, name, ids]) => ({ set: id, name, ids }));
+  const SET_OFF = 0.25;
+  const setItems = S => S.ids.map(id => shopItems().find(x => x.id === id)).filter(Boolean);
+  const setCost = S => { const own = shopData().owned, its = setItems(S), left = its.filter(x => !own.includes(x.id)), sum = left.reduce((a, x) => a + starPrice(x), 0);
+    return { sum, cost: Math.round(sum * (1 - SET_OFF) / 10) * 10, left }; };
+  const setOf = id => SHOP_SETS.find(S => S.ids.includes(id));
+  function setSwatches(el, S, big) { el.className = 'setsw' + (big ? ' big' : ''); for (const x of setItems(S)) { const d = document.createElement('i'); shopSwatch(d, x.id, x.sw, x.cat.k); el.append(d); } }
+  function shopSets(list) {
+    if (!shopSel || !shopSel.set) shopSel = SHOP_SETS[0];
+    const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
+    sec.className = 'shopsec'; grid.className = 'shopgrid'; h.textContent = `セット(バラで買うより${SET_OFF * 100}%おトク)`;
+    gridCols(grid, SHOP_SETS.length); sec.append(h, grid);
+    for (const S of SHOP_SETS) {
+      const c = setCost(S), b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile settile' + (c.left.length ? '' : ' owned') + (shopSel === S ? ' sel' : '');
+      const sw = document.createElement('span'); setSwatches(sw, S);
+      const n = document.createElement('b'); n.textContent = S.name;
+      const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = c.left.length ? '★' + c.cost : '所持';
+      b.append(sw, n, pr);
+      if (c.left.length) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = SET_OFF * 100 + '%OFF'; b.append(t); }
+      b.addEventListener('click', () => { tap(); shopSel = S; setClipAt = 0; openShop(); });
+      grid.append(b);
+    }
+    list.append(sec);
+  }
+  let setClipAt = 0;   // (which of the set's items has its clip showing)
+  function setDetail(box) {
+    const S = shopSel && shopSel.set ? shopSel : SHOP_SETS[0], sd = shopData(), c = setCost(S), its = setItems(S);
+    const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    const big = mk('div', 'big'), sw = mk('span'), head = mk('div'), price = mk('div', 'price');
+    setSwatches(sw, S, true);
+    if (!c.left.length) price.textContent = '全部持っています';
+    else price.append(mk('s', null, '★' + c.sum), document.createTextNode(`★${c.cost}(${SET_OFF * 100}%おトク)`));
+    head.append(mk('div', 'cat', 'セット'), mk('h3', null, S.name), price);
+    big.append(sw, head);
+    // the clip of one of its items; the list below picks which
+    const at = Math.min(setClipAt, its.length - 1), src = its[at] && shopClip(its[at]);
+    let clip = null;
+    if (src) { const v = document.createElement('video'), cw = mk('div', 'clip'); v.muted = true; v.loop = true; v.autoplay = true; v.playsInline = true; v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.src = src; cw.append(v, mk('span', null, its[at].name)); clip = cw; }
+    const what = mk('div', 'blk setlist'); what.append(mk('span', null, '中身(タップで映像を切り替え)'));
+    its.forEach((x, i) => { const own = sd.owned.includes(x.id), r = mk('button', 'setrow' + (i === at ? ' on' : '')); r.type = 'button';
+      const d = mk('i'); shopSwatch(d, x.id, x.sw, x.cat.k);
+      r.append(d, mk('b', null, x.name), mk('small', null, x.cat.label), mk('em', own ? 'have' : '', own ? '所持' : '★' + starPrice(x)));
+      r.addEventListener('click', () => { tap(); setClipAt = i; shopDetail(); }); what.append(r); });
+    const act = mk('div', 'shopact'), btn = mk('button', c.left.length ? 'go' : 'ghost'); btn.type = 'button';
+    const short = c.cost > starHave();
+    btn.textContent = !c.left.length ? '全部持っている' : short ? `★があと${c.cost - starHave()}個たりない ・ ★を買う` : `★${c.cost}で交換して全部装備`;
+    btn.disabled = !c.left.length; if (c.left.length && short) btn.classList.add('toBuy');
+    btn.addEventListener('click', () => {
+      tap();
+      if (short) { shopTab = 'star'; shopSel = null; openShop(); return; }
+      const s2 = shopData(); starW().s += c.cost;
+      for (const x of its) { if (!s2.owned.includes(x.id)) s2.owned.push(x.id); s2.eq[x.cat.k] = x.id; }
+      saveRecords(); openShop(); shopSay('');
+      for (let i = 0; i < 4; i++) setTimeout(() => tone(1175 + i * 120, 0.08, 'triangle', 0.05), i * 80);
+    });
+    act.append(btn, mk('span', 'state', `所持 ★${starHave()}`));
+    box.append(big, ...(clip ? [clip] : []), what, act);
+    if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
+  }
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
     const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
@@ -3394,6 +3479,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function shopDetail() {
     const it = shopSel, box = $('shopDetail'), sd = shopData(); box.textContent = '';
     if (shopTab === 'star') { packDetail(box); return; }
+    if (shopTab === 'set') { setDetail(box); return; }
     if (!it) return;
     const mk = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
     const have = !it.id || sd.owned.includes(it.id), on = (sd.eq[it.cat.k] || '') === it.id;
@@ -3439,6 +3525,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // a story's prize: also won by clearing that story's stage 3
     { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
       if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_LAST[r]}クリアで獲得`)); }
+    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).left.length > 1) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}に入っています(${SET_OFF * 100}%おトク) ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); act.append(g); } }
     box.append(big, ...(clip ? [clip] : []), look, fx, act);
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
