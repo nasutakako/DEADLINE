@@ -3275,8 +3275,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   try { if ((records.shopReset || 0) < SHOP_RESET_N) { shopResetApply(records); localStorage.setItem(REC_KEY, JSON.stringify(records)); } } catch (e) {}
   const stdItem = c => c.k === 'acc' ? ['', 'なし', 0, 'アクセサリーをつけない', ''] : ['', '標準', 0, 'はじめから使える', ''];
   // taken off the shelves: no longer sold, but whoever bought one keeps it (装備 still lists it)
+  // (the free plain-colour skins are everyone's from the start: they are on the equip screen, not the shop's shelves)
   const SHOP_RETIRED = ['sk_mouse', 'sk_lady_y', 'sk_lady_b', 'sk_budo', 'sk_kaizoku'];
-  const shopItems = () => SHOP.flatMap(c => [stdItem(c), ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]) && !SHOP_RETIRED.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
+  const shopItems = () => SHOP.flatMap(c => [stdItem(c), ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]) && !SHOP_RETIRED.includes(it[0]) && !FREE_SKINS.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   // (the gold + by the stars opens the ★ shop)
   document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
   function openShop() {
@@ -3288,7 +3289,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const list = $('shopList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
     const cats = shopTab === 'star' ? [] : SHOP.filter(c => (c.under || c.k) === shopTab);
     if (shopTab === 'star') shopPacks(list);
-    else if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')); }
+    else if (!shopSel || !cats.includes(shopSel.cat)) { const c = cats[0]; shopSel = shopItems().find(x => x.cat === c && x.id === (sd.eq[c.k] || '')) || shopItems().find(x => x.cat === c); }
     for (const cat of cats) {
       const sec = document.createElement('section'), h = document.createElement('h3'), grid = document.createElement('div');
       sec.className = 'shopsec'; grid.className = 'shopgrid' + (cat.items.length === 2 ? ' three' : ''); h.textContent = cat.label;
