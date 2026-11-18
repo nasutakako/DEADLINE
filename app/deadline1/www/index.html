@@ -20,7 +20,7 @@ html.inshell { --sa-top: 0px; --sa-bottom: 0px; --sa-left: 0px; --sa-right: 0px;
 
 /* the shop and equip screens: a slim top (no note), the tabs down the left, the list three to a row, a wide detail
    panel, gold prices and green 所持; a bar on the list's right edge shows how far down it goes */
-body #shopScreen .shophead .shopnote { display: none; }
+body #shopScreen .shophead .shopnote { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body #shopScreen .shophead h2, body #equipScreen .shophead h2 { font-size: 24px; }
 body #shopScreen .shopwrap, body #equipScreen .shopwrap { gap: 6px; }
 body #shopScreen .shopleft, body #equipScreen .shopleft { flex-direction: row; position: relative; }
@@ -1606,7 +1606,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     <div class="shopwrap">
       <div class="shophead">
         <h2>ショップ</h2>
-        <span class="shopstars" id="shopStars"></span><button class="starplus" id="shopStarPlus" type="button" aria-label="★を買う">＋</button><span class="shopnote">★はミッション・ログインボーナス・ランクレース・共有で獲得できます</span>
+        <span class="shopstars" id="shopStars"></span><button class="starplus" id="shopStarPlus" type="button" aria-label="★を買う">＋</button><span class="shopnote">見た目が変わるだけ。強さは変わらない</span>
         <button class="ghost shoprestore" id="shopRestore" type="button">購入を復元</button><button class="ghost shopclose" id="shopClose" type="button">閉じる</button>
         <span class="shopmsg" id="shopMsg" role="status" hidden></span>
       </div>
