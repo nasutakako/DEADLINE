@@ -710,12 +710,12 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .big.setbig > div { min-width: 0; width: 100%; }
 .shoptile.settile b { letter-spacing: -0.04em; white-space: nowrap; }   /* (the long set names kept on one line) */
 .setlist { gap: 4px; }
-.shopdetail .setlist .setrow { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto; grid-template-rows: auto; width: 100%; align-items: center; gap: 8px; padding: 3px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.shopdetail .setlist .setrow { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; grid-template-rows: auto; width: 100%; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .setrow.on { border-color: #ff9bd6; }
-.setrow i { width: 22px; height: 22px; border-radius: 50%; }
-.setrow b { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.setrow i { width: 14px; height: 14px; border-radius: 50%; }
+.setrow b { font-size: 10.5px; letter-spacing: -0.03em; line-height: 1.2; overflow-wrap: anywhere; }
 .shopdetail .setlist .setrow small { grid-column: auto; grid-row: auto; font-size: 11px; color: var(--muted); }
-.setrow em { font-style: normal; font-size: 12px; color: var(--lamp); }
+.setrow em { font-style: normal; font-size: 10.5px; color: var(--lamp); }
 .setrow em.have { color: #5dff9e; }
 .setnote { width: 100%; margin-top: 4px; padding: 6px 10px; border-radius: 8px; border: 1px dashed rgba(255,207,90,.6); background: rgba(255,207,90,.06); color: var(--lamp); font: inherit; font-size: 12.5px; cursor: pointer; text-align: center; }
 .shopdetail .price s { color: var(--muted); margin-right: 4px; }
@@ -740,6 +740,13 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .clip { position: relative; flex: none; align-self: flex-start; height: clamp(64px, 22vh, 150px); width: auto; max-width: 100%; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: #000; aspect-ratio: 16 / 10; }
 .shopdetail .clip video { display: block; width: 100%; height: 100%; object-fit: cover; }
 .shopdetail .clip.pic { aspect-ratio: 844 / 390; } .shopdetail .clip img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.shopdetail .setside { display: flex; flex: none; gap: 8px; align-items: flex-start; min-width: 0; width: 100%; }
+.shopdetail .setside .clip { flex: 0 0 46%; width: 46%; height: auto; aspect-ratio: 768 / 480; }
+.shopdetail .setside .setlist { display: grid; flex: 1 1 0; min-width: 0; gap: 1px; align-content: start; }
+.shopdetail .setside .setrow { border: 0; background: none; padding: 2px 4px; border-radius: 6px; }
+.shopdetail .setside .setrow.on { background: rgba(255,155,214,.14); }
+.shopdetail .setside .setrow b { font-size: 11px; font-weight: 700; letter-spacing: 0; line-height: 1.2; white-space: normal; overflow-wrap: anywhere; }
+.shopdetail .setside .setrow em { font-size: 10px; }
 .shopdetail .clip span { position: absolute; left: 8px; top: 6px; padding: 2px 7px; border-radius: 4px; background: rgba(0,0,0,.6); font-size: 10px; letter-spacing: .1em; color: #fff; }
 .shopstars { font-weight: 800; color: var(--lamp); letter-spacing: .04em; white-space: nowrap; }
 /* (the gold + by the stars: straight to buying ★) */
@@ -3376,9 +3383,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ★ in packs (about 1円 a star: the smallest a little dearer, the two biggest with extra); free while testing
   // (bigger packs, better value: 0.9, 0.88, 1.08, 1.15, 1.3 and 1.5 ★ a yen)
   const STAR_PACKS = [[350, 400], [650, 600], [1150, 1000], [2600, 2000], [4500, 3000]].map(([pack, yen]) => ({ pack, yen }));
-  // sets: a few looks of one theme together, 25% off what they would cost one by one (each is also sold on its own, at
-  // its own price). Whoever already has part of one pays for the rest only, at the same 25% off, so buying one first
-  // never costs much more than the set and buying singly is never cheaper. Bought with ★, everything in it worn at once
+  // sets: a few looks of one theme together, 25% off what they would cost one by one, sold only whole (each is also sold
+  // on its own tab at its own price). With part of one owned the set is not for sale: the rest is bought singly.
+  // Bought with ★, everything in it worn at once
   const SHOP_SETS = [
     ['set_elec', '電気セット', ['bomb_emp', 'br_emf', 'rk_plasma', 'dash_bolt']],
     ['set_comic', 'コミックセット', ['bomb_comic', 'rk_comic', 'dash_comic', 'br_comic', 'sk_comic']],
@@ -3390,7 +3397,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const SET_OFF = 0.25;
   const setItems = S => S.ids.map(id => shopItems().find(x => x.id === id)).filter(Boolean);
   const setCost = S => { const own = shopData().owned, its = setItems(S), left = its.filter(x => !own.includes(x.id)), sum = left.reduce((a, x) => a + starPrice(x), 0);
-    return { sum, cost: Math.round(sum * (1 - SET_OFF) / 10) * 10, left }; };
+    return { sum, cost: Math.round(sum * (1 - SET_OFF) / 10) * 10, left, whole: left.length === its.length, part: left.length > 0 && left.length < its.length }; };
   const setOf = id => SHOP_SETS.find(S => S.ids.includes(id));
   function setSwatches(el, S, big) { el.className = 'setsw' + (big ? ' big' : ''); for (const x of setItems(S)) { const d = document.createElement('i'); shopSwatch(d, x.id, x.sw, x.cat.k); el.append(d); } }
   function shopSets(list) {
@@ -3402,9 +3409,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const c = setCost(S), b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile settile' + (c.left.length ? '' : ' owned') + (shopSel === S ? ' sel' : '');
       const sw = document.createElement('span'); setSwatches(sw, S);
       const n = document.createElement('b'); n.textContent = S.name;
-      const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = c.left.length ? '★' + c.cost : '所持';
+      const pr = document.createElement('span'); pr.className = 'pr'; pr.textContent = c.whole ? '★' + c.cost : c.part ? '一部所持' : '所持';
       b.append(sw, n, pr);
-      if (c.left.length) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = SET_OFF * 100 + '%OFF'; b.append(t); }
+      if (c.whole) { const t = document.createElement('span'); t.className = 'fxtag'; t.textContent = SET_OFF * 100 + '%OFF'; b.append(t); }
       b.addEventListener('click', () => { tap(); shopSel = S; setClipAt = 0; openShop(); });
       grid.append(b);
     }
@@ -3417,7 +3424,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (no swatch row here: the tile on the left shows them, and the panel keeps its height for the clip)
     const big = mk('div', 'big setbig'), head = mk('div'), price = mk('div', 'price');
     if (!c.left.length) price.textContent = '全部持っています';
-    else price.append(mk('s', null, '★' + c.sum), document.createTextNode(` ★${c.cost} (${SET_OFF * 100}%おトク)` + (c.left.length < its.length ? ` ・残り${c.left.length}品` : '')));
+    else if (c.part) price.textContent = `一部を持っている(残り${c.left.length}品はバラで)`;
+    else price.append(mk('s', null, '★' + c.sum), document.createTextNode(` ★${c.cost} (${SET_OFF * 100}%おトク)`));
     head.append(mk('div', 'cat', 'セット'), mk('h3', null, S.name), price);
     big.append(head);
     // the clips of its items, one after another (each played through once, then the next); the list below jumps to one
@@ -3438,16 +3446,17 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       };
       cw.append(lab); requestAnimationFrame(() => show(at));
     }
-    const what = mk('div', 'blk setlist'); what.append(mk('span', null, '中身(映像は順番に流れる。タップでその品へ)'));
+    const what = mk('div', 'blk setlist');
     its.forEach((x, i) => { const own = sd.owned.includes(x.id), r = mk('button', 'setrow' + (i === at ? ' on' : '')); r.type = 'button';
       const d = mk('i'); shopSwatch(d, x.id, x.sw, x.cat.k);
-      r.append(d, mk('b', null, x.name), mk('small', null, x.cat.label), mk('em', own ? 'have' : '', own ? '所持' : '★' + starPrice(x)));
+      r.append(d, mk('b', null, x.name)); if (own) r.append(mk('em', 'have', '所持'));   // (no single prices here: the set has its own)
       r.addEventListener('click', () => { tap(); setClipAt = i; shopDetail(); }); what.append(r); });
-    const act = mk('div', 'shopact'), btn = mk('button', c.left.length ? 'go' : 'ghost'); btn.type = 'button';
+    const act = mk('div', 'shopact'), btn = mk('button', c.whole ? 'go' : 'ghost'); btn.type = 'button';
     const short = c.cost > starHave();
-    btn.textContent = !c.left.length ? '全部持っている' : short ? `★があと${c.cost - starHave()}個たりない ・ ★を買う` : c.left.length < its.length ? `残りを★${c.cost}で交換して全部装備` : `★${c.cost}で交換して全部装備`;
-    btn.disabled = !c.left.length; if (c.left.length && short) btn.classList.add('toBuy');
+    btn.textContent = !c.left.length ? '全部持っている' : c.part ? 'セットでは買えない(残りは各タブでバラで)' : short ? `★があと${c.cost - starHave()}個たりない ・ ★を買う` : `★${c.cost}で交換して全部装備`;
+    btn.disabled = !c.whole; if (c.whole && short) btn.classList.add('toBuy');
     btn.addEventListener('click', () => {
+      if (!c.whole) return;
       tap();
       if (short) { shopTab = 'star'; shopSel = null; openShop(); return; }
       const s2 = shopData(); starW().s += c.cost;
@@ -3456,7 +3465,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       for (let i = 0; i < 4; i++) setTimeout(() => tone(1175 + i * 120, 0.08, 'triangle', 0.05), i * 80);
     });
     act.append(btn, mk('span', 'state', `所持 ★${starHave()}`));
-    box.append(big, ...(clip ? [clip] : []), what, act);
+    const row = mk('div', 'setside'); if (clip) row.append(clip); row.append(what);   // (the clip and its list side by side)
+    box.append(big, row, act);
   }
   function shopPacks(list) {
     if (!shopSel || !shopSel.pack) shopSel = STAR_PACKS[0];
@@ -3545,8 +3555,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // a story's prize: also won by clearing that story's stage 3
     { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
       if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_LAST[r]}クリアで獲得`)); }
-    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).left.length > 1) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}でまとめて買うと${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); act.append(g); } }
-    box.append(big, ...(clip ? [clip] : []), look, fx, act);
+    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}でまとめて買うと${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); act.append(g); } }
+    box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   $('shopBtn').addEventListener('click', () => { tap(); shopSay(''); openShop(); });
@@ -3616,7 +3626,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     btn.type = 'button'; btn.textContent = on ? '装備中' : it.id ? '装備する' : '標準に戻す'; btn.disabled = on;
     btn.addEventListener('click', () => { tap(); shopData().eq[it.cat.k] = it.id; saveRecords(); openEquip(); });
     act.append(btn, mk('span', 'state', on ? 'いま使っている' : '持っている'));
-    box.append(big, ...(clip ? [clip] : []), look, fx, act);
+    box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
   // ---------- plays (遊べる回数): 3 at most, one used each time a run starts; back one every 10 minutes, one more for
