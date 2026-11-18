@@ -33,6 +33,11 @@ body #shopList .shoptile .pr, body #equipList .shoptile .pr { color: #ffcf5a; fo
 body #shopList .shoptile.owned .pr, body #equipList .shoptile.owned .pr { color: #5dff9e; }
 body #shopList, body #equipList { padding-right: 12px; scrollbar-width: none; }
 body #shopList::-webkit-scrollbar, body #equipList::-webkit-scrollbar { display: none; }
+/* the play clip in the detail panel as wide as the panel (the set panel keeps its clip beside the list) */
+body .shopdetail > .clip { width: 100%; height: auto; max-height: none; aspect-ratio: 2.2 / 1; align-self: stretch; }   /* (a little cropped top and bottom, so the whole of it sits above the buy button) */
+body .shopdetail > .clip.pic { aspect-ratio: 844 / 390; }
+body .shopdetail .big .sw { width: 48px; height: 48px; }   /* (a smaller swatch in the head, to leave the wide clip room) */
+body .shopdetail { gap: 8px; }
 .listbar { position: absolute; right: 0; width: 5px; border-radius: 3px; background: rgba(255,255,255,.08); pointer-events: none; }
 .listbar[hidden] { display: none; }
 .listbar i { position: absolute; left: 0; right: 0; border-radius: 3px; background: rgba(255,207,90,.75); }
@@ -3585,7 +3590,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // a story's prize: also won by clearing that story's stage 3
     { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
       if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_LAST[r]}クリアで獲得`)); }
-    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}でまとめて買うと${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); act.append(g); } }
+    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}でまとめて買うと${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); look.append(g); } }   // (with the look, not the buy bar, so the clip keeps its room)
     box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
   }
