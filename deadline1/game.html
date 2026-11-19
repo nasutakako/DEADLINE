@@ -297,7 +297,8 @@ body.handui:not(.cyberui) .countdown { font: 900 clamp(84px, 25vmin, 176px)/1 va
 @media (max-height: 520px) { #titleScreen .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; } #titleScreen .row .go { align-self: stretch; padding: 10px 8px; font-size: 15px; letter-spacing: .02em; white-space: nowrap; } }
 .tutbar .tstep { flex: none; font-size: 11px; font-weight: 800; letter-spacing: .06em; color: var(--lamp); }
 .tutbar p { margin: 0; font-size: clamp(13px, 1.9vw, 16px); font-weight: 700; line-height: 1.45; text-wrap: balance; }
-.tutbar p i { font-style: normal; display: inline-block; }
+.tutbar p i { font-style: normal; display: block; white-space: nowrap; }   /* (each line whole: they are written short enough) */
+.tutbar p b { color: var(--lamp); font-weight: 900; }
 .tutbar.ok { border-color: #5ce08a; }
 .tutbar.ok p { color: #5ce08a; }
 .tutbar .trow { flex: none; display: flex; gap: 6px; }
@@ -9911,94 +9912,94 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   const TUT = {
     w: [
-      { warp: true, say: '2-1にはワープポイントがある。踏むと、もう1つのワープポイントに飛ぶ(ダッシュで通り過ぎたときは飛ばない)。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
-      { warp: true, say: '一度使うと1分30秒使えない。使えるようになると光る。少し待ってみよう', set: tutWarpBar, go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
-      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で出口が開く。ワープで鬼を振り切って、鍵を拾って脱出しよう', end: true },
+      { warp: true, say: '[ワープポイント]を踏むと|もう1つへ飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
+      { warp: true, say: '一度使うと[1分30秒]使えない。|使えると光る。少し待ってみよう', set: tutWarpBar, go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
+      { say: '[2分30秒]で出口が開く。|ワープで振り切って[鍵]を拾おう', end: true },
     ],
     1: [
-      { btn: 'pad', say: 'コントロールスティックを動かして走ってみよう', go: () => tut.run > 6 * TUT_U },
-      { btn: 'dash', say: 'ダッシュボタンを押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
-      { say: '黄色い箱を拾うと爆弾が増える。拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
-      { btn: 'mine', say: '爆弾ボタンで足元に置くと、1秒後に爆発して円の中の鬼を倒す。鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
-      { say: '黄色い鬼は先回りする。逃走者の進む先を読んで、行く手に回り込んでくる', info: true },
-      { say: '後ろから赤い鬼、建物の向こうから黄色い鬼。このままだと角で挟まれる。光る脇道に入って止まろう', set: tutFeint, go: tutFeintGo },
-      { say: '黄色い鬼は脇道に釣られて後ろに回った。挟まれそうなときは、脇道に入って止まり、元の道に戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
-      { say: '鬼は赤い ! の場所から出てくる。出てくる前に ! を踏むと、その鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
-      { say: '! を5回踏むごとに、バリアが1個届く。バリアは1個まで持てて、すでに持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く', info: true },
-      { btn: 'item', say: 'アイテムボタンで、選んでいるアイテム(バリア・ランチャー)を使う。◀ ▶で選ぶアイテムを切り替えられる。使ってみよう', set: () => { if (!bag.length) bag.push('launcher'); }, go: () => S3.items > 0 },
-      { say: '1〜2分に1回、道にランチャーが落ちる。10秒で消えるので、見つけたら拾おう', info: true },
-      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true },
+      { btn: 'pad', say: '[スティック]を動かして走ってみよう', go: () => tut.run > 6 * TUT_U },
+      { btn: 'dash', say: '[ダッシュ]を押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
+      { say: '[黄色い箱]を拾うと爆弾が増える。|拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
+      { btn: 'mine', say: '[爆弾]は1秒後に爆発し、円の中の鬼を倒す。|鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
+      { say: '[黄色い鬼]は先回りして、|行く手に回り込んでくる', info: true },
+      { say: 'このままだと角で挟まれる。|[光る脇道]に入って止まろう', set: tutFeint, go: tutFeintGo },
+      { say: '黄色い鬼が脇道に釣られた。|挟まれそうなら[脇道で止まって]から戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
+      { say: '鬼は[!]から出てくる。|出る前に踏むと鬼は出ない。踏んでみよう', set: () => tutWarn(tutSpot(3, 5), { t: SPAWN_WARN * 0.45, hold: true }), go: () => S3.stomps > 0 },
+      { say: '[!]を5回踏むと[バリア]が届く。|バリアが埋まっていたら[爆弾2個]が届く', info: true },
+      { btn: 'item', say: '[ランチャー]はボタンに触れて、|撃ちたい方向へ[はじく]と撃てる。|撃ってみよう', set: () => { if (!bag.includes('launcher')) bag.push('launcher'); itemSel = 'launcher'; }, go: () => S3.items > 0 },
+      { say: '[◀ ▶]で使うアイテムを切り替えられる。|道に落ちるランチャーは10秒で消える', info: true },
+      { say: '[2分30秒]で右端に出口が開く。|[鍵]を拾って出口へ', end: true },
     ],
     2: [
-      { say: '地面の加速装置(矢印のパネル)を踏むと、ダッシュと同じだけ加速する。一度使うと25秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
-      { btn: 'mine', say: 'バリア鬼は爆発に1回耐える。爆弾を当ててバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
+      { say: '[加速装置]を踏むと加速する。|一度使うと25秒使えない。踏んでみよう', set: tutPadPlace, go: () => tut.padUsed },
+      { btn: 'mine', say: '[バリア鬼]は爆発に1回耐える。|爆弾でバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
-      { btn: 'mine', say: 'バリアが割れた鬼はしばらく怯む。怯んでいる間は触れても確保されない。もう一度爆発させて倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
-      { btn: 'dash mine', say: '黒い鬼は自分より速い。黒い鬼の ! はまわりの輪が黒い。一度ダッシュを使ってから爆弾を置いて倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
-      { say: '鬼を60体倒すごとに、ランチャーが届く', info: true },
-      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
+      { btn: 'mine', say: '割れた鬼はしばらく怯み、触れても平気。|[もう一度爆弾]で倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
+      { btn: 'dash mine', say: '[黒い鬼]は自分より速い。|[ダッシュ]で離れてから爆弾で倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
+      { say: '鬼を[60体]倒すごとに[ランチャー]が届く', info: true },
+      { tail: true, say: '2分からバリアや爆弾が支給される', info: true },
+      { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
     3: [
-      { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
-      { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
-      { pit: true, say: '一度使った落とし穴は40秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
-      { pit: true, say: '自分が落とし穴に落ちても確保になるので注意', info: true },
-      { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは6分30秒で出口が開く。ランクレースは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
+      { pit: true, say: '[落とし穴]のふたに乗って離れると開く。|乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
+      { pit: true, say: '開いた穴に[鬼を誘い込もう]。|通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
+      { pit: true, say: '一度使うと[40秒]ふさがる。|使えるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
+      { pit: true, say: '[自分が落ちても確保]になるので注意', info: true },
+      { say: MAP_CHOICE ? 'ストーリーは[6分30秒]で出口が開く。|ランクレースは出口なしで逃げ続ける' : '出口はない。|捕まるまで逃げ続けよう', end: true },
     ],
     '3h': [
-      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
+      { tail: true, say: '2分から毎分補給が届く', info: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★30', end: true },
     ],
     '3b': [
-      { say: '4-3の自爆鬼は、爆発の範囲が通常の爆弾の1.5倍。点滅したら、ダッシュで一気に離れよう', info: true },
-      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
+      { say: '4-3の自爆鬼は爆発が[1.5倍]。|点滅したら[ダッシュ]で離れよう', info: true },
+      { tail: true, say: '2分から毎分補給が届く', info: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★30', end: true },
     ],
     b1: [
-      { say: '4-1には、自爆する橙色の鬼がいる。時間がたつにつれて、だんだん黒い鬼より速くなる', info: true },
-      { say: '自爆鬼の ! は、まわりの輪がオレンジ色で火花が走る。逃走者からいちばん遠い場所に出るが、! が出ている間に近づくと、近くで出てくるので気をつけよう', info: true },
-      { say: '近づくと点滅して、1秒後に爆弾の1.2倍の大きさで爆発する。巻き込まれると確保', info: true },
-      { say: '点滅中は足が少し遅くなる(逃走者の0.9倍)。点滅したら、すぐまっすぐ円の外へ逃げよう', info: true },
-      { say: '自爆では他の鬼は倒れない。でも爆弾で倒すと誘爆して、まわりの鬼も吹き飛ぶ', info: true },
-      { btn: 'mine', say: '点滅する前に、爆弾で倒してみよう', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
-      { say: '2分経過でバリアと爆弾1個が支給される。バリアは自爆も1回防ぐ', info: true },
-      { say: '2分30秒で右端に出口が開く。鍵を拾って出口へ', end: true },
+      { say: '[自爆鬼](橙色)がいる。|だんだん黒い鬼より速くなる', info: true },
+      { say: '自爆鬼の[!]はオレンジ色の輪。|近づくと、すぐそばに出てくる', info: true },
+      { say: '近づくと[点滅]して、1秒後に爆発。|巻き込まれると確保', info: true },
+      { say: '点滅中は少し遅くなる。|点滅したら[まっすぐ円の外へ]逃げよう', info: true },
+      { say: '爆弾で倒すと[誘爆]して、|まわりの鬼も吹き飛ぶ', info: true },
+      { btn: 'mine', say: '点滅する前に、[爆弾]で倒してみよう', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
+      { say: '[バリア]は自爆も1回防ぐ', info: true },
+      { say: '[2分30秒]で右端に出口が開く。|[鍵]を拾って出口へ', end: true },
     ],
     k1: [
-      { say: '3-1では、先回りする黄色い鬼が逃走者に近づくと、黒い影の鬼と分裂する。影の鬼は別の道から追ってくる', info: true },
-      { say: '分裂した影の鬼は、逃走者の進む先へ回り込み、黄色い鬼と挟み撃ちにしてくる', info: true },
-      { btn: 'mine', say: '影の鬼に触れても確保される。本体を爆弾で倒すと、影の鬼も一緒に消える。倒してみよう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
-      { say: '建物の影(暗いところ)に入ると、影の鬼は逃走者を見失う。影のまわりまでは来るが、中には入ってこない。影に1秒入ってみよう', set: tutShade, go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
-      { say: '3-1からは、影分身ダッシュが自動で使える', info: true, set: () => { tut.want = null; tut.hidT = null; enemies.length = 0; tut.oni = []; } },
-      { btn: 'dash', say: 'ダッシュすると、その場に影の分身が残る。鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
-      { say: '近い鬼ほど長く影を追う。そのすきに離れよう。影はすぐ消える', info: true },
-      { say: '2分経過でバリアと爆弾1個が支給される。2分30秒で右端に出口が開くので、鍵を拾って出口へ', end: true, set: () => { enemies.length = 0; tut.oni = []; } },
+      { say: '[黄色い鬼]が近づくと[影の鬼]と分裂する。|影の鬼は別の道から追ってくる', info: true },
+      { say: '影の鬼は先へ回り込み、|[挟み撃ち]にしてくる', info: true },
+      { btn: 'mine', say: '[本体]を爆弾で倒すと影の鬼も消える。|倒してみよう', set: () => { tut.refill = true; tutOni({ amb: true }); }, go: tutDown },
+      { say: '[建物の影]に入ると影の鬼は見失う。|影に1秒入ってみよう', set: tutShade, go: () => { if (!shadeAt(P.x, P.y)) { tut.hidT = null; return false; } const now = performance.now() / 1000; if (tut.hidT == null) tut.hidT = now; return now - tut.hidT > 1; } },
+      { say: '3-1からは[影分身ダッシュ]が使える', info: true, set: () => { tut.want = null; tut.hidT = null; enemies.length = 0; tut.oni = []; } },
+      { btn: 'dash', say: 'ダッシュすると[分身]が残る。|鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
+      { say: '近い鬼ほど長く分身を追う。|[そのすきに離れよう]', info: true },
+      { say: '[2分30秒]で右端に出口が開く。|[鍵]を拾って出口へ', end: true, set: () => { enemies.length = 0; tut.oni = []; } },
     ],
     k3: [
-      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ', end: true },
+      { tail: true, say: '2分から毎分補給が届く', info: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ', end: true },
     ],
     // 電脳都市 and 縁日通り: no new rule of their own, only the stage's times (and stage 2's lessons, the first time)
     c2: [
-      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
+      { tail: true, say: '2分からバリアや爆弾が支給される', info: true },
+      { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
     b2: [
-      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true },
-      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
+      { tail: true, say: '2分からバリアや爆弾が支給される', info: true },
+      { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
     k2: [
-      { say: '黄色い鬼から分かれた影の鬼は先回りして、行く手に回り込んでくる(点線のルート)。このままだと挟み撃ちになる', info: true, set: tutPincer },
-      { btn: 'dash', say: '影の鬼は建物1つ分離れていても影に反応する。光る角に向かって走り、角でダッシュして影を置こう', set: tutPincer, go: tutPincerGo },
-      { say: '影の鬼は脇道を下りて影に向かい、回り込めなくなった。挟まれそうなときは、手前の道に影を置こう', info: true, set: () => { P.inv = 1e9; } },
+      { say: '[影の鬼]が点線のルートで回り込んでくる。|このままだと挟み撃ちになる', info: true, set: tutPincer },
+      { btn: 'dash', say: '[光る角]まで走って、|角で[ダッシュ]して分身を置こう', set: tutPincer, go: tutPincerGo },
+      { say: '影の鬼が分身に釣られた。|挟まれそうなら[手前の道に分身]を置こう', info: true, set: () => { P.inv = 1e9; } },
       // (the practice's oni go, and with them the cover that kept the runner from being caught while reading)
-      { tail: true, say: '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される', info: true, set: () => { enemies.length = 0; tut.oni = []; tut.pinc = null; P.inv = 0; } },
-      { say: '4分30秒で出口が開く。出口が開くと、自分より速い黒い鬼も現れる', end: true },
+      { tail: true, say: '2分からバリアや爆弾が支給される', info: true, set: () => { enemies.length = 0; tut.oni = []; tut.pinc = null; P.inv = 0; } },
+      { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
     '3c': [
-      { tail: true, say: '2分から毎分補給が届く。偶数分はバリアと爆弾2個、奇数分は爆弾2個', info: true },
-      { say: '6分30秒経過で右端に出口が開き、鍵が落ちる。鍵を拾って出口へ。初回クリアで★30がもらえる', end: true },
+      { tail: true, say: '2分から毎分補給が届く', info: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★30', end: true },
     ],
   };
   function tutBegin() {
@@ -10016,7 +10017,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       preDone = add.length > 0;
       steps = pre === 3 ? [...steps.filter(x => !x.tail && !x.end), ...add, ...last] : [...add, ...steps];
     }
-    tut = { n: tk, pre: preDone ? pre : 0, i: -1, steps: steps.filter(s => (!s.pit || hole) && (!s.warp || warps.length === 2)), hole, oni: [], run: 0, lx: P.x, ly: P.y };
+    steps = steps.filter(s => (!s.pit || hole) && (!s.warp || warps.length === 2));
+    if (steps.every(s => s.tail || s.end) && tutReplay !== tk) { tutMark(tk); tut = null; startCount(); return; }   // (only the times: the stage details tell them)
+    tut = { n: tk, pre: preDone ? pre : 0, i: -1, steps, hole, oni: [], run: 0, lx: P.x, ly: P.y };
     for (const s of pending) dropWarn(s);
     pending = []; nextSpawn = nextItem = 1e9; P.nextR = 1e9; P.black2 = true;
     state = 'play'; input.stick = null;
@@ -10030,8 +10033,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     tut.wait = 0; tut.ok = 0; tut.refill = false; tut.s0 = P.stock;
     $('tutBar').classList.remove('ok', 'low', 'mid', 'tight');
     $('tutStep').textContent = `練習 ${tut.i + 1}/${tut.steps.length}`;
-    // lines break only after a 。 or 、, never a few characters off a word
-    $('tutSay').innerHTML = st.say.replace(/([。、])/g, '$1\u0000').split('\u0000').map(x => '<i>' + x + '</i>').join('');
+    // a line per | (each kept whole where it fits), [word] lit
+    const esc = x => x.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    $('tutSay').innerHTML = st.say.split('|').map(l => '<i>' + esc(l).replace(/\[([^\]]+)\]/g, '<b>$1</b>') + '</i>').join('');
     $('tutNext').hidden = !st.info && !st.end;
     $('tutNext').textContent = st.end ? (tutReplay ? '一覧へ戻る' : '本番スタート') : '次へ';
     tutGlow(st.btn);
@@ -10131,7 +10135,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       '黄色い鬼は、脇道に一瞬入ってすぐ戻ると、脇道の向こうへ回り込む',
       '黄色い鬼の前で立ち止まると、まっすぐ向かってくる。爆弾を置いて待とう',
       '黄色い箱を拾うと爆弾が増える。持てるのは3個まで',
-      '1〜2分に1回、道にランチャーが落ちる。10秒で消えるので、見つけたら拾おう',
+      '[◀ ▶]で使うアイテムを切り替えられる。|道に落ちるランチャーは10秒で消える',
     ],
     1: [
       '2分経過でバリアと爆弾1個が支給される',
@@ -10139,7 +10143,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       '出口が開くと鬼が一度に5体出て、30秒後からは6体',
     ],
     2: [
-      '2分でバリアと爆弾1個、3分で爆弾2個、4分でバリアと爆弾2個が支給される',
+      '2分からバリアや爆弾が支給される',
       '4分30秒で出口が開くと、自分より速い黒い鬼が現れる',
       '4分から鬼が一度に4体出る。5分からは5体',
     ],
@@ -10148,7 +10152,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       '怯んでいる鬼に触れても確保されない',
       '黒い鬼は自分より速い。一度ダッシュを使ってから爆弾で倒そう',
       '! を5回踏むごとに、バリアが1個届く。持っていたら自動で装着される。バリアがいっぱいなら爆弾2個',
-      '鬼を60体倒すごとに、ランチャーが届く',
+      '鬼を[60体]倒すごとに[ランチャー]が届く',
       'バリアは鬼に触れられても1回だけ守ってくれて、触れた鬼を倒す',
       'ランチャーは向いている方向に弾を撃ち、着弾した場所の鬼を倒す',
     ],
@@ -11501,7 +11505,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>ランクレース ${weekMapName()}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
-      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を60体倒すごとに、ランチャーが届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
+      <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を[60体]倒すごとに[ランチャー]が届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
         ${li([`一度に出る鬼は9分まで${ONI_WAVE_MAX}体まで。9分から7体、12分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '10分から: 2分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
@@ -11543,7 +11547,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
-      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を60体倒すごとに、ランチャーが届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}
+      ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を[60体]倒すごとに[ランチャー]が届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : n === 3 ? `一度に出る鬼は9分まで${ONI_WAVE_MAX}体まで。9分から7体、12分からは8体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
