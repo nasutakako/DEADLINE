@@ -1733,18 +1733,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <span class="kicker">TUTORIAL</span>
       <h2 class="clear">チュートリアル一覧</h2>
       <div class="picks" id="tutPicks">
-        <button class="pick" data-tut="1" type="button"><b>1-1</b><span><i>黄色い鬼(先回り)・</i><i>「!」を踏む・</i><i>5回踏むとバリア・</i><i>落ちているランチャー</i></span></button>
+        <button class="pick" data-tut="1" type="button"><b>1-1</b><span><i>黄色い鬼(先回り)・</i><i>「!」を踏む・</i><i>5回踏むとバリア・</i><i>ランチャー(はじいて撃つ)</i></span></button>
         <button class="pick" data-tut="2" type="button"><b>1-2</b><span><i>加速装置・</i><i>バリア鬼・</i><i>黒い鬼</i></span></button>
         <button class="pick" data-tut="3h" type="button"><b>1-3</b><span><i>落とし穴</i></span></button>
         <button class="pick" data-tut="w" type="button"><b>2-1</b><span><i>ワープポイント</i></span></button>
-        <button class="pick" data-tut="c2" type="button"><b>2-2</b></button>
-        <button class="pick" data-tut="3c" type="button"><b>2-3</b></button>
         <button class="pick" data-tut="k1" type="button"><b>3-1</b><span><i>分裂する黄色い鬼・</i><i>影の鬼・</i><i>建物の影・</i><i>影分身ダッシュ</i></span></button>
-        <button class="pick" data-tut="k2" type="button"><b>3-2</b><span><i>影の鬼の挟み撃ち</i></span></button>
-        <button class="pick" data-tut="k3" type="button"><b>3-3</b></button>
         <button class="pick" data-tut="b1" type="button"><b>4-1</b><span><i>自爆鬼・</i><i>誘爆</i></span></button>
-        <button class="pick" data-tut="b2" type="button"><b>4-2</b></button>
-        <button class="pick" data-tut="3b" type="button"><b>4-3</b><span><i>自爆の範囲1.5倍</i></span></button>
       </div>
       <div class="row"><button class="ghost" id="tutBackBtn" type="button">タイトルへ</button></div>
     </div>
@@ -3185,7 +3179,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // it speeds up with the other oni: half as fast again as a plain one, up to its top speed (above the runner's), so a
   // stage opens with one the runner can outrun and it reaches its top speed as the oni get fast
   const bomberSpeed = () => Math.min(runnerSpeed() * bomberMult(), enemySpeed() * 1.5);
-  const bomberR = () => BLAST * (stageN >= 3 ? 1.5 : 1.2);   // (stages 1 and 2: 1.2 times a bomb's; 4-3: 1.5 times)
+  const bomberR = () => BLAST * 1.5;   // (1.5 times a bomb's, on every stage)
   const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 1, 1];   // (never more than one on the map at a time)
   // once lit, a bomber slows to 0.9 of the runner's speed: running straight off gets clear on stages 1-2, hesitating or a
   // dead end doesn't; on 花火の夜 (its bigger blast) it takes a dash
@@ -9955,7 +9949,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     b1: [
       { say: '[自爆鬼](橙色)がいる。|だんだん黒い鬼より速くなる', info: true },
       { say: '自爆鬼の[!]はオレンジ色の輪。|近づくと、すぐそばに出てくる', info: true },
-      { say: '近づくと[点滅]して、1秒後に爆発。|巻き込まれると確保', info: true },
+      { say: '近づくと[点滅]して、1秒後に爆発。|範囲は爆弾の[1.5倍]。巻き込まれると確保', info: true },
       { say: '点滅中は少し遅くなる。|点滅したら[まっすぐ円の外へ]逃げよう', info: true },
       { say: '爆弾で倒すと[誘爆]して、|まわりの鬼も吹き飛ぶ', info: true },
       { btn: 'mine', say: '点滅する前に、[爆弾]で倒してみよう', set: () => { tut.refill = true; tutOni({ bomber: true }); }, go: tutDown },
@@ -9970,6 +9964,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '3-1からは[影分身ダッシュ]が使える', info: true, set: () => { tut.want = null; tut.hidT = null; enemies.length = 0; tut.oni = []; } },
       { btn: 'dash', say: 'ダッシュすると[分身]が残る。|鬼を引きつけてからダッシュしよう', set: () => { tut.d0 = S3.dashes; tutOni({}); }, go: () => S3.dashes > tut.d0 && tut.oni.some(e => e.decoy && !e.dead) },
       { say: '近い鬼ほど長く分身を追う。|[そのすきに離れよう]', info: true },
+      { say: '[影の鬼]が点線のルートで回り込んでくる。|このままだと挟み撃ちになる', info: true, set: tutPincer },
+      { btn: 'dash', say: '[光る角]まで走って、|角で[ダッシュ]して分身を置こう', set: tutPincer, go: tutPincerGo },
+      { say: '影の鬼が分身に釣られた。|挟まれそうなら[手前の道に分身]を置こう', info: true, set: () => { P.inv = 1e9; } },
       { say: '[2分30秒]で右端に出口が開く。|[鍵]を拾って出口へ', end: true, set: () => { enemies.length = 0; tut.oni = []; } },
     ],
     k3: [
@@ -9986,9 +9983,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
     k2: [
-      { say: '[影の鬼]が点線のルートで回り込んでくる。|このままだと挟み撃ちになる', info: true, set: tutPincer },
-      { btn: 'dash', say: '[光る角]まで走って、|角で[ダッシュ]して分身を置こう', set: tutPincer, go: tutPincerGo },
-      { say: '影の鬼が分身に釣られた。|挟まれそうなら[手前の道に分身]を置こう', info: true, set: () => { P.inv = 1e9; } },
       // (the practice's oni go, and with them the cover that kept the runner from being caught while reading)
       { tail: true, say: '2分からバリアや爆弾が支給される', info: true, set: () => { enemies.length = 0; tut.oni = []; tut.pinc = null; P.inv = 0; } },
       { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
@@ -11496,7 +11490,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'],
       cyber: ['落とし穴が2か所(使うと40秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと40秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
-      fuse: ['落とし穴が2か所(使うと40秒使えない)', '自爆鬼(橙色)が出る。だんだん黒い鬼より速くなる。近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍(4-1・4-2のマップでも同じ)', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
+      fuse: ['落とし穴が2か所(使うと40秒使えない)', '自爆鬼(橙色)が出る。だんだん黒い鬼より速くなる。近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>ランクレース ${weekMapName()}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
@@ -11539,7 +11533,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
     if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)');
-    if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾の${n >= 3 ? '1.5' : '1.2'}倍`, '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
+    if (n <= 3 && route === 'fuse') own.push(`自爆鬼(橙色)が出る(一度に${BOMBER_MAX[n - 1]}体まで)。近づくと点滅して${BOMBER_FUSE}秒後に爆発する(点滅中は逃走者の${BOMBER_LIT}倍の速さ)。範囲は爆弾の1.5倍`, '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', '自爆鬼を爆弾で倒すと誘爆して、まわりの鬼も倒せる', n >= 3 ? '爆発は花火になる' : '');
     $('rankInfoBody').innerHTML = `
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
