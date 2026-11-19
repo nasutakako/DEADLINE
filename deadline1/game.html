@@ -3005,7 +3005,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   };
   // (the plain football is off sale: the balls are all comic-book ones now; sk_soccer kept drawable for anyone it was given to)
   // taken out of the shop: the water and fire items (no longer sold, and taken off anyone wearing them)
-  const SHOP_GONE = ['sk_toki', 'sk_toki_r', 'sk_toki_b', 'dash_blink', 'sk_soccer', 'bomb_big', 'pad_hand', 'bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
+  const SHOP_GONE = ['sk_budo', 'sk_kaizoku', 'sk_toki', 'sk_toki_r', 'sk_toki_b', 'dash_blink', 'sk_soccer', 'bomb_big', 'pad_hand', 'bomb_fire', 'bomb_water', 'rk_fire', 'rk_water', 'bs_fire', 'dash_water', 'bs_after', 'dash_ice', 'rk_hole', 'bomb_dark', 'sk_neon', 'sk_star', 'sk_bluefire', 'sk_moon', 'dash_shadow', 'sk_dawn', 'sk_finale'];
   const SHOP_SOLD = SHOP.flatMap(c => c.items.map(it => it[0]));
   for (const c of SHOP) c.items = c.items.filter(it => !SHOP_GONE.includes(it[0]));
   // ハイジャンプ is gone from the game, and its looks from the shop
@@ -3018,7 +3018,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     { const sd = records.shop; sd.eq = sd.eq || {}; for (const c of ['', '_r', '_b']) { if (sd.owned.includes('sk_toki' + c) && !sd.owned.includes('ac_toki' + c)) sd.owned.push('ac_toki' + c); if (sd.eq.skin === 'sk_toki' + c) { sd.eq.skin = ''; sd.eq.acc = 'ac_toki' + c; } } }
     for (const k in records.shop.eq) if (SHOP_GONE.includes(records.shop.eq[k])) records.shop.eq[k] = '';
     // (the 無制限パス is gone: taken back from whoever had it)
-    records.shop.owned = records.shop.owned.filter(id => id !== 'pass_unlimited');
+    records.shop.owned = records.shop.owned.filter(id => id !== 'pass_unlimited' && id !== 'sk_budo' && id !== 'sk_kaizoku');   // (武闘家 and 海賊 are gone too)
     // (the plain-colour runner skins are free: everyone has them)
     for (const id of FREE_SKINS) if (!records.shop.owned.includes(id)) records.shop.owned.push(id);
     return records.shop;
@@ -3384,7 +3384,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const stdItem = c => c.k === 'acc' ? ['', 'なし', 0, 'アクセサリーをつけない', ''] : ['', '標準', 0, 'はじめから使える', ''];
   // taken off the shelves: no longer sold, but whoever bought one keeps it (装備 still lists it)
   // (the free plain-colour skins are everyone's from the start: they are on the equip screen, not the shop's shelves)
-  const SHOP_RETIRED = ['sk_mouse', 'sk_lady_y', 'sk_lady_b', 'sk_budo', 'sk_kaizoku'];
+  const SHOP_RETIRED = ['sk_mouse', 'sk_lady_y', 'sk_lady_b'];
   const shopItems = () => SHOP.flatMap(c => [stdItem(c), ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]) && !SHOP_RETIRED.includes(it[0]) && !FREE_SKINS.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   // (the gold + by the stars opens the ★ shop)
   document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
@@ -3694,7 +3694,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         .map(it => ({ cat, id: it[0], name: it[1], desc: it[3], sw: it[4], price: it[2] }));
       if (!equipSel || !tabCats.includes(equipSel.cat) ? cat === tabCats[0] : equipSel.cat === cat && !opts.some(o => o.id === equipSel.id)) equipSel = opts.find(o => o.id === (sd.eq[cat.k] || '')) || opts[0];
       const sec = mk('section', 'shopsec'), grid = mk('div', 'shopgrid' + (cat.items.length === 2 ? ' three' : '')); gridCols(grid, opts.length);
-      sec.append(mk('h3', '', cat.label), grid);
+      sec.append(grid);   // (no name over the list: the tab says it)
       for (const it of opts) {
         const on = (sd.eq[cat.k] || '') === it.id, b = mk('button', 'shoptile owned' + (on ? ' on' : '') + (equipSel.id === it.id ? ' sel' : ''));
         b.type = 'button';
