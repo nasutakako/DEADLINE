@@ -8214,6 +8214,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const now = performance.now() / 1000;
     drawShift(now);
 
+    // the map's devices (warp points, boost pads, pits), drawn again over the dark in a blackout so they still show
+    const drawGimmicks = () => {
     // warp points: a swirl in cyan and magenta while usable, dark while resting (the arc shows the minute running down)
     for (const w of warps) {
       const ready = !(w.cool > 0), fl = w.flash > 0 ? w.flash / PIT_FLASH : 0;
@@ -8277,6 +8279,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         if (!ready) { ctx.strokeStyle = 'rgba(143,233,255,.5)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(h.x, h.y, 0.56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - h.cool / PIT_COOL)); ctx.stroke(); }
       }
     }
+    };
+    drawGimmicks();
     for (const f of falls) {
       const k = f.t / 0.7, x = f.x + (f.hx - f.x) * Math.min(1, k * 3), y = f.y + (f.hy - f.y) * Math.min(1, k * 3);
       ctx.globalAlpha = 1 - k;
@@ -8497,7 +8501,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.inv > 0 && Math.sin(now * 30) > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 0.12, 0, Math.PI * 2); ctx.stroke(); }
     };
     const up = P.jumpT > 0;
-    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawWarn(); } }   // (the ! shine through the dark)
+    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); } }   // (the devices and the ! shine through the dark)
     for (const e of enemies) if (!e.dead) lightPool(e.x, e.y, ONI_LIGHT, 0.26 * Math.min(1, (t - e.born) / 0.3));
     if (state !== 'caught' && state !== 'over') lightPool(P.x, P.y, runnerLook(now).glow, 0.24);
     if (!up) drawRunner();
