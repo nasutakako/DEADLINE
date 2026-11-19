@@ -753,7 +753,10 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .shopdetail .big.setbig { flex-direction: column; align-items: flex-start; gap: 6px; }
 .shopdetail .big.setbig > div { min-width: 0; width: 100%; }
 .shoptile.settile b { letter-spacing: -0.04em; white-space: nowrap; }   /* (the long set names kept on one line) */
-.shopsec .nofx { margin: -4px 0 6px; font-size: 10.5px; line-height: 1.3; color: var(--muted); }
+.shopsec h3 { min-width: 0; max-width: 100%; overflow: hidden; }
+.shopsec h3 .h3t { flex: none; white-space: nowrap; }
+.shopsec h3 small.nofx { flex: 1 1 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 9.5px; font-weight: 400; letter-spacing: -0.02em; color: var(--muted); }   /* (beside the heading, one line) */
+.shopsec h3:has(.nofx) { gap: 6px; }
 .setlist { gap: 4px; }
 .shopdetail .setlist .setrow { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; grid-template-rows: auto; width: 100%; align-items: center; gap: 5px; padding: 2px 6px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .setrow.on { border-color: #ff9bd6; }
@@ -3382,8 +3385,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       gridCols(grid, shopItems().filter(x => x.cat === cat).length);
       const fxN = cat.items.filter(it => SHOP_FX[it[0]]).length;
       if (fxN) { const sm = document.createElement('small'); sm.textContent = `効果つき ${fxN}`; h.append(sm); }
-      const nofx = document.createElement('p'); nofx.className = 'nofx'; nofx.textContent = '全アイテム特別な効果なし(見た目だけ)';
-      sec.append(h, nofx, grid);
+      { const t = { pad: '操作パネル', skin: 'スキン' }[cat.k] || h.textContent; h.textContent = '';   // (short names here, to leave the note its line)
+        const n = document.createElement('span'); n.className = 'h3t'; n.textContent = t; const nofx = document.createElement('small'); nofx.className = 'nofx'; nofx.textContent = '全アイテム効果なし(見た目のみ)'; h.prepend(n); h.append(nofx); }
+      sec.append(h, grid);
       for (const it of shopItems().filter(x => x.cat === cat)) {
         const have = !it.id || sd.owned.includes(it.id), on = (sd.eq[cat.k] || '') === it.id, sel = shopSel && shopSel.cat === cat && shopSel.id === it.id;
         const b = document.createElement('button'); b.type = 'button'; b.className = 'shoptile' + (have ? ' owned' : '') + (on ? ' on' : '') + (sel ? ' sel' : '');
