@@ -59,6 +59,8 @@ body.aiming .controls .act:not(.aimsrc), body.aiming .controls .itemarr, body.ai
 #aimRing i { position: absolute; width: 40px; height: 40px; transform: translate(-50%, -50%); display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 16px; line-height: 1; box-sizing: border-box; transition: transform .08s, filter .08s; }
 #aimRing i.on { transform: translate(-50%, -50%); filter: brightness(1.45) drop-shadow(0 0 8px rgba(255,255,255,.7)); }
 #aimRing i.off { opacity: .28; filter: grayscale(1); }
+#aimRing.flat i.on { background: var(--aimc) !important; color: #0a0a0f !important; filter: drop-shadow(0 0 8px var(--aimc)); }
+body.cyberui #aimRing.flat i.on { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%) !important; border-image: none !important; }   /* (cyber's arrows are octagons: the fill follows their shape) */
 </style>
 </head>
 <body>
@@ -1260,9 +1262,9 @@ body.arcadeui .controls .act { position: absolute !important; width: 29% !import
   transform: translate(-50%, -50%); overflow: visible !important; border: 0 !important; border-radius: 50% !important; display: flex !important; flex-direction: column; align-items: center; justify-content: center; gap: 0;
   --f: 232,44,36; --r: 168,20,14; --s: 104,8,4;
   background: radial-gradient(circle at 50% 58%, rgb(var(--f)) 0 56%, color-mix(in srgb, rgb(var(--f)) 70%, #fff) 68%, rgb(var(--r)) 100%) !important;
-  box-shadow: 0 0 0 2px rgb(var(--r)), 0 4px 0 2px rgb(var(--s)), 0 0 0 5px rgb(var(--g, var(--r))), 0 5px 0 5px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.18) !important;
+  box-shadow: 0 0 0 2px rgb(var(--r)), 0 2px 0 2px rgb(var(--s)), 0 0 0 3px rgb(var(--g, var(--r))), 0 3px 0 3px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.7), inset 0 -2px 3px rgba(0,0,0,.18) !important;
   color: #fff !important; text-shadow: none !important; font-size: 0 !important; font-weight: 900; letter-spacing: 0 !important; line-height: 1.1; transition: transform .05s, box-shadow .05s; }
-body.arcadeui .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 5px rgb(var(--g, var(--r))), 0 2px 0 5px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.5), inset 0 -1px 3px rgba(0,0,0,.25) !important; }
+body.arcadeui .controls .act:active { transform: translate(-50%, calc(-50% + 2px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 3px rgb(var(--g, var(--r))), 0 1px 0 3px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.5), inset 0 -1px 3px rgba(0,0,0,.25) !important; }
 /* (the names printed on the panel under each button, as on a real stick; the button's face shows how many are left) */
 body.arcadeui .controls .act::before { content: attr(data-lbl); position: absolute; top: calc(100% + 7px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 9px; font-weight: 700; letter-spacing: 0; color: #e9ebf0; pointer-events: none; }
 body.arcadeui .controls .act small, body.arcadeui .controls #mineCount { color: #fff !important; font-size: 13px !important; font-family: "Share Tech Mono", var(--f-num); letter-spacing: 0 !important; font-weight: 700; text-shadow: none !important; }
@@ -1429,14 +1431,18 @@ body.handui.darkhand:not(.ontitle):not(.picking) .padknob { width: 48px !importa
    a deep base under it, pressed down when touched), in black; where they sit and the ring round them as before */
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .act { --f: 40,42,47; --r: 14,15,17; --s: 0,0,0;
   background: radial-gradient(ellipse 58% 30% at 50% 22%, rgba(255,255,255,.22), rgba(255,255,255,0) 72%), radial-gradient(circle at 50% 58%, rgb(var(--f)) 0 56%, color-mix(in srgb, rgb(var(--f)) 70%, #fff) 68%, rgb(var(--r)) 100%) !important;
-  box-shadow: 0 0 0 2px rgb(var(--r)), 0 4px 0 2px rgb(var(--s)), 0 0 0 5px #3a3c42, 0 5px 0 5px rgb(var(--s)), 0 7px 10px rgba(0,0,0,.6), inset 0 2px 1px rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.4) !important; color: #fff !important; }
-body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .act:active { transform: translate(-50%, calc(-50% + 3px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 5px #3a3c42, 0 2px 0 5px rgb(var(--s)), 0 3px 4px rgba(0,0,0,.6), inset 0 2px 1px rgba(255,255,255,.3), inset 0 -1px 3px rgba(0,0,0,.5) !important; }
+  box-shadow: 0 0 0 2px rgb(var(--r)), 0 2px 0 2px rgb(var(--s)), 0 0 0 3px #3a3c42, 0 3px 0 3px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.45), inset 0 -2px 3px rgba(0,0,0,.4) !important; color: #fff !important; }
+body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .act:active { transform: translate(-50%, calc(-50% + 2px)); box-shadow: 0 0 0 2px rgb(var(--r)), 0 1px 0 2px rgb(var(--s)), 0 0 0 3px #3a3c42, 0 1px 0 3px rgb(var(--s)), inset 0 2px 1px rgba(255,255,255,.3), inset 0 -1px 3px rgba(0,0,0,.5) !important; }
 /* a button that cannot be used now goes dark, but stays solid: the ring line behind never shows through it */
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .act[aria-disabled="true"] { opacity: 1 !important; filter: brightness(.5); }
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .act small, body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls #mineCount { color: #fff !important; }
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .act::before { color: #b5b9c2 !important; }
-/* (ランチャー's name under its button: above it, the long word ran into バリア's ring) */
-body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .rkb::before { top: calc(100% + 4px); bottom: auto; left: auto; right: -12px; transform: none; letter-spacing: -.02em; font-size: 9px; }
+/* (the black one: ランチャー on top and バリア on the right, swapped from the white one; バリア's name under its button
+   at the right, ランチャー's over its own) */
+body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .rkb { left: 50%; top: 23%; }
+body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .barb { left: 83%; top: 52%; }
+body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .rkb::before { bottom: calc(100% + 4px); top: auto; left: 50%; right: auto; transform: translateX(-50%); letter-spacing: -.02em; font-size: 9px; }
+body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .barb::before { top: calc(100% + 4px); bottom: auto; left: auto; right: -4px; transform: none; }
 /* (爆弾's under its button too, the same way out on the left) */
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .mine::before { top: calc(100% + 4px); bottom: auto; right: auto; left: -4px; transform: none; }
 /* (the four face buttons sit in one round recess in the shell, as on the reference: a dark dish with a faint rim) */
@@ -11596,6 +11602,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         const prev = $('itemPrev'), ref = prev && prev.offsetParent ? prev : el, cs = getComputedStyle(ref), round = ref === el;
         const look = {}; for (const k of ['background', 'border', 'borderRadius', 'boxShadow', 'color', 'fontFamily', 'borderImage', 'clipPath', 'textShadow']) look[k] = cs[k];
         if (round) look.borderRadius = '50%';
+        ring.classList.toggle('flat', !round); ring.style.setProperty('--aimc', cs.color);
         for (const a of ring.children) { Object.assign(a.style, look); a.style.width = a.style.height = (round ? Math.max(34, Math.min(46, r.width * 0.5)) : Math.max(34, Math.min(46, ref.getBoundingClientRect().width))) + 'px'; }
         // each arrow just outside the button on its side, never over it: where the screen's edge leaves less room than an
         // arrow, that one is made as slim as the room (a tab against the edge)
