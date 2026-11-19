@@ -39,8 +39,15 @@ body #shopList::-webkit-scrollbar, body #equipList::-webkit-scrollbar { display:
 body .shopdetail > .clip { align-self: center; aspect-ratio: 1.6; width: 100%; height: auto; max-height: none; flex: none; }
 body .shopdetail > .clip.pic { aspect-ratio: 2.164; }
 body .shopdetail > .clip video, body .shopdetail > .clip img { object-fit: contain; }
-body .shopdetail .big .sw { width: 48px; height: 48px; }   /* (a smaller swatch in the head, to leave the wide clip room) */
-body .shopdetail { gap: 8px; }
+body .shopdetail .big .sw { width: 44px; height: 44px; }   /* (a smaller swatch in the head, to leave the clip room) */
+body .shopdetail { gap: 6px; padding: 12px; }
+body .shopdetail .big { gap: 10px; }
+body .shopdetail h3 { font-size: 17px; }
+body .shopdetail .blk { gap: 1px; }
+body .shopdetail .blk p { font-size: 12.5px; line-height: 1.45; }
+body .shopdetail .shopact { padding-top: 6px; padding-bottom: 12px; bottom: -12px; margin-bottom: -12px; }
+body .shopdetail .shopact button { padding: 10px; }
+body .shopdetail .setnote { margin-top: 3px; padding: 3px 8px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .listbar { position: absolute; right: 0; width: 5px; border-radius: 3px; background: rgba(255,255,255,.08); pointer-events: none; }
 .listbar[hidden] { display: none; }
 .listbar i { position: absolute; left: 0; right: 0; border-radius: 3px; background: rgba(255,207,90,.75); }
@@ -2847,8 +2854,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['bomb_ice', '氷結爆弾', 500, '青白い冷気が弾ける', 'radial-gradient(circle at 40% 35%,#f2feff,#8feaff 40%,#1a7fa8 72%,#05222e)'],
       ['bomb_fire', '炎熱爆弾', 500, '爆心に炎が燃え残る', 'radial-gradient(circle at 45% 40%,#fff3c0,#ff9a2a 35%,#ff3b1a 65%,#3a0600)'],
       ['bomb_comic', 'コミック爆弾', 500, 'ギザギザの吹き出しと「BOOM!」の文字で、漫画のように弾ける', 'conic-gradient(from 10deg,#ffe23a 0 8%,#ff4a2a 8% 16%,#ffe23a 16% 25%,#ff4a2a 25% 33%,#ffe23a 33% 42%,#ff4a2a 42% 50%,#ffe23a 50% 58%,#ff4a2a 58% 66%,#ffe23a 66% 75%,#ff4a2a 75% 83%,#ffe23a 83% 92%,#ff4a2a 92%)'],
-      ['bomb_dragon', '龍の咆哮', 500, '金色の龍が爆弾のまわりを回り、その輪の中で爆発したあと天に昇っていく', 'radial-gradient(circle,#fff3b0 0 18%,#ffc21a 30%,#ff7a1a 46%,#b05a00 58%,rgba(0,0,0,0) 66%)'],
-      ['bomb_energy', 'エネルギー爆弾', 500, '手のひらに集めた気が、まばゆい光の球になって炸裂する', 'radial-gradient(circle,#ffffff 0 22%,#ffd21a 34%,#ff9a00 52%,rgba(215,80,0,.45) 66%,rgba(0,0,0,0) 72%)'],
+      ['bomb_dragon', '龍の咆哮', 500, '金色の龍が爆弾を囲んで回り、爆発のあと天に昇る', 'radial-gradient(circle,#fff3b0 0 18%,#ffc21a 30%,#ff7a1a 46%,#b05a00 58%,rgba(0,0,0,0) 66%)'],
+      ['bomb_energy', 'エネルギー爆弾', 500, '集めた気が、まばゆい光の球になって炸裂する', 'radial-gradient(circle,#ffffff 0 22%,#ffd21a 34%,#ff9a00 52%,rgba(215,80,0,.45) 66%,rgba(0,0,0,0) 72%)'],
       ['bomb_energy_r', 'エネルギー爆弾(赤)', 500, '手のひらに集めた赤い気が、まばゆい光の球になって炸裂する', 'radial-gradient(circle,#ffffff 0 22%,#ff4a2a 34%,#e60000 52%,rgba(165,0,0,.45) 66%,rgba(0,0,0,0) 72%)'],
       ['bomb_energy_b', 'エネルギー爆弾(青)', 500, '手のひらに集めた青い気が、まばゆい光の球になって炸裂する', 'radial-gradient(circle,#ffffff 0 22%,#3a9bff 34%,#0050ff 52%,rgba(0,25,200,.45) 66%,rgba(0,0,0,0) 72%)'],
       ['bomb_fw', '花火爆弾', 500, '夜空の花火のように色とりどりに弾ける', 'radial-gradient(circle at 45% 40%,#fff6e0,#ff6ab0 30%,#ffcf5a 52%,#4ab8ff 72%,#1a0a30)'],
@@ -2858,10 +2865,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['rk_laser', 'レーザー砲', 200, '通路を貫く赤い光線', 'linear-gradient(90deg,#3a0010,#ff2d55 45%,#fff 55%,#ff2d55 65%,#3a0010)'],
       ['rk_plasma', 'プラズマ砲', 500, '脈打つ緑の光弾。着弾するとプラズマが外周を走る', 'radial-gradient(circle,#effff6 12%,#2bff9a 42%,#5a2bff 80%)'],
       ['rk_comic', 'コミック砲', 500, '黒いふちのマンガのロケット。着弾すると「BAM!」と弾ける', 'conic-gradient(from 20deg,#2a6bff 0 10%,#ffe23a 10% 20%,#2a6bff 20% 30%,#ffe23a 30% 40%,#2a6bff 40% 50%,#ffe23a 50% 60%,#2a6bff 60% 70%,#ffe23a 70% 80%,#2a6bff 80% 90%,#ffe23a 90%)'],
-      ['rk_dragon', '龍撃', 500, '金色の龍が体をうねらせて飛んでいき、当たると光になって弾ける', 'linear-gradient(90deg,#b05a00,#ffc21a 30%,#fff3b0 50%,#ff7a1a 70%,#b05a00)'],
-      ['rk_energy', 'エネルギー弾', 500, '青いエネルギーの球を撃ち出す。通ったあとに光のかけらが残り、当たると大きく弾ける', 'linear-gradient(90deg,#00199a,#0a5aff 35%,#ffffff 50%,#0a5aff 65%,#00199a)'],
-      ['rk_energy_r', 'エネルギー弾(赤)', 500, '赤いエネルギーの球を撃ち出す。通ったあとに光のかけらが残り、当たると大きく弾ける', 'linear-gradient(90deg,#7a0000,#ff1a00 35%,#ffffff 50%,#ff1a00 65%,#7a0000)'],
-      ['rk_energy_y', 'エネルギー弾(金)', 500, '金色のエネルギーの球を撃ち出す。通ったあとに光のかけらが残り、当たると大きく弾ける', 'linear-gradient(90deg,#9a3a00,#ffa000 35%,#ffffff 50%,#ffa000 65%,#9a3a00)'],
+      ['rk_dragon', '龍撃', 500, '金色の龍がうねりながら飛び、当たると光になって弾ける', 'linear-gradient(90deg,#b05a00,#ffc21a 30%,#fff3b0 50%,#ff7a1a 70%,#b05a00)'],
+      ['rk_energy', 'エネルギー弾', 500, '青いエネルギーの球を撃つ。光のかけらを残し、当たると大きく弾ける', 'linear-gradient(90deg,#00199a,#0a5aff 35%,#ffffff 50%,#0a5aff 65%,#00199a)'],
+      ['rk_energy_r', 'エネルギー弾(赤)', 500, '赤いエネルギーの球を撃つ。光のかけらを残し、当たると大きく弾ける', 'linear-gradient(90deg,#7a0000,#ff1a00 35%,#ffffff 50%,#ff1a00 65%,#7a0000)'],
+      ['rk_energy_y', 'エネルギー弾(金)', 500, '金色のエネルギーの球を撃つ。光のかけらを残し、当たると大きく弾ける', 'linear-gradient(90deg,#9a3a00,#ffa000 35%,#ffffff 50%,#ffa000 65%,#9a3a00)'],
       ['rk_ice', '氷結砲', 500, '冷気をまとった弾', 'linear-gradient(90deg,#062a36,#3fd8ff 45%,#f2feff 55%,#3fd8ff 65%,#062a36)'],
       ['rk_fire', '火炎砲', 500, '着弾点から炎が走る', 'radial-gradient(circle,#fff3c0 12%,#ff8a1a 42%,#c81a08 80%)'],
       ['rk_hole', 'ブラックホール砲', 500, '着弾点に重力の渦', 'radial-gradient(circle,#000 30%,#3a0a6a 55%,#c08cff 75%,rgba(0,0,0,0) 80%)'],
@@ -2875,7 +2882,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     { k: 'dash', label: 'ダッシュ', items: [
       ['dash_petal', '桜吹雪', 200, '駆け抜けたあとに花びらが舞う', 'radial-gradient(circle at 40% 40%,#fff0f5,#ffb7d0 45%,#e2558a)'],
       ['dash_warp', '時空の裂け目', 500, '空間をゆがめて駆ける', 'radial-gradient(circle,#0a0018 30%,#7b3cff 55%,#3fe0ff 68%,rgba(0,0,0,0) 72%)'],
-      ['dash_dragon', '龍の疾走', 500, '金色の炎をまとって駆け、龍のうろこと瑞雲を残していく', 'radial-gradient(circle at 40% 40%,#fff3b0,#ffc21a 35%,#ff7a1a 60%,#b05a00)'],
+      ['dash_dragon', '龍の疾走', 500, '金色の炎をまとって駆け、うろこと瑞雲を残す', 'radial-gradient(circle at 40% 40%,#fff3b0,#ffc21a 35%,#ff7a1a 60%,#b05a00)'],
       ['dash_nitro_y', 'ニトロ(金)', 500, '背中から金色の炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#9a3a00 22%,#ffa000 45%,#ffffff 62%,#ffd21a 74%,rgba(0,0,0,0) 90%)'],
       ['dash_nitro_r', 'ニトロ(赤)', 500, '背中から赤い炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#7a0000 22%,#ff1a00 45%,#ffffff 62%,#ff5a3a 74%,rgba(0,0,0,0) 90%)'],
       ['dash_nitro_b', 'ニトロ(青)', 500, '背中から青い炎を噴いて、一気に加速する', 'linear-gradient(90deg,rgba(0,0,0,0) 8%,#00199a 22%,#0a5aff 45%,#ffffff 62%,#3a9bff 74%,rgba(0,0,0,0) 90%)'],
@@ -2890,7 +2897,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['br_glass', 'ガラス状', 200, '光を返す透明な殻', 'radial-gradient(circle at 35% 30%,#fff,rgba(220,240,255,.45) 35%,rgba(120,170,210,.25))'],
       ['br_emf', '電磁シールド', 500, 'まわる電磁の輪', 'radial-gradient(circle,rgba(60,90,220,.25) 38%,#7b5cff 58%,#3fd0ff 70%,rgba(0,0,0,0) 72%)'],
       ['br_comic', 'コミックシールド', 500, '黒いふちに網点のマンガの盾。割れると「POW!」と弾ける', 'radial-gradient(circle,#7ff3ff 0 45%,#111 46% 52%,#ff3fb4 53% 66%,#111 67% 72%,rgba(0,0,0,0) 73%)'],
-      ['br_dragon', '龍の守り', 500, '金色の龍が逃走者のまわりをとぐろを巻いてめぐり、身を守る', 'radial-gradient(circle,rgba(0,0,0,0) 34%,#b05a00 36%,#ffc21a 44%,#fff3b0 48%,#ffc21a 52%,#b05a00 60%,rgba(0,0,0,0) 62%)'],
+      ['br_dragon', '龍の守り', 500, '金色の龍がとぐろを巻いて逃走者を守る', 'radial-gradient(circle,rgba(0,0,0,0) 34%,#b05a00 36%,#ffc21a 44%,#fff3b0 48%,#ffc21a 52%,#b05a00 60%,rgba(0,0,0,0) 62%)'],
       ['br_aura', '闘気エネルギー', 500, '金色のエネルギーを全身にまとう。ふちが波打ち、光がめぐる', 'radial-gradient(circle,#fff6c0 0 30%,#ffd21a 45%,#ff9a0a 58%,rgba(255,200,40,.35) 66%,rgba(0,0,0,0) 72%)'],
       ['br_aura_r', '闘気エネルギー(赤)', 500, '赤いエネルギーを全身にまとう。ふちが波打ち、光がめぐる', 'radial-gradient(circle,#ffd0c0 0 30%,#ff5a3c 45%,#e01e1e 58%,rgba(255,80,60,.35) 66%,rgba(0,0,0,0) 72%)'],
       ['br_aura_b', '闘気エネルギー(青)', 500, '青いエネルギーを全身にまとう。ふちが波打ち、光がめぐる', 'radial-gradient(circle,#d0ecff 0 30%,#4a9cff 45%,#1e5ae8 58%,rgba(70,150,255,.35) 66%,rgba(0,0,0,0) 72%)'] ] },
@@ -2915,7 +2922,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['sk_comic_b', 'コミック(青)', 500, '黒い太線と網点の影。アメコミのコマから飛び出してきたような見た目', 'radial-gradient(circle at 34% 30%,#fff 0 9%,transparent 10%),radial-gradient(circle at 62% 66%,#1a6ad8 0 34%,transparent 35%),radial-gradient(circle,#3ab8ff 0 62%,#111 63% 70%,transparent 71%)'],
       ['sk_budo', '武闘家', 500, '黒い目のまわりから、肌色・オレンジ・青・オレンジのしま模様。オレンジが多め', 'radial-gradient(circle at 62% 50%,#111 0 9%,#f6c9a0 10% 16%,#ff7a1a 17% 44%,#2346a8 45% 53%,#ff7a1a 54%)'],
       ['sk_kaizoku', '海賊', 500, '黒い目のまわりから、肌色・赤・黄・青のしま模様。赤と青が多め', 'radial-gradient(circle at 62% 50%,#111 0 9%,#f6c9a0 10% 16%,#d9261c 17% 44%,#f2c230 45% 52%,#2a5cb8 53%)'],
-      ['sk_gold', '黄金', 500, '赤い石をはめ込んだ、磨き上げた金のボール。金の光をまとって光の輪を放ち、表面に光の筋が走り、きらめきが舞い、走ると金の粉がこぼれる', 'radial-gradient(circle at 36% 30%,#fffbe0,#ffd86a 30%,#e0a020 58%,#7a4a00)'],
+      ['sk_gold', '黄金', 500, '赤い石をはめた金のボール。光の輪ときらめき、走ると金の粉', 'radial-gradient(circle at 36% 30%,#fffbe0,#ffd86a 30%,#e0a020 58%,#7a4a00)'],
       ['sk_shopstar', 'スター', 500, 'ショップの★の色をしたボールに、黒い星', 'url("data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Cpath d=%27M50 8 61.8 37.6 93.8 39.8 69 60.2 76.9 91.2 50 74 23.1 91.2 31 60.2 6.2 39.8 38.2 37.6Z%27 fill=%27%23141008%27 stroke=%27%23141008%27 stroke-width=%273%27 stroke-linejoin=%27round%27/%3E%3C/svg%3E") center/64% no-repeat,radial-gradient(circle at 38% 32%,#fff3c8,#ffcf5a 45%,#b07a10)'],
       ['sk_lady_r', 'てんとう虫(赤)', 500, 'ナナホシのような赤。黒い斑点つき', 'radial-gradient(circle at 30% 38%,#000 9%,transparent 10%),radial-gradient(circle at 70% 38%,#000 9%,transparent 10%),radial-gradient(circle at 34% 70%,#000 9%,transparent 10%),radial-gradient(circle at 66% 70%,#000 9%,transparent 10%),linear-gradient(90deg,transparent 47%,#000 47%,#000 53%,transparent 53%),radial-gradient(circle at 38% 35%,#ffb3a8,#e3261b 45%,#4a0602)'], ['sk_lady_y', 'てんとう虫(黄)', 500, '明るい黄色。黒い斑点つき', 'radial-gradient(circle at 30% 38%,#000 9%,transparent 10%),radial-gradient(circle at 70% 38%,#000 9%,transparent 10%),radial-gradient(circle at 34% 70%,#000 9%,transparent 10%),radial-gradient(circle at 66% 70%,#000 9%,transparent 10%),linear-gradient(90deg,transparent 47%,#000 47%,#000 53%,transparent 53%),radial-gradient(circle at 38% 35%,#fff3b0,#f2c014 45%,#4d3a00)'], ['sk_lady_b', 'てんとう虫(水色)', 500, '涼しい水色。黒い斑点つき', 'radial-gradient(circle at 30% 38%,#000 9%,transparent 10%),radial-gradient(circle at 70% 38%,#000 9%,transparent 10%),radial-gradient(circle at 34% 70%,#000 9%,transparent 10%),radial-gradient(circle at 66% 70%,#000 9%,transparent 10%),linear-gradient(90deg,transparent 47%,#000 47%,#000 53%,transparent 53%),radial-gradient(circle at 38% 35%,#d6f4ff,#3cb6e8 45%,#0a3248)'],
       ['sk_neon', 'ネオン', 500, '光る桃色の輪をまとう', ''], ['sk_star', '星屑', 500, 'まわりに星がまたたく', ''],
@@ -2923,9 +2930,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ['sk_dawn', '夜明け', 500, '1-3クリアの証。朝日の金色', ''], ['sk_finale', '大輪', 500, '4-3クリアの証。紅と金に星がまたたく', ''] ] },
     // accessories: worn over any skin
     { k: 'acc', label: 'アクセサリー', items: [
-      ['ac_toki', '闘気(金)', 500, '金色の闘気をまとう。ふちがメラメラと燃え、走ると後ろへたなびき、光の粒が舞う。どのスキンにも重ねられる', 'radial-gradient(circle,#fff6c0 0 28%,#ffc21a 40%,#ff8a00 52%,rgba(255,140,0,.5) 62%,rgba(0,0,0,0) 74%)'],
-      ['ac_toki_r', '闘気(赤)', 500, '赤い闘気をまとう。ふちがメラメラと燃え、走ると後ろへたなびき、光の粒が舞う。どのスキンにも重ねられる', 'radial-gradient(circle,#ffd0c0 0 28%,#ff3a24 40%,#d00000 52%,rgba(230,0,0,.5) 62%,rgba(0,0,0,0) 74%)'],
-      ['ac_toki_b', '闘気(青)', 500, '青い闘気をまとう。ふちがメラメラと燃え、走ると後ろへたなびき、光の粒が舞う。どのスキンにも重ねられる', 'radial-gradient(circle,#d0ecff 0 28%,#2a7cff 40%,#0030d0 52%,rgba(0,60,255,.5) 62%,rgba(0,0,0,0) 74%)'] ] },
+      ['ac_toki', '闘気(金)', 500, '金色の闘気がメラメラ燃え、走ると後ろへたなびく。どのスキンにも重ねられる', 'radial-gradient(circle,#fff6c0 0 28%,#ffc21a 40%,#ff8a00 52%,rgba(255,140,0,.5) 62%,rgba(0,0,0,0) 74%)'],
+      ['ac_toki_r', '闘気(赤)', 500, '赤い闘気がメラメラ燃え、走ると後ろへたなびく。どのスキンにも重ねられる', 'radial-gradient(circle,#ffd0c0 0 28%,#ff3a24 40%,#d00000 52%,rgba(230,0,0,.5) 62%,rgba(0,0,0,0) 74%)'],
+      ['ac_toki_b', '闘気(青)', 500, '青い闘気がメラメラ燃え、走ると後ろへたなびく。どのスキンにも重ねられる', 'radial-gradient(circle,#d0ecff 0 28%,#2a7cff 40%,#0030d0 52%,rgba(0,60,255,.5) 62%,rgba(0,0,0,0) 74%)'] ] },
   ];
   // the runner's looks: brushed-metal colours (light, middle, shadow), the glow under it, and a moving extra
   const SKIN = {
@@ -3501,10 +3508,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the detail panel's clip (or picture): whole, as wide as the panel unless that would run under the buy bar at the
   // bottom, then as tall as the room above it allows (narrower, centred)
   function clipFit(box) {
-    const c = box.querySelector(':scope > .clip'), a = box.querySelector('.shopact'); if (!c || !a) return;
+    // the whole panel (head, clip, the look's words, the buy bar) on screen with no scrolling: the clip gives up what
+    // height it must, keeping its shape (centred, narrower)
+    const c = box.querySelector(':scope > .clip'); if (!c) return;
     c.style.width = ''; const ar = c.classList.contains('pic') ? 2.164 : 1.6;
-    const room = a.getBoundingClientRect().top - c.getBoundingClientRect().top - 6, w = c.getBoundingClientRect().width;
-    if (room > 40 && w / ar > room) c.style.width = Math.floor(room * ar) + 'px';
+    for (let k = 0; k < 4; k++) {
+      const over = box.scrollHeight - box.clientHeight; if (over <= 1) break;
+      const h = c.getBoundingClientRect().height - over - 2; if (h < 40) { c.style.width = Math.floor(40 * ar) + 'px'; break; }
+      c.style.width = Math.floor(h * ar) + 'px';
+    }
   }
   addEventListener('resize', () => { for (const id of ['shopDetail', 'equipDetail']) { const b = $(id); if (b && b.offsetParent) clipFit(b); } });
   // a list's scroll bar: a thin track on its right edge with a thumb for the part on screen (hidden when it all fits)
@@ -3600,11 +3612,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (it.id && !s2.owned.includes(it.id)) { if (cost) starW().s += cost; s2.owned.push(it.id); }
       s2.eq[it.cat.k] = it.id; saveRecords(); openShop(); shopSay('');
     });
-    act.append(btn, mk('span', 'state', on ? 'いま使っている' : have ? '持っている' : 'まだ持っていない'));
+    act.append(btn);   // (no state line: the price line and the button already say it)
     // a story's prize: also won by clearing that story's stage 3
     { const r = MAP_CHOICE && Object.keys(STORY_PRIZE).find(k => STORY_PRIZE[k][1] === it.id);
       if (r && !have) act.append(mk('span', 'state prize', mailWaiting(it.id) ? '✉️(メール)に届いている' : `${STORY_LAST[r]}クリアで獲得`)); }
-    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name}でまとめて買うと${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); look.append(g); } }   // (with the look, not the buy bar, so the clip keeps its room)
+    { const S = it.id && !have && setOf(it.id); if (S && setCost(S).whole) { const g = mk('button', 'setnote'); g.type = 'button'; g.textContent = `${S.name.replace('セット', '')}セットなら${SET_OFF * 100}%おトク ›`; g.addEventListener('click', () => { tap(); shopTab = 'set'; shopSel = S; setClipAt = Math.max(0, S.ids.indexOf(it.id)); openShop(); }); look.append(g); } }   // (with the look, not the buy bar, so the clip keeps its room)
     box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
     clipFit(box); requestAnimationFrame(() => clipFit(box));   // (again once the screen is laid out: the first time it opens it is not yet)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
@@ -3676,7 +3688,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const act = mk('div', 'shopact'), btn = mk('button', on ? 'ghost' : 'go');
     btn.type = 'button'; btn.textContent = on ? '装備中' : it.id ? '装備する' : '標準に戻す'; btn.disabled = on;
     btn.addEventListener('click', () => { tap(); shopData().eq[it.cat.k] = it.id; saveRecords(); openEquip(); });
-    act.append(btn, mk('span', 'state', on ? 'いま使っている' : '持っている'));
+    act.append(btn);
     box.append(big, ...(clip ? [clip] : []), look, ...(SHOP_FX[it.id] ? [fx] : []), act);   // (the effect block only when there is one)
     clipFit(box); requestAnimationFrame(() => clipFit(box));   // (again once the screen is laid out: the first time it opens it is not yet)
     if (clip && clip.firstChild.play) clip.firstChild.play().catch(() => {});
