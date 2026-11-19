@@ -61,6 +61,17 @@ body.aiming .controls .act:not(.aimsrc), body.aiming .controls .itemarr, body.ai
 #aimRing i.off { opacity: .45; }   /* (flicked at a wall: dims a moment) */
 #aimRing.flat i.on { background: var(--aimc) !important; color: #0a0a0f !important; filter: drop-shadow(0 0 8px var(--aimc)); }
 body.cyberui #aimRing.flat i.on { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%) !important; border-image: none !important; }   /* (cyber's arrows are octagons: the fill follows their shape) */
+
+/* a group's own tabs across the top of the list (アイテム: ランチャー / バリア / 爆弾, スキン: スキン / アクセサリー) */
+#shopScreen .shopleft, #equipScreen .shopleft { display: grid !important; grid-template-columns: 92px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); column-gap: 8px; row-gap: 6px; }
+#shopTabs, #equipTabs { grid-column: 1; grid-row: 1 / 3; }
+.shopleft > .subtabs { grid-column: 2; grid-row: 1; display: flex; gap: 4px; padding-right: 12px; }
+.shopleft > .subtabs[hidden] { display: none; }
+.shopleft > .subtabs + .shoplist { grid-row: 2; }
+.shopleft > .subtabs[hidden] + .shoplist { grid-row: 1 / 3; }
+.shopleft > .shoplist { grid-column: 2; min-height: 0; }
+.subtabs button { flex: 1 1 0; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 5px 4px; font: inherit; font-weight: 700; font-size: 12px; white-space: nowrap; }
+.subtabs button[aria-selected="true"] { color: var(--lamp); border-color: rgba(255,207,90,.6); background: rgba(255,207,90,.1); }
 </style>
 </head>
 <body>
@@ -3367,13 +3378,22 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const shopItems = () => SHOP.flatMap(c => [stdItem(c), ...c.items.filter(it => !SHOP_PRIZE_ONLY.includes(it[0]) && !SHOP_RETIRED.includes(it[0]) && !FREE_SKINS.includes(it[0]))].map(it => ({ cat: c, id: it[0], name: it[1], price: it[2], desc: it[3], sw: it[4] })));
   // (the gold + by the stars opens the ★ shop)
   document.addEventListener('click', e => { if (e.target && e.target.id === 'shopStarPlus') { tap(); shopTab = 'star'; shopSel = null; openShop(); } });
+  // the tabs down the left, grouped: アイテム holds ランチャー, バリア and 爆弾, スキン holds スキン and アクセサリー; a group's
+  // own tabs run across the top of the list. (cur: the tab picked, a single one; pick(k): go to tab k)
+  const TAB_GROUPS = [['item', 'アイテム', ['rocket', 'barrier', 'bomb']], ['dash', 'ダッシュ'], ['look', 'スキン', ['skin', 'acc']], ['pad', '操作パネル'], ['set', 'セット']];
+  const TAB_NAME = { rocket: 'ランチャー', barrier: 'バリア', bomb: '爆弾', skin: 'スキン', acc: 'アクセサリー' };
+  function groupTabs(tabs, list, cur, pick, withSet) {
+    tabs.textContent = '';
+    for (const [g, label, subs] of TAB_GROUPS) { if (g === 'set' && !withSet) continue;
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(subs ? subs.includes(cur) : cur === g));
+      b.addEventListener('click', () => { const k = subs ? (subs.includes(cur) ? cur : subs[0]) : g; if (k !== cur) pick(k); }); tabs.append(b); }
+    let row = list.parentElement.querySelector(':scope > .subtabs'); if (!row) { row = document.createElement('div'); row.className = 'subtabs'; row.setAttribute('role', 'tablist'); list.before(row); }
+    row.textContent = ''; const grp = TAB_GROUPS.find(t => t[2] && t[2].includes(cur)); row.hidden = !grp;
+    if (grp) for (const k of grp[2]) { const b = document.createElement('button'); b.type = 'button'; b.textContent = TAB_NAME[k]; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(cur === k)); b.addEventListener('click', () => { if (k !== cur) pick(k); }); row.append(b); }
+  }
   function openShop() {
-    const tabs = $('shopTabs'); tabs.textContent = '';
-    tabs.classList.add('eight');
-    for (const [k, label] of [...EQUIP_TABS, ['set', 'セット']]) {   // (★ is bought through the + by the stars, or the short-of-stars button)
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(shopTab === k));
-      b.addEventListener('click', () => { tap(); shopTab = k; shopSel = null; openShop(); }); tabs.append(b);
-    }
+    const tabs = $('shopTabs');
+    groupTabs(tabs, $('shopList'), shopTab, k => { tap(); shopTab = k; shopSel = null; $('shopList').scrollTop = 0; openShop(); }, true);
     const list = $('shopList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
     const cats = shopTab === 'star' || shopTab === 'set' ? [] : SHOP.filter(c => (c.under || c.k) === shopTab);
     if (shopTab === 'star') shopPacks(list);
@@ -3646,11 +3666,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const EQUIP_TABS = [['rocket', 'ランチャー'], ['barrier', 'バリア'], ['bomb', '爆弾'], ['dash', 'ダッシュ'], ['skin', 'スキン'], ['acc', 'アクセサリー'], ['pad', '操作パネル']];
   let equipTab = 'rocket', equipSel = null;   // (the tile picked for the detail panel: {cat, id, name, desc, sw})
   function openEquip() {
-    const tabs = $('equipTabs'); tabs.textContent = '';
-    for (const [k, label] of EQUIP_TABS) {
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(equipTab === k));
-      b.addEventListener('click', () => { if (equipTab !== k) { tap(); equipTab = k; equipSel = null; list.scrollTop = 0; openEquip(); } }); tabs.append(b);
-    }
+    groupTabs($('equipTabs'), $('equipList'), equipTab, k => { tap(); equipTab = k; equipSel = null; $('equipList').scrollTop = 0; openEquip(); }, false);
     const list = $('equipList'), sd = shopData(), keep = list.scrollTop; list.textContent = '';
     const mk = (tag, cls, txt) => { const e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; };
     const tabCats = SHOP.filter(c => (c.under || c.k) === equipTab);
