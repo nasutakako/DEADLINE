@@ -1770,7 +1770,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 10分から(ランチャー×4・バリア×1)</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -5796,7 +5796,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     recStart();
-    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true; }
+    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true;
+      if (testLate === 600) { P.barrier = false; bag = ['launcher', 'launcher', 'launcher', 'launcher', 'barrier']; itemSel = 'launcher'; } }   // (10:00: four launchers and a barrier in hand, none worn)
   }
 
   // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
@@ -6595,7 +6596,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // the try-out: only the time, nothing recorded
       bgmStop(); state = 'caught'; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1; tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
       document.querySelector('#overScreen h2').textContent = '確保';
-      const from = testLate === 720 ? '12分' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
+      const from = testLate === 600 ? '10分' : testLate === 720 ? '12分' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
       $('rStars').hidden = true; $('rShare').closest('.sharerow').hidden = true; $('rTime').textContent = (P && P.stompN || 0) + '回'; $('rKills').textContent = kills + '体'; $('retryBtn').textContent = 'もう一度テスト';
       return;
     }
@@ -11459,7 +11460,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function begin(n) {
     tap(); daily = null; rankRun = false;
     if (n < 2) { start(n); return; }
-    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
+    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -11593,7 +11594,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = !ART_ONLY; testLate = 0;
+    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = !ART_ONLY; testLate = 0;
     $('spMsg').textContent = `ランクレース。今週のマップは${weekMapName()}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
@@ -11636,7 +11637,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
   $('spGoBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStart(); });
-  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || !rankRun) return; tap(); testLate = at; spStart(); misLive = false; misRender(); });
+  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 600]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || !rankRun) return; tap(); testLate = at; spStart(); misLive = false; misRender(); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
   // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
   // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
