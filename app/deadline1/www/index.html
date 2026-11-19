@@ -72,6 +72,14 @@ body.cyberui #aimRing.flat i.on { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100
 .shopleft > .shoplist { grid-column: 2; min-height: 0; }
 .subtabs button { flex: 1 1 0; border: 1px solid var(--line); background: var(--panel); color: var(--muted); border-radius: 6px; padding: 5px 4px; font: inherit; font-weight: 700; font-size: 12px; white-space: nowrap; }
 .subtabs button[aria-selected="true"] { color: var(--lamp); border-color: rgba(255,207,90,.6); background: rgba(255,207,90,.1); }
+
+/* the left tabs as a rail: no boxes, a little picture over each name, the one picked lit with a gold bar at its left
+   (the tabs over the list keep their boxes: two kinds of tab, two looks) */
+body #shopTabs button.railtab, body #equipTabs button.railtab { position: relative; display: flex !important; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px !important; border: 0 !important; background: none !important; border-radius: 8px; color: var(--muted); font-size: 11px; text-align: center !important; }
+.railtab svg { width: 22px; height: 22px; }
+.railtab[aria-selected="true"] { color: var(--lamp) !important; background: rgba(255,207,90,.08) !important; }
+.railtab[aria-selected="true"]::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 2px; background: var(--lamp); box-shadow: 0 0 6px rgba(255,207,90,.6); }
+body #shopTabs, body #equipTabs { gap: 2px !important; border-right: 1px solid var(--line); padding-right: 4px; }
 </style>
 </head>
 <body>
@@ -3383,11 +3391,20 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the tabs down the left, grouped: アイテム holds ランチャー, バリア and 爆弾, スキン holds スキン and アクセサリー; a group's
   // own tabs run across the top of the list. (cur: the tab picked, a single one; pick(k): go to tab k)
   const TAB_GROUPS = [['item', 'アイテム', ['rocket', 'barrier', 'bomb']], ['dash', 'ダッシュ'], ['look', 'スキン', ['skin', 'acc']], ['pad', '操作パネル'], ['set', 'セット']];
+  // the left tabs' little pictures (line drawings in the text's colour)
+  const svgI = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const TAB_ICON = {
+    item: svgI('<circle cx="11" cy="14" r="7"/><path d="M15 8l3-3M17 3l2 2M20 6l1 1"/>'),
+    dash: svgI('<path d="M3 8h11M5 12h13M3 16h9"/><path d="M17 6l4 6-4 6"/>'),
+    look: svgI('<circle cx="12" cy="12" r="8"/><path d="M8.5 9.5a4 4 0 0 1 4-2.5"/>'),
+    pad: svgI('<rect x="2" y="7" width="20" height="11" rx="5"/><path d="M7 10.5v4M5 12.5h4"/><circle cx="16" cy="11" r="1"/><circle cx="18" cy="14" r="1"/>'),
+    set: svgI('<path d="M3 8l9-4 9 4-9 4z"/><path d="M3 8v8l9 4 9-4V8M12 12v8"/>'),
+  };
   const TAB_NAME = { rocket: 'ランチャー', barrier: 'バリア', bomb: '爆弾', skin: 'スキン', acc: 'アクセサリー' };
   function groupTabs(tabs, list, cur, pick, withSet) {
     tabs.textContent = '';
     for (const [g, label, subs] of TAB_GROUPS) { if (g === 'set' && !withSet) continue;
-      const b = document.createElement('button'); b.type = 'button'; b.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(subs ? subs.includes(cur) : cur === g));
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'railtab'; b.innerHTML = (TAB_ICON[g] || '') + '<span></span>'; b.lastChild.textContent = label; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(subs ? subs.includes(cur) : cur === g));
       b.addEventListener('click', () => { const k = subs ? (subs.includes(cur) ? cur : subs[0]) : g; if (k !== cur) pick(k); }); tabs.append(b); }
     let row = list.parentElement.querySelector(':scope > .subtabs'); if (!row) { row = document.createElement('div'); row.className = 'subtabs'; row.setAttribute('role', 'tablist'); list.before(row); }
     row.textContent = ''; const grp = TAB_GROUPS.find(t => t[2] && t[2].includes(cur)); row.hidden = !grp;
