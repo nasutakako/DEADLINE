@@ -1707,15 +1707,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <div><span class="label">阻止</span><b id="cTotal">0回</b></div>
         <div><span class="label">ベスト</span><b id="cNext">--</b></div>
       </div>
-      <p id="cMsg">補給アイテムを1つ選ぶと次のステージが始まる。</p>
+      <p id="cMsg"></p>
       <div class="award" id="cTitles" hidden></div>
       <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button></div>
       <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="cShare" type="button">X</button><button class="ghost share" id="cInsta" type="button">Instagram</button><button class="ghost share" id="cLine" type="button">LINE</button><span class="sharestar" id="cShareStar"></span></div>
-      <span class="label" id="pickLabel">次のステージへ進む:補給アイテムを1つ選ぶ</span>
-      <div class="picks" id="clearPicks">
-        <button class="pick barrier" data-item="barrier" type="button"><b>1 ・ バリア</b><span><i>1回だけ</i><i>捕まっても</i><i>助かる</i></span></button>
-        <button class="pick launcher" data-item="launcher" type="button"><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
-      </div>
+      <div class="row nextrow" id="clearPicks"><button class="go" id="nextStageBtn" type="button">次のステージへ</button></div>
     </div>
   </div>
 
@@ -6394,11 +6390,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     showTitles('cTitles', awardTitles(+t.toFixed(1), kills - stageKillStart, false, false));
     $('cScoreLabel').textContent = `ステージ${stageN} 逃走時間`;
     $('cScore').textContent = fmtTime(t);
-    $('pickLabel').textContent = `ステージ${stageN + 1}へ進む:補給アイテムを1つ選ぶ`;
+    $('nextStageBtn').textContent = `ステージ${stageN + 1}へ`;
     // stage 2 is the last stage: no item pick, offer a jump back to stage 1 instead
     const last = stageN >= 3;
     if (!last) bgmStart(songFor(stageN + 1));  // the next stage's waiting music under the item pick
-    $('pickLabel').hidden = last; $('clearPicks').hidden = last;
+    $('clearPicks').hidden = last;
     if (last) $('cMsg').textContent = '全ステージ制覇。もう一度挑むか、タイトルに戻るかを選べる。';
     $('cMsg').classList.toggle('story', last && MAP_CHOICE);
     if (last && MAP_CHOICE) {
@@ -6410,8 +6406,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     { const top = stageBest(ownKey); bestCell($('cNext'), top); $('cNext').className = crank === 1 ? 'new' : ''; }
     if (fcStars && !last) $('cMsg').classList.add('story');
     if (!last) $('cMsg').textContent = (fcStars ? `初回クリア報酬 ★${fcStars}(✉️メールで受け取れる)。` : '') + (stageN === 1
-      ? '地上に出た。アイテムを選んでステージ2へ進むか、もう一度挑むか、タイトルに戻るかを選べる。'
-      : 'アイテムを選んでステージ3へ進むか、もう一度挑むか、タイトルに戻るかを選べる。');
+      ? '地上に出た。ステージ2へ進むか、もう一度挑むか、タイトルに戻るかを選べる。'
+      : 'ステージ3へ進むか、もう一度挑むか、タイトルに戻るかを選べる。');
     ui.clear.hidden = false; celebrate('clear', crank === 1); titleChime('cTitles'); prepShare('clear');
   }
   // a story's prize: into what the player owns, and on at once if that slot is still the standard one;
@@ -10592,7 +10588,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (e.code === 'Enter' && state === 'title') showBrief();
     else if (e.code === 'Enter' && (state === 'brief' || state === 'over')) start();
     else if (e.code === 'Enter' && state === 'startpick') $('startPickScreen').dataset.step === 'item' ? spStart() : spStep('item');
-    if (state === 'clear' || (state === 'startpick' && $('startPickScreen').dataset.step === 'item')) { const k = { Digit1: 'barrier', Digit2: 'launcher' }[e.code]; if (k) state === 'clear' ? nextStage(k) : spStart(k); }
+    if (state === 'startpick' && $('startPickScreen').dataset.step === 'item') { const k = { Digit1: 'barrier', Digit2: 'launcher' }[e.code]; if (k) spStart(k); }
     if (e.code === 'KeyQ' || e.code === 'KeyR') useItem();
     if (state === 'play') { const k = { Digit1: 'barrier', Digit2: 'launcher' }[e.code]; if (k) useItem(k); }
     if (e.code === 'KeyP' || e.code === 'Escape') setPause(state === 'play');
@@ -11635,7 +11631,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('clearTitleBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('quitBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('spBackBtn').addEventListener('click', () => { tap(); toTitle(); });
-  for (const b of document.querySelectorAll('#clearPicks .pick')) b.addEventListener('click', () => (tap(), nextStage(b.dataset.item)));
+  // 次のステージへ: to the next stage's map pick (its details readable there), then its item pick, as a start from the title
+  $('nextStageBtn').addEventListener('click', () => { if (state !== 'clear' || stageN >= 3) return; begin(stageN + 1); });
   for (const b of document.querySelectorAll('#startPicks .pick')) b.addEventListener('click', () => { if (state === 'startpick') tap(), spSel(b.dataset.item); });
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
