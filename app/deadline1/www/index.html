@@ -1770,7 +1770,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 10分から(ランチャー×4・バリア×1)</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -5635,7 +5635,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let P, enemies, pending, items, mines, booms, sparks, t, nextSpawn, spawnGap, level, kills;
   let shake = 0, flash = 0, caughtTimer = 0, beatTimer = 0, nextItem = 0, danger = 0;
   let fxp = [];   // the shop looks' particles (smoke, embers, shards, glints, rings, ...): looks only, they touch nothing
-  const PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 45, PIT_FLASH = 1.5, PIT_LID = 0.48;   // (the lid's radius as drawn)
+  const PIT_OPEN = 20, PIT_EAT = 1, PIT_COOL = 40, PIT_FLASH = 1.5, PIT_LID = 0.48;   // (the lid's radius as drawn)
   let holes = [], falls = [], pendingStart = 2, rockets = [];
   // 地形変化: on stage 3 (and the weekly ranking), at 15:00 the streets change. Some stretches of road are shut off and
   // some blocks open a way through, warned 5 s before. { at, block: [tile index], open: [tile index], on }
@@ -5796,8 +5796,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     recStart();
-    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true;
-      if (testLate === 600) { P.barrier = false; bag = ['launcher', 'launcher', 'launcher', 'launcher', 'barrier']; itemSel = 'launcher'; } }   // (10:00: four launchers and a barrier in hand, none worn)
+    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true; }
   }
 
   // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
@@ -6596,7 +6595,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // the try-out: only the time, nothing recorded
       bgmStop(); state = 'caught'; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1; tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
       document.querySelector('#overScreen h2').textContent = '確保';
-      const from = testLate === 600 ? '10分' : testLate === 720 ? '12分' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
+      const from = testLate === 720 ? '12分' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
       $('rStars').hidden = true; $('rShare').closest('.sharerow').hidden = true; $('rTime').textContent = (P && P.stompN || 0) + '回'; $('rKills').textContent = kills + '体'; $('retryBtn').textContent = 'もう一度テスト';
       return;
     }
@@ -9943,7 +9942,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     3: [
       { pit: true, say: '広場の落とし穴のふたに乗ってから離れると、穴が開く。ふたに乗ってみよう', set: () => tutHolePlace(tut.hole), go: () => { const h = holes.find(q => q.open); if (h) tut.hole = h; return !!h; } },
       { pit: true, say: '開いた穴に鬼を誘い込もう。穴を通った鬼は落ちる', set: () => tutOni({ at: tutBeyond(tut.hole) }), go: () => S3.pit > 0 },
-      { pit: true, say: '一度使った落とし穴は45秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
+      { pit: true, say: '一度使った落とし穴は40秒ふさがり、ふたが暗くなる。使えるようになるとふたが光る。少し待ってみよう', go: () => tut.coolSeen && !(tut.hole.cool > 0) && !(tut.hole.flash > 0.6) },
       { pit: true, say: '自分が落とし穴に落ちても確保になるので注意', info: true },
       { say: MAP_CHOICE ? '2分から毎分補給が届く。ストーリーでは6分30秒で出口が開く。ランクレースは出口なしで逃げ続ける' : '出口はない。2分から毎分補給が届く。捕まるまで逃げ続けよう', end: true },
     ],
@@ -10154,7 +10153,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       'ランチャーは向いている方向に弾を撃ち、着弾した場所の鬼を倒す',
     ],
     3: [
-      '落とし穴は1度使用すると45秒使用できない',
+      '落とし穴は1度使用すると40秒使用できない',
       '落とし穴はふたを踏んで離れると開き、通った鬼をまとめて落とす',
       '自分が落とし穴に落ちても確保になる',
       '使えるようになった落とし穴はふたが光る',
@@ -11460,7 +11459,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function begin(n) {
     tap(); daily = null; rankRun = false;
     if (n < 2) { start(n); return; }
-    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
+    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -11494,10 +11493,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function rankInfo() {
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.filter(Boolean).map(x => `<li>${x}</li>`).join('') + '</ul>';
     const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX], ['9:00', 7], ['12:00', 8]];
-    const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと45秒使えない'],
-      cyber: ['落とし穴が2か所(使うと45秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
-      shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと45秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
-      fuse: ['落とし穴が2か所(使うと45秒使えない)', '自爆鬼(橙色)が出る。だんだん黒い鬼より速くなる。近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍(4-1・4-2のマップでも同じ)', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
+    const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'],
+      cyber: ['落とし穴が2か所(使うと40秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
+      shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと40秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
+      fuse: ['落とし穴が2か所(使うと40秒使えない)', '自爆鬼(橙色)が出る。だんだん黒い鬼より速くなる。近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍(4-1・4-2のマップでも同じ)', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
     $('rankInfoBody').innerHTML = `
       <section><h3>ランクレース ${weekMapName()}</h3>${li(['出口は開かない。捕まるまでの逃走時間で競う', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>報酬(★)</h3>${li(['週が終わったときの順位で★がもらえる(週明けに✉️(メール)に届く)', '順位は名前を登録してランキングに載った記録で決まる', `101位以下・名前なしでも、その週に1回遊べば★${RANK_PRIZE_LOW}`])}<table><tr><th>順位</th><th>★</th></tr>${RANK_PRIZE.map(([r, n], i) => `<tr><td>${r <= 3 ? r + '位' : (RANK_PRIZE[i - 1][0] + 1) + '〜' + r + '位'}</td><td>★${n}</td></tr>`).join('')}<tr><td>101位以下</td><td>★${RANK_PRIZE_LOW}</td></tr></table></section>
@@ -11594,7 +11593,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = !ART_ONLY; testLate = 0;
+    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = !ART_ONLY; testLate = 0;
     $('spMsg').textContent = `ランクレース。今週のマップは${weekMapName()}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
@@ -11637,7 +11636,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
   $('spGoBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStart(); });
-  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 600]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || !rankRun) return; tap(); testLate = at; spStart(); misLive = false; misRender(); });
+  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || !rankRun) return; tap(); testLate = at; spStart(); misLive = false; misRender(); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
   // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
   // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
