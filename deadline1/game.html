@@ -56,10 +56,9 @@ body .shopdetail .setnote { margin-top: 3px; padding: 3px 8px; font-size: 11px; 
 body.aiming .controls .act:not(.aimsrc), body.aiming .controls .itemarr, body.aiming #pad { opacity: .25; transition: opacity .12s; }
 #aimRing { position: fixed; inset: 0; pointer-events: none; z-index: 60; }
 #aimRing[hidden] { display: none; }
-#aimRing i { position: absolute; width: 40px; height: 40px; transform: translate(-50%, -50%); display: grid; place-items: center; font-style: normal; font: 900 18px/1 sans-serif; color: #fff;
-  border-radius: 12px; background: rgba(255,207,90,.28); border: 2px solid rgba(255,207,90,.8); box-shadow: 0 0 10px rgba(255,207,90,.4); text-shadow: 0 1px 2px rgba(0,0,0,.6); }
-#aimRing i.on { background: #ffcf5a; color: #3a2400; transform: translate(-50%, -50%) scale(1.18); box-shadow: 0 0 18px #ffcf5a; text-shadow: none; }
-#aimRing i.off { opacity: .3; filter: grayscale(1); }
+#aimRing i { position: absolute; width: 40px; height: 40px; transform: translate(-50%, -50%); display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 16px; line-height: 1; box-sizing: border-box; transition: transform .08s, filter .08s; }
+#aimRing i.on { transform: translate(-50%, -50%); filter: brightness(1.45) drop-shadow(0 0 8px rgba(255,255,255,.7)); }
+#aimRing i.off { opacity: .28; filter: grayscale(1); }
 </style>
 </head>
 <body>
@@ -11593,7 +11592,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (!real || state !== 'play' || !bag.includes('launcher')) { useItem('launcher'); return; }
       st = { x, y, id, aiming: false, timer: setTimeout(() => { if (!st) return; st.aiming = true; aimDir = { dir: null };
         const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, gx = r.width / 2 + 26, gy = r.height / 2 + 26, cl = (v, hi) => Math.max(22, Math.min(hi - 22, v));
-        for (const a of ring.children) { const [dx, dy] = DIRS[a.dataset.k]; a.style.left = cl(cx + dx * gx, innerWidth) + 'px'; a.style.top = cl(cy + dy * gy, innerHeight) + 'px'; a.classList.toggle('off', !fireRocketDir(dx, dy)); a.classList.remove('on'); }
+        // (the arrows dressed as this panel's own: its ◀ ▶ item arrows where it has them, else its launcher button, small)
+        const prev = $('itemPrev'), ref = prev && prev.offsetParent ? prev : el, cs = getComputedStyle(ref), round = ref === el;
+        const look = {}; for (const k of ['background', 'border', 'borderRadius', 'boxShadow', 'color', 'fontFamily', 'borderImage', 'clipPath', 'textShadow']) look[k] = cs[k];
+        if (round) look.borderRadius = '50%';
+        for (const a of ring.children) { Object.assign(a.style, look); a.style.width = a.style.height = (round ? Math.max(34, Math.min(46, r.width * 0.5)) : Math.max(34, Math.min(46, ref.getBoundingClientRect().width))) + 'px'; }
+        // each arrow just outside the button on its side, never over it: where the screen's edge leaves less room than an
+        // arrow, that one is made as slim as the room (a tab against the edge)
+        for (const a of ring.children) { const [dx, dy] = DIRS[a.dataset.k], sz = parseFloat(a.style.width), gap = 4;
+          let w = sz, h = sz, x, y;
+          if (dx) { const room = dx > 0 ? innerWidth - r.right - gap - 2 : r.left - gap - 2; w = Math.max(12, Math.min(sz, room)); x = dx > 0 ? r.right + gap + w / 2 : r.left - gap - w / 2; y = cl(cy, innerHeight); }
+          else { const room = dy > 0 ? innerHeight - r.bottom - gap - 2 : r.top - gap - 2; h = Math.max(12, Math.min(sz, room)); y = dy > 0 ? r.bottom + gap + h / 2 : r.top - gap - h / 2; x = cl(cx, innerWidth); }
+          a.style.width = w + 'px'; a.style.height = h + 'px'; a.style.left = x + 'px'; a.style.top = y + 'px'; a.classList.toggle('off', !fireRocketDir(dx, dy)); a.classList.remove('on'); }
         ring.hidden = false; document.body.classList.add('aiming'); el.classList.add('aimsrc'); tone(880, 0.05, 'triangle', 0.04); }, 200) };
     };
     const move = (x, y) => { if (!st || !st.aiming) return; const dx = x - st.x, dy = y - st.y; let k = null;
