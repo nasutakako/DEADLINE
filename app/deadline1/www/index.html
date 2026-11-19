@@ -58,7 +58,7 @@ body.aiming .controls .act:not(.aimsrc), body.aiming .controls .itemarr, body.ai
 #aimRing[hidden] { display: none; }
 #aimRing i { position: absolute; width: 40px; height: 40px; transform: translate(-50%, -50%); display: grid; place-items: center; font-style: normal; font-weight: 900; font-size: 16px; line-height: 1; box-sizing: border-box; transition: transform .08s, filter .08s; }
 #aimRing i.on { transform: translate(-50%, -50%); filter: brightness(1.45) drop-shadow(0 0 8px rgba(255,255,255,.7)); }
-#aimRing i.off { opacity: .28; filter: grayscale(1); }
+#aimRing i.off { opacity: .45; }   /* (flicked at a wall: dims a moment) */
 #aimRing.flat i.on { background: var(--aimc) !important; color: #0a0a0f !important; filter: drop-shadow(0 0 8px var(--aimc)); }
 body.cyberui #aimRing.flat i.on { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%) !important; border-image: none !important; }   /* (cyber's arrows are octagons: the fill follows their shape) */
 </style>
@@ -11581,23 +11581,23 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     el.addEventListener('touchstart', go('t'), { passive: false });
     el.addEventListener('click', e => { if (e.detail === 0) fn(); });
   }
-  // the launcher's button: a quick tap fires it the way the runner faces (as ever); held a moment, the other buttons
-  // dim and four arrows come out round it: slide toward one and let go to fire that way (back to the middle, or no
-  // slide: nothing fired). A way blocked by a wall right there shows dark and can't be picked
+  // the launcher's button: touched, the other buttons dim and four arrows come out round it at once; a flick toward one
+  // fires that way the moment the finger has moved far enough (let go without a flick: nothing fired). A way with a
+  // wall right there fires nothing (a shake), and the finger can still flick another way
   let aimDir = null;
   function aimPress(el, isRk, other) {
     const ring = $('aimRing') || (() => { const r = document.createElement('div'); r.id = 'aimRing'; r.hidden = true;
       for (const [k, t] of [['u', '▲'], ['d', '▼'], ['l', '◀'], ['r', '▶']]) { const a = document.createElement('i'); a.dataset.k = k; a.textContent = t; r.append(a); } document.body.append(r); return r; })();
     const DIRS = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] };
     let st = null, last = -1e9, kind = '';
-    const end = fire => { if (!st) return; clearTimeout(st.timer); const s2 = st; st = null;
-      if (s2.aiming) { document.body.classList.remove('aiming'); el.classList.remove('aimsrc'); ring.hidden = true; const d = aimDir && aimDir.dir; aimDir = null; if (fire && d) useItem('launcher', d); return; }
-      if (fire) useItem('launcher'); };
+    const hide = () => { document.body.classList.remove('aiming'); el.classList.remove('aimsrc'); ring.hidden = true; aimDir = null; };
+    const end = () => { if (!st) return; st = null; hide(); };
     const start = (x, y, id, real) => {
       if (!isRk()) { other(); return; }
-      if (!real || state !== 'play' || !bag.includes('launcher')) { useItem('launcher'); return; }
-      st = { x, y, id, aiming: false, timer: setTimeout(() => { if (!st) return; st.aiming = true; aimDir = { dir: null };
-        const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, gx = r.width / 2 + 26, gy = r.height / 2 + 26, cl = (v, hi) => Math.max(22, Math.min(hi - 22, v));
+      if (state !== 'play' || !bag.includes('launcher')) { useItem('launcher'); return; }
+      { const r = el.getBoundingClientRect(); if (!real) { x = r.left + r.width / 2; y = r.top + r.height / 2; id = 'any'; } }   // (a touch passed on from beside the button: followed from its middle)
+      st = { x, y, id, aiming: true }; aimDir = { dir: null };
+      { const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, gx = r.width / 2 + 26, gy = r.height / 2 + 26, cl = (v, hi) => Math.max(22, Math.min(hi - 22, v));
         // (the arrows dressed as this panel's own: its ◀ ▶ item arrows where it has them, else its launcher button, small)
         const prev = $('itemPrev'), ref = prev && prev.offsetParent ? prev : el, cs = getComputedStyle(ref), round = ref === el;
         const look = {}; for (const k of ['background', 'border', 'borderRadius', 'boxShadow', 'color', 'fontFamily', 'borderImage', 'clipPath', 'textShadow']) look[k] = cs[k];
@@ -11610,24 +11610,23 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
           let w = sz, h = sz, x, y;
           if (dx) { const room = dx > 0 ? innerWidth - r.right - gap - 2 : r.left - gap - 2; w = Math.max(12, Math.min(sz, room)); x = dx > 0 ? r.right + gap + w / 2 : r.left - gap - w / 2; y = cl(cy, innerHeight); }
           else { const room = dy > 0 ? innerHeight - r.bottom - gap - 2 : r.top - gap - 2; h = Math.max(12, Math.min(sz, room)); y = dy > 0 ? r.bottom + gap + h / 2 : r.top - gap - h / 2; x = cl(cx, innerWidth); }
-          a.style.width = w + 'px'; a.style.height = h + 'px'; a.style.left = x + 'px'; a.style.top = y + 'px'; a.classList.toggle('off', !fireRocketDir(dx, dy)); a.classList.remove('on'); }
-        ring.hidden = false; document.body.classList.add('aiming'); el.classList.add('aimsrc'); tone(880, 0.05, 'triangle', 0.04); }, 200) };
+          a.style.width = w + 'px'; a.style.height = h + 'px'; a.style.left = x + 'px'; a.style.top = y + 'px'; a.classList.remove('on', 'off'); }
+        ring.hidden = false; document.body.classList.add('aiming'); el.classList.add('aimsrc'); }
     };
-    const move = (x, y) => { if (!st || !st.aiming) return; const dx = x - st.x, dy = y - st.y; let k = null;
-      if (Math.hypot(dx, dy) > 22) k = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
-      if (k && !fireRocketDir(...DIRS[k])) k = null;
-      const was = aimDir.k; aimDir.k = k; aimDir.dir = k ? DIRS[k] : null;
+    const move = (x, y) => { if (!st || !st.aiming) return; const dx = x - st.x, dy = y - st.y;
+      if (Math.hypot(dx, dy) < 16) return;
+      const k = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'r' : 'l') : (dy > 0 ? 'd' : 'u');
+      if (!fireRocketDir(...DIRS[k])) { if (st.wall !== k) { st.wall = k; itemNo(); for (const a of ring.children) a.classList.toggle('off', a.dataset.k === k); } st.x = x; st.y = y; return; }
       for (const a of ring.children) a.classList.toggle('on', a.dataset.k === k);
-      if (k && k !== was) tone(1320, 0.03, 'triangle', 0.03); };
+      st.aiming = false; useItem('launcher', DIRS[k]); setTimeout(hide, 90); };
     el.addEventListener('pointerdown', e => { e.preventDefault(); const now = performance.now(); if (kind === 't' && now - last < 80) return; last = now; kind = 'p'; start(e.clientX, e.clientY, 'p' + e.pointerId, e.isTrusted && e.clientX > 0); });
     el.addEventListener('touchstart', e => { e.preventDefault(); const now = performance.now(); if (kind === 'p' && now - last < 80) return; last = now; kind = 't'; const t = e.changedTouches && e.changedTouches[0]; start(t ? t.clientX : 0, t ? t.clientY : 0, t ? 't' + t.identifier : 't', e.isTrusted && !!t); }, { passive: false });
     el.addEventListener('click', e => { if (e.detail === 0) { if (isRk()) useItem('launcher'); else other(); } });
-    addEventListener('pointermove', e => { if (st && st.id === 'p' + e.pointerId) move(e.clientX, e.clientY); });
-    addEventListener('touchmove', e => { if (st) for (const t of e.changedTouches) if (st.id === 't' + t.identifier) move(t.clientX, t.clientY); }, { passive: true });
-    addEventListener('pointerup', e => { if (st && st.id === 'p' + e.pointerId) end(true); });
-    addEventListener('touchend', e => { if (st) for (const t of e.changedTouches) if (st.id === 't' + t.identifier) end(true); });
-    addEventListener('pointercancel', e => { if (st && st.id === 'p' + e.pointerId) end(false); });
-    addEventListener('touchcancel', e => { if (st) for (const t of e.changedTouches) if (st.id === 't' + t.identifier) end(false); });
+    const mine = id => st && (st.id === id || st.id === 'any');
+    addEventListener('pointermove', e => { if (mine('p' + e.pointerId)) move(e.clientX, e.clientY); });
+    addEventListener('touchmove', e => { if (st) for (const t of e.changedTouches) if (mine('t' + t.identifier)) { move(t.clientX, t.clientY); break; } }, { passive: true });
+    for (const t of ['pointerup', 'pointercancel']) addEventListener(t, e => { if (st && st.id === 'p' + e.pointerId) end(); });
+    for (const t of ['touchend', 'touchcancel']) addEventListener(t, e => { if (st) for (const u of e.changedTouches) if (st.id === 't' + u.identifier || st.id === 'any') end(); });
   }
   aimPress(ui.item, () => itemCur() === 'launcher', () => useItem(itemCur()));
   press($('barBtn'), () => useItem('barrier')); aimPress($('rkBtn'), () => true, () => {});   // (the arcade panel's own two)
