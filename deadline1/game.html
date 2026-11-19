@@ -11606,7 +11606,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         for (const a of ring.children) { Object.assign(a.style, look); a.style.width = a.style.height = (round ? Math.max(34, Math.min(46, r.width * 0.5)) : Math.max(34, Math.min(46, ref.getBoundingClientRect().width))) + 'px'; }
         // each arrow just outside the button on its side, never over it: where the screen's edge leaves less room than an
         // arrow, that one is made as slim as the room (a tab against the edge)
-        for (const a of ring.children) { const [dx, dy] = DIRS[a.dataset.k], sz = parseFloat(a.style.width), gap = 4;
+        for (const a of ring.children) { const [dx, dy] = DIRS[a.dataset.k], sz = parseFloat(a.style.width), gap = round ? 16 : 4;   // (round buttons: well clear of the launcher's ring and rim, out over the map if need be)
           let w = sz, h = sz, x, y;
           if (dx) { const room = dx > 0 ? innerWidth - r.right - gap - 2 : r.left - gap - 2; w = Math.max(12, Math.min(sz, room)); x = dx > 0 ? r.right + gap + w / 2 : r.left - gap - w / 2; y = cl(cy, innerHeight); }
           else { const room = dy > 0 ? innerHeight - r.bottom - gap - 2 : r.top - gap - 2; h = Math.max(12, Math.min(sz, room)); y = dy > 0 ? r.bottom + gap + h / 2 : r.top - gap - h / 2; x = cl(cx, innerWidth); }
