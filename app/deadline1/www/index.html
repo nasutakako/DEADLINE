@@ -1811,7 +1811,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <span class="label" id="lifeRule"></span>
       <div class="lifeacts">
         <button class="lifeact ad" id="lifeAd" type="button"><b>広告を見て 1回復</b><small>広告を1本、最後まで見る</small></button>
-        <button class="lifeact ad3" id="lifeAd3" type="button"><b>広告を2本見て 3回復</b><small id="lifeAd3Sub">続けて2本見ると3回復(1日1回まで)</small></button>
+        <button class="lifeact ad3" id="lifeAd3" type="button"><b>広告を見て 3回復</b><small id="lifeAd3Sub">1本で3回復(1日1回まで)</small></button>
       </div>
       <div class="lifestar" id="lifeStar"><span class="label" id="lifeStarHave"></span><div class="lifestarbtns" id="lifeStarBtns"></div></div>
       <div class="row"><button class="ghost" id="lifeClose" type="button">閉じる</button></div>
@@ -3763,7 +3763,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('lifeBig').innerHTML = lifeHearts(n);
     $('lifeRule').textContent = n >= LIFE_MAX ? `最大${LIFE_MAX}回。${LIFE_EVERY / 60000}分ごとに1回復する` : `次の回復まで ${lifeClock(lifeLeft())}(${LIFE_EVERY / 60000}分ごとに1回復、最大${LIFE_MAX}回)`;
     $('lifeAd').disabled = n >= LIFE_MAX; $('lifeAd3').disabled = n >= LIFE_MAX || ad3Used();
-    $('lifeAd3Sub').textContent = ad3Used() ? '今日はもう使った(1日1回まで。明日また使える)' : '続けて2本見ると3回復(1日1回まで)';
+    $('lifeAd3Sub').textContent = ad3Used() ? '今日はもう使った(1日1回まで。明日また使える)' : '1本で3回復(1日1回まで)';
     // ★ for hearts: what is held, and each pack (marked if it is short of stars or would go past the most that can be held)
     $('lifeStarHave').textContent = `★でハートを買う(所持 ★${starHave()})`;
     const box = $('lifeStarBtns'); box.textContent = '';
@@ -3794,11 +3794,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('lifeBtn').addEventListener('click', () => { tap(); lifeOpen(''); });
   $('lifeClose').addEventListener('click', () => { tap(); $('lifeScreen').hidden = true; });
   // the ads (a sample screen for now: a real rewarded ad, AdMob in the app or a rewarded web ad, goes in its place).
-  // One ad gives one back; 広告を2本 plays two straight after each other and gives three, once a day
+  // One ad gives one back; the day's bonus ad (one, once a day) gives three
   let adTimer = 0, adRun = null;
   const ad3Used = () => lifeData.ad3Day === todayKey();
   function adPlay() {
-    const btn = $('adClose'), more = adRun.of > 1;
+    const btn = $('adClose'), more = adRun.of > 1;   // (more than one in a row: none now, kept for the counter)
     $('adScreen').hidden = false; btn.disabled = true;
     $('adLabel').textContent = more ? `広告(サンプル) ${adRun.n + 1}/${adRun.of}` : '広告(サンプル)';
     let left = AD_SEC; btn.textContent = `あと${left}秒`;
@@ -3807,19 +3807,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       clearInterval(adTimer); adRun.n++;
       // the second one follows on its own
       if (adRun.n < adRun.of) { adPlay(); return; }
-      btn.disabled = false; btn.textContent = `閉じて${adRun.of > 1 ? 3 : 1}回復`;
+      btn.disabled = false; btn.textContent = `閉じて${adRun.k}回復`;
     }, 1000);
   }
-  function adStart(of) {
-    if (lifeNow() >= LIFE_MAX || (of > 1 && ad3Used())) return;
-    tap(); adRun = { n: 0, of }; adPlay();
+  function adStart(k) {
+    if (lifeNow() >= LIFE_MAX || (k > 1 && ad3Used())) return;
+    tap(); adRun = { n: 0, of: 1, k }; adPlay();
   }
   $('lifeAd').addEventListener('click', () => adStart(1));
-  $('lifeAd3').addEventListener('click', () => adStart(2));
+  $('lifeAd3').addEventListener('click', () => adStart(3));
   $('adClose').addEventListener('click', () => {
     if ($('adClose').disabled || !adRun) return;
     if (adRun.n < adRun.of) return;
-    const k = adRun.of > 1 ? 3 : 1; adRun = null;
+    const k = adRun.k; adRun = null;
     if (k === 3) lifeData.ad3Day = todayKey();
     $('adScreen').hidden = true; lifeGive(k); $('lifeMsg').textContent = `${k}回復した!`;
   });
