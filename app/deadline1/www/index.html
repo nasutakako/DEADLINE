@@ -960,6 +960,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lifeact.line small { color: rgba(255,255,255,.85); }
 .lifeact:disabled { opacity: .45; cursor: default; }
 .adov .card { align-items: center; }
+.contcard { align-items: center; text-align: center; }
+.contcard p { margin: 4px 0 10px; color: var(--muted); }
 .adbox { width: min(100%, 320px); aspect-ratio: 16 / 9; display: grid; place-content: center; gap: 6px; text-align: center; border: 1px dashed var(--muted); border-radius: 8px; background: #11151f; }
 .adbox b { font-family: var(--f-display); font-weight: 400; font-size: 26px; color: var(--oni); }
 .adbox span { font-size: 12px; color: var(--muted); }
@@ -1472,7 +1474,7 @@ body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .mine::
 /* (the four face buttons sit in one round recess in the shell, as on the reference: a dark dish with a faint rim) */
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls::before { content: ''; position: absolute; left: 50%; top: 52%; width: 86%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
   background: radial-gradient(circle at 50% 40%, #0c0c0e, #000 70%); box-shadow: inset 0 3px 8px rgba(0,0,0,.9), inset 0 -1px 0 rgba(255,255,255,.1), 0 0 0 1px rgba(255,255,255,.2), 0 1px 0 1px rgba(0,0,0,.8); }
-body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls { margin-bottom: 84px; }
+body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls { margin-bottom: 14px; }   /* (the four buttons' middle level with the stick's) */
 body.handui.darkhand:not(.cyberui):not(.ontitle):not(.picking) .controls .dash::after { background: conic-gradient(rgba(0,0,0,0) calc(var(--p, 1) * 360deg), rgba(0,0,0,.5) 0) !important; }
 
 
@@ -1816,6 +1818,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       </div>
       <div class="lifestar" id="lifeStar"><span class="label" id="lifeStarHave"></span><div class="lifestarbtns" id="lifeStarBtns"></div></div>
       <div class="row"><button class="ghost" id="lifeClose" type="button">閉じる</button></div>
+    </div>
+  </div>
+  <div class="overlay" id="contScreen" hidden>
+    <div class="card contcard">
+      <span class="kicker">CONTINUE</span>
+      <h2 id="contHead">確保</h2>
+      <p id="contMsg">広告を見ると、ここから1回だけ続けられる</p>
+      <div class="row"><button class="go" id="contAd" type="button">広告を見て続ける</button><button class="ghost" id="contNo" type="button">あきらめる</button></div>
     </div>
   </div>
   <div class="overlay lifeov adov" id="adScreen" hidden>
@@ -3808,7 +3818,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       clearInterval(adTimer); adRun.n++;
       // the second one follows on its own
       if (adRun.n < adRun.of) { adPlay(); return; }
-      btn.disabled = false; btn.textContent = `閉じて${adRun.k}回復`;
+      btn.disabled = false; btn.textContent = adRun.cont ? '閉じて続ける' : `閉じて${adRun.k}回復`;
     }, 1000);
   }
   function adStart(k) {
@@ -3820,11 +3830,35 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('adClose').addEventListener('click', () => {
     if ($('adClose').disabled || !adRun) return;
     if (adRun.n < adRun.of) return;
+    if (adRun.cont) { adRun = null; $('adScreen').hidden = true; contRevive(); return; }
     const k = adRun.k; adRun = null;
     if (k === 3) lifeData.ad3Day = todayKey();
     $('adScreen').hidden = true; lifeGive(k); $('lifeMsg').textContent = `${k}回復した!`;
   });
   setInterval(() => { if (!$('titleScreen').hidden || !$('lifeScreen').hidden) lifeRender(); }, 1000);
+  // コンティニュー: caught on stage 1-3, once a stage, an ad puts the runner back where it was, the oni near it dazed
+  function contShow() {
+    const h = document.querySelector('#overScreen h2').textContent;
+    $('contHead').textContent = h; $('contScreen').hidden = false;
+  }
+  function contRevive() {
+    contPending = false; contUsed = true; $('contScreen').hidden = true;
+    // fell in a pit: its lid shuts (locked for its usual wait) under the runner
+    if (P.pit) { P.pit = false; P.r = R_PLAYER; for (const h of holes) if (Math.hypot(h.x - P.x, h.y - P.y) < 0.6) { h.open = false; h.cool = PIT_COOL; h.armed = false; } }
+    P.blast = false; P.inv = CONT_INV; P.saveT = CONT_INV; P.vx = P.vy = 0;
+    for (const e of enemies) if (!e.dead && Math.hypot(e.x - P.x, e.y - P.y) < CONT_R) { e.stun = Math.max(e.stun || 0, CONT_STUN); e.fuseT = null; }
+    shake = 0; flash = 0.4; state = 'play';
+    tone(880, 0.1, 'triangle', 0.05); setTimeout(() => tone(1320, 0.16, 'triangle', 0.05), 90);
+  }
+  const CONT_INV = 3, CONT_R = 5, CONT_STUN = 2.5;
+  $('contAd').addEventListener('click', () => { if (state !== 'cont') return; tap(); adRun = { n: 0, of: 1, k: 0, cont: true }; adPlay(); });
+  $('contNo').addEventListener('click', () => {
+    if (state !== 'cont') return; tap();
+    // the cause shown on the result (a pit, a blast) is kept as the catch set it
+    const h2 = document.querySelector('#overScreen h2').textContent, msg = $('rMsg').textContent;
+    contPending = false; contUsed = true; $('contScreen').hidden = true; caught(true);
+    if (h2 !== '確保') { document.querySelector('#overScreen h2').textContent = h2; $('rMsg').textContent = msg; }
+  });
   lifeRender();
 
   // ---------- the opening sting: every launch. It holds still until the page is
@@ -5781,7 +5815,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
     P = { x: (yagura ? yagura.x + 1 : sx) + 0.5, y: yagura ? yagura.y + 4.5 : sy + 0.5, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; fxp = [];
-    t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0;
+    t = 0; level = 1; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
     shift = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
@@ -5933,7 +5967,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const byRocket = rocketKills - P.rocketSeen;
       const delay = (kills - P.killSeen) * 0.4;
       // oni already flagged with a ! are held back; otherwise the next wave is pushed back
-      if (pending.length) for (const p of pending) p.t += delay; else nextSpawn += delay;
+      // (and the wave after them as well, so it does not come straight on the heels of the held-back ones)
+      for (const p of pending) p.t += delay; nextSpawn += delay;
       P.killSeen = kills; P.rocketSeen = rocketKills;
       // from stage 2: every 100 oni taken down (by any means) earns a launcher, into the bag
       if (stageN >= 2) {
@@ -6582,7 +6617,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     document.querySelector('#overScreen h2').textContent = '転落';
     $('rMsg').textContent = `${stageLabel(stageN)}で落とし穴に落ちた。`;
   }
-  function caught() {
+  let contUsed = false, contPending = false;
+  const contCan = () => stageN <= 3 && !rankRun && !daily && !tut && !testLate && !contUsed;
+  function caught(quiet) {
     if (testLate) {
       // the try-out: only the time, nothing recorded
       bgmStop(); state = 'caught'; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1; tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
@@ -6591,11 +6628,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       $('rStars').hidden = true; $('rShare').closest('.sharerow').hidden = true; $('rTime').textContent = (P && P.stompN || 0) + '回'; $('rKills').textContent = kills + '体'; $('retryBtn').textContent = 'もう一度テスト';
       return;
     }
-    bgmStop(); $('rShare').closest('.sharerow').hidden = false;
+    // ステージ1〜3: the first catch of the stage can be undone by watching an ad (not the rank race, not the survival nights)
+    if (!quiet && contCan()) {
+      bgmStop(); document.querySelector('#overScreen h2').textContent = '確保';
+      state = 'caught'; contPending = true; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1;
+      tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
+      return;
+    }
+    if (!quiet) bgmStop(); $('rShare').closest('.sharerow').hidden = false;
     document.querySelector('#overScreen h2').textContent = '確保';
     state = 'caught';
-    caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1;
-    tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
+    if (quiet) caughtTimer = 0;   // (given up on the continue screen: straight to the result)
+    else { caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1;
+      tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught'); }
     if (total > best) { best = total; saveBest(); }   // (the longest run ever, kept as before)
     records.plays++;
     const ownKey = ownRecKey(stageN);
@@ -8493,7 +8538,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.inv > 0 && Math.sin(now * 30) > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 0.12, 0, Math.PI * 2); ctx.stroke(); }
     };
     const up = P.jumpT > 0;
-    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); } }   // (the devices and the ! shine through the dark)
+    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); for (const m of mines) drawMine(m, now); } }   // (the devices and the ! shine through the dark)
     for (const e of enemies) if (!e.dead) lightPool(e.x, e.y, ONI_LIGHT, 0.26 * Math.min(1, (t - e.born) / 0.3));
     if (state !== 'caught' && state !== 'over') lightPool(P.x, P.y, runnerLook(now).glow, 0.24);
     if (!up) drawRunner();
@@ -10562,7 +10607,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     } else if (state === 'caught') {
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
-      if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; if (overCele) celebrate('over', true); else { const tg = ui.over.querySelector('.celetag'); if (tg) tg.classList.remove('on'); } fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
+      if (caughtTimer <= 0 && contPending) { state = 'cont'; contShow(); }
+      else if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && rankRun); ui.over.hidden = false; if (overCele) celebrate('over', true); else { const tg = ui.over.querySelector('.celetag'); if (tg) tg.classList.remove('on'); } fitRow(ui.over.querySelector('.card > .row')); titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     if (state === 'replay') repTick(dt);
     draw(); if (state !== 'replay') hud();
