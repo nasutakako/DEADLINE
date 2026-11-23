@@ -1694,7 +1694,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <p id="rMsg"></p>
       <div class="award" id="rTitles" hidden></div>
       <div class="row"><button class="go" id="retryBtn" type="button">もう一度逃げる</button><button class="ghost" id="overRankBtn" type="button" hidden>ランキング</button><button class="ghost" id="menuBtn" type="button">タイトルへ</button></div>
-      <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="rShare" type="button">X</button><button class="ghost share" id="rInsta" type="button">Instagram</button><button class="ghost share" id="rLine" type="button">LINE</button><span class="sharestar" id="rShareStar"></span></div>
+      <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="rShare" type="button">X</button><button class="ghost share" id="rLine" type="button">LINE</button><span class="sharestar" id="rShareStar"></span></div>
     </div>
   </div>
 
@@ -1713,7 +1713,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <p id="cMsg"></p>
       <div class="award" id="cTitles" hidden></div>
       <div class="row"><button class="ghost" id="againBtn" type="button">もう一度</button><button class="ghost" id="clearTitleBtn" type="button">タイトルへ</button></div>
-      <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="cShare" type="button">X</button><button class="ghost share" id="cInsta" type="button">Instagram</button><button class="ghost share" id="cLine" type="button">LINE</button><span class="sharestar" id="cShareStar"></span></div>
+      <div class="sharerow"><span class="label">シェア</span><button class="ghost share" id="cShare" type="button">X</button><button class="ghost share" id="cLine" type="button">LINE</button><span class="sharestar" id="cShareStar"></span></div>
       <div class="row nextrow" id="clearPicks"><button class="go" id="nextStageBtn" type="button">次のステージへ</button></div>
     </div>
   </div>
@@ -2791,10 +2791,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       });
     }
     $('shareImg').src = SHARE.url || drawCard(SHARE.kind).toDataURL('image/png');
-    $('shareHow').textContent = (matchMedia('(pointer: coarse)').matches ? '画像を長押しして保存し、' : '画像を右クリックで保存して、') + (dest === 'ig' ? 'Instagramに投稿してね。' : 'Xの投稿に添付してね。');
+    $('shareHow').textContent = (matchMedia('(pointer: coarse)').matches ? '画像を長押しして保存し、' : '画像を右クリックで保存して、') + 'Xの投稿に添付してね。';
     $('shareText').value = I.text; $('shareCopy').textContent = '文面をコピー';
-    $('shareX').href = dest === 'ig' ? 'https://www.instagram.com/' : 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text);
-    $('shareX').textContent = dest === 'ig' ? 'Instagramを開く' : 'Xを開く';
+    $('shareX').href = 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text);
+    $('shareX').textContent = 'Xを開く';
     o.hidden = false;
   }
   // a phone opens the app straight away; a computer or the claude.ai viewer (a frame) shows the card to save
@@ -2819,7 +2819,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     topLoc().href = app;
     setTimeout(() => { document.removeEventListener('visibilitychange', off); if (!left && !document.hidden) topLoc().href = web; }, 2500);
   }
-  // the first share of the day (X, Instagram or LINE alike) gives ★5
+  // the first share of the day (X or LINE alike) gives ★5
   const SHARE_STAR = 5, shareDayKey = () => { const d = new Date(); return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`; };
   const shareStarLeft = () => records.shareDay !== shareDayKey();
   function shareStarLine() { for (const id of ['rShareStar', 'cShareStar']) { const el = $(id); if (el) el.textContent = shareStarLeft() ? `今日はじめてのシェアで★${SHARE_STAR}` : ''; } }
@@ -2835,13 +2835,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (dest === 'line') { const u = 'https://line.me/R/share?text=' + encodeURIComponent(I.text); try { if (inFrame || !matchMedia('(pointer: coarse)').matches) window.open(u, '_blank', 'noopener'); else topLoc().href = u; } catch (_) {} return; }
     if (inFrame || !matchMedia('(pointer: coarse)').matches) { shareFallback(I, dest); return; }
     copyCard().then(ok => {
-      if (ok) shareToast(dest === 'ig' ? '画像をコピーした。ストーリーで貼り付けてね' : '画像をコピーした。投稿画面に貼り付けてね');
-      setTimeout(() => dest === 'ig'
-        ? openApp('instagram://story-camera', 'https://www.instagram.com/')
-        : openApp('twitter://post?message=' + encodeURIComponent(I.text), 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text)), ok ? 600 : 0);
+      if (ok) shareToast('画像をコピーした。投稿画面に貼り付けてね');
+      setTimeout(() => openApp('twitter://post?message=' + encodeURIComponent(I.text), 'https://twitter.com/intent/tweet?text=' + encodeURIComponent(I.text)), ok ? 600 : 0);
     });
   }
-  for (const [id, dest, kind] of [['rShare', 'x', 'over'], ['cShare', 'x', 'clear'], ['rInsta', 'ig', 'over'], ['cInsta', 'ig', 'clear'], ['rLine', 'line', 'over'], ['cLine', 'line', 'clear']])
+  for (const [id, dest, kind] of [['rShare', 'x', 'over'], ['cShare', 'x', 'clear'], ['rLine', 'line', 'over'], ['cLine', 'line', 'clear']])
     $(id).addEventListener('click', () => shareTo(dest, kind));
   function paintTitle() {
     // titles owned but none ever chosen: wear the hardest one
