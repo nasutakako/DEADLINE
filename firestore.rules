@@ -7,10 +7,10 @@ service cloud.firestore {
     function signedIn() { return request.auth != null; }
     function okGame(g) { return g in ['deadline1', 'deadline2', 'deadline3d']; }
     // the fixed boards, the all-time ones (at1-at4: 歴代ランキング, one per stage 3; not written for now), and the weekly ranking's
-    // (wk + the week's number, e.g. wk2964)
-    function okBoard(b) { return b in ['players', 'loop', 'daily1', 'daily2', 'daily3', 'at1', 'at2', 'at3', 'at4'] || b.matches('wk[0-9]{1,6}'); }
+    // (wk + the week's number, e.g. wk2964), and the スペシャル ones (sp + its number, e.g. sp1: no end date)
+    function okBoard(b) { return b in ['players', 'loop', 'daily1', 'daily2', 'daily3', 'at1', 'at2', 'at3', 'at4'] || b.matches('wk[0-9]{1,6}') || b.matches('sp[0-9]{1,3}'); }
 
-    // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, loop DEADLINE1's 無限回路, daily1-3 the daily nights, wk<n> the weekly ranking, at1-at4 the all-time ones
+    // games/<game>/<board>/<uid>: { name, key, best, at, title } — players is stage 3, loop DEADLINE1's 無限回路, daily1-3 the daily nights, wk<n> the weekly ranking, at1-at4 the all-time ones, sp<n> the スペシャル ones
     match /games/{game}/{board}/{uid} {
       allow read: if okGame(game) && okBoard(board);
       allow create, update: if okGame(game) && okBoard(board) && signedIn() && request.auth.uid == uid
