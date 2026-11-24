@@ -9955,6 +9955,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const TUT = {
     w: [
       { warp: true, say: '[ワープポイント]を踏むと|もう1つへ飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
+      { warp: true, say: '[ダッシュ]で通るとワープしない。|飛びたくない時はダッシュで抜けよう', info: true },
       { warp: true, say: '一度使うと[1分30秒]使えない。|使えると光る。少し待ってみよう', set: tutWarpBar, go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
       { say: '[2分30秒]で出口が開く。|ワープで振り切って[鍵]を拾おう', end: true },
     ],
