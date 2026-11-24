@@ -3985,6 +3985,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     el.style.transform = '';
     const on = L && (L.x || L.y || L.s !== 1);
     el.style.translate = on ? `${L.x}px ${L.y}px` : ''; el.style.scale = on && L.s !== 1 ? String(L.s) : '';
+    // a screen too small for where it was put (a phone turning, a narrower window): shown pulled back inside, but what
+    // was set stays as it was (only moving it in the editor changes it)
+    if (on && el.offsetParent) {
+      const r = el.getBoundingClientRect(), W = innerWidth, H = innerHeight;
+      const dx = r.left < 0 ? -r.left : r.right > W ? W - r.right : 0, dy = r.top < 0 ? -r.top : r.bottom > H ? H - r.bottom : 0;
+      if (dx || dy) el.style.translate = `${L.x + dx}px ${L.y + dy}px`;
+    }
 
   }
   // (pulled back inside the window if a nudge or a resize took it past the edge)
@@ -4043,7 +4050,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('leOne').addEventListener('click', () => { tap(); if (laySel) { delete settings.lay[laySel]; layPut(laySel); setSave(); laySelect(laySel); } });
   $('leAll').addEventListener('click', () => { tap(); settings.lay = {}; applyLay(); setSave(); laySelect(laySel); });
   $('leDone').addEventListener('click', () => { tap(); layClose(); });
-  addEventListener('resize', () => { for (const k of LAY_KEYS) if (settings.lay[k]) layKeep(k); });
+  addEventListener('resize', () => { for (const k of LAY_KEYS) if (settings.lay[k]) layPut(k); });   // (shown, not saved: see layPut)
   $('setBtn').addEventListener('click', () => { tap(); openSettings(); });
   $('setClose').addEventListener('click', () => closeOverlay('setScreen'));
   $('equipBtn').addEventListener('click', () => { tap(); openEquip(); });
