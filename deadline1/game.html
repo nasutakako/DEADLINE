@@ -563,27 +563,14 @@ body.replaying .stage { position: fixed; inset: 0; z-index: 40; border-radius: 0
 .repbar .rptop { display: flex; align-items: center; gap: 10px; font-size: 13px; min-width: 0; }
 .repbar .rptop .kicker { margin: 0; font-size: 10px; }
 .repbar .rptop .reppad { flex: none; padding: 1px 7px; border-radius: 99px; border: 1px solid rgba(255,255,255,.2); font-size: 10.5px; color: var(--ink); letter-spacing: .04em; }
-/* a replay played with a control panel skin: the bar and the map's frame in that skin's look */
-body.replaying.cyberui .repbar { border: 1px solid #00f0ff; border-radius: 0; background: linear-gradient(90deg, rgba(0,240,255,.12), rgba(0,240,255,.02)), rgba(2,20,23,.94); box-shadow: 0 0 14px rgba(0,240,255,.35); font-family: "Share Tech Mono", var(--f-body), monospace;
-  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px); }
-body.replaying.cyberui .repbar .kicker, body.replaying.cyberui .repbar .rptime { color: #00f0ff; text-shadow: 0 0 6px rgba(0,240,255,.7); }
-body.replaying.cyberui .repbar .reppad { border-color: #ff2a3d; color: #ff8a95; border-radius: 0; }
-body.replaying.cyberui .repbar button { border-radius: 0 !important; border-color: rgba(0,240,255,.6) !important; color: #bff9ff !important; background: rgba(0,240,255,.08) !important; }
-body.replaying.cyberui .repbar input[type=range] { accent-color: #00f0ff; }
+/* a replay played with a control panel skin: the map's frame in that skin's look (the bar stays the same for every panel) */
 body.replaying.cyberui .stage { outline: 2px solid rgba(0,240,255,.7); outline-offset: -2px; }
-body.replaying.arcadeui .repbar { border: 0; border-radius: 12px; background: linear-gradient(180deg, #1e1f22, #0c0c0d); box-shadow: 0 0 0 2px #050505, 0 0 0 4px #8e9096, 0 0 0 5px #2a2a2d, 0 8px 18px rgba(0,0,0,.6); }
-body.replaying.arcadeui .repbar .kicker { color: #ff3b2f; }
-body.replaying.arcadeui .repbar .rptime { color: #5dff9e; text-shadow: 0 0 6px rgba(93,255,158,.6); font-family: "Share Tech Mono", monospace; }
-body.replaying.arcadeui .repbar .reppad { border-color: #e82c24; color: #ffb3ad; }
-body.replaying.arcadeui .repbar .rprow button { border-radius: 99px; border: 0; background: radial-gradient(circle at 50% 35%, #ff5a4f, #c8170e 70%); color: #fff; box-shadow: 0 2px 0 #6a0a05; }
-body.replaying.arcadeui .repbar input[type=range] { accent-color: #e82c24; }
 body.replaying.arcadeui .stage { outline: 3px solid #8e9096; outline-offset: -3px; }
-body.replaying.handui:not(.cyberui) .repbar { border: 0; border-radius: 14px; background: linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,0) 46%), linear-gradient(180deg, #1c1d21, #060608); box-shadow: 0 0 0 1px #000, 0 0 0 2.5px #9ca0a8, 0 0 0 3.5px #2c2e33, 0 8px 18px rgba(0,0,0,.6); }
-body.replaying.handui:not(.cyberui) .repbar .kicker, body.replaying.handui:not(.cyberui) .repbar .rptime { color: #e6e8ec; }
-body.replaying.handui:not(.cyberui) .repbar .reppad { border-color: #9ca0a8; color: #d8dbe1; }
-body.replaying.handui:not(.cyberui) .repbar input[type=range] { accent-color: #c9ccd2; }
 body.replaying.handui:not(.cyberui) .stage { outline: 2px solid #9ca0a8; outline-offset: -2px; }
-.repbar .rptop b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repbar .rptop b { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.repbar .rptop button { flex: none; white-space: nowrap; }   /* (隠す and 閉じる always on one line) */
+/* the map and the numbers: a line of their own under the name, the same on every panel */
+.repbar .rpinfo { margin-top: -4px; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .repbar .rptop span { color: var(--muted); font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .repbar .rptop button { padding: 4px 12px; font-size: 12.5px; }
 .repbar .rptop #repHide { margin-left: auto; }
@@ -1578,7 +1565,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   <div class="countdown" id="countdown" hidden></div>
   <button class="repshow" id="repShow" type="button" hidden aria-label="操作バーを出す">▲ 操作</button>
   <div class="repbar" id="repBar" hidden>
-    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span class="reppad" id="repPad" hidden></span><span id="repInfo"></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
+    <div class="rptop"><span class="kicker">REPLAY</span><b id="repName"></b><span class="reppad" id="repPad" hidden></span><button class="ghost" id="repHide" type="button" aria-label="操作バーを隠す">▼ 隠す</button><button class="ghost" id="repClose" type="button">閉じる</button></div>
+    <div class="rpinfo" id="repInfo"></div>
     <div class="rprow"><button id="repPlay" type="button" aria-label="一時停止">❚❚</button><input type="range" id="repSeek" min="0" max="1000" value="0" aria-label="再生位置"><span class="rptime" id="repTime">0:00</span><button id="repSpeed" type="button">1x</button></div>
   </div>
   <div class="tutbar" id="tutBar" hidden><span class="tstep" id="tutStep"></span><p id="tutSay"></p><div class="trow"><button type="button" id="tutNext" class="go" hidden>次へ</button><button type="button" id="tutSkip">スキップ</button></div></div>
@@ -11249,6 +11237,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       falls.map(f => [q(f.x), q(f.y), q(f.hx), q(f.hy), q(f.t), f.tough ? 1 : 0].join(',')).join('/'),
       // the 加速装置: the seconds left of each one's wait (0 ready)
       pads.map(d => Math.ceil(Math.max(0, d.cool))).join(','),
+      // the warp points: the seconds left of their wait (0 ready), so a replay shows them shut while they rest
+      warps.map(w => Math.ceil(Math.max(0, w.cool || 0))).join(','),
     ];
     rec.fr.push(g.join('|')); rec.next += 1 / REC_HZ;
   }
@@ -11289,7 +11279,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const nl = raw.indexOf('\n'), head = JSON.parse(raw.slice(0, nl));
     const nums = s => s ? s.split(',').map(Number) : [];
     const list = s => s ? s.split('/').map(nums) : [];
-    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]), h: g[8] ? g[8].split(',').map(Number) : null, f: list(g[9]), d: g[10] ? g[10].split(',').map(Number) : null }; });
+    const fr = raw.slice(nl + 1).split(';').map(f => { const g = f.split('|'); return { k: +g[0], p: nums(g[1]), e: list(g[2]), m: list(g[3]), b: list(g[4]), i: list(g[5]), w: list(g[6]), c: list(g[7]), h: g[8] ? g[8].split(',').map(Number) : null, f: list(g[9]), d: g[10] ? g[10].split(',').map(Number) : null, x: g[11] ? g[11].split(',').map(Number) : null }; });
     // when each oni first showed (it grows in over 0.3 s, as in the game)
     const seen = new Map(); fr.forEach((f, n) => { for (const e of f.e) if (!seen.has(e[0])) seen.set(e[0], n / head.hz); });
     const st = []; { let n = 0; for (let i = 0; i < fr.length; i++) { if (i + 1 < fr.length) { const nx = new Set(fr[i + 1].w.map(w => w[0] + ',' + w[1])); for (const w of fr[i].w) if (!nx.has(w[0] + ',' + w[1]) && w[2] / 20 > 1.5 / head.hz) n++; } st.push(n); } }
@@ -11347,6 +11337,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pending = A.w.map(p => ({ x: z(p[0]), y: z(p[1]), t: Math.max(0.01, z(p[2]) - u / h.hz) }));
     if (A.h) holes.forEach((o, k) => { o.open = A.h[k] === 1; o.cool = A.h[k] === 2 ? 1 : 0; o.flash = 0; });
     pads.forEach((o, k) => { o.cool = A.d ? A.d[k] || 0 : 0; o.flash = 0; });
+    // (a replay kept before the warps were noted shows them ready, as it always did)
+    warps.forEach((o, k) => { o.cool = A.x ? Math.max(0, L(A.x[k] || 0, (B.x || A.x)[k] || 0)) : 0; o.flash = 0; });
     falls = A.f.map(f => ({ x: z(f[0]), y: z(f[1]), hx: z(f[2]), hy: z(f[3]), t: z(f[4]) + u / h.hz, tough: !!f[5] })).filter(f => f.t < 0.7);
     elems = A.c.map(c => ({ k: 'clone', x: z(c[0]), y: z(c[1]), t: z(c[2]) + u / h.hz, life: z(c[3]), el: c[4] ? 'water' : 'dark' })).filter(c => c.t < c.life);
     // the launcher rounds in flight now, and the sparks of whatever went off since the last look (a jump of the bar
