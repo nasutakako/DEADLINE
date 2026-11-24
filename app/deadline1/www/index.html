@@ -2346,7 +2346,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // the endless stage by its name alone (it needs no "ステージ3")
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
     // this week's map (by its name) and the three survival nights
-    const boards = () => [['wk' + WEEK(), '今週 ' + weekMapName(), '今週 ' + weekMapName()], ['wk' + (WEEK() - 1), '先週 ' + weekMapName(WEEK() - 1) + '(最終結果)', '先週 ' + weekMapName(WEEK() - 1)], ...SPECIALS.map(S => [S.board, 'スペシャル ' + S.name, S.name]), ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['wk' + WEEK(), '今週 ' + weekMapName(), '今週 ' + weekMapName()], ['wk' + (WEEK() - 1), '先週 ' + weekMapName(WEEK() - 1) + '(最終結果)', '先週 ' + weekMapName(WEEK() - 1)], ...SPECIALS.map(S => [S.board, 'スペシャル ' + S.name, `スペシャル(${S.name})`]), ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     const allBoards = () => ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => [allKey(sk, n), '歴代 ' + MAP_NAMES[sk][n - 1], MAP_NAMES[sk][n - 1], sk]));
     const isAll = b => /^at[1-4](s[12])?$/.test(b);
     function paintTabs(cur) {
