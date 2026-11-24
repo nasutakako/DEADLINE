@@ -11705,7 +11705,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = true;
     $('spKicker').textContent = `スペシャル ${S.name}`; bestLine('spBest', 3); rkStat(S);
-    $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼\n・鬼の出方はランクレースと同じ。速さはランクレースの2分の速さから始まり、6分で最高速(最高速はランクレースと同じ)\n・出口は開かない。捕まるまで逃げ続ける\n・マップの仕掛けは落とし穴と、加速装置${S.pads}か所`;
+    $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼\n・出口は開かない。捕まるまで逃げ続ける\n・マップの仕掛けは落とし穴と、加速装置${S.pads}か所`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
     fitStandby();
