@@ -1033,6 +1033,8 @@ body.ontitle .pad .who .records { flex: 1 1 auto; }
 .lerow span { min-width: 3.4em; text-align: center; font-family: var(--f-num); font-weight: 700; }
 body.laymode .act, body.laymode .padbase { outline: 2px dashed rgba(255,207,90,.6); outline-offset: 2px; cursor: move; }
 body.laymode .laysel { outline: 3px solid var(--lamp) !important; }
+/* (the panels that centre their buttons on a point with translate(-50%, -50%): a size set in ボタン配置 grows round that point) */
+body.arcadeui .controls .act, body.handui:not(.cyberui) .controls .act { transform-origin: 0 0; }
 @media (max-height: 400px) { .layedit { gap: 4px; padding: 8px 10px; } .layedit button { height: 28px; } .lepad { grid-template-columns: 38px 38px 38px; } .layedit .lesel { font-size: 11px; } }
 .setrow small { grid-column: 1; font-size: 12px; line-height: 1.45; color: var(--muted); }
 .setrow .sw { grid-column: 2; grid-row: 1 / span 2; position: relative; width: 48px; height: 28px; border-radius: 14px; background: #2a3142; transition: background .15s; }
@@ -3982,14 +3984,20 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     box.append(lay);
   }
   // ---------- the layout editor: each control nudged (dx, dy in px) and sized (60%-160%), kept wholly on screen ----------
-  const LAY_KEYS = ['item', 'mine', 'dash', 'pad'], LAY_NAME = { item: 'アイテム', mine: '爆弾', dash: 'ダッシュ', pad: '移動スティック' };
-  const layEl = k => k === 'pad' ? document.querySelector('#pad .padbase') : k === 'item' ? $('itemRow') : ui[k];
+  // (バリア and ランチャー: their own buttons on the arcade, dragon and handheld panels)
+  const LAY_KEYS = ['item', 'mine', 'dash', 'barb', 'rkb', 'pad'], LAY_NAME = { item: 'アイテム', mine: '爆弾', dash: 'ダッシュ', barb: 'バリア', rkb: 'ランチャー', pad: '移動スティック' };
+  const layEl = k => k === 'pad' ? document.querySelector('#pad .padbase') : k === 'item' ? $('itemRow') : k === 'barb' ? $('barBtn') : k === 'rkb' ? $('rkBtn') : ui[k];
   if (!settings.lay || typeof settings.lay !== 'object') settings.lay = {};
   const layOf = k => (settings.lay[k] = Object.assign({ x: 0, y: 0, s: 1 }, settings.lay[k]));
   function layPut(k) {
     const el = layEl(k); if (!el) return;
     const L = settings.lay[k];
-    el.style.transform = L && (L.x || L.y || L.s !== 1) ? `translate(${L.x}px, ${L.y}px) scale(${L.s})` : '';
+    // (the translate and scale properties, not transform: the panels that place their buttons with a transform of their
+    // own keep it; those grow from the corner that the transform puts in their middle, set in the CSS)
+    el.style.transform = '';
+    const on = L && (L.x || L.y || L.s !== 1);
+    el.style.translate = on ? `${L.x}px ${L.y}px` : ''; el.style.scale = on && L.s !== 1 ? String(L.s) : '';
+
   }
   // (pulled back inside the window if a nudge or a resize took it past the edge)
   function layKeep(k) {
