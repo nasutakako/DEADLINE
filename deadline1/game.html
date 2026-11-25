@@ -496,6 +496,11 @@ body.picking :is(#briefScreen, #startPickScreen) h2 { font-size: min(26px, 6.5vh
 .pi b { font-size: clamp(12px, 1.75vw, 16px); }
 body.ontitle .padinfo, body.ontitle .padbase { display: none; }
 .pi.kill b { color: var(--lamp); } .pi.oni b { color: var(--oni); }
+.pi .pirow { grid-column: 1 / -1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.pi .pirow .meter { flex: 1 1 auto; min-width: 0; }
+/* 鬼の速さ: small, beside 次の鬼's bar (Lv23/25), red as MAX once the oni are at their top speed */
+.pi .pilv { flex: none; font-family: var(--f-num); font-size: 10px; font-weight: 700; line-height: 1; letter-spacing: 0; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pi.max .pilv { color: #ff3b30 !important; }
 @media (min-aspect-ratio: 5/4) and (pointer: coarse) {
   body {
     --side: clamp(120px, 15vw, 140px);
@@ -1571,7 +1576,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     <span class="whonote" id="whoNote" hidden></span>
   </div>
   <div class="padinfo" id="padInfo">
-    <div class="pi"><span class="label">次の鬼</span><b id="pNext">--</b><div class="meter"><i id="pMeter"></i></div></div>
+    <div class="pi" id="pSpd"><span class="label">次の鬼</span><b id="pNext">--</b><div class="pirow"><div class="meter"><i id="pMeter"></i></div><span class="pilv" id="pLv" title="鬼の速さ">Lv1</span></div></div>
     <div class="pi kill"><span class="label">撃破</span><b id="pKills">0</b></div>
     <div class="pi oni"><span class="label">阻止</span><b id="pCount">0</b></div>
     <div class="misbox" id="misBox" hidden></div>
@@ -5975,6 +5980,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const rankPace = () => stageN === 3 && (rankRun || !!special);   // (a special runs at the rank race's pace)
   const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
   const enemyTop = () => rankPace() ? RANK_MAX : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
+  // the oni at the top speed this run can reach (shown as MAX rather than a level that only counts on)
+  const oniMaxed = () => !tut && !!P && enemySpeed() >= enemyTop() - 1e-9;
+  // the level the top speed comes at on this stage (shown as Lv23/25)
+  const oniMaxLv = () => 1 + Math.max(0, Math.ceil((enemyTop() - ENEMY_BASE - (Math.min(stageN, 2) - 1) * 0.55) / enemyStep() - 1e-9));
   const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(enemyTop(), ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
@@ -6721,7 +6730,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     bestCell($('rBest'), top);
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
-      ? `自己ベスト更新。最後は鬼の速さ Lv${level} だった。`
+      ? `自己ベスト更新。最後は鬼の速さ ${oniMaxed() ? 'MAX' : 'Lv' + level} だった。`
       : top && top.escaped ? `${stageLabel(stageN)}で確保された。このステージは ${fmtTime(top.time)} で脱出済み。`
       : `${stageLabel(stageN)}で確保された。ベストまであと ${Math.max(0, (top ? top.time : 0) - t).toFixed(1)} 秒。`;
     tip('rMono', stageN);
@@ -8718,6 +8727,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ui.lv.textContent = 'Lv' + (level || 1);
     ui.kills.textContent = kills || 0;
     $('pKills').textContent = kills || 0; $('pCount').textContent = P && P.stompN || 0;
+    { const mx = oniMaxed(); $('pLv').textContent = mx ? 'MAX' : `Lv${level || 1}/${oniMaxLv()}`; $('pSpd').classList.toggle('max', mx); }
     { const b = stageBest(recKey(sN)); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
     if (playing) {
       ui.nextLabel.textContent = `次の鬼(${warnLeft != null ? pending.length : spawnBatch()}体)まで ${left.toFixed(1)}秒`;
