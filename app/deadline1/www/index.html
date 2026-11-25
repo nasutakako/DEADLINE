@@ -6730,7 +6730,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     bestCell($('rBest'), top);
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
-      ? `自己ベスト更新。最後は鬼の速さ ${oniMaxed() ? 'MAX' : 'Lv' + level} だった。`
+      ? `自己ベスト更新。最後は鬼の速さ ${oniMaxed() ? 'Lv MAX' : 'Lv' + level} だった。`
       : top && top.escaped ? `${stageLabel(stageN)}で確保された。このステージは ${fmtTime(top.time)} で脱出済み。`
       : `${stageLabel(stageN)}で確保された。ベストまであと ${Math.max(0, (top ? top.time : 0) - t).toFixed(1)} 秒。`;
     tip('rMono', stageN);
@@ -8727,7 +8727,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ui.lv.textContent = 'Lv' + (level || 1);
     ui.kills.textContent = kills || 0;
     $('pKills').textContent = kills || 0; $('pCount').textContent = P && P.stompN || 0;
-    { const mx = oniMaxed(); $('pLv').textContent = mx ? 'MAX' : `Lv${level || 1}/${oniMaxLv()}`; $('pSpd').classList.toggle('max', mx); }
+    { const mx = oniMaxed(); $('pLv').textContent = mx ? 'Lv MAX' : `Lv${level || 1}/${oniMaxLv()}`; $('pSpd').classList.toggle('max', mx); }
     { const b = stageBest(recKey(sN)); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
     if (playing) {
       ui.nextLabel.textContent = `次の鬼(${warnLeft != null ? pending.length : spawnBatch()}体)まで ${left.toFixed(1)}秒`;
