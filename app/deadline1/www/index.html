@@ -1993,11 +1993,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // a twist of its own. The first: every oni black, on 1-3's map (its pits) with 15 boost pads. Each has a ranking of
   // its own with no end date (the board sp<n>); a special run earns no titles ----------
   const SPECIALS = [
+    // ranked: whether it has a ranking now (off: a mini stage with only its own best; turned on now and then, as an event)
     // lane: 3 of its pads always on one street running across, spaced as the rest are.
     // skin/ns: the series and which of its maps, one drawn at random on each stand-by (series 2: its warp points too).
     // lvFrom: the speed level it starts at past the rank race's (24 = the rank race's top, from the start).
     // toughAt/toughRate: from then, now and then a black barrier oni (one on the map at a time)
-    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], pads: 15, lane: 3, lvFrom: 24, toughAt: 240, toughRate: 0.05 },
+    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], pads: 15, lane: 3, lvFrom: 24, ranked: false, toughAt: 240, toughRate: 0.05 },
   ];
   let special = null, specialN = 3;   // the special being played (stage 3), or null; and which of its series' maps
   const specialOpen = () => { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } };
@@ -2178,7 +2179,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const bestOf = key => { const r = stageBest(key); return r ? +(+r.time).toFixed(1) : 0; };
     async function syncDaily() {
       if (!db || !me || !me.name || !canWrite) return;
-      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ...SPECIALS]) {
+      for (const d of [...DAILY, ...(MAP_CHOICE ? [{ key: 'n3', board: 'loop' }] : []), { key: 'wk' + WEEK(), board: 'wk' + WEEK() }, ...SPECIALS.filter(S => S.ranked)]) {
         const b = bestOf(d.key); if (!(b > 0)) continue;
         let cur = boardDocs[d.board];
         if (cur === undefined) { try { const s = await db.doc(d.board + '/' + uid).get(); cur = boardDocs[d.board] = s.exists ? s.data() : null; } catch (e) { continue; } }
@@ -2381,7 +2382,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // the endless stage by its name alone (it needs no "ステージ3")
     const endless = () => STAGE_LABELS[2][1].replace(/^ステージ3 /, '');
     // this week's map (by its name) and the three survival nights
-    const boards = () => [['wk' + WEEK(), '今週 ' + weekMapName(), '今週 ' + weekMapName()], ['wk' + (WEEK() - 1), '先週 ' + weekMapName(WEEK() - 1) + '(最終結果)', '先週 ' + weekMapName(WEEK() - 1)], ...SPECIALS.map(S => [S.board, 'スペシャル ' + S.name, `スペシャル(${S.name})`]), ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
+    const boards = () => [['wk' + WEEK(), '今週 ' + weekMapName(), '今週 ' + weekMapName()], ['wk' + (WEEK() - 1), '先週 ' + weekMapName(WEEK() - 1) + '(最終結果)', '先週 ' + weekMapName(WEEK() - 1)], ...SPECIALS.filter(S => S.ranked).map(S => [S.board, 'スペシャル ' + S.name, `スペシャル(${S.name})`]), ...[].map((d, i) => [d.board, '生存課題 ' + d.name, d.name + (i === dailyToday() ? '(今日)' : '')])];
     const allBoards = () => ALL_SKINS.flatMap(sk => [1, 2, 3].map(n => [allKey(sk, n), '歴代 ' + MAP_NAMES[sk][n - 1], MAP_NAMES[sk][n - 1], sk]));
     const isAll = b => /^at[1-4](s[12])?$/.test(b);
     function paintTabs(cur) {
@@ -10688,7 +10689,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P && P.pit) P.r = Math.max(0.02, P.r - dt * 0.4);
       caughtTimer -= dt; shake = Math.max(0, shake - dt); flash = Math.max(0, flash - dt * 1.5);
       if (caughtTimer <= 0 && contPending) { state = 'cont'; contShow(); }
-      else if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && (rankRun || special)); ui.over.hidden = false; if (overCele) celebrate('over', true); else { const tg = ui.over.querySelector('.celetag'); if (tg) tg.classList.remove('on'); } fitRow(ui.over.querySelector('.card .endrow > .row')); fitResultSoon(ui.over); titleChime('rTitles'); starChime(); prepShare('over'); }
+      else if (caughtTimer <= 0) { state = 'over'; $('overRankBtn').hidden = !(stageN === 3 && (rankRun || (special && special.ranked))); ui.over.hidden = false; if (overCele) celebrate('over', true); else { const tg = ui.over.querySelector('.celetag'); if (tg) tg.classList.remove('on'); } fitRow(ui.over.querySelector('.card .endrow > .row')); fitResultSoon(ui.over); titleChime('rTitles'); starChime(); prepShare('over'); }
     }
     if (state === 'replay') repTick(dt);
     draw(); if (state !== 'replay') hud();
@@ -11722,10 +11723,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const box = $('spRk'); box.hidden = false;
     $('spRkBestL').textContent = S ? '自己ベスト' : '今週の自己ベスト'; $('spRkPlaceL').textContent = S ? '順位' : '今週の順位';
     const r = stageBest(S ? S.key : 'wk' + WEEK()), bb = $('spRkBest'), pl = $('spRkPlace');
+    pl.parentElement.hidden = !!S && !S.ranked;   // (a special with no ranking now: its best alone)
     bb.textContent = r ? fmtTime(r.time) : 'まだ記録なし'; bb.classList.toggle('dim', !r);
     const gp = $('spRkGap'); gp.hidden = true;
     pl.textContent = !r ? '--' : Rank.named() ? '確認中…' : '名前を登録すると載る'; pl.classList.toggle('dim', !r || !Rank.named());
     if (!r || !Rank.named()) return;
+    if (S && !S.ranked) return;
     const g = await Rank.weekGap(S ? S.board : undefined);
     if (!(S ? special === S : rankRun) || state !== 'startpick') return;
     pl.textContent = g ? g.rank + '位' : 'まだ載っていない'; pl.classList.toggle('dim', !g);
@@ -11741,7 +11744,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     specialN = S.ns ? S.ns[Math.floor(Math.random() * S.ns.length)] : 3;   // (a map of its series, drawn afresh each time)
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = S.skin; bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
-    $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = true;
+    $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = !S.ranked; $('spTestBtn').hidden = $('spTest2Btn').hidden = true;
     $('spKicker').textContent = `スペシャル ${S.name} ・ ${MAP_NAMES[S.skin][specialN - 1]}`; bestLine('spBest', 3); rkStat(S);
     $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼(4分からはまれに黒いバリア鬼)\n・出口は開かない。捕まるまで逃げ続ける\n・マップはシリーズ2の3つからランダム。仕掛けは落とし穴、ワープポイント、加速装置${S.pads}か所`;
     $('startPickScreen').hidden = false;
