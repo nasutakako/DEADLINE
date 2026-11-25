@@ -1993,10 +1993,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // a twist of its own. The first: every oni black, on 1-3's map (its pits) with 15 boost pads. Each has a ranking of
   // its own with no end date (the board sp<n>); a special run earns no titles ----------
   const SPECIALS = [
+    // lane: 3 of its pads side by side along one street (the rest spread out).
     // skin/ns: the series and which of its maps, one drawn at random on each stand-by (series 2: its warp points too).
     // lvFrom: the speed level it starts at past the rank race's (24 = the rank race's top, from the start).
     // toughAt/toughRate: from then, now and then a black barrier oni (one on the map at a time)
-    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], pads: 15, lvFrom: 24, toughAt: 240, toughRate: 0.05 },
+    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], pads: 15, lane: 3, lvFrom: 24, toughAt: 240, toughRate: 0.05 },
   ];
   let special = null, specialN = 3;   // the special being played (stage 3), or null; and which of its series' maps
   const specialOpen = () => { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } };
@@ -4355,11 +4356,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // the start crossing and the pits stay in the light
       shadeMap[idx(sx, sy)] = 0; for (const h of holes) shadeMap[h.i] = 0;
     }
-    pads = stageN === 3 && special ? makePads(special.pads) : stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : stageN === 3 && (rankRun || repN != null) ? makePads(3) : mapStage() <= 1 ? [] : makePads(3);
+    pads = stageN === 3 && special ? makePads(special.pads, special.lane || 0) : stageN === 4 && daily && daily.key === 'd1' ? makePads(10) : stageN === 3 && (rankRun || repN != null) ? makePads(3) : mapStage() <= 1 ? [] : makePads(3);
   }
   // the 加速装置: two straight-street tiles (a street running on both sides, buildings or plazas beside), at least
   // half the map apart, clear of the pits, the warp points, the goals, the bridges, the yagura and the start crossing
-  function makePads(num) {
+  // lane: how many to set side by side along one stretch of a street running across (the rest spread out as ever)
+  function makePads(num, lane = 0) {
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4, c = [];
     const road = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 0;
     for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
@@ -4380,9 +4382,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       }
       return [];
     }
+    // a lane (黒鬼ラッシュ): one stretch of a street running across, its tiles all pads in a row (just the one such stretch)
+    let row = [];
+    if (lane > 1) {
+      const has = (x, y) => c.some(q => q[0] === x && q[1] === y && q[2]);
+      const runs = []; for (const q of c) if (q[2] && !has(q[0] - 1, q[1])) { const r = [q]; while (r.length < lane && has(r[r.length - 1][0] + 1, q[1])) r.push(c.find(w => w[0] === r[r.length - 1][0] + 1 && w[1] === q[1] && w[2])); if (r.length === lane && !has(r[r.length - 1][0] + 1, q[1])) runs.push(r); }
+      if (runs.length) row = runs[Math.floor(Math.random() * runs.length)];
+    }
     // three (or 疾風の夜's ten, a special's fifteen): spread out, each well clear of the others (the gap eased off if the map runs short)
     for (let gap = num <= 3 ? Math.max(8, Math.hypot(COLS, ROWS) / 3) : Math.max(6, Math.hypot(COLS, ROWS) / 5); gap >= 3; gap -= 1) {
-      const got = [], pool = c.slice().sort(() => Math.random() - 0.5);
+      const got = row.slice(), pool = c.filter(q => !row.includes(q)).sort(() => Math.random() - 0.5);
       for (const q of pool) { if (got.length >= num) break; if (got.every(g => Math.hypot(g[0] - q[0], g[1] - q[1]) >= gap)) got.push(q); }
       if (got.length >= num) return got.map(mk);
     }
@@ -11737,7 +11746,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>スペシャル ${S.name}</h3>${li([S.tag, '出口は開かない。捕まるまでの逃走時間が記録になる', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table></section>
-      <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
+      <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(そのうち${S.lane}つは1本の通路に横並び)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
