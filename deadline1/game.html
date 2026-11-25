@@ -401,6 +401,9 @@ h2 { font-size: clamp(40px, 10vw, 68px); color: var(--oni); }
 .rkstat b.dim { font-size: clamp(14px, 4.4vh, 20px); color: var(--muted); }
 .rkstat em { font-style: normal; font-size: clamp(11px, 3.3vh, 14px); font-weight: 700; color: #5dff9e; }
 .rkstat em[hidden] { display: none; }
+/* (a special with no ranking now: --位, greyed, and a word that there is none just now) */
+.rkstat b.off { color: var(--muted); }
+.rkstat em.off { color: var(--muted); font-weight: 400; }
 #startPickScreen[data-step="item"] :is(#spRk, #spBest) { display: none; }   /* (自己ベスト: on the map step only) */
 #startPickScreen:has(#spRk:not([hidden])) #spBest { display: none; }
 #startPicks .pick.sel { border-color: #5dff9e; background: color-mix(in srgb, #5dff9e 14%, var(--panel)); box-shadow: 0 0 0 1px #5dff9e inset, 0 0 14px rgba(93,255,158,.25); }
@@ -1774,7 +1777,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <span class="kicker exitk" id="spKicker">STAGE 2</span>
       <span class="pbest" id="spBest" hidden></span>
       <h2 class="clear" id="spHead">マップ選択</h2>
-      <div class="rkstat" id="spRk" hidden><div><small id="spRkBestL">今週の自己ベスト</small><b id="spRkBest">--:--.-</b><em id="spRkGap" hidden></em></div><div><small id="spRkPlaceL">今週の順位</small><b id="spRkPlace">--</b></div></div>
+      <div class="rkstat" id="spRk" hidden><div><small id="spRkBestL">今週の自己ベスト</small><b id="spRkBest">--:--.-</b><em id="spRkGap" hidden></em></div><div><small id="spRkPlaceL">今週の順位</small><b id="spRkPlace">--</b><em class="off" id="spRkPlaceNote" hidden></em></div></div>
       <p class="mono" id="spMono" hidden></p>
       <div class="mapsel" id="spMaps" hidden></div>
       <p id="spMsg" style="white-space: pre-line">補給アイテムを1つ選ぶとステージが始まる。</p>
@@ -11723,12 +11726,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const box = $('spRk'); box.hidden = false;
     $('spRkBestL').textContent = S ? '自己ベスト' : '今週の自己ベスト'; $('spRkPlaceL').textContent = S ? '順位' : '今週の順位';
     const r = stageBest(S ? S.key : 'wk' + WEEK()), bb = $('spRkBest'), pl = $('spRkPlace');
-    pl.parentElement.hidden = !!S && !S.ranked;   // (a special with no ranking now: its best alone)
+    // (a special with no ranking now: its place as --位, greyed, and that one is held now and then)
+    const off = !!S && !S.ranked; pl.classList.toggle('off', off); $('spRkPlaceNote').hidden = !off; $('spRkPlaceNote').textContent = off ? 'ランキングはときどき開催' : '';
     bb.textContent = r ? fmtTime(r.time) : 'まだ記録なし'; bb.classList.toggle('dim', !r);
     const gp = $('spRkGap'); gp.hidden = true;
     pl.textContent = !r ? '--' : Rank.named() ? '確認中…' : '名前を登録すると載る'; pl.classList.toggle('dim', !r || !Rank.named());
     if (!r || !Rank.named()) return;
-    if (S && !S.ranked) return;
+    if (off) { pl.textContent = '--位'; pl.classList.remove('dim'); return; }
     const g = await Rank.weekGap(S ? S.board : undefined);
     if (!(S ? special === S : rankRun) || state !== 'startpick') return;
     pl.textContent = g ? g.rank + '位' : 'まだ載っていない'; pl.classList.toggle('dim', !g);
