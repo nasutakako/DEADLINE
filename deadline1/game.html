@@ -10069,12 +10069,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ],
     '3h': [
       { tail: true, say: '2分から毎分補給が届く', info: true },
-      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★30', end: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★70', end: true },
     ],
     '3b': [
       { say: '4-3の自爆鬼は爆発が[1.5倍]。|点滅したら[ダッシュ]で離れよう', info: true },
       { tail: true, say: '2分から毎分補給が届く', info: true },
-      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★30', end: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★70', end: true },
     ],
     b1: [
       { say: '[自爆鬼](橙色)がいる。|だんだん黒い鬼より速くなる', info: true },
@@ -10119,7 +10119,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ],
     '3c': [
       { tail: true, say: '2分から毎分補給が届く', info: true },
-      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★30', end: true },
+      { say: '[6分30秒]で右端に出口が開く。|[鍵]を拾って出口へ。初回クリアで★70', end: true },
     ],
   };
   function tutBegin() {
@@ -10393,14 +10393,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const STORY_NIGHT = { home: 1, cyber: 2, shadow: 3, fuse: 4 };
   const stageKicker = n => `ステージ ${mapName(n)}`;
   // what clearing each story's stage 3 gives: [slot, item, name]
-  // a map's first clear: ★10 / ★20 / ★30 for its stage 1 / 2 / 3 (once each, by mail)
-  const FIRST_STARS = [0, 10, 20, 30];
+  // a map's first clear: ★30 / ★50 / ★70 for its stage 1 / 2 / 3 (once each, by mail)
+  const FIRST_STARS = [0, 30, 50, 70];
   function firstClearPrize(n, skin) {
     const id = 'fc-' + skin + n, st = FIRST_STARS[n] || 0;
     if (!st || tut || mailFind(id)) return 0;
     mailSend({ id, k: 'star', n: st, t: `${MAP_NAMES[skin][n - 1]} 初回クリア報酬`, b: '★' + st }); return st;
   }
-  // the stories' own prizes are gone: a map's first clear (★10 / 20 / 30) is all
+  // the stories' own prizes are gone: a map's first clear (★30 / 50 / 70) is all
   const STORY_STARS = {};
   const STORY_PRIZE = {};
   const STORY_NOTE = { home: 'クリアで2-1解放', cyber: 'クリアで3-1解放', shadow: 'クリアで4-1解放', fuse: '' };
