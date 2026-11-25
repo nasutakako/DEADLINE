@@ -628,6 +628,8 @@ body.replaying.handui:not(.cyberui) .stage { outline: 2px solid #9ca0a8; outline
   border: 13px solid transparent; border-image: var(--aw-frame) 21 fill / 13px stretch; filter: drop-shadow(0 0 12px var(--aw-glow)) drop-shadow(0 3px 4px rgba(0,0,0,.5)); }
 .aw-plate::before, .aw-plate::after { content: ""; position: absolute; top: 50%; width: 8px; height: 8px; margin-top: -4px; background: var(--aw-gem); transform: rotate(45deg); box-shadow: 0 0 6px var(--aw-glow); }
 .aw-plate::before { left: -17px; } .aw-plate::after { right: -17px; }
+/* (room each side for its diamonds, so they stay inside the card when the plate has a line of its own) */
+.award .aw-plate { margin-left: 20px; margin-right: 20px; max-width: calc(100% - 40px); }
 .aw-name { font-family: var(--f-display); font-weight: 400; font-size: 21px; line-height: 1.15; letter-spacing: .08em; text-align: center; overflow-wrap: anywhere;
   background: linear-gradient(180deg, var(--aw-ink1) 10%, var(--aw-ink2) 55%, var(--aw-ink3) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: var(--aw-ink2); }
 .aw-how { font-size: 11px; letter-spacing: .06em; color: var(--aw-how); text-align: center; }
@@ -698,10 +700,13 @@ body.replaying.handui:not(.cyberui) .stage { outline: 2px solid #9ca0a8; outline
 /* (when the share buttons have a line of their own, the note goes in front of them on it) */
 .endrow.wrapped > .sharerow .sharestar { position: static; order: -1; }
 /* a result too tall for the screen: the room between its parts a little less */
-:is(#overScreen, #clearScreen).tight { padding-top: 6px; padding-bottom: 6px; }
-:is(#overScreen, #clearScreen).tight .card { gap: 4px; }
+:is(#overScreen, #clearScreen).tight { padding-top: 4px; padding-bottom: 4px; }
+:is(#overScreen, #clearScreen).tight .card { gap: 3px; }
 :is(#overScreen, #clearScreen).tight .card .mono { display: none; }   /* (the hint line gives way first) */
 :is(#overScreen, #clearScreen).tight .result b { white-space: nowrap; font-size: min(1em, 4.2vw); }
+:is(#overScreen, #clearScreen).tight .result b .besc { display: none; }
+:is(#overScreen, #clearScreen).tight :is(.endrow, .nextrow) button { padding-top: 7px; padding-bottom: 7px; }
+:is(#overScreen, #clearScreen).tight .endrow { row-gap: 4px; }   /* (脱出 after the best: the heading says it) */
 :is(#overScreen, #clearScreen).tight .result > div { padding-top: 4px; padding-bottom: 4px; }
 :is(#overScreen, #clearScreen).tight .card h2 { font-size: min(1em, 30px); }
 :is(#overScreen, #clearScreen).tight .score b { font-size: min(1em, 36px); }
@@ -1983,8 +1988,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // a twist of its own. The first: every oni black, on 1-3's map (its pits) with 15 boost pads. Each has a ranking of
   // its own with no end date (the board sp<n>); a special run earns no titles ----------
   const SPECIALS = [
-    // lvFrom: the speed level it starts at past the rank race's (6 = 2:00's speed; the same top, so reached at 6:00)
-    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd1', pads: 15, lvFrom: 6 },
+    // lvFrom: the speed level it starts at past the rank race's (12 = 4:00's speed; the same top, so reached at 4:00).
+    // toughAt/toughRate: from then, now and then a black barrier oni (one on the map at a time)
+    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd1', pads: 15, lvFrom: 12, toughAt: 240, toughRate: 0.05 },
   ];
   let special = null;   // the special being played (stage 3), or null
   const specialOpen = () => { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } };
@@ -6222,7 +6228,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // a daily night: every oni of its one kind
       if (daily) { black = daily.key === 'd1'; amb = daily.key === 'd2'; tough = daily.key === 'd3'; }
       // 黒鬼ラッシュ: every oni black (the kinds stage 3 keeps about are dropped with it)
-      if (special && special.key === 'sp1') { black = true; amb = tough = false; }
+      if (special && special.key === 'sp1') { black = true; amb = false;
+        // (from 4:00, now and then one of them black and armoured: a black barrier oni, one about at a time)
+        tough = t >= special.toughAt && !enemies.some(o => o.tough && !o.dead) && Math.random() < special.toughRate; }
       // a practice oni is exactly the kind the tutorial asked for
       let bomber = !!s.bomber && !black && !daily;
       if (bomber) tough = amb = false;
@@ -11705,7 +11713,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = true;
     $('spKicker').textContent = `スペシャル ${S.name}`; bestLine('spBest', 3); rkStat(S);
-    $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼\n・出口は開かない。捕まるまで逃げ続ける\n・マップの仕掛けは落とし穴と、加速装置${S.pads}か所`;
+    $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼(4分からはまれに黒いバリア鬼)\n・出口は開かない。捕まるまで逃げ続ける\n・マップの仕掛けは落とし穴と、加速装置${S.pads}か所`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
     fitStandby();
@@ -11715,7 +11723,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const waves = [['0:00', 3], ['4:00', 4], ['5:00', 5], ['6:00', ONI_WAVE_MAX], ['9:00', 7], ['12:00', 8]];
     $('rankInfoBody').innerHTML = `
       <section><h3>スペシャル ${S.name}</h3>${li([S.tag, '出口は開かない。捕まるまでの逃走時間が記録になる', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
-      <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さはランクレースの2分の速さから始まり、20秒ごとに少しずつ速くなって6分で最高速(最高速はランクレースと同じ)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
+      <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さはランクレースの4分の速さから始まり、20秒ごとに少しずつ速くなって4分で最高速(最高速はランクレースと同じ)', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li([`加速装置が${S.pads}か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
