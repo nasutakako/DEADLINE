@@ -6710,7 +6710,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       tx.textContent = (got ? `ミッション達成 ★ +${got}` : left ? 'ミッションを達成すると★1' : '今日のミッションはすべて達成') + ` ・ 所持 ★${starHave()}` + (got && left ? ` ・ 残り${left}個` : ''); }
     $('rScoreLabel').textContent = `${stageLabel(stageN)} 逃走時間`;
     $('rScore').textContent = fmtTime(t);
-    $('retryBtn').textContent = `もう一度${stageLabel(stageN)}`;
+    $('retryBtn').textContent = stageN === 3 && special ? 'もう一度' : `もう一度${stageLabel(stageN)}`;   // (a special's name is too long for the button)
     $('rRank').textContent = rankText(stageN, rank);
     $('rTime').textContent = (P && P.stompN || 0) + '回';   // (阻止: the ! stamped out this run; the old 合計時間 matched the score above)
     $('rKills').textContent = kills + '体';
