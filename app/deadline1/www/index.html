@@ -2001,7 +2001,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // skin/ns: the series and which of its maps, one drawn at random on each stand-by (series 2: its warp points too).
     // lvFrom: the speed level it starts at past the rank race's (24 = the rank race's top, from the start).
     // toughAt/toughRate: from then, now and then a black barrier oni (one on the map at a time)
-    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], pads: 15, lane: 3, lvFrom: 24, ranked: false, toughAt: 240, toughRate: 0.05 },
+    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], look: 'black', pads: 15, lane: 3, lvFrom: 24, ranked: false, toughAt: 240, toughRate: 0.05 },
   ];
   let special = null, specialN = 3;   // the special being played (stage 3), or null; and which of its series' maps
   const specialOpen = () => { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } };
@@ -4452,6 +4452,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     mapCache.height = Math.max(1, Math.round(ROWS * TY * dpr));
     const m = mapCache.getContext('2d');
     m.scale(TX * dpr, TY * dpr);
+    // (黒鬼ラッシュ: series 2's neon city in black and grey, on all three of its maps)
+    if (mapSkin === 'd2' && stageN === 3 && special && special.look === 'black') { renderNeon(m, 'black'); return; }
     if (mapSkin === 'd2') { if (mapStage() === 1) renderVault(m); else renderNeon(m); return; }
     if (mapSkin === 'd3') { if (mapStage() === 1) renderNight(m, 'day'); else renderShadow(m); return; }
     if (mapSkin === 'd4') { renderFest(m); if (mapStage() === 2) comicPass(m); return; }   // (4-2 only: 4-1 back to its own look)
@@ -4463,15 +4465,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
   // stages 2-3: a neon grid city. Dark asphalt with a faint tile grid, glowing lane dashes,
   // buildings as black slabs outlined in light, dot-matrix plazas, glows at the crossings.
-  function renderNeon(m) {
-    const rnd = mapRnd();
-    const A = mapStage() >= 3 ? [255, 43, 214] : [0, 229, 255], B = mapStage() >= 3 ? [255, 70, 70] : [255, 43, 214];
+  // look 'black' (黒鬼ラッシュ): near-black ground and blocks, the neon in greys only
+  function renderNeon(m, look) {
+    const rnd = mapRnd(), blk = look === 'black';
+    const A = blk ? [200, 200, 200] : mapStage() >= 3 ? [255, 43, 214] : [0, 229, 255], B = blk ? [110, 110, 110] : mapStage() >= 3 ? [255, 70, 70] : [255, 43, 214];
     const c = (k, a) => `rgba(${k[0]},${k[1]},${k[2]},${a})`;
-    m.fillStyle = '#070a14'; m.fillRect(0, 0, COLS, ROWS);
+    m.fillStyle = blk ? '#020202' : '#070a14'; m.fillRect(0, 0, COLS, ROWS);
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       const v = grid[idx(x, y)];
       if (v === 1) continue;
-      m.fillStyle = v === 2 ? '#0b1124' : '#090e1c'; m.fillRect(x, y, 1, 1);
+      m.fillStyle = blk ? (v === 2 ? '#0b0b0b' : '#070707') : v === 2 ? '#0b1124' : '#090e1c'; m.fillRect(x, y, 1, 1);
       m.strokeStyle = c(A, 0.07); m.lineWidth = 0.02; m.strokeRect(x, y, 1, 1);
       if (v === 2) { m.fillStyle = c(A, 0.22); for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) m.fillRect(x + 0.11 + a * 0.25, y + 0.11 + b * 0.25, 0.04, 0.04); }
     }
@@ -4497,7 +4500,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (grid[idx(x, y)] !== 1) continue;
       const sh = blockShade[idx(x, y)];
-      m.fillStyle = `rgb(${12 + sh * 8},${15 + sh * 8},${32 + sh * 14})`; m.fillRect(x, y, 1.002, 1.002);
+      m.fillStyle = blk ? `rgb(${10 + sh * 6},${10 + sh * 6},${10 + sh * 6})` : `rgb(${12 + sh * 8},${15 + sh * 8},${32 + sh * 14})`; m.fillRect(x, y, 1.002, 1.002);
       m.strokeStyle = 'rgba(255,255,255,0.025)'; m.lineWidth = 0.02;
       m.beginPath(); m.moveTo(x, y + 0.5); m.lineTo(x + 1, y + 0.5); m.moveTo(x + 0.5, y); m.lineTo(x + 0.5, y + 1); m.stroke();
     }
@@ -4514,7 +4517,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       m.stroke();
     }
     m.restore();
-    for (const [wx, wy] of windows) { m.fillStyle = rnd() < 0.5 ? c(A, 0.75) : c(B, 0.6); m.fillRect(wx, wy, 0.07, 0.07); }
+    for (const [wx, wy] of windows) { m.fillStyle = rnd() < (blk ? 0.3 : 0.5) ? c(A, 0.75) : c(B, 0.6); m.fillRect(wx, wy, 0.07, 0.07); }
     // a hard neon frame round the city
     m.strokeStyle = c(A, 0.6); m.lineWidth = 0.06; m.strokeRect(0.04, 0.04, COLS - 0.08, ROWS - 0.08);
   }
