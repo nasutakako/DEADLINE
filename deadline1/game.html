@@ -1996,9 +1996,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // ranked: whether it has a ranking now (off: a mini stage with only its own best; turned on now and then, as an event)
     // lane: 3 of its pads always on one street running across, spaced as the rest are.
     // skin/ns: the series and which of its maps, one drawn at random on each stand-by (series 2: its warp points too).
-    // lvFrom: the speed level it starts at past the rank race's (24 = the rank race's top, from the start).
+    // lvFrom: the speed level it starts at past the rank race's (26 = the rank race's steps: its top, from the start).
     // toughAt/toughRate: from then, now and then a black barrier oni (one on the map at a time)
-    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], look: 'black', pads: 15, lane: 3, lvFrom: 24, ranked: false, toughAt: 240, toughRate: 0.05 },
+    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], look: 'black', pads: 15, lane: 3, lvFrom: 26, ranked: false, toughAt: 240, toughRate: 0.05 },
   ];
   let special = null, specialN = 3;   // the special being played (stage 3), or null; and which of its series' maps
   const specialOpen = () => { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } };
@@ -5997,8 +5997,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const STORY_TO = { 2: [3.8, 4.0, 4.25, 3.05 + 13 * ((3.05 + 21 * ENEMY_STEP_LONG - 3.05) / 24)], 3: [4.3, 4.6, 4.85, 3.05 + 19 * ((3.05 + 21 * ENEMY_STEP_LONG - 3.05) / 24)] };
   const storyStep = () => { const w = MAP_CHOICE ? Math.max(0, ['d1', 'd2', 'd3', 'd4'].indexOf(mapSkin)) : 0; return (STORY_TO[stageN][w] - 3.05) / (stageN === 2 ? 13 : 19); };
   const storyPace = () => !capRun() && (stageN === 2 || stageN === 3);
-  // the weekly ranking tops out lower (the old 7:00 speed, 3.05 + 21 x 0.125), still reached at 8:00 (24 steps of 20 s)
-  const RANK_MAX = 3.05 + 21 * ENEMY_STEP_LONG, RANK_STEP = (RANK_MAX - 3.05) / 24;
+  // the weekly ranking (and the specials): the same steps as before (3.05 + 21 x 0.125 over 24 of them), now 26 of them
+  // up to about 5.89, and a step every 360/26 s, so the top (Lv27) comes at 6:00
+  const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 26, RANK_MAX = 3.05 + RANK_STEPS * RANK_STEP, RANK_EVERY = 360 / RANK_STEPS;
   const rankPace = () => stageN === 3 && (rankRun || !!special);   // (a special runs at the rank race's pace)
   const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
   const enemyTop = () => rankPace() ? RANK_MAX : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
@@ -6055,7 +6056,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         }
       }
     }
-    level = 1 + Math.floor(t / LV_EVERY) + (stageN === 3 && special ? special.lvFrom || 0 : 0);
+    level = 1 + Math.floor(t / (rankPace() ? RANK_EVERY : LV_EVERY)) + (stageN === 3 && special ? special.lvFrom || 0 : 0);
     // the stage's music gives way to the title music alone: at 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
     // (stage 3 walks the story's music first: stage 1's, stage 2's from 2:00, its own from 4:00)
     if (!tut) { const s = playSong(); if (!bgm || bgm.song !== s) bgmStart(s); }
@@ -11652,7 +11653,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を[100体]倒すごとに[ランチャー]が届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は9分まで${ONI_WAVE_MAX}体まで。9分から7体、12分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は20秒ごとに少しずつ速くなり、8分ごろに最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+        ${li([`一度に出る鬼は9分まで${ONI_WAVE_MAX}体まで。9分から7体、12分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は少しずつ速くなり、6分で最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '9分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '10分から: 2分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
