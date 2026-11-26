@@ -1785,7 +1785,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 封鎖4か所・4分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -2005,7 +2005,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ---------- weekly ranking: stage 3 with no way out, on one map a week (Japan time, the week from Monday) ----------
   let rankRun = false;
   // (a try-out for the late game, not kept: a ranking run that starts at 12:00, nothing of it saved or sent)
-  let testLate = 0;
+  let testLate = 0, testRk = false;
   // replays (see the recorder further down): the ranking run's map seed, its notes, the one playing, what its runner wore
   let repSeed = 0, rec = null, rp = null, repEq = null;
   // whether the map's first pit was moved for the stage 3 tutorial (kept with a replay, so it builds the same pits)
@@ -2026,7 +2026,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const stageLabel = n => n === 4 && daily ? '生存課題 ' + daily.name : n === 3 && special ? 'スペシャル ' + special.name : n === 3 && rankRun ? 'ランクレース' : 'ステージ' + n;
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
   // stage 2 opens once stage 1 is escaped, stage 3 once stage 2 is; the daily nights (生存課題) once stage 1 is
-  const unlocked = n => n <= 1 || isCleared(n === 4 ? 1 : Math.min(n, 3) - 1);
+  const unlocked = n => n <= 1 || (ART_ONLY && n === 3) || isCleared(n === 4 ? 1 : Math.min(n, 3) - 1);
   // ランクレース: open once 1-1 is escaped (whatever this week's map)
   // (the artifact only: the ranking open from the start, and the 12:00 try-out; the site and the app build set this false)
   const ART_ONLY = false;
@@ -5997,8 +5997,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     shift = null; seals = []; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
+    if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
     recStart();
-    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true; }
+    if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true;
+      // (the 4:55 try-out, a rank race's or a story's stage 3: the 3:00 and 4:00 streets already shut (the rank race's oni already
+      // at top speed); the 5:00 pair is warned as usual)
+      if (testLate === 295) { if (rankPace()) { waveLvN = 1e3; level = WAVE_MAXLV; for (const w of pending) w.lv = WAVE_MAXLV; }
+        sealTimes().forEach((at, k) => { if (at >= 300) return; const q = planSeal(at); q.k = k; seals.push(q); setSeal(q, true); });
+        flowKey = -1; shadeKey = ''; renderMapCache(); flow(Math.floor(P.x), Math.floor(P.y)); } }
   }
 
   // inner: keep off the outermost ring of streets (spawn warnings there end up half off the screen)
@@ -6627,6 +6633,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
 
   function stageClear() {
+    if (testLate) { misEnd(); caught('esc'); return; }   // (a try-out's way out: nothing written down)
     misEnd();
     bgmStop();
     state = 'clear'; input.stick = null;
@@ -6848,8 +6855,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (testLate) {
       // the try-out: only the time, nothing recorded
       bgmStop(); state = 'caught'; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1; tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
-      document.querySelector('#overScreen h2').textContent = '確保';
-      const from = testLate === 720 ? '12分' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
+      document.querySelector('#overScreen h2').textContent = quiet === 'esc' ? '脱出' : '確保';
+      const from = testLate === 720 ? '12分' : testLate === 295 ? '4分55秒' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
       $('rStars').hidden = true; $('rShare').closest('.sharerow').hidden = true; $('rTime').textContent = (P && P.stompN || 0) + '回'; $('rKills').textContent = kills + '体'; $('retryBtn').textContent = 'もう一度テスト';
       return;
     }
@@ -10563,7 +10570,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const MCLEAR = { d1: 'h', d2: '', d3: 's', d4: 'b' }, PREV_STORY = { d2: 'd1', d3: 'd2', d4: 'd3' };
   // a story is done once its stage 3 is escaped (帰り道's from before its own mark, by its stage 3 escapes)
   const storyDone = skin => !!(records.mclear || {})[MCLEAR[skin] + 3] || (skin === 'd1' && (records.stages[3] || []).some(r => r.escaped));
-  const mapOpen = (n, skin = 'd2') => n === 1 ? storyDone(PREV_STORY[skin]) : !!(records.mclear || {})[MCLEAR[skin] + (n - 1)];
+  const mapOpen = (n, skin = 'd2') => ART_ONLY && n === 3 ? true : n === 1 ? storyDone(PREV_STORY[skin]) : !!(records.mclear || {})[MCLEAR[skin] + (n - 1)];
   // a map already escaped (地下/夜の街 from before their own mark: only 帰り道 was open then)
   const mapCleared = (n, skin) => !!(records.mclear || {})[MCLEAR[skin] + n] || (skin === 'd1' && (n === 3 ? storyDone('d1') : !!(records.cleared || {})[n]));
   const MAP_LOCKS = { d2: ['1-3をクリアで解放', '2-1をクリアで解放', '2-2をクリアで解放'], d3: ['2-3をクリアで解放', '3-1をクリアで解放', '3-2をクリアで解放'], d4: ['3-3をクリアで解放', '4-1をクリアで解放', '4-2をクリアで解放'] };
@@ -11761,7 +11768,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function begin(n) {
     tap(); daily = null; rankRun = false; special = null;
     if (n < 2) { start(n); return; }
-    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = true; spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
+    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = true; $('spTest3Btn').hidden = !(ART_ONLY && n === 3); spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -11903,7 +11910,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     specialN = S.ns ? S.ns[Math.floor(Math.random() * S.ns.length)] : 3;   // (a map of its series, drawn afresh each time)
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = S.skin; bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
-    $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = !S.ranked; $('spTestBtn').hidden = $('spTest2Btn').hidden = true;
+    $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = !S.ranked; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = true;
     $('spKicker').textContent = `スペシャル ${S.name} ・ ${MAP_NAMES[S.skin][specialN - 1]}`; bestLine('spBest', 3); rkStat(S);
     $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼(4分からはまれに黒いバリア鬼)\n・出口は開かない。捕まるまで逃げ続ける\n・マップはシリーズ2の3つからランダム。仕掛けは落とし穴、ワープポイント、加速装置${S.pads}か所`;
     $('startPickScreen').hidden = false;
@@ -11928,7 +11935,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = !ART_ONLY; testLate = 0;
+    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = !ART_ONLY; testLate = 0;
     $('spMsg').textContent = `ランクレース。今週のマップは${weekMapName()}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
@@ -11960,7 +11967,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('specialBtn').addEventListener('click', () => specialOpen() ? beginSpecial(SPECIALS[0]) : lockedTap('special'));
   $('rankPlayBtn').addEventListener('click', () => rankOpen() ? beginRank() : lockedTap('rankPlay'));
   updateLocks();
-  $('retryBtn').addEventListener('click', () => testLate ? (rankRun = true, state = 'startpick', spStart(), misLive = false, misRender()) : stageN === 3 && special ? beginSpecial(special) : stageN === 3 && rankRun ? beginRank() : begin(stageN));
+  $('retryBtn').addEventListener('click', () => testLate ? (rankRun = testRk, state = 'startpick', spStart(), misLive = false, misRender()) : stageN === 3 && special ? beginSpecial(special) : stageN === 3 && rankRun ? beginRank() : begin(stageN));
   $('menuBtn').addEventListener('click', () => { tap(); toTitle(); });
   $('againBtn').addEventListener('click', () => begin(stageN));
   $('clearTitleBtn').addEventListener('click', () => { tap(); toTitle(); });
@@ -11972,7 +11979,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
   $('spGoBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStart(); });
-  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || !rankRun) return; tap(); testLate = at; spStart(); misLive = false; misRender(); });
+  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 295]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || special || !(rankRun || (id === 'spTest3Btn' && pendingStart === 3))) return; tap(); testLate = at; testRk = rankRun; spStart(); misLive = false; misRender(); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
   // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
   // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
