@@ -5743,13 +5743,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // starts and as it ends; while out the streets and blocks are lost in the dark, only the runner, the oni and their
   // lights showing. outageLevel(T) is how dark it is at run time T (0 lit .. 1 out)
   const OUTAGE_AT = 600, OUTAGE_EVERY = 120, OUTAGE_LEN = 15, OUTAGE_DARK = 1;
-  // story stage 3: from 8:00, every 2 min; the rank race and the specials: from 9:00, every minute (how long can you
-  // last). A replay plays its own run's (the old ones: from 10:00, every 2 min)
-  const STORY_OUTAGE_AT = 480, RANK_OUTAGE_AT = 540, RANK_OUTAGE_EVERY = 60;
+  // every stage 3 (story, rank race, specials): from 9:00, every minute (how long can you last). A replay plays its own
+  // run's (the old ones: from 10:00, every 2 min)
+  const RANK_OUTAGE_AT = 540, RANK_OUTAGE_EVERY = 60;
   let repOutAt = null, repOutEvery = null;
-  const hardRun = () => stageN === 3 && (rankRun || !!special);
-  const outAt = () => rp ? (repOutAt ?? OUTAGE_AT) : hardRun() ? RANK_OUTAGE_AT : STORY_OUTAGE_AT;
-  const outEvery = () => rp ? (repOutEvery ?? OUTAGE_EVERY) : hardRun() ? RANK_OUTAGE_EVERY : OUTAGE_EVERY;   // (pitch dark over the streets; the runner, the oni and their lights drawn on top)
+  const outAt = () => rp ? (repOutAt ?? OUTAGE_AT) : RANK_OUTAGE_AT;
+  const outEvery = () => rp ? (repOutEvery ?? OUTAGE_EVERY) : RANK_OUTAGE_EVERY;   // (pitch dark over the streets; the runner, the oni and their lights drawn on top)
   function outageAt(T) {   // (seconds into the outage going on at T, or -1)
     const A = outAt(); if (stageN !== 3 || tut || T < A) return -1;
     const E = outEvery(), k = Math.floor((T - A) / E), u = T - A - k * E;
@@ -5982,7 +5981,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (k === 'tough') return t >= 240 ? 2 : 0;
     if (k === 'bomber') return 0;   // (no bomber is ever made to be about: they come by chance)
     if (t < 360) return 0;
-    if (k === 'black') return t >= (hardRun() ? 480 : 540) ? 2 : 1;   // (black: 1 from 6:00, 2 from 9:00 on (8:00 in the rank race and the specials))
+    if (k === 'black') return t >= 480 ? 2 : 1;   // (black: 1 from 6:00, 2 from 8:00 on)
     return 1;   // (from 6:00 one yellow one always about)
   }
   // how many of those are short (on the map and warned), for a wave that would otherwise not come
@@ -11704,7 +11703,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), n >= 2 ? '鬼を[100体]倒すごとに[ランチャー]が届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? (n === 3 ? '出口が開いたあとは鬼がどんどん増える(停電も起きる)。早めに脱出しよう' : '出口が開いたあとは鬼がどんどん増える。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは鬼がどんどん増える。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
