@@ -3376,7 +3376,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
     // (a shadow oni runs at its parent's speed: a plain oni's, a black one's as fast as the black one)
-    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min(es * e.var, runnerSpeed() * PLAIN_MAX)) * (e.slowT > 0 ? e.slowK : 1);
+    const v = (e.black ? runnerSpeed() * BLACK_MULT : Math.min((e.spd ?? es) * e.var, runnerSpeed() * PLAIN_MAX)) * (e.slowT > 0 ? e.slowK : 1);
     e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
     e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
     const ox = e.x, oy = e.y;
@@ -5892,7 +5892,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4;
     P = { x: (yagura ? yagura.x + 1 : sx) + 0.5, y: yagura ? yagura.y + 4.5 : sy + 0.5, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock, barrier: false, inv: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; fxp = [];
-    t = 0; level = 1 + (stageN === 3 && special ? special.lvFrom || 0 : 0); shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
+    t = 0; level = stageN === 3 && special ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
     shift = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
@@ -5925,6 +5925,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const bomber = !allBlack && fuseStory() && enemies.filter(o => o.bomber).length + pending.filter(o => o.bomber).length < BOMBER_MAX[n] && Math.random() < BOMBER_RATE[n];
     if (bomber) p = farRoad();
     pending.push(allBlack ? { x: p.x, y: p.y, t: SPAWN_WARN, bomber: false, black: true, wave } : { x: p.x, y: p.y, t: SPAWN_WARN, bomber, wave });
+    if (rankPace()) pending[pending.length - 1].lv = nextWaveLv();
     if (wave) { const w = waveTally[wave] || (waveTally[wave] = { n: 0, st: 0 }); w.n++; }
   }
   // every 5 ! stamped out: a barrier. One at most in the items; with one already there it is put on at once (worn
@@ -6007,14 +6008,21 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the weekly ranking (and the specials): the same steps as before (3.05 + 21 x 0.125 over 24 of them), up to 6.0 (the
   // top it had before 11/13), 27 steps (the last one capped at 6.0), a step every 240/27 s: the top (Lv28) at 4:00
   const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 27, RANK_MAX = 6.0, RANK_EVERY = 240 / RANK_STEPS;
+  // the rank race and the specials now: each oni runs at the level it came out at, every wave two levels on from the last
+  // (Lv1, 3, 5 ...), so a fresh wave is faster than the ones about; the top, 8.0, at Lv49 (the 25th wave, about 4:00).
+  // The runner keeps up with the fastest about; the black oni stay faster than the runner
+  const WAVE_LV = 2, WAVE_MAXLV = 49, WAVE_TOP = 8.0, WAVE_STEP = (WAVE_TOP - 3.05) / (WAVE_MAXLV - 1);
+  const waveSpd = L => Math.min(WAVE_TOP, 3.05 + (L - 1) * WAVE_STEP);
+  let waveLvN = 0;   // (waves queued so far this run)
+  const nextWaveLv = () => special ? WAVE_MAXLV : Math.min(WAVE_MAXLV, 1 + WAVE_LV * waveLvN);
   const rankPace = () => stageN === 3 && (rankRun || !!special);   // (a special runs at the rank race's pace)
   const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
-  const enemyTop = () => rankPace() ? RANK_MAX : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
+  const enemyTop = () => rankPace() ? WAVE_TOP : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
   // the oni at the top speed this run can reach (shown as MAX rather than a level that only counts on)
   const oniMaxed = () => !tut && !!P && enemySpeed() >= enemyTop() - 1e-9;
   // the level the top speed comes at on this stage (shown as Lv23/25)
-  const oniMaxLv = () => 1 + Math.max(0, Math.ceil((enemyTop() - ENEMY_BASE - (Math.min(stageN, 2) - 1) * 0.55) / enemyStep() - 1e-9));
-  const enemySpeed = () => tut ? ENEMY_BASE + 0.55 : Math.min(enemyTop(), ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
+  const oniMaxLv = () => rankPace() ? WAVE_MAXLV : 1 + Math.max(0, Math.ceil((enemyTop() - ENEMY_BASE - (Math.min(stageN, 2) - 1) * 0.55) / enemyStep() - 1e-9));
+  const enemySpeed = () => !tut && rankPace() ? waveSpd(level || 1) : tut ? ENEMY_BASE + 0.55 : Math.min(enemyTop(), ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
@@ -6063,7 +6071,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         }
       }
     }
-    level = 1 + Math.floor(t / (rankPace() ? RANK_EVERY : LV_EVERY)) + (stageN === 3 && special ? special.lvFrom || 0 : 0);
+    if (!rankPace()) level = 1 + Math.floor(t / LV_EVERY);
     // the stage's music gives way to the title music alone: at 2:00 on stages 1 and 2, 6:00 on stage 3 and the survival nights
     // (stage 3 walks the story's music first: stage 1's, stage 2's from 2:00, its own from 4:00)
     if (!tut) { const s = playSong(); if (!bgm || bgm.song !== s) bgmStart(s); }
@@ -6114,7 +6122,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // a story stage with its exit open: the wave there was, one more at once and one more every 15 s after, no cap (no staying on)
       else if (stageN <= 3 && exitOpen && !rankRun && !special && !tut) batch = [0, 3, 4, 6][stageN] + 1 + Math.floor((t - alarmAt) / 15);
       else batch = lateWave() || Math.min(batch, ONI_WAVE_MAX);   // (every stage: at most 6 a wave; stage 3 more from 7:00)
-      waveSeq++; for (let i = 0; i < batch; i++) queueSpawn();
+      waveSeq++; for (let i = 0; i < batch; i++) queueSpawn(); if (rankPace()) waveLvN++;
       nextSpawn = t + spawnGap;
     // stage 3, 2:00-6:00: once a minute, the next wave always brings one black oni (faster than you)
     if (stageN === 3 && t < 360 && pending.length && t >= (P.nextBlack ?? 120) && !pending.some(p => p.black)) { pending[pending.length - 1 - Math.floor(Math.random() * Math.min(3, pending.length))].black = true; P.nextBlack = (P.nextBlack ?? 120) + 60; }
@@ -6279,7 +6287,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const sx = s.x, sy = s.y;   // (every oni, a bomber too, steps out of its own !)
       if (s.tut) { black = !!s.black; tough = !!s.tough; amb = !!s.amb; bomber = !!s.bomber; }
       if (tough) toughWave = true;
-      enemies.push({ x: sx, y: sy, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
+      if (s.lv && rankPace()) level = Math.max(level || 1, s.lv);
+      enemies.push({ lv: s.lv, spd: s.lv && rankPace() ? waveSpd(s.lv) : undefined, x: sx, y: sy, r: R_ENEMY, vx: 0, vy: 0, bias: Math.random(), var: 0.94 + Math.random() * 0.12, born: t, hp: tough ? 2 : 1, tough, armored: tough, amb, black, bomber, stun: 0 });
       if (s.tut && tut) { enemies[enemies.length - 1].tut = true; tut.oni.push(enemies[enemies.length - 1]); }
       tone(140, 0.25, 'sawtooth', 0.05, 70);
     }
@@ -6375,7 +6384,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       const dx = gx - e.x, dy = gy - e.y, dl = Math.hypot(dx, dy) || 1;
       // (a bomber runs faster still than the black one)
       // (while the runner is up in a ハイジャンプ, every oni slows right down)
-      const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? (e.fuseT != null ? runnerSpeed() * BOMBER_LIT : bomberSpeed()) : Math.min(es * e.var, runnerSpeed() * PLAIN_MAX)) * (e.slowT > 0 ? e.slowK : 1) * (air ? JUMP_ONI : 1);
+      const v = (e.black ? runnerSpeed() * BLACK_MULT : e.bomber ? (e.fuseT != null ? runnerSpeed() * BOMBER_LIT : bomberSpeed()) : Math.min((e.spd ?? es) * e.var, runnerSpeed() * PLAIN_MAX)) * (e.slowT > 0 ? e.slowK : 1) * (air ? JUMP_ONI : 1);
       e.vx += (dx / dl * v - e.vx) * Math.min(1, dt * 12);
       e.vy += (dy / dl * v - e.vy) * Math.min(1, dt * 12);
       move(e, e.vx, e.vy, dt);
@@ -6383,7 +6392,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (let i = 0; i < enemies.length; i++) for (let j = i + 1; j < enemies.length; j++) {
       const p = enemies[i], q = enemies[j];
       const dx = q.x - p.x, dy = q.y - p.y, d = Math.hypot(dx, dy);
-      if (d > 0 && d < 0.62 && !p.black && !q.black && !p.amb && !q.amb && !p.shade && !q.shade && !p.bomber && !q.bomber) { const k = (0.62 - d) / 2; p.x -= dx / d * k; p.y -= dy / d * k; q.x += dx / d * k; q.y += dy / d * k; collide(p); collide(q); }
+      if (d > 0 && d < 0.62 && (p.lv || 0) === (q.lv || 0) && !p.black && !q.black && !p.amb && !q.amb && !p.shade && !q.shade && !p.bomber && !q.bomber) { const k = (0.62 - d) / 2; p.x -= dx / d * k; p.y -= dy / d * k; q.x += dx / d * k; q.y += dy / d * k; collide(p); collide(q); }
     }
 
     // 導火線: a bomber near the runner lights its fuse, blinks, and goes off
@@ -11662,7 +11671,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を[100体]倒すごとに[ランチャー]が届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は7分まで${ONI_WAVE_MAX}体まで。7分から7体、8分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は少しずつ速くなり、4分で最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+        ${li([`一度に出る鬼は7分まで${ONI_WAVE_MAX}体まで。7分から7体、8分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は出るたびに2レベルずつ速くなり(先に出た鬼は出たときの速さのまま)、4分ごろに最高速。速い鬼は遅い鬼をすり抜ける。逃走者はいちばん速い鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '8分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '9分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
