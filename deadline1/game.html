@@ -2081,7 +2081,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the record list a run is judged against: on stages 1 and 2 the map's own (2-1 against 2-1's runs, not 1-1's), as
   // the stand-by screen's 自己ベスト shows it; 1-1's runs from before maps had their own lists are on the stage's
   const ownRecKey = n => { if (n > 2) return recKey(n); const k = mapRecKey(n, mapSkin); return !stageBest(k) && mapSkin === 'd1' ? n : k; };
-  const stageBest = n => { const l = (records.stages[n] || []).filter(r => r.time != null).sort(better); return l.length ? l[0] : null; };
+  // the rank race was reset part-way through week 2969 (its rules changed): that week's runs from before the reset no
+  // longer count, here or on the board (so they are not sent up again)
+  const RANK_RESET = { key: 'wk2969', at: '2026-11-26T13:22:22.000Z' };
+  const stageBest = n => { const l = (records.stages[n] || []).filter(r => r.time != null && !(n === RANK_RESET.key && (r.at || '') < RANK_RESET.at)).sort(better); return l.length ? l[0] : null; };
   const STAGE_LABELS = [[1, 'ステージ1 1-1'], [2, 'ステージ2 1-2'], [3, 'ステージ3 1-3']];
   function renderRecords() {
     updateLocks();
