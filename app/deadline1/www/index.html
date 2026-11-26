@@ -6031,7 +6031,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // every 5 ! stamped out: a barrier. One at most in the items; with one already there it is put on at once (worn
   // already as well: nothing more)
   const STOMP_PRIZE = 5;
-  const STOMP_R = 0.75;   // (how close the runner's middle must come to a "!" to stamp it out; it was 0.55)
+  const STOMP_R = 0.75;
+  const ITEM_GRAB = 0.75;   // (how close the runner's middle must come to a box or a launcher on the road to take it; it was 0.6)
+  // a box or a launcher dropping on the road: a chime as a boost pad's when it is ready again (a launcher two notes)
+  function dropChime(rk) { tone(1175, 0.1, 'triangle', 0.035); if (rk) setTimeout(() => tone(1568, 0.12, 'triangle', 0.035), 110); }   // (how close the runner's middle must come to a "!" to stamp it out; it was 0.55)
   let waveSeq = 0, waveTally = {};
   function stompPrize() {
     // (a barrier; with both barriers held, two bombs instead, as far as the bombs go (3 at most))
@@ -6276,10 +6279,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (P.nextRk == null) P.nextRk = rkGap();
     if (!tut && t >= P.nextRk && !items.some(it => it.rk && !it.ex)) {
       P.nextRk = t + rkGap();
-      { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); }
+      { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true }); if (!tut) dropChime(true); }
     }
     if (t >= nextItem) {
-      if (!items.some(it => !it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t }); }
+      if (!items.some(it => !it.rk)) { const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t }); if (!tut) dropChime(false); }
       nextItem = t + ITEM_EVERY;
     }
 
@@ -6373,7 +6376,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     if (!air && exitOpen && hasKey && P.x > COLS - 0.5 && Math.abs(P.y - (exitY + 0.5)) < 0.55) { stageClear(); return; }
 
-    for (const it of items) if (!air && Math.hypot(it.x - P.x, it.y - P.y) < 0.6 && (it.rk || P.stock < MINE_MAX)) {
+    for (const it of items) if (!air && Math.hypot(it.x - P.x, it.y - P.y) < ITEM_GRAB && (it.rk || P.stock < MINE_MAX)) {
       it.taken = true;
       if (it.rk) { bag.push('launcher'); flash = Math.max(flash, 0.15); tone(880, 0.08, 'triangle', 0.05); setTimeout(() => tone(1320, 0.12, 'triangle', 0.05), 80); continue; }
       P.stock++; tone(990, 0.08, 'square', 0.04); setTimeout(() => tone(1320, 0.1, 'square', 0.04), 70);
