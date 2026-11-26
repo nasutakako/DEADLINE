@@ -4002,11 +4002,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       });
       box.append(b);
     }
-    // 画質: 自動 / 高画質 / 標準
+    // 画質: 自動 / 高画質 / 標準 / ドット
     const q = document.createElement('div'); q.className = 'setrow setq';
     const qt = document.createElement('b'); qt.textContent = '画質'; const qs = document.createElement('span'); qs.className = 'seg'; qs.setAttribute('role', 'radiogroup');
     const qn = document.createElement('small');
-    const QS = [['auto', '自動', 'きれいに描き、動きが重いときは自動で標準に下げる'], ['high', '高画質', 'いつもきれいに描く(古い端末では動きが重くなることがある)'], ['std', '標準', '動きの軽さを優先する(電池も長持ち)']];
+    const QS = [['auto', '自動', 'きれいに描き、動きが重いときは自動で標準に下げる'], ['high', '高画質', 'いつもきれいに描く(古い端末では動きが重くなることがある)'], ['std', '標準', '動きの軽さを優先する(電池も長持ち)'], ['dot', 'ドット', '1マスを16ドットで粗く描く。いちばん軽い(見た目はドット絵風になる)']];
     const qPaint = () => { for (const el of qs.children) el.setAttribute('aria-checked', String(el.dataset.q === settings.q)); qn.textContent = (QS.find(x => x[0] === settings.q) || QS[0])[2]; };
     for (const [k, label] of QS) {
       const o = document.createElement('button'); o.type = 'button'; o.dataset.q = k; o.textContent = label; o.setAttribute('role', 'radio');
@@ -4165,6 +4165,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // drawn as finely as the screen (iPhone: 3 to a point); if a run can't keep its frames up at that, back to 2 for the rest of the visit
   // (設定の画質: 自動 as above, 高画質 always 3, 標準 always 2)
   let dprMax = settings.q === 'std' ? 2 : 3, fpsN = 0, fpsT = 0, fpsSlow = 0;
+  const DOT_PX = 16;
   const SIZES = [13, 17, 21, 25, 29, 33, 37, 41];
   const nearest = v => SIZES.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a);
   const idx = (x, y) => y * COLS + x;
@@ -4432,13 +4433,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
   function resize() {
     const r = stage.getBoundingClientRect();
-    dpr = Math.min(dprMax, window.devicePixelRatio || 1);
     W = r.width; H = r.height;
-    cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
     T = Math.min(W / COLS, H / ROWS);
     // the tiles stay square (buildings and players never look stretched): the map is as big as fits, centred; behind a
     // stand-by screen it is only a backdrop, so there it covers the whole screen instead (its edges cut off, no bands)
     TX = TY = document.body.classList.contains('picking') ? Math.max(W / COLS, H / ROWS) : T;
+    // 画質 ドット: every tile drawn 16 dots wide and shown blown up dot for dot (the lightest; everything drawn goes
+    // through it, so every map, skin and effect comes out in dots)
+    const dot = settings.q === 'dot';
+    dpr = dot ? DOT_PX / Math.max(1, TX) : Math.min(dprMax, window.devicePixelRatio || 1);
+    cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
+    cv.style.imageRendering = dot ? 'pixelated' : ''; if (dot && !cv.style.imageRendering) cv.style.imageRendering = 'crisp-edges';
+    ctx.imageSmoothingEnabled = !dot; try { sprites.clear(); } catch (_) {}
     ox = (W - COLS * TX) / 2; oy = (H - ROWS * TY) / 2;
     renderMapCache();
     sideFill();
@@ -5998,11 +6004,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // a light round the runner and each oni on the ground, a little smaller than a street light's pool
   // (drawn once at the screen's own pixel size and kept: the same picture, without a new gradient for every oni every
   // frame. Its alpha is the light's strength: the stops scale with it, so drawing the full one fainter is the same)
-  const sprites = new Map();
+  // (a look whose colours keep changing, such as the aurora skin, would need a new one every frame: more than a few new
+  // ones in a second and the rest are drawn the old way instead, as they were before)
+  const sprites = new Map(); let spriteNew = 0, spriteAt = 0;
   function sprite(key, wTiles, hTiles, paint) {
     const sx = TX * dpr, sy = TY * dpr, k = key + '|' + sx.toFixed(2) + 'x' + sy.toFixed(2);
     let c = sprites.get(k);
     if (!c) {
+      const now = performance.now(); if (now - spriteAt > 1000) { spriteAt = now; spriteNew = 0; }
+      if (++spriteNew > 12) return null;
       if (sprites.size > 80) sprites.clear();
       c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(wTiles * sx) + 2); c.height = Math.max(1, Math.ceil(hTiles * sy) + 2);
       const g = c.getContext('2d'); g.setTransform(sx, 0, 0, sy, c.width / 2, c.height / 2); paint(g);
@@ -6017,6 +6027,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       gr.addColorStop(0, col(1)); gr.addColorStop(0.45, col(0.4)); gr.addColorStop(1, col(0));
       g.fillStyle = gr; g.fillRect(-1.05, -1.05, 2.1, 2.1);
     });
+    if (!c) { const g = ctx.createRadialGradient(x, y, 0, x, y, 1.05); g.addColorStop(0, col(a)); g.addColorStop(0.45, col(a * 0.4)); g.addColorStop(1, col(0)); ctx.fillStyle = g; ctx.fillRect(x - 1.05, y - 1.05, 2.1, 2.1); return; }
     const ga = ctx.globalAlpha; ctx.globalAlpha = ga * Math.min(1, a);
     ctx.drawImage(c, x - c.tw / 2, y - c.th / 2, c.tw, c.th);
     ctx.globalAlpha = ga;
@@ -8357,6 +8368,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the oni's ball: drawn once per look and size and kept (a growing one is the full one drawn smaller)
   function metalBall(x, y, r, pal) {
     const R = Math.max(r, R_ENEMY), c = sprite('ball' + pal.join() + R.toFixed(3), R * 2 + 0.1, R * 2 + 0.1, g => metalBallDraw(g, 0, 0, R, pal)), k = r / R;
+    if (!c) { metalBallDraw(ctx, x, y, r, pal); return; }
     ctx.drawImage(c, x - c.tw * k / 2, y - c.th * k / 2, c.tw * k, c.th * k);
   }
   function metalBallDraw(ctx, x, y, r, [hi, mid, lo]) {
