@@ -1996,9 +1996,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // ranked: whether it has a ranking now (off: a mini stage with only its own best; turned on now and then, as an event)
     // lane: 3 of its pads always on one street running across, spaced as the rest are.
     // skin/ns: the series and which of its maps, one drawn at random on each stand-by (series 2: its warp points too).
-    // lvFrom: the speed level it starts at past the rank race's (26 = the rank race's steps: its top, from the start).
+    // lvFrom: the speed level it starts at past the rank race's (27 = the rank race's steps: its top, from the start).
     // toughAt/toughRate: from then, now and then a black barrier oni (one on the map at a time)
-    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], look: 'black', pads: 15, lane: 3, lvFrom: 26, ranked: false, toughAt: 240, toughRate: 0.05 },
+    { key: 'sp1', board: 'sp1', name: '黒鬼ラッシュ', tag: '黒い鬼だらけ。加速装置で駆け抜けろ', skin: 'd2', ns: [1, 2, 3], look: 'black', pads: 15, lane: 3, lvFrom: 27, ranked: false, toughAt: 240, toughRate: 0.05 },
   ];
   let special = null, specialN = 3;   // the special being played (stage 3), or null; and which of its series' maps
   const specialOpen = () => { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } };
@@ -5997,9 +5997,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const STORY_TO = { 2: [3.8, 4.0, 4.25, 3.05 + 13 * ((3.05 + 21 * ENEMY_STEP_LONG - 3.05) / 24)], 3: [4.3, 4.6, 4.85, 3.05 + 19 * ((3.05 + 21 * ENEMY_STEP_LONG - 3.05) / 24)] };
   const storyStep = () => { const w = MAP_CHOICE ? Math.max(0, ['d1', 'd2', 'd3', 'd4'].indexOf(mapSkin)) : 0; return (STORY_TO[stageN][w] - 3.05) / (stageN === 2 ? 13 : 19); };
   const storyPace = () => !capRun() && (stageN === 2 || stageN === 3);
-  // the weekly ranking (and the specials): the same steps as before (3.05 + 21 x 0.125 over 24 of them), now 26 of them
-  // up to about 5.89, and a step every 360/26 s, so the top (Lv27) comes at 6:00
-  const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 26, RANK_MAX = 3.05 + RANK_STEPS * RANK_STEP, RANK_EVERY = 360 / RANK_STEPS;
+  // the weekly ranking (and the specials): the same steps as before (3.05 + 21 x 0.125 over 24 of them), up to 6.0 (the
+  // top it had before 11/13), 27 steps (the last one capped at 6.0), a step every 360/27 s: the top (Lv28) at 6:00
+  const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 27, RANK_MAX = 6.0, RANK_EVERY = 360 / RANK_STEPS;
   const rankPace = () => stageN === 3 && (rankRun || !!special);   // (a special runs at the rank race's pace)
   const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
   const enemyTop = () => rankPace() ? RANK_MAX : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
