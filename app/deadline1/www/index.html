@@ -10204,7 +10204,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { btn: 'mine', say: '[バリア鬼]は爆発に1回耐える。|爆弾でバリアを割ろう', set: () => { tut.refill = true; tutOni({ tough: true }); }, go: () => tut.oni.some(e => !e.tough || e.dead) },
       // the barrier just broke: hold the daze long enough to read about it
       { btn: 'mine', say: '割れた鬼はしばらく怯み、触れても平気。|[もう一度爆弾]で倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
-      { btn: 'dash mine', say: '[黒い鬼]は自分より速い。|[ダッシュ]で離れてから爆弾で倒そう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
+      { btn: 'mine', say: '[黒い鬼]は自分より速い。|[爆弾]を先に置いて待ち伏せしよう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を[100体]倒すごとに[ランチャー]が届く', info: true },
       { tail: true, say: '2分からバリアや爆弾が支給される', info: true },
       { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
