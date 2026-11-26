@@ -5814,6 +5814,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const outEvery = () => rp ? (repOutEvery ?? OUTAGE_EVERY) : RANK_OUTAGE_EVERY;   // (pitch dark over the streets; the runner, the oni and their lights drawn on top)
   function outageAt(T) {   // (seconds into the outage going on at T, or -1)
     const A = outAt(); if (stageN !== 3 || tut || T < A) return -1;
+    // (none in the minute the town is built again: the new streets are seen)
+    if (swaps.some(q => q.seed && T >= q.at && T < q.at + OUTAGE_LEN)) return -1;
     const E = outEvery(), k = Math.floor((T - A) / E), u = T - A - k * E;
     return u < OUTAGE_LEN ? u : -1;
   }
@@ -5838,6 +5840,53 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let carves = [];   // { at, tiles: [tile index, ...], on }
   const carveTimes = () => [...new Set(sealTimes())];   // (one at each time a street shuts)
   const sealRun = () => stageN === 3 && !tut;
+  // 地形総入れ替え (the rank race and the specials): at 8:00, and from 15:00 every 5 min, the whole town is pulled down and
+  // built again: a new layout in the same look (a siren and a count of SWAP_WARN s first, the map flashing). Every
+  // building bursts; oni caught inside the new buildings burst and are gone; the runner is moved to the nearest street
+  // and gets 2 s without being caught. The streets shut and cut so far go with the old town; those still to come are
+  // picked again in the new one. A replay builds each town from its seed
+  const SWAP_WARN = 5, SWAP_FIRST = 480, SWAP_FROM = 900, SWAP_EVERY = 300;
+  let swaps = [];   // { at, seed, on }
+  const swapRun = () => stageN === 3 && !tut && (rankRun || !!special);
+  const swapTimes = () => { const a = [SWAP_FIRST]; for (let m = SWAP_FROM; m <= t + SWAP_WARN; m += SWAP_EVERY) a.push(m); return a; };
+  const oniPal = e => e.shade ? METAL.shade : e.bomber ? METAL.bomber : e.black ? METAL.black : e.amb ? METAL.amb : METAL.oni;
+  function popAt(x, y, cols, n, v0, v1) { for (let k = 0; k < n; k++) { const a = Math.random() * Math.PI * 2, v = v0 + Math.random() * (v1 - v0); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.1 + Math.random() * 0.6, c: cols[k % cols.length] }); } }
+  function doSwap(q) {
+    q.on = true;
+    // the old town bursts: every building, and the streets a little
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (grid[idx(x, y)] === 1) popAt(x + 0.5, y + 0.5, ['#d8d2c8', '#9a8f84', '#ffffff'], 8, 2, 9);
+      else if (Math.random() < 0.5) popAt(x + 0.5, y + 0.5, ['#8fe9ff', '#ffffff'], 3, 1.5, 6);
+    }
+    // the streets shut and cut so far go with it; the ones warned and still to come are picked again in the new town
+    for (const o of seals) if (o.on) o.tiles = [];
+    for (const o of carves) if (o.on) o.tiles = [];
+    recEv(['m', q.at, q.seed]);
+    seeded(q.seed, genMap); flowKey = -1; shadeKey = ''; resize(); renderMapCache();
+    for (const o of seals) if (!o.on) { o.tiles = planSeal(o.at).tiles; o.was = null; }
+    for (const o of carves) if (!o.on) o.tiles = planCarve(o.at).tiles;
+    // oni caught inside a building: they burst, in their own colour (as a boost pad's burst), and are gone
+    const inWall = o => !walk(Math.floor(o.x), Math.floor(o.y));
+    for (const e of enemies) if (!e.dead && inWall(e)) { const pal = oniPal(e); popAt(e.x, e.y, [pal[0], pal[1], pal[0]], 32, 1.5, 6.5); e.dead = true; }
+    enemies = enemies.filter(e => !e.dead); pending = pending.filter(w => !inWall(w));
+    const out = o => { if (inWall(o)) { const n = nearOpen(o.x, o.y); o.x = n.x; o.y = n.y; } };
+    out(P); for (const w of items) out(w); for (const w of mines) out(w); for (const w of decoys) out(w);
+    P.inv = Math.max(P.inv, 2); P.ambT = null; P.trail = []; P.warpAway = null;
+    flow(Math.floor(P.x), Math.floor(P.y));
+    flash = Math.max(flash, 0.9); shake = reduceMotion ? 0 : Math.max(shake, 0.7);
+    noise(0.8, 0.12); tone(70, 0.8, 'sawtooth', 0.1, 30); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
+  }
+  // the warning: the map flashing and a count in big letters at the top
+  function drawSwap(now) {
+    if (rp) return;
+    const q = swaps.find(o => !o.on); if (!q) return;
+    const left = q.at - t; if (left > SWAP_WARN || left < 0) return;
+    ctx.save(); ctx.fillStyle = `rgba(255,255,255,${0.06 + 0.1 * Math.abs(Math.sin(now * 6))})`; ctx.fillRect(0, 0, COLS, ROWS); ctx.restore();
+    const n = Math.max(1, Math.ceil(left)), fs = Math.min(1.4, COLS / 12);
+    ctx.save(); ctx.font = `900 ${fs}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round';
+    const msg = `街が入れ替わる！ ${n}`; ctx.lineWidth = fs * 0.22; ctx.strokeStyle = 'rgba(10,8,14,0.9)'; ctx.strokeText(msg, COLS / 2, fs * 1.1);
+    ctx.fillStyle = Math.floor(now * 4) % 2 ? '#ff4a3a' : '#ffd23a'; ctx.fillText(msg, COLS / 2, fs * 1.1); ctx.restore();
+  }
   const sealTimes = () => { const a = []; for (let m = SEAL_EVERY_FROM; m <= t + SEAL_WARN; m += 60) a.push(m); return a; };
   // every open tile reachable from every other (the streets must stay one piece)
   function allJoined() {
@@ -6104,7 +6153,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = stageN === 3 && special ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    shift = null; seals = []; carves = []; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; seals = []; carves = []; swaps = []; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
@@ -6357,6 +6406,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // as each blackout ends, one launcher drops in the street, besides the usual ones (it lies as long as they do)
     if (outageAt(t) >= 0) P.inOutage = true;
     else if (P.inOutage) { P.inOutage = false; const p = randomRoad(4); items.push({ x: p.x, y: p.y, born: t, rk: true, ex: true }); dropChime(); }
+    if (swapRun()) {
+      for (const at of swapTimes()) if (t >= at - SWAP_WARN && !swaps.some(q => q.at === at)) {
+        // (one already past when the run starts (a try-out from later on): left as it was)
+        if (t > at + 1) swaps.push({ at, seed: 0, on: true });
+        else { swaps.push({ at, seed: (Math.random() * 4294967296) >>> 0, on: false }); klaxon(3, 0.04); }
+      }
+      for (const q of swaps) if (!q.on && t >= q.at) doSwap(q);
+    }
     if (sealRun()) {
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
         if (!seals.some(o => o !== q && o.at === at)) { tone(988, 0.08, 'square', 0.04); setTimeout(() => tone(988, 0.08, 'square', 0.04), 160); } } });
@@ -8618,7 +8675,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (!P) return;
     ctx.setTransform(TX * dpr, 0, 0, TY * dpr, (ox + sx) * dpr, (oy + sy) * dpr);
     const now = performance.now() / 1000;
-    drawShift(now); drawSeals(now);
+    drawShift(now); drawSeals(now); drawSwap(now);
 
     // the map's devices (warp points, boost pads, pits), drawn again over the dark in a blackout so they still show
     const drawGimmicks = () => {
@@ -10004,7 +10061,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
   // ---------- launcher: a rocket down the corridor you are roughly facing ----------
   const ROCKET_SPEED = 13;   // (tiles a second; it was 16. A replay plays at its own run's: repRkSpeed)
-  let repRkSpeed = null;
+  let repRkSpeed = null, repTown = 0, repHead = null;
   const rkSpeedRep = () => repRkSpeed || 16;
   let rocketKills = 0;
   // the launcher aimed with a slide: straight down the street the way chosen (null when a wall is right there)
@@ -11685,6 +11742,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     shake = 0; flash = 0; danger = 0; exitOpen = false; keyPos = null; stageKillStart = 0;
     seals = (h.ev || []).filter(e => e[1] === 's').map(e => ({ at: +e[2], tiles: String(e[3]).split(',').filter(v => v !== '').map(Number), on: false }));
     carves = (h.ev || []).filter(e => e[1] === 'c').map(e => ({ at: +e[2], tiles: String(e[3]).split(',').filter(v => v !== '').map(Number), on: false }));
+    swaps = (h.ev || []).filter(e => e[1] === 'm').map(e => ({ at: +e[2], seed: +e[3] >>> 0 })); repTown = 0; repHead = h;
     { const g = (h.ev || []).find(e => e[1] === 'g'); shift = g ? { at: g[0] / 100, block: String(g[2]).split(',').filter(v => v !== '').map(Number), open: String(g[3]).split(',').filter(v => v !== '').map(Number), on: false } : null; }
     state = 'replay';
     rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][(h.n || 3) - 1] : '';
@@ -11751,7 +11809,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     rp.evAt = time;
     if (shift) setShift(time >= shift.at);
-    { let ch = false; for (const q of seals) if (setSeal(q, time >= q.at)) ch = true; for (const q of carves) if (setCarve(q, time >= q.at)) ch = true; if (ch) { flowKey = -1; renderMapCache(); } }
+    // (the town of the moment: built again from its seed when the time passes a 地形総入れ替え, either way)
+    const town = swaps.filter(q => time >= q.at).length, from = town ? swaps[town - 1].at : 0;
+    if (town !== repTown) {
+      repTown = town; const h = repHead;
+      mapGen = h.g || 1; repTutPit = !!h.tp; try { seeded(town ? swaps[town - 1].seed : h.seed, genMap); } finally { repTutPit = null; mapGen = 2; }
+      for (const q of seals) { q.on = false; q.was = null; } for (const q of carves) q.on = false;
+      flowKey = -1; shadeKey = ''; resize(); renderMapCache();
+    }
+    { let ch = false; for (const q of seals) if (setSeal(q, time >= q.at && q.at >= from)) ch = true; for (const q of carves) if (setCarve(q, time >= q.at && q.at >= from)) ch = true; if (ch) { flowKey = -1; renderMapCache(); } }
   }
   function repTick(dt) {
     if (!rp) return;
@@ -11946,7 +12012,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分〜4分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: 黒い鬼が、マップに必ず1体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '8分と、15分からは5分ごと: 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前からカウントダウン。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12057,7 +12123,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '8分と、15分からは5分ごと: 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前からカウントダウン。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
