@@ -698,15 +698,12 @@ body.replaying.handui:not(.cyberui) .stage { outline: 2px solid #9ca0a8; outline
 .dailybtn.locked { opacity: .5; }
 /* the result's share buttons: a slim row of their own under the main ones */
 .sharerow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
-/* the result screens: もう一度/タイトルへ and the share buttons side by side, so the card keeps to the screen's height */
-.endrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+/* the result screens: もう一度/タイトルへ, and the share buttons always on a line of their own just under them */
+.endrow { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
 .endrow > .row { margin: 0; }
-.endrow > .sharerow { margin-left: auto; position: relative; flex-wrap: nowrap; }
-.endrow > .sharerow .label { display: none; }   /* (X and LINE say what they are) */
-/* (the first-share ★ note sits just over the share buttons, taking no line of its own) */
-.endrow > .sharerow .sharestar { position: absolute; right: 0; bottom: calc(100% + 3px); white-space: nowrap; font-size: 11px; }
-/* (when the share buttons have a line of their own, the note goes in front of them on it) */
-.endrow.wrapped > .sharerow .sharestar { position: static; order: -1; }
+.endrow > .sharerow { flex-wrap: nowrap; gap: 6px 8px; }
+.endrow > .sharerow .ghost.share { padding: 5px 12px; font-size: 12.5px; }
+.endrow > .sharerow .sharestar { white-space: nowrap; font-size: 11px; }
 /* a result too tall for the screen: the room between its parts a little less */
 :is(#overScreen, #clearScreen).tight { padding-top: 4px; padding-bottom: 4px; }
 :is(#overScreen, #clearScreen).tight .card { gap: 3px; }
