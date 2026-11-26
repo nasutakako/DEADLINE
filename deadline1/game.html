@@ -5918,6 +5918,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     return true;
   }
+  // a street shutting or a building cut away: the boost pad's burst of sparks, bigger (from every tile of it, more
+  // of them, flung further and lasting longer)
+  function mapPop(tiles, cols) {
+    for (const i of tiles) { const x = i % COLS + 0.5, y = Math.floor(i / COLS) + 0.5;
+      for (let k = 0; k < 40; k++) { const a = Math.random() * Math.PI * 2, v = 2 + Math.random() * 7.5; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.2 + Math.random() * 0.6, c: cols[k % 3] }); } }
+  }
   function fireSeal(q) {
     if (!setSeal(q, true) || !q.tiles.length) return;
     flowKey = -1; shadeKey = ''; renderMapCache();
@@ -5925,10 +5931,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const out = o => { if (!walk(Math.floor(o.x), Math.floor(o.y))) { const n = nearOpen(o.x, o.y); o.x = n.x; o.y = n.y; } };
     out(P); for (const e of enemies) out(e); for (const w of pending) out(w); for (const w of items) out(w); for (const w of mines) out(w); for (const w of decoys) out(w);
     flow(Math.floor(P.x), Math.floor(P.y));
-    shake = reduceMotion ? 0 : Math.max(shake, 0.25); flash = Math.max(flash, 0.15);
+    shake = reduceMotion ? 0 : Math.max(shake, 0.3); flash = Math.max(flash, 0.25);
     tone(80, 0.4, 'sawtooth', 0.09, 40); noise(0.3, 0.1);
-    for (const i of q.tiles) { const x = i % COLS + 0.5, y = Math.floor(i / COLS) + 0.5;
-      for (let k = 0; k < 5; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.6; sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 0.8, c: '#9a8f84' }); } }
+    mapPop(q.tiles, ['#ff6a5e', '#ffd0cb', '#ffffff']);
   }
   function planCarve(at) {
     const busy = (x, y) => goalT[idx(x, y)] || (riverOn && y >= 3 && y <= 7) || pads.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5)
@@ -5963,10 +5968,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     flowKey = -1; shadeKey = ''; renderMapCache();
     recEv(['c', q.at, q.tiles.join(',')]);
     flow(Math.floor(P.x), Math.floor(P.y));
-    shake = reduceMotion ? 0 : Math.max(shake, 0.2);
+    shake = reduceMotion ? 0 : Math.max(shake, 0.3); flash = Math.max(flash, 0.25);
     noise(0.35, 0.08); tone(140, 0.3, 'triangle', 0.06, 300);
-    for (const i of q.tiles) { const x = i % COLS + 0.5, y = Math.floor(i / COLS) + 0.5;
-      for (let k = 0; k < 6; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.8; sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 0.8, c: '#8fe9ff' }); } }
+    mapPop(q.tiles, ['#5fe3ff', '#b6fdff', '#ffffff']);
   }
   // the warning: a red glow and outline on each tile of the stretch that is about to shut, pulsing (the carve's, in red)
   function drawSeals(now) {
