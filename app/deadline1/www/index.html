@@ -4408,19 +4408,26 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     return [];
   }
   // two street tiles at least half the map apart (never a pit, a goal or the start crossing)
+  // ...off the streets (on a street there are times it cannot be got round): in a plaza (its middle) or the gap in an
+  // L-shaped block, never the plaza that has a pit; plazas first. Only if a map has too few such spots, any road as before
   function makeWarps() {
     const sx = Math.floor(COLS / 2 / 4) * 4, sy = Math.floor(ROWS / 2 / 4) * 4, c = [];
-    for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
-      const i = idx(x, y);
-      if (grid[i] === 1 || goalT[i] || holes.some(h => Math.hypot(h.x - x - 0.5, h.y - y - 0.5) < 2.5) || Math.hypot(x - sx, y - sy) < 3) continue;
-      c.push([x, y]);
+    const ok = (x, y) => { const i = idx(x, y); return grid[i] !== 1 && !goalT[i] && Math.hypot(x - sx, y - sy) >= 3; };
+    const plazas = [], gaps = [];
+    for (let by = 1; by + 2 < ROWS - 1; by += 4) for (let bx = 1; bx + 2 < COLS - 1; bx += 4) {
+      if (holes.some(h => h.x > bx && h.x < bx + 3 && h.y > by && h.y < by + 3)) continue;   // (the plaza with a pit)
+      const open = []; for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 1) open.push([x, y]);
+      if (open.length === 9) { if (ok(bx + 1, by + 1)) plazas.push([bx + 1, by + 1]); }
+      else { const free = open.filter(([x, y]) => ok(x, y)); if (free.length) gaps.push(free[Math.floor(Math.random() * free.length)]); }
     }
     const need = Math.max(8, Math.hypot(COLS, ROWS) / 2);
-    for (let k = 0; k < 400 && c.length; k++) {
-      const a = c[Math.floor(Math.random() * c.length)], b = c[Math.floor(Math.random() * c.length)];
-      if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b].map(([x, y]) => ({ x: x + 0.5, y: y + 0.5, cool: 0, flash: 0 }));
+    const pair = list => { for (let k = 0; k < 400 && list.length > 1; k++) { const a = list[Math.floor(Math.random() * list.length)], b = list[Math.floor(Math.random() * list.length)]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b]; } return null; };
+    let got = pair(plazas) || pair([...plazas, ...gaps]);
+    if (!got) {
+      for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (ok(x, y) && !holes.some(h => Math.hypot(h.x - x - 0.5, h.y - y - 0.5) < 2.5)) c.push([x, y]);
+      got = pair(c);
     }
-    return [];
+    return got ? got.map(([x, y]) => ({ x: x + 0.5, y: y + 0.5, cool: 0, flash: 0 })) : [];
   }
 
   function resize() {
@@ -6492,17 +6499,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     let nearestD = 99;
     // a dazed oni cannot catch the runner (touching it is safe)
     for (const e of enemies) if (!(e.stun > 0) && !(e.shade && shadeAt(P.x, P.y))) nearestD = Math.min(nearestD, Math.hypot(e.x - P.x, e.y - P.y));
-    // heartbeat: from 6 tiles off, slow, racing as the nearest oni closes in (about 1.1 sec apart far off, 0.3 at its
-    // heels); louder the more oni are close. A sudden closing-in cuts the wait short so the beat speeds up at once
-    const near = enemies.filter(e => Math.hypot(e.x - P.x, e.y - P.y) < 4).length;
-    if (nearestD < 6) {
-      const gap = 0.26 + 0.85 * Math.pow(clamp((nearestD - 0.6) / 5.4, 0, 1), 1.2);
-      beatTimer = Math.min(beatTimer - dt, gap);
-      if (beatTimer <= 0) {
-        heartbeat(near ? Math.min(0.6, 0.16 + (near - 1) * 0.11) : 0.1, gap);
-        beatTimer = gap;
-      }
-    }
+    // (the heartbeat as an oni closed in is gone: it crackled)
     danger = clamp(1 - (nearestD - 0.6) / 3.4, 0, 1);
     // in the tutorial a catch sends the runner back to the start of that practice step
     if (!air && nearestD < CATCH && P.inv <= 0 && tut) tutCaught();
