@@ -5710,8 +5710,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function steer(ix, iy, sp) {
     const mag = Math.min(1, Math.hypot(ix, iy));
     if (mag < 0.05) return [0, 0];
-    // (it looks further ahead the faster it goes: a quick runner gets ready for a turn, or slides along a wall, in time)
-    const probe = Math.max(0.1, sp * 0.025), r = P.r - 0.01;
+    const probe = 0.1, r = P.r - 0.01;
     const sx = Math.sign(ix), sy = Math.sign(iy);
     const canX = Math.abs(ix) > 0.15 && !overlaps(P.x + sx * probe, P.y, r);
     const canY = Math.abs(iy) > 0.15 && !overlaps(P.x, P.y + sy * probe, r);
