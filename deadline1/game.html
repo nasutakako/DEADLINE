@@ -5826,18 +5826,20 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   const SHIFT_AT = 900, SHIFT_WARN = 5, SHIFT_BLOCK = 5, SHIFT_OPEN = 4;
   let shift = null;
-  // stage 3: one stretch of street shuts for good at each of these times (a time listed twice shuts two at once), joining
-  // the two blocks beside it into one (a "!" on it for SEAL_WARN s first). 3:00, 4:00, 5:00, two each (a story's stage 3
+  // stage 3: one stretch shuts for good at each of these times (a time listed twice shuts two at once): a street (joining
+  // the blocks beside it, or along a plaza) or a line across a plaza (not one with a warp point or a pit in it); a red
+  // glow on it for SEAL_WARN s first. 3:00, 4:00, 5:00 two each, then from 6:00 one every minute (a story's stage 3
   // never by the right edge, where the way out opens)
-  const SEAL_TIMES = [180, 180, 240, 240, 300, 300], STORY_SEAL_TIMES = SEAL_TIMES, SEAL_WARN = 3;
+  const SEAL_TIMES = [180, 180, 240, 240, 300, 300], SEAL_EVERY_FROM = 360, SEAL_WARN = 3;
   let seals = [];   // { at, tiles: [tile index, ...], on }
-  // and at each of those times (once per time) one thin building is cut away into street: one half of a block with an
-  // alley down its middle (#.# -> ..#), or on 4-3 one of the flat blocks along the top, above the river (a cyan glow on
-  // it for SEAL_WARN s first)
+  // and at each of those times (once per time) a building is cut through into street, three tiles in a line opening a way
+  // between two streets: down (or across) the middle of a block (a joined one too), one half of a block with an alley
+  // down its middle, or on 4-3 one of the flat blocks along the top, above the river (a cyan glow on it for SEAL_WARN s
+  // first). Picked at random among those; there is always one
   let carves = [];   // { at, tiles: [tile index, ...], on }
-  const carveTimes = () => [...new Set(sealTimes())];
+  const carveTimes = () => [...new Set(sealTimes())];   // (one at each time a street shuts)
   const sealRun = () => stageN === 3 && !tut;
-  const sealTimes = () => rankRun || special ? SEAL_TIMES : STORY_SEAL_TIMES;
+  const sealTimes = () => { const a = SEAL_TIMES.slice(); for (let m = SEAL_EVERY_FROM; m <= t + SEAL_WARN; m += 60) a.push(m); return a; };
   // every open tile reachable from every other (the streets must stay one piece)
   function allJoined() {
     let start = -1, total = 0; for (let i = 0; i < COLS * ROWS; i++) if (grid[i] !== 1) { total++; if (start < 0) start = i; }
@@ -5920,21 +5922,34 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       || pads.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5)
       || holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || (yagura && Math.abs(x - yagura.x - 1) < 4 && Math.abs(y - yagura.y - 1) < 4)
       || items.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1) || (!rankRun && !special && x >= COLS - 5);   // (a story: the streets to the way out stay open)
+    // a plaza: a block's 3x3 all plaza; one with a warp point or a pit in it is left alone
+    const cellIn = (cx, cy) => cx >= 0 && cy >= 0 && cx + 4 < COLS + 1 && cy + 4 < ROWS + 1;
+    const plaza = (cx, cy) => cellIn(cx, cy) && [1, 2, 3].every(a => [1, 2, 3].every(b => cx + a < COLS && cy + b < ROWS && grid[idx(cx + a, cy + b)] === 2));
+    const kept = (cx, cy) => warps.some(q => q.x > cx && q.x < cx + 4 && q.y > cy && q.y < cy + 4) || holes.some(q => q.x > cx && q.x < cx + 4 && q.y > cy && q.y < cy + 4);
     const segs = [];
-    for (let cy = 0; cy < ROWS; cy += 4) for (let cx = 0; cx + 4 < COLS; cx += 4) segs.push([[cx + 1, cy], [cx + 2, cy], [cx + 3, cy]]);
-    for (let cx = 0; cx < COLS; cx += 4) for (let cy = 0; cy + 4 < ROWS; cy += 4) segs.push([[cx, cy + 1], [cx, cy + 2], [cx, cy + 3]]);
+    // the streets: [tiles, the cells either side]
+    for (let cy = 0; cy < ROWS; cy += 4) for (let cx = 0; cx + 4 < COLS; cx += 4) segs.push([[[cx + 1, cy], [cx + 2, cy], [cx + 3, cy]], [[cx, cy - 4], [cx, cy]]]);
+    for (let cx = 0; cx < COLS; cx += 4) for (let cy = 0; cy + 4 < ROWS; cy += 4) segs.push([[[cx, cy + 1], [cx, cy + 2], [cx, cy + 3]], [[cx - 4, cy], [cx, cy]]]);
+    // the lines across the plazas
+    for (let cy = 0; cy + 4 < ROWS; cy += 4) for (let cx = 0; cx + 4 < COLS; cx += 4) if (plaza(cx, cy) && !kept(cx, cy)) {
+      segs.push([[1, 2, 3].map(d => [cx + 2, cy + d]), null], [[1, 2, 3].map(d => [cx + d, cy + 2]), null]); }
     const shut = seals.flatMap(q => q.tiles), order = segs.sort(() => Math.random() - 0.5);
-    // (first a street between two blocks: buildings on both sides of all three tiles, so the two become one; on a map
-    // with too few of those (4-3, all plazas), a street with a block along one side, which the block then grows over)
-    // (and if even those run out, a stretch closer to one already shut)
-    for (const [need, gap] of [[2, 2], [1, 2], [1, 1]]) for (const sg of order) {
-      const sides = sg[0][1] === sg[1][1] ? [sg.map(([x, y]) => [x, y - 1]), sg.map(([x, y]) => [x, y + 1])] : [sg.map(([x, y]) => [x - 1, y]), sg.map(([x, y]) => [x + 1, y])];
-      if (!sg.every(([x, y]) => x > 0 && y > 0 && x < COLS - 1 && y < ROWS - 1 && grid[idx(x, y)] === 0 && !busy(x, y))) continue;
-      if (sides.filter(sd => sd.every(([a, b]) => !walk(a, b))).length < need) continue;
+    // (any of them, at random, clear of the others shut; if none is, one closer to them)
+    for (const gap of [2, 1, 0]) for (const [sg, cells] of order) {
+      if (!sg.every(([x, y]) => x > 0 && y > 0 && x < COLS - 1 && y < ROWS - 1 && walk(x, y) && !busy(x, y))) continue;
+      if (cells) {
+        // a street: a block along it on one side at least, or a plaza (not a kept one)
+        const sides = sg[0][1] === sg[1][1] ? [sg.map(([x, y]) => [x, y - 1]), sg.map(([x, y]) => [x, y + 1])] : [sg.map(([x, y]) => [x - 1, y]), sg.map(([x, y]) => [x + 1, y])];
+        const blocks = sides.filter(sd => sd.every(([a, b]) => !walk(a, b))).length, pz = cells.filter(([a, b]) => plaza(a, b));
+        if (pz.some(([a, b]) => kept(a, b))) continue;
+        if (!blocks && !pz.length) continue;
+      }
       if (sg.some(([x, y]) => shut.some(i => Math.abs(i % COLS - x) + Math.abs(Math.floor(i / COLS) - y) <= gap))) continue;
-      for (const [x, y] of sg) grid[idx(x, y)] = 1;
+      // (counting the ones warned and not shut yet: two at once must not cut the streets in two between them)
+      const try_ = [...sg.map(([x, y]) => idx(x, y)), ...seals.filter(q => !q.on).flatMap(q => q.tiles)], was = try_.map(i => grid[i]);
+      for (const i of try_) grid[i] = 1;
       const ok = allJoined();
-      for (const [x, y] of sg) grid[idx(x, y)] = 0;
+      try_.forEach((i, n) => { grid[i] = was[n]; });
       if (ok) return { at, tiles: sg.map(([x, y]) => idx(x, y)), on: false };
     }
     return { at, tiles: [], on: false };
@@ -5943,8 +5958,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function setSeal(q, on) {
     if (q.on === on) return false;
     q.on = on;
-    for (const i of q.tiles) {
-      grid[i] = on ? 1 : 0;
+    if (on && !q.was) q.was = q.tiles.map(i => grid[i]);
+    for (const [n, i] of q.tiles.entries()) {
+      grid[i] = on ? 1 : (q.was ? q.was[n] : 0);
       if (on && blockShade) { const x = i % COLS, y = Math.floor(i / COLS), n = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([a, b]) => [x + a, y + b]).filter(([a, b]) => a >= 0 && b >= 0 && a < COLS && b < ROWS && grid[idx(a, b)] === 1 && !q.tiles.includes(idx(a, b)));
         blockShade[i] = n.length ? n.reduce((m, [a, b]) => m + blockShade[idx(a, b)], 0) / n.length : 0.5; }
     }
@@ -5976,15 +5992,24 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const cands = [];
     for (let cy = 0; cy + 4 < ROWS; cy += 4) for (let cx = 0; cx + 4 < COLS; cx += 4) {
       const col = x => [1, 2, 3].map(d => [x, cy + d]), row = y => [1, 2, 3].map(d => [cx + d, y]);
-      // a block with an alley down (or across) its middle: either half
-      if (col(cx + 2).every(([x, y]) => walk(x, y)) && col(cx + 1).every(([x, y]) => B(x, y)) && col(cx + 3).every(([x, y]) => B(x, y))) cands.push(col(cx + 1), col(cx + 3));
-      if (row(cy + 2).every(([x, y]) => walk(x, y)) && row(cy + 1).every(([x, y]) => B(x, y)) && row(cy + 3).every(([x, y]) => B(x, y))) cands.push(row(cy + 1), row(cy + 3));
+      // (a line of three building tiles across the block, with a street (or a plaza) at both ends: a way through)
+      const thruV = x => col(x).every(([a, b]) => B(a, b)) && walk(x, cy) && walk(x, cy + 4), thruH = y => row(y).every(([a, b]) => B(a, b)) && walk(cx, y) && walk(cx + 4, y);
+      // down (or across) the middle of a block, a joined one too
+      if (thruV(cx + 2)) cands.push(col(cx + 2));
+      if (thruH(cy + 2)) cands.push(row(cy + 2));
+      // a block with an alley down (or across) its middle: either half (the other one cut already or not)
+      if (col(cx + 2).every(([x, y]) => walk(x, y))) for (const x of [cx + 1, cx + 3]) if (thruV(x)) cands.push(col(x));
+      if (row(cy + 2).every(([x, y]) => walk(x, y))) for (const y of [cy + 1, cy + 3]) if (thruH(y)) cands.push(row(y));
     }
     // 4-3: the flat blocks along the top, street above and below
     if (riverOn) for (let cx = 0; cx + 4 < COLS; cx += 4) { const r = [1, 2, 3].map(d => [cx + d, 1]); if (r.every(([x, y]) => B(x, y) && walk(x, 0) && walk(x, 2))) cands.push(r); }
     const fit = gap => cands.filter(c => c.every(([x, y]) => x > 0 && y > 0 && x < COLS - 1 && y < ROWS - 1 && !busy(x, y))
       && !c.some(([x, y]) => near.some(i => Math.abs(i % COLS - x) + Math.abs(Math.floor(i / COLS) - y) <= gap)));
     let ok = fit(2); if (!ok.length) ok = fit(0);   // (none clear of the other changes: then only not on top of one)
+    // (and so that there always is one: past the pads, the warp points and the pits too, only never in the river, at a goal
+    // or (a story) by the way out)
+    if (!ok.length) ok = cands.filter(c => c.every(([x, y]) => x > 0 && y > 0 && x < COLS - 1 && y < ROWS - 1 && !goalT[idx(x, y)] && !(riverOn && y >= 3 && y <= 7) && (rankRun || special || x < COLS - 5))
+      && !c.some(([x, y]) => near.includes(idx(x, y))));
     const c = ok[Math.floor(Math.random() * ok.length)];
     return { at, tiles: c ? c.map(([x, y]) => idx(x, y)) : [], on: false };
   }
@@ -6090,6 +6115,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // at top speed); the 5:00 pair is warned as usual)
       if (testLate === 295) { if (rankPace()) { waveLvN = 1e3; level = WAVE_MAXLV; for (const w of pending) w.lv = WAVE_MAXLV; }
         sealTimes().forEach((at, k) => { if (at >= 300) return; const q = planSeal(at); q.k = k; seals.push(q); setSeal(q, true); });
+        for (const at of carveTimes()) if (at < 300) { const q = planCarve(at); carves.push(q); setCarve(q, true); }
         flowKey = -1; shadeKey = ''; renderMapCache(); flow(Math.floor(P.x), Math.floor(P.y)); } }
   }
 
@@ -11921,7 +11947,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分〜4分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: 黒い鬼が、マップに必ず1体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に赤い枠で予告)。そのあとはその街で逃げ続ける', '3分・4分・5分: 真ん中に路地がある建物の片側が1か所ずつ削れて、道になる(4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分・4分・5分は2か所ずつ、6分からは1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -11963,7 +11989,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT()])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは鬼がどんどん増える。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
-      ${n === 3 ? sec('時間で変わること', ['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に赤い枠で予告。出口の近くはふさがらない)', '3分・4分・5分: 真ん中に路地がある建物の片側が1か所ずつ削れて、道になる(4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告。出口の近くは削れない)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる']) : ''}
+      ${n === 3 ? sec('時間で変わること', ['3分・4分・5分は2か所ずつ、6分からは1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場と、出口の近くはふさがらない)', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告。出口の近くは削れない)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる']) : ''}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12032,7 +12058,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に赤い枠で予告)。そのあとはその街で逃げ続ける', '3分・4分・5分: 真ん中に路地がある建物の片側が1か所ずつ削れて、道になる(3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分・4分・5分は2か所ずつ、6分からは1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
