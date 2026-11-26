@@ -6015,13 +6015,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   // (never on the same spot as another warning: two oni out of one "!" would look like one that split)
   function queueSpawn(wave = waveSeq) {
+    // (never on a warp point, where the "!" and the warp sat one over the other, and never in a pit's mouth)
+    const onThing = p => warps.some(w => Math.hypot(w.x - p.x, w.y - p.y) < 1) || holes.some(h => Math.hypot(h.x - p.x, h.y - p.y) < 0.8);
     let p = randomRoad(10, true);
-    for (let k = 0; k < 12 && pending.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 1.5); k++) p = randomRoad(10, true);
+    for (let k = 0; k < 24 && (pending.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 1.5) || onThing(p)); k++) p = randomRoad(10, true);
     // 導火線: whether this one is a bomber is settled here, at the warning, so it can be warned where the runner is not
     const n = Math.min(3, stageN) - 1;
     const allBlack = stageN === 3 && special && special.key === 'sp1';   // (黒鬼ラッシュ: every "!" a black oni's from the start)
     const bomber = !allBlack && fuseStory() && enemies.filter(o => o.bomber).length + pending.filter(o => o.bomber).length < BOMBER_MAX[n] && Math.random() < BOMBER_RATE[n];
-    if (bomber) p = farRoad();
+    if (bomber) { p = farRoad(); for (let k = 0; k < 8 && onThing(p); k++) p = farRoad(); }
     pending.push(allBlack ? { x: p.x, y: p.y, t: SPAWN_WARN, bomber: false, black: true, wave } : { x: p.x, y: p.y, t: SPAWN_WARN, bomber, wave });
     if (rankPace()) pending[pending.length - 1].lv = nextWaveLv();
     if (wave) { const w = waveTally[wave] || (waveTally[wave] = { n: 0, st: 0 }); w.n++; }
@@ -6029,6 +6031,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // every 5 ! stamped out: a barrier. One at most in the items; with one already there it is put on at once (worn
   // already as well: nothing more)
   const STOMP_PRIZE = 5;
+  const STOMP_R = 0.75;   // (how close the runner's middle must come to a "!" to stamp it out; it was 0.55)
   let waveSeq = 0, waveTally = {};
   function stompPrize() {
     // (a barrier; with both barriers held, two bombs instead, as far as the bombs go (3 at most))
@@ -6381,7 +6384,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
     // every stage: stepping on a ! warning stamps that oni out before it can appear
     pending = pending.filter(s => {
-      if (Math.hypot(s.x - P.x, s.y - P.y) >= 0.55) return true;   // the black oni's ! looks the same and goes too
+      if (Math.hypot(s.x - P.x, s.y - P.y) >= STOMP_R) return true;   // the black oni's ! looks the same and goes too
       for (let i = 0; i < 14; i++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 3; sparks.push({ x: s.x, y: s.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: Math.random() < 0.5 ? '#ffffff' : '#ff6a5a' }); }
       flash = Math.max(flash, 0.12); tone(1568, 0.09, 'triangle', 0.05, 784);
       if (S3) S3.stomps++;
