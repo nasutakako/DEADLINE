@@ -5880,18 +5880,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     flash = Math.max(flash, 0.9); shake = reduceMotion ? 0 : Math.max(shake, 0.7);
     noise(0.8, 0.12); tone(70, 0.8, 'sawtooth', 0.1, 30); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
   }
-  // the warning: every building glowing purple with a purple outline, pulsing (as a street about to shut or a building
-  // about to be cut is shown, in purple)
+  // the warning: every building a pane of purple glass (as a street about to shut or a building about to be cut is shown)
   function drawSwap(now) {
     if (rp) return;
     const q = swaps.find(o => !o.on); if (!q) return;
     const left = q.at - t; if (left > SWAP_WARN || left < 0) return;
-    const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
-    ctx.save(); ctx.lineWidth = 0.06;
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) {
-      ctx.fillStyle = `rgba(176,92,255,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
-      ctx.strokeStyle = `rgba(214,170,255,${0.5 + a * 0.5})`; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
-    ctx.restore();
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) drawGlass(x, y, GLASS_PURPLE, left, SWAP_WARN, now);
   }
 
   // (none at a minute the whole town is built again (the rank race, the specials): that is change enough)
@@ -6086,21 +6080,50 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     mapPop(q.tiles, ['#5fe3ff', '#b6fdff', '#ffffff']);
   }
   // the warning: a red glow and outline on each tile of the stretch that is about to shut, pulsing (the carve's, in red)
+  // the warnings (a street about to shut: red; a building about to be cut: cyan; the whole town about to go: purple): a
+  // pane of tinted glass on each tile, a sheen across it and a bevelled edge, that cracks as the moment comes (a crack,
+  // then a shatter of them), shivering in the last second, as if it would burst at a touch
+  const GLASS_RED = '255,64,52', GLASS_CYAN = '80,215,255', GLASS_PURPLE = '176,92,255';
+  function glassPaint(g, rgb, lv) {
+    const s = 0.44, gr = g.createLinearGradient(-s, -s, s, s);
+    gr.addColorStop(0, `rgba(${rgb},0.66)`); gr.addColorStop(0.5, `rgba(${rgb},0.34)`); gr.addColorStop(1, `rgba(${rgb},0.58)`);
+    g.fillStyle = gr; g.fillRect(-s, -s, 2 * s, 2 * s);
+    // (the sheen: two bands of light across it from the top left)
+    g.save(); g.beginPath(); g.rect(-s, -s, 2 * s, 2 * s); g.clip();
+    g.fillStyle = 'rgba(255,255,255,0.32)'; g.beginPath(); g.moveTo(-s, -s + 0.16); g.lineTo(-s + 0.16, -s); g.lineTo(-s + 0.4, -s); g.lineTo(-s, -s + 0.4); g.closePath(); g.fill();
+    g.fillStyle = 'rgba(255,255,255,0.16)'; g.beginPath(); g.moveTo(-s, -s + 0.5); g.lineTo(-s + 0.5, -s); g.lineTo(-s + 0.58, -s); g.lineTo(-s, -s + 0.58); g.closePath(); g.fill();
+    g.restore();
+    // (the bevel: light along the top and left, shade along the bottom and right; a bright rim in the colour round it)
+    g.lineWidth = 0.05; g.strokeStyle = 'rgba(255,255,255,0.8)'; g.beginPath(); g.moveTo(-s, s); g.lineTo(-s, -s); g.lineTo(s, -s); g.stroke();
+    g.strokeStyle = 'rgba(0,0,0,0.35)'; g.beginPath(); g.moveTo(s, -s); g.lineTo(s, s); g.lineTo(-s, s); g.stroke();
+    g.lineWidth = 0.03; g.strokeStyle = `rgba(${rgb},0.95)`; g.strokeRect(-s - 0.025, -s - 0.025, 2 * s + 0.05, 2 * s + 0.05);
+    g.fillStyle = 'rgba(255,255,255,0.95)'; g.beginPath(); g.arc(-s + 0.12, -s + 0.12, 0.035, 0, Math.PI * 2); g.fill();
+    // (the cracks: from a point off the middle out to the edges, jagged; then a ring of them across)
+    if (lv > 0) {
+      const c = [0.07, 0.05], rays = lv === 1 ? [[0.44, -0.28], [-0.22, 0.44], [-0.44, -0.12]] : [[0.44, -0.28], [-0.22, 0.44], [-0.44, -0.12], [0.3, 0.44], [0.12, -0.44], [-0.44, 0.3], [0.44, 0.16]];
+      g.strokeStyle = 'rgba(255,255,255,0.9)'; g.lineWidth = 0.022; g.lineJoin = 'round';
+      for (const [ex, ey] of rays) { const mx = (c[0] + ex) / 2, my = (c[1] + ey) / 2, nx = -(ey - c[1]) * 0.12, ny = (ex - c[0]) * 0.12;
+        g.beginPath(); g.moveTo(c[0], c[1]); g.lineTo(mx + nx, my + ny); g.lineTo(ex, ey); g.stroke(); }
+      if (lv > 1) { g.lineWidth = 0.016; g.beginPath(); rays.forEach(([ex, ey], k) => { const r = 0.42, px = c[0] + (ex - c[0]) * r, py = c[1] + (ey - c[1]) * r; k ? g.lineTo(px, py) : g.moveTo(px, py); }); g.closePath(); g.stroke(); }
+    }
+  }
+  function drawGlass(x, y, rgb, left, warn, now) {
+    const lv = left > warn * 2 / 3 ? 0 : left > warn / 3 ? 1 : 2, c = sprite('glass' + rgb + lv, 1.1, 1.1, g => glassPaint(g, rgb, lv));
+    const a = 0.82 + 0.18 * Math.sin(now * 8), j = left < 1 ? 0.025 : 0;
+    ctx.save(); ctx.globalAlpha *= a; ctx.translate(x + 0.5 + (j ? (Math.random() - 0.5) * j * 2 : 0), y + 0.5 + (j ? (Math.random() - 0.5) * j * 2 : 0));
+    if ((x + y) % 2) ctx.rotate(Math.PI / 2);   // (so the cracks are not all alike)
+    if (c) ctx.drawImage(c, -c.tw / 2, -c.th / 2, c.tw, c.th); else glassPaint(ctx, rgb, lv);
+    ctx.restore();
+  }
   function drawSeals(now) {
     const T = rp ? rp.time : t;
-    for (const q of carves) {   // (the building about to be cut away: a cyan glow and outline, pulsing)
+    for (const q of carves) {
       if (q.on || T < q.at - SEAL_WARN) continue;
-      const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
-      for (const i of q.tiles) { const x = i % COLS, y = Math.floor(i / COLS);
-        ctx.fillStyle = `rgba(90,220,255,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = `rgba(170,240,255,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
+      for (const i of q.tiles) drawGlass(i % COLS, Math.floor(i / COLS), GLASS_CYAN, q.at - T, SEAL_WARN, now);
     }
     for (const q of seals) {
       if (q.on || T < q.at - SEAL_WARN) continue;
-      const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
-      for (const i of q.tiles) { const x = i % COLS, y = Math.floor(i / COLS);
-        ctx.fillStyle = `rgba(255,59,48,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = `rgba(255,140,130,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
+      for (const i of q.tiles) drawGlass(i % COLS, Math.floor(i / COLS), GLASS_RED, q.at - T, SEAL_WARN, now);
     }
   }
   function drawShift(now) {
