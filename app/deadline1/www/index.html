@@ -1785,7 +1785,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 封鎖4か所・4分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 4分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -5826,11 +5826,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   const SHIFT_AT = 900, SHIFT_WARN = 5, SHIFT_BLOCK = 5, SHIFT_OPEN = 4;
   let shift = null;
-  // stage 3: one stretch shuts for good at each of these times (a time listed twice shuts two at once): a street (joining
-  // the blocks beside it, or along a plaza) or a line across a plaza (not one with a warp point or a pit in it); a red
-  // glow on it for SEAL_WARN s first. 3:00, 4:00, 5:00 two each, then from 6:00 one every minute (a story's stage 3
-  // never by the right edge, where the way out opens)
-  const SEAL_TIMES = [180, 180, 240, 240, 300, 300], SEAL_EVERY_FROM = 360, SEAL_WARN = 3;
+  // stage 3: from 3:00, every minute one stretch shuts for good: a street (joining the blocks beside it, or along a plaza)
+  // or a line across a plaza (not one with a warp point or a pit in it); a red glow on it for SEAL_WARN s first (a
+  // story's stage 3 never by the right edge, where the way out opens)
+  const SEAL_EVERY_FROM = 180, SEAL_WARN = 3;
   let seals = [];   // { at, tiles: [tile index, ...], on }
   // and at each of those times (once per time) a building is cut through into street, three tiles in a line opening a way
   // between two streets: down (or across) the middle of a block (a joined one too), one half of a block with an alley
@@ -5839,7 +5838,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let carves = [];   // { at, tiles: [tile index, ...], on }
   const carveTimes = () => [...new Set(sealTimes())];   // (one at each time a street shuts)
   const sealRun = () => stageN === 3 && !tut;
-  const sealTimes = () => { const a = SEAL_TIMES.slice(); for (let m = SEAL_EVERY_FROM; m <= t + SEAL_WARN; m += 60) a.push(m); return a; };
+  const sealTimes = () => { const a = []; for (let m = SEAL_EVERY_FROM; m <= t + SEAL_WARN; m += 60) a.push(m); return a; };
   // every open tile reachable from every other (the streets must stay one piece)
   function allJoined() {
     let start = -1, total = 0; for (let i = 0; i < COLS * ROWS; i++) if (grid[i] !== 1) { total++; if (start < 0) start = i; }
@@ -11947,7 +11946,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分〜4分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: 黒い鬼が、マップに必ず1体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分・4分・5分は2か所ずつ、6分からは1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -11989,7 +11988,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT()])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは鬼がどんどん増える。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
-      ${n === 3 ? sec('時間で変わること', ['3分・4分・5分は2か所ずつ、6分からは1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場と、出口の近くはふさがらない)', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告。出口の近くは削れない)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる']) : ''}
+      ${n === 3 ? sec('時間で変わること', ['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場と、出口の近くはふさがらない)', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告。出口の近くは削れない)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる']) : ''}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12058,7 +12057,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分・4分・5分は2か所ずつ、6分からは1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
