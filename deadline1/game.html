@@ -5771,8 +5771,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // (off everywhere: the 4:00-8:00 seals already change the streets)
   const SHIFT_ON = false;
   // 停電: on stage 3 (and the weekly ranking) the street lights fail for 15 s at 10:00, then every 2 min (12:00, 14:00, ...).
-  // Not black: the lights stutter, mostly out with clicks of light coming back now and then, a quick stutter as it
-  // starts and as it ends; while out the streets and blocks are lost in the dark, only the runner, the oni and their
+  // Three rounds of 2 s of the lights clicking on and off, then 3 s pitch dark; while out the streets and blocks are lost in the dark, only the runner, the oni and their
   // lights showing. outageLevel(T) is how dark it is at run time T (0 lit .. 1 out)
   const OUTAGE_AT = 600, OUTAGE_EVERY = 120, OUTAGE_LEN = 15, OUTAGE_DARK = 1;
   // every stage 3 (story, rank race, specials): from 6:00, every minute (how long can you last). A replay plays its own
@@ -5788,9 +5787,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   function outageLevel(T) {
     const u = outageAt(T); if (u < 0) return 0;
+    // (three rounds of 2 s clicking (the lights stuttering on and off) then 3 s pitch dark)
+    if (u % 5 >= 2) return 1;
     const k = Math.floor((T - outAt()) / outEvery()), seg = Math.floor(u * 9), h = Math.abs(Math.sin(seg * 12.9898 + k * 78.233) * 43758.5453) % 1;
-    const edge = u < 1.1 || u > OUTAGE_LEN - 1.1;   // (a stutter as it fails and as it comes back)
-    return (edge ? h < 0.5 : h < 0.22) ? 0 : 1;   // (out, with clicks of full light: about one moment in five)
+    return seg % 2 === 0 ? (h < 0.75 ? 0 : 1) : (h < 0.25 ? 0 : 1);   // (lit and out by turns, a click about every 0.1 s)
   }
   const SHIFT_AT = 900, SHIFT_WARN = 5, SHIFT_BLOCK = 5, SHIFT_OPEN = 4;
   let shift = null;
