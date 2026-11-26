@@ -6005,8 +6005,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const storyStep = () => { const w = MAP_CHOICE ? Math.max(0, ['d1', 'd2', 'd3', 'd4'].indexOf(mapSkin)) : 0; return (STORY_TO[stageN][w] - 3.05) / (stageN === 2 ? 13 : 19); };
   const storyPace = () => !capRun() && (stageN === 2 || stageN === 3);
   // the weekly ranking (and the specials): the same steps as before (3.05 + 21 x 0.125 over 24 of them), up to 6.0 (the
-  // top it had before 11/13), 27 steps (the last one capped at 6.0), a step every 360/27 s: the top (Lv28) at 6:00
-  const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 27, RANK_MAX = 6.0, RANK_EVERY = 360 / RANK_STEPS;
+  // top it had before 11/13), 27 steps (the last one capped at 6.0), a step every 240/27 s: the top (Lv28) at 4:00
+  const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 27, RANK_MAX = 6.0, RANK_EVERY = 240 / RANK_STEPS;
   const rankPace = () => stageN === 3 && (rankRun || !!special);   // (a special runs at the rank race's pace)
   const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
   const enemyTop = () => rankPace() ? RANK_MAX : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
@@ -11662,7 +11662,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <section><h3>拾えるもの</h3>${li([`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT(), '鬼を[100体]倒すごとに[ランチャー]が届く', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)'])}</section>
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}体</td></tr>`).join('')}</table>
-        ${li([`一度に出る鬼は7分まで${ONI_WAVE_MAX}体まで。7分から7体、8分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は少しずつ速くなり、6分で最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
+        ${li([`一度に出る鬼は7分まで${ONI_WAVE_MAX}体まで。7分から7体、8分からは8体`, '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は少しずつ速くなり、4分で最高速。逃走者も鬼に合わせて速くなる', route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い'])}</section>
       <section><h3>鬼の種類</h3>${li(['2分〜6分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼と先回りの鬼(黄色)が、マップに必ず1体はいるように出てくる', '8分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '9分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : []), '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
