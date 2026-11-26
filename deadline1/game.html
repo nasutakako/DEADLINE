@@ -5799,6 +5799,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // never by the right edge, where the way out opens)
   const SEAL_TIMES = [180, 180, 240, 240, 300, 300], STORY_SEAL_TIMES = SEAL_TIMES, SEAL_WARN = 3;
   let seals = [];   // { at, tiles: [tile index, ...], on }
+  // and at each of those times (once per time) one thin building is cut away into street: one half of a block with an
+  // alley down its middle (#.# -> ..#), or on 4-3 one of the flat blocks along the top, above the river (a cyan glow on
+  // it for SEAL_WARN s first)
+  let carves = [];   // { at, tiles: [tile index, ...], on }
+  const carveTimes = () => [...new Set(sealTimes())];
   const sealRun = () => stageN === 3 && !tut;
   const sealTimes = () => rankRun || special ? SEAL_TIMES : STORY_SEAL_TIMES;
   // every open tile reachable from every other (the streets must stay one piece)
@@ -5925,9 +5930,54 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const i of q.tiles) { const x = i % COLS + 0.5, y = Math.floor(i / COLS) + 0.5;
       for (let k = 0; k < 5; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.6; sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 0.8, c: '#9a8f84' }); } }
   }
+  function planCarve(at) {
+    const busy = (x, y) => goalT[idx(x, y)] || (riverOn && y >= 3 && y <= 7) || pads.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || warps.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5)
+      || holes.some(q => Math.hypot(q.x - x - 0.5, q.y - y - 0.5) < 1.5) || (yagura && Math.abs(x - yagura.x - 1) < 4 && Math.abs(y - yagura.y - 1) < 4)
+      || (!rankRun && !special && x >= COLS - 5);   // (a story: the streets to the way out stay as they are)
+    const B = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS && grid[idx(x, y)] === 1;
+    const near = seals.flatMap(q => q.tiles).concat(carves.flatMap(q => q.tiles));
+    const cands = [];
+    for (let cy = 0; cy + 4 < ROWS; cy += 4) for (let cx = 0; cx + 4 < COLS; cx += 4) {
+      const col = x => [1, 2, 3].map(d => [x, cy + d]), row = y => [1, 2, 3].map(d => [cx + d, y]);
+      // a block with an alley down (or across) its middle: either half
+      if (col(cx + 2).every(([x, y]) => walk(x, y)) && col(cx + 1).every(([x, y]) => B(x, y)) && col(cx + 3).every(([x, y]) => B(x, y))) cands.push(col(cx + 1), col(cx + 3));
+      if (row(cy + 2).every(([x, y]) => walk(x, y)) && row(cy + 1).every(([x, y]) => B(x, y)) && row(cy + 3).every(([x, y]) => B(x, y))) cands.push(row(cy + 1), row(cy + 3));
+    }
+    // 4-3: the flat blocks along the top, street above and below
+    if (riverOn) for (let cx = 0; cx + 4 < COLS; cx += 4) { const r = [1, 2, 3].map(d => [cx + d, 1]); if (r.every(([x, y]) => B(x, y) && walk(x, 0) && walk(x, 2))) cands.push(r); }
+    const fit = gap => cands.filter(c => c.every(([x, y]) => x > 0 && y > 0 && x < COLS - 1 && y < ROWS - 1 && !busy(x, y))
+      && !c.some(([x, y]) => near.some(i => Math.abs(i % COLS - x) + Math.abs(Math.floor(i / COLS) - y) <= gap)));
+    let ok = fit(2); if (!ok.length) ok = fit(0);   // (none clear of the other changes: then only not on top of one)
+    const c = ok[Math.floor(Math.random() * ok.length)];
+    return { at, tiles: c ? c.map(([x, y]) => idx(x, y)) : [], on: false };
+  }
+  function setCarve(q, on) {
+    if (q.on === on) return false;
+    q.on = on;
+    for (const i of q.tiles) grid[i] = on ? 0 : 1;
+    if (on) windows = windows.filter(([x, y]) => !q.tiles.includes(idx(Math.floor(x), Math.floor(y))));
+    return true;
+  }
+  function fireCarve(q) {
+    if (!setCarve(q, true) || !q.tiles.length) return;
+    flowKey = -1; shadeKey = ''; renderMapCache();
+    recEv(['c', q.at, q.tiles.join(',')]);
+    flow(Math.floor(P.x), Math.floor(P.y));
+    shake = reduceMotion ? 0 : Math.max(shake, 0.2);
+    noise(0.35, 0.08); tone(140, 0.3, 'triangle', 0.06, 300);
+    for (const i of q.tiles) { const x = i % COLS + 0.5, y = Math.floor(i / COLS) + 0.5;
+      for (let k = 0; k < 6; k++) { const a = Math.random() * Math.PI * 2, sp = 0.6 + Math.random() * 1.8; sparks.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, a: 0.8, c: '#8fe9ff' }); } }
+  }
   // the warning: a red "!" on each tile of the stretch that is about to shut, pulsing
   function drawSeals(now) {
     const T = rp ? rp.time : t;
+    for (const q of carves) {   // (the building about to be cut away: a cyan glow and outline, pulsing)
+      if (q.on || T < q.at - SEAL_WARN) continue;
+      const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
+      for (const i of q.tiles) { const x = i % COLS, y = Math.floor(i / COLS);
+        ctx.fillStyle = `rgba(90,220,255,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
+        ctx.strokeStyle = `rgba(170,240,255,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
+    }
     for (const q of seals) {
       if (q.on || T < q.at - SEAL_WARN) continue;
       const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
@@ -5994,7 +6044,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = stageN === 3 && special ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    shift = null; seals = []; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; seals = []; carves = []; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
@@ -6249,6 +6299,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
         if (!seals.some(o => o !== q && o.at === at)) { tone(988, 0.08, 'square', 0.04); setTimeout(() => tone(988, 0.08, 'square', 0.04), 160); } } });
       for (const q of seals) if (!q.on && t >= q.at) fireSeal(q);
+      for (const at of carveTimes()) if (t >= at - SEAL_WARN && !carves.some(q => q.at === at)) carves.push(planCarve(at));
+      for (const q of carves) if (!q.on && t >= q.at) fireCarve(q);
     }
     if (SHIFT_ON && stageN === 3 && !tut) {
       if (!shift && t >= SHIFT_AT - SHIFT_WARN) { shift = planShift(); klaxon(2, 0.03); }
@@ -11552,6 +11604,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; fxp = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
     shake = 0; flash = 0; danger = 0; exitOpen = false; keyPos = null; stageKillStart = 0;
     seals = (h.ev || []).filter(e => e[1] === 's').map(e => ({ at: +e[2], tiles: String(e[3]).split(',').filter(v => v !== '').map(Number), on: false }));
+    carves = (h.ev || []).filter(e => e[1] === 'c').map(e => ({ at: +e[2], tiles: String(e[3]).split(',').filter(v => v !== '').map(Number), on: false }));
     { const g = (h.ev || []).find(e => e[1] === 'g'); shift = g ? { at: g[0] / 100, block: String(g[2]).split(',').filter(v => v !== '').map(Number), open: String(g[3]).split(',').filter(v => v !== '').map(Number), on: false } : null; }
     state = 'replay';
     rp.map = MAP_NAMES[h.skin] ? MAP_NAMES[h.skin][(h.n || 3) - 1] : '';
@@ -11618,7 +11671,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     rp.evAt = time;
     if (shift) setShift(time >= shift.at);
-    { let ch = false; for (const q of seals) if (setSeal(q, time >= q.at)) ch = true; if (ch) { flowKey = -1; renderMapCache(); } }
+    { let ch = false; for (const q of seals) if (setSeal(q, time >= q.at)) ch = true; for (const q of carves) if (setCarve(q, time >= q.at)) ch = true; if (ch) { flowKey = -1; renderMapCache(); } }
   }
   function repTick(dt) {
     if (!rp) return;
@@ -11813,7 +11866,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分〜4分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: 黒い鬼が、マップに必ず1体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に「!」で予告)。そのあとはその街で逃げ続ける', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に「!」で予告)。そのあとはその街で逃げ続ける', '3分・4分・5分: 真ん中に路地がある建物の片側が1か所ずつ削れて、道になる(4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -11855,7 +11908,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT()])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは鬼がどんどん増える。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
-      ${n === 3 ? sec('時間で変わること', ['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に「!」で予告。出口の近くはふさがらない)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる']) : ''}
+      ${n === 3 ? sec('時間で変わること', ['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に「!」で予告。出口の近くはふさがらない)', '3分・4分・5分: 真ん中に路地がある建物の片側が1か所ずつ削れて、道になる(4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告。出口の近くは削れない)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる']) : ''}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -11924,7 +11977,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に「!」で予告)。そのあとはその街で逃げ続ける', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分・4分・5分: 通路が2か所ずつふさがり、両側の建物がつながる(3秒前に「!」で予告)。そのあとはその街で逃げ続ける', '3分・4分・5分: 真ん中に路地がある建物の片側が1か所ずつ削れて、道になる(3秒前に水色の枠で予告)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
