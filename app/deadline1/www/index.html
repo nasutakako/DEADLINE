@@ -5648,11 +5648,22 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
 
   // ---------- physics ----------
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  // a building's outer corners (both streets beside the corner open) hit as if rounded off by CORNER_R: a ball
+  // glancing a corner slides round it instead of stopping dead. Only the hit is round; the corners are drawn as before.
+  // Gives the middle of the rounding for the point (cx, cy) of tile (tx, ty) nearest the ball, or null
+  const CORNER_R = 0.05;
+  function roundCorner(tx, ty, cx, cy) {
+    if ((cx !== tx && cx !== tx + 1) || (cy !== ty && cy !== ty + 1)) return null;
+    const sx = cx === tx ? -1 : 1, sy = cy === ty ? -1 : 1;
+    if (!walk(tx + sx, ty) || !walk(tx, ty + sy)) return null;
+    return [cx - sx * CORNER_R, cy - sy * CORNER_R];
+  }
   function overlaps(x, y, r) {
     const x0 = Math.floor(x - r), x1 = Math.floor(x + r), y0 = Math.floor(y - r), y1 = Math.floor(y + r);
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
       if (walk(tx, ty)) continue;
-      const cx = clamp(x, tx, tx + 1), cy = clamp(y, ty, ty + 1);
+      const cx = clamp(x, tx, tx + 1), cy = clamp(y, ty, ty + 1), rc = roundCorner(tx, ty, cx, cy);
+      if (rc) { if ((x - rc[0]) ** 2 + (y - rc[1]) ** 2 < (r + CORNER_R) ** 2) return true; continue; }
       if ((x - cx) ** 2 + (y - cy) ** 2 < r * r) return true;
     }
     for (const [a, b, c, d] of posts) { const cx = clamp(x, a, b), cy = clamp(y, c, d); if ((x - cx) ** 2 + (y - cy) ** 2 < r * r) return true; }
@@ -5663,7 +5674,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const x0 = Math.floor(e.x - r), x1 = Math.floor(e.x + r), y0 = Math.floor(e.y - r), y1 = Math.floor(e.y + r);
     for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++) {
       if (walk(tx, ty)) continue;
-      const cx = clamp(e.x, tx, tx + 1), cy = clamp(e.y, ty, ty + 1);
+      const cx = clamp(e.x, tx, tx + 1), cy = clamp(e.y, ty, ty + 1), rc = roundCorner(tx, ty, cx, cy);
+      if (rc) {
+        const dx = e.x - rc[0], dy = e.y - rc[1], d = Math.hypot(dx, dy), R = r + CORNER_R;
+        if (d < R && d > 1e-9) { e.x = rc[0] + dx / d * R; e.y = rc[1] + dy / d * R; }
+        continue;
+      }
       const dx = e.x - cx, dy = e.y - cy, d2 = dx * dx + dy * dy;
       if (d2 < r * r && d2 > 1e-9) { const d = Math.sqrt(d2); e.x += dx / d * (r - d); e.y += dy / d * (r - d); }
     }
