@@ -9978,7 +9978,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   titleMusic();
 
   // ---------- launcher: a rocket down the corridor you are roughly facing ----------
-  const ROCKET_SPEED = 16;
+  const ROCKET_SPEED = 13;   // (tiles a second; it was 16. A replay plays at its own run's: repRkSpeed)
+  let repRkSpeed = null;
+  const rkSpeedRep = () => repRkSpeed || 16;
   let rocketKills = 0;
   // the launcher aimed with a slide: straight down the street the way chosen (null when a wall is right there)
   function fireRocketDir(dx, dy) {
@@ -11573,7 +11575,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     try { fn(); } finally { Math.random = keep; }
   }
   function recStart() {
-    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], ev: [], fx: [''], ids: new WeakMap(), nid: 1, oa: outAt(), oe: outEvery(), seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), g: mapGen, cols: COLS, rows: ROWS,
+    rec = rankRun && stageN === 3 && !tut ? { next: 0, fr: [], ev: [], fx: [''], ids: new WeakMap(), nid: 1, oa: outAt(), oe: outEvery(), rs: ROCKET_SPEED, seed: repSeed, tp: lastTutPit, skin: mapSkin, n: weekStage(), g: mapGen, cols: COLS, rows: ROWS,
       eq: { skin: EQ('skin'), acc: EQ('acc'), bomb: EQ('bomb'), barrier: EQ('barrier'), dash: EQ('dash'), pad: EQ('pad'), rocket: EQ('rocket') } } : null;
   }
   // a launcher shot or a bomb going off, kept with its time: too quick for the 8-a-second notes, the replay plays it
@@ -11615,7 +11617,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   async function repPack(r, len) {
     let fr = r.fr, hz = REC_HZ;
     for (let k = 0; k < 4; k++) {
-      const head = JSON.stringify({ v: 1, oa: r.oa, oe: r.oe, skin: r.skin, n: r.n || 3, g: r.g || 1, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len, ev: r.ev || [] });
+      const head = JSON.stringify({ v: 1, oa: r.oa, oe: r.oe, rs: r.rs, skin: r.skin, n: r.n || 3, g: r.g || 1, cols: r.cols, rows: r.rows, seed: r.seed, tp: !!r.tp, hz, fx: r.fx, eq: r.eq, len, ev: r.ev || [] });
       const raw = head + '\n' + fr.join(';');
       let out = 'p:' + raw;
       try {
@@ -11652,7 +11654,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     $('rankScreen').hidden = true; ui.title.hidden = true;
     stageN = 3; daily = null; rankRun = false; special = null; tut = null; mapSkin = h.skin; COLS = h.cols; ROWS = h.rows;
     repN = h.n || 3; mapGen = h.g || 1; repTutPit = !!h.tp; try { seeded(h.seed, genMap); } finally { repTutPit = null; mapGen = 2; } resize();
-    repEq = h.eq || {}; repOutAt = h.oa || OUTAGE_AT; repOutEvery = h.oe || OUTAGE_EVERY;
+    repEq = h.eq || {}; repOutAt = h.oa || OUTAGE_AT; repOutEvery = h.oe || OUTAGE_EVERY; repRkSpeed = h.rs || null;
     P = { x: 0, y: 0, r: R_PLAYER, vx: 0, vy: 0, mx: 0, my: 0, dashT: 0, cd: 0, fx: 0, fy: 1, trail: [], stock: 0, barrier: false, inv: 0, boostT: 0, jumpT: 0, saveT: 0, flT: 0 };
     enemies = []; pending = []; items = []; mines = []; booms = []; sparks = []; falls = []; fxp = []; rockets = []; beams = []; zaps = []; decoys = []; elems = [];
     shake = 0; flash = 0; danger = 0; exitOpen = false; keyPos = null; stageKillStart = 0;
@@ -11708,13 +11710,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const ev = h.ev || [];
     rockets = [];
     for (const e of ev) if (e[1] === 'r') {
-      const t0 = e[0] / 100, [, , x, y, dx, dy, left, fx] = e, d = (time - t0) * ROCKET_SPEED;
+      const t0 = e[0] / 100, [, , x, y, dx, dy, left, fx] = e, d = (time - t0) * rkSpeedRep();
       if (d >= 0 && d < left) rockets.push({ x: x + dx * d, y: y + dy * d, dx, dy, left: left - d, t: time - t0, sx: x, sy: y, fx, el: EL_ROCKET[fx] });
     }
     const prev = rp.evAt ?? time;
     if (time < prev || time - prev > 0.5) { sparks = []; fxp = []; }
     else for (const e of ev) {
-      const te = e[0] / 100 + (e[1] === 'r' ? e[6] / ROCKET_SPEED : 0);
+      const te = e[0] / 100 + (e[1] === 'r' ? e[6] / rkSpeedRep() : 0);
       if (te <= prev || te > time) continue;
       const x = e[1] === 'r' ? e[2] + e[4] * e[6] : e[2], y = e[1] === 'r' ? e[3] + e[5] * e[6] : e[3], fw = e[1] === 'x' && e[4] === 'bomb_fw', cols = fw ? FW_COLS[Math.floor(Math.random() * FW_COLS.length)] : null;
       for (let i = 0, n = e[1] === 'r' ? 18 : 26; i < n; i++) { const a = Math.random() * Math.PI * 2, sp = 2 + Math.random() * (fw ? 7 : 6);
