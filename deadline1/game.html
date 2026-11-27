@@ -5935,9 +5935,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ctx.restore();
   }
   // the show at a town swap (all standing still): 0-1 s the pane over the map cracking from the middle out (the crack
-  // sounding), 1-1.5 s held cracked and silent, 1.5-2.5 s a blinding light swelling from the middle until all is white,
-  // 2.5 s the burst
-  const SWAP_SHOW = 2.5;
+  // sounding), 1-1.5 s held cracked and silent, 1.5-3.5 s a blinding light swelling from the middle (slow at first,
+  // faster as it spreads) until all is white, 3.5 s the burst
+  const SWAP_SHOW = 3.5;
   function drawSwapWhite() {
     if (!swapFx.snap) {
       // (the frame as drawn so far, town and frozen oni and runner and all, cut to the map: the picture in the glass)
@@ -5953,7 +5953,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const gl = ctx.createLinearGradient(0, 0, COLS, ROWS); gl.addColorStop(0, 'rgba(255,255,255,0.18)'); gl.addColorStop(0.5, 'rgba(255,255,255,0.03)'); gl.addColorStop(1, 'rgba(180,200,255,0.1)');
     ctx.fillStyle = gl; ctx.fillRect(0, 0, COLS, ROWS);
     if (k >= 1.5) {
-      const cx = COLS / 2, cy = ROWS / 2, R = Math.hypot(COLS, ROWS) / 2, r = R * Math.pow(Math.min(1, (k - 1.5) / 1), 0.85) * 1.2 + 0.2;
+      const cx = COLS / 2, cy = ROWS / 2, R = Math.hypot(COLS, ROWS) / 2, r = R * Math.pow(Math.min(1, (k - 1.5) / 2), 2.2) * 1.2 + 0.2;   // (2 s: slow while it is small, faster as it spreads)
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.25);
       g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.72, 'rgba(255,255,255,1)'); g.addColorStop(0.84, 'rgba(255,250,235,0.85)'); g.addColorStop(1, 'rgba(255,245,225,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, COLS, ROWS);
