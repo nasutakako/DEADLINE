@@ -4455,15 +4455,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (holes.some(h => h.x > bx && h.x < bx + 3 && h.y > by && h.y < by + 3)) continue;   // (the plaza with a pit)
       const open = []; for (let y = by; y < by + 3; y++) for (let x = bx; x < bx + 3; x++) if (grid[idx(x, y)] !== 1) open.push([x, y]);
       if (open.length === 9) { if (ok(bx + 1, by + 1)) plazas.push([bx + 1, by + 1]); }
-      else { const free = open.filter(([x, y]) => ok(x, y)); if (free.length) gaps.push(free[Math.floor(Math.random() * free.length)]); }
+      // an L-shaped block (its open part a 2x2 in one corner): in the nook, the middle tile, walls on two sides
+      else if (open.length === 4 && ok(bx + 1, by + 1) && open.every(([x, y]) => Math.abs(x - (bx + 1)) + Math.abs(y - (by + 1)) <= 2 && open.some(([x2, y2]) => x2 === bx + 1 && y2 === by + 1))) {
+        const xs = open.map(p => p[0]), ys = open.map(p => p[1]);
+        if (Math.max(...xs) - Math.min(...xs) === 1 && Math.max(...ys) - Math.min(...ys) === 1) gaps.push([bx + 1, by + 1]);
+      }
     }
     const need = Math.max(8, Math.hypot(COLS, ROWS) / 2);
     const pair = list => { for (let k = 0; k < 400 && list.length > 1; k++) { const a = list[Math.floor(Math.random() * list.length)], b = list[Math.floor(Math.random() * list.length)]; if (Math.hypot(a[0] - b[0], a[1] - b[1]) >= need) return [a, b]; } return null; };
-    let got = pair(plazas) || pair([...plazas, ...gaps]);
-    if (!got) {
-      for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) if (ok(x, y) && !holes.some(h => Math.hypot(h.x - x - 0.5, h.y - y - 0.5) < 2.5)) c.push([x, y]);
-      got = pair(c);
-    }
+    // only in a plaza or an L-shaped block's nook (off the streets: touching one is enough, so none on a way through)
+    const all = [...plazas, ...gaps];
+    let got = pair(all);
+    if (!got && all.length > 1) { let best = -1; for (const a of all) for (const b of all) { const d = Math.hypot(a[0] - b[0], a[1] - b[1]); if (d > best) { best = d; got = [a, b]; } } }
     return got ? got.map(([x, y]) => ({ x: x + 0.5, y: y + 0.5, cool: 0, flash: 0 })) : [];
   }
 
@@ -6387,13 +6390,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
   }
 
-  // warp points (the DEADLINE2 maps): stand on one for 0.5 sec to come out of the other; both rest a minute and a half after a jump
+  // warp points (the DEADLINE2 maps): touch one (walking or dashing) to come out of the other; both rest a minute and a half after a jump
   let warps = [];
   // 加速装置: two plates on straight streets (from 1-2 on), far apart; stepping on one runs the runner as a dash would
   // (the dash button's own wait untouched); then 30 s before it works again
   let pads = [];
   const PAD_COOL = 25, BOOSTPAD_R = 0.42;
-  const WARP_HOLD = 0.08, WARP_COOL = 90, WARP_R = 0.46;   // (the hold counts only off a dash: a dash runs straight over)
+  const WARP_HOLD = 0.08, WARP_COOL = 90, WARP_R = 0.46;   // (touching it is enough now, a dash too; WARP_HOLD only draws the ring)
   let stageN = 1, total = 0, exitY = -1, exitOpen = false, keyPos = null, hasKey = false, bag = [], beams = [];
   const input = { keys: new Set(), stick: null, hover: null };
 
@@ -6808,15 +6811,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       for (const w of warps) { if (w.flash > 0) w.flash -= dt; if (w.cool > 0) { w.cool -= dt; if (w.cool <= 0) { w.flash = PIT_FLASH; if (w === warps[0]) { tone(1175, 0.12, 'triangle', 0.04); setTimeout(() => tone(1568, 0.16, 'triangle', 0.04), 110); } } } }
       // the point the runner came out of only works again once they have stepped off it
       if (P.warpAway && Math.hypot(P.x - P.warpAway.x, P.y - P.warpAway.y) > WARP_R + 0.2) P.warpAway = null;
-      const on = !(warps[0].cool > 0) && warps.find(w => w !== P.warpAway && Math.hypot(P.x - w.x, P.y - w.y) < WARP_R);
-      if (on && P.dashT > 0) { P.warpT = 0; P.warpOn = null; }   // dashing over it: no warp
-      else if (on) {
+      // touching it is enough, dashing or not; and however fast the runner goes, the way they came this frame counts
+      // (so they never run clean over it between two frames); a longer jump than a step (a warp, a reset) does not
+      const lx = P.wlx === undefined ? P.x : P.wlx, ly = P.wly === undefined ? P.y : P.wly, far = Math.hypot(P.x - lx, P.y - ly) > 1.5;
+      const near = w => { if (far) return Math.hypot(P.x - w.x, P.y - w.y); const dx = P.x - lx, dy = P.y - ly, L2 = dx * dx + dy * dy, u = L2 ? Math.max(0, Math.min(1, ((w.x - lx) * dx + (w.y - ly) * dy) / L2)) : 0; return Math.hypot(lx + dx * u - w.x, ly + dy * u - w.y); };
+      P.wlx = P.x; P.wly = P.y;
+      const on = !(warps[0].cool > 0) && warps.find(w => w !== P.warpAway && near(w) < WARP_R);
+      if (on) {
         if (!P.warpT) tone(660, 0.3, 'sine', 0.035, 1320);
         P.warpT = (P.warpT || 0) + dt; P.warpOn = on;
-        if (P.warpT >= WARP_HOLD) {
+        {
           const to = warps.find(w => w !== on);
           for (const [x, y] of [[on.x, on.y], [to.x, to.y]]) for (let i = 0; i < 18; i++) { const a = Math.random() * Math.PI * 2, v = 1.5 + Math.random() * 4; sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 0.9, c: i % 2 ? '#3fe0ff' : '#ff4fd8' }); }
-          P.x = to.x; P.y = to.y; P.vx = P.vy = 0; P.hist = []; P.trail = []; P.warpAway = to;
+          P.x = to.x; P.y = to.y; P.vx = P.vy = 0; P.hist = []; P.trail = []; P.warpAway = to; P.wlx = P.x; P.wly = P.y;
           for (const w of warps) w.cool = WARP_COOL;
           P.warpT = 0; P.warpOn = null; flash = Math.max(flash, 0.3);
           tone(1320, 0.18, 'sine', 0.05, 330); setTimeout(() => tone(440, 0.25, 'sine', 0.05, 1760), 90);
@@ -10700,7 +10707,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const TUT = {
     w: [
       { warp: true, say: '[ワープポイント]を踏むと|もう1つへ飛ぶ。乗ってみよう', set: () => tutWarpPlace(), go: () => tut.warped },
-      { warp: true, say: '[ダッシュ]で通るとワープしない。|飛びたくない時はダッシュで抜けよう', info: true },
+      { warp: true, say: '[ダッシュ]で突っ込んでもワープする。|広場かL字の建物のくぼみにあるよ', info: true },
       { warp: true, say: '一度使うと[1分30秒]使えない。|使えると光る。少し待ってみよう', set: tutWarpBar, go: () => tut.wcool && !(warps[0].cool > 0) && !(warps[0].flash > 0.6) },
       { say: '[2分30秒]で出口が開く。|ワープで振り切って[鍵]を拾おう', end: true },
     ],
@@ -12325,7 +12332,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const sk = weekSkin(), route = ROUTE[sk], li = a => '<ul>' + a.filter(Boolean).map(x => `<li>${x}</li>`).join('') + '</ul>';
     const waves = [['0:00', '3体'], ['4:00', '1分ごとに1体ずつ増える']];
     const own = { home: ['落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'],
-      cyber: ['落とし穴が2か所(使うと40秒使えない)', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない'],
+      cyber: ['落とし穴が2か所(使うと40秒使えない)', 'ワープポイントが2つ。触れるともう一方へ飛ぶ(ダッシュで通っても飛ぶ)。広場かL字の建物のくぼみにある。一度使うと1分30秒使えない'],
       shadow: ['影分身ダッシュが自動で使える。ダッシュした場所に影の分身が残り、近くの鬼が分身を追う', '落とし穴が2か所(使うと40秒使えない)', '先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う'],
       fuse: ['落とし穴が2か所(使うと40秒使えない)', '自爆鬼(橙色)が出る。だんだん黒い鬼より速くなる。近づくと点滅して1秒後に爆発する(点滅中は逃走者の0.9倍の速さ)。爆発の範囲は爆弾の1.5倍', '自爆鬼の「!」は輪がオレンジ色で、逃走者からいちばん遠い場所に出る(「!」が出ている間に近づくと、近くで出てくる)', ...(weekStage() === 3 ? ['マップの上は川。橋は3本'] : weekStage() === 2 ? ['マップの真ん中にやぐら'] : [])] }[route] || [];
     $('rankInfoBody').innerHTML = `
@@ -12367,7 +12374,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (n === 4 && daily && daily.key === 'd1') own.push('加速装置が10か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'); else if (ms >= 2) own.push('加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない');
     // (the survival nights always have their two pits, on whichever map they are played)
     if (ms >= 3 || n === 4) own.push(`落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと${PIT_COOL}秒使えない`);
-    if (mapSkin === 'd2') own.push(`ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと${mmss(WARP_COOL)}使えない`);
+    if (mapSkin === 'd2') own.push(`ワープポイントが2つ。触れるともう一方へ飛ぶ(ダッシュで通っても飛ぶ)。広場かL字の建物のくぼみにある。一度使うと${mmss(WARP_COOL)}使えない`);
     if (mapSkin === 'd4' && ms === 2) own.push('マップの真ん中にやぐらが建っている');
     if (mapSkin === 'd4' && ms === 3) own.push('マップの上は川。向こう岸へは3本の橋で渡る');
     if (n <= 3 && route === 'shadow') own.push('先回りの鬼(黄色)は近づくと影の鬼と分裂する。影の鬼は先回りして挟み撃ちにくる', '建物の影(暗いところ)に入ると、影の鬼は見失う', 'ダッシュが影分身ダッシュになる(その場に分身が残り、近くの鬼が分身を追う)');
@@ -12446,7 +12453,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>スペシャル ${S.name}</h3>${li([S.tag, '出口は開かない。捕まるまでの逃走時間が記録になる', '最初に補給アイテム(バリア・ランチャー)を1つ選んで始まる'])}</section>
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
-      <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
+      <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。触れるともう一方へ飛ぶ(ダッシュで通っても飛ぶ)。広場かL字の建物のくぼみにある。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
       <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
