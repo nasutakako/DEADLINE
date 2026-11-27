@@ -3251,7 +3251,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // (大爆発 now goes off as the old 衝撃波爆弾 did: the fireball and the double shock wave)
   const bombFx = () => { const v = EQ('bomb'); return v === 'bomb_grav' ? 'bomb_big' : v; };   // (電脳の檻 no longer lends the EMP bomb: it is a look in the shop like the others)
   // 影踏み: the shadow dash from 黄昏通り on (not in the weekly ranking); the yellow oni's shadows on every stage of it
-  const shadowStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'shadow' && stageN <= 3 && !daily && state !== 'title';
+  // (not in the rank race's turned towns that are 3-1 by day or at dusk (1-3's and 4-3's): those have no 影分身, runner or oni)
+  const shadowStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'shadow' && stageN <= 3 && !daily && state !== 'title' && !(stageN === 3 && town && (town.look === 'day' || town.look === 'dusk'));
   // 導火線: every stage of it has bomber oni (the weekly ranking on its map too; not the survival nights)
   const fuseStory = () => MAP_CHOICE && ROUTE[mapSkin] === 'fuse' && stageN <= 3 && !daily && state !== 'title';
   // a bomber lights up within this distance of the runner and goes off a bomb's fuse later, as big as a bomb
@@ -5442,15 +5443,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // warm sunlight over everything, brightest top-left
       m.restore();
       const g = m.createLinearGradient(0, 0, COLS, ROWS);
-      if (DUSK) { g.addColorStop(0, 'rgba(255,178,72,0.3)'); g.addColorStop(0.5, 'rgba(255,150,80,0.1)'); g.addColorStop(1, 'rgba(40,44,120,0.32)'); }   // (amber to blue-violet: no red, so the red warnings still stand out)
+      if (DUSK) { g.addColorStop(0, 'rgba(255,172,64,0.44)'); g.addColorStop(0.55, 'rgba(255,140,70,0.24)'); g.addColorStop(1, 'rgba(120,60,110,0.22)'); }   // (amber to blue-violet: no red, so the red warnings still stand out)
       else { g.addColorStop(0, 'rgba(255,244,214,0.14)'); g.addColorStop(1, 'rgba(0,0,0,0.06)'); }
       m.fillStyle = g; m.fillRect(0, 0, COLS, ROWS);
       // (the river at dusk, 4-3's turned town: the evening sky on the water, a low sun's glints, the bridges, the grass bank)
       if (riverOn && DUSK) {
-        const g = m.createLinearGradient(0, 3, 0, 7); g.addColorStop(0, '#3a3462'); g.addColorStop(0.5, '#5a4a72'); g.addColorStop(1, '#2c3660');
+        const g = m.createLinearGradient(0, 3, 0, 7); g.addColorStop(0, '#4a3a62'); g.addColorStop(0.5, '#7a5a70'); g.addColorStop(1, '#3a3a62');
         m.fillStyle = g; m.fillRect(0, 3, COLS, 4);
         for (let k = 0; k < Math.round(COLS / 5); k++) { const x = rnd() * COLS, gl = m.createRadialGradient(x, 5, 0, x, 5, 2.2);
-          gl.addColorStop(0, 'rgba(255,170,90,0.3)'); gl.addColorStop(1, 'rgba(255,170,90,0)'); m.fillStyle = gl; m.fillRect(x - 2.2, 3, 4.4, 4); }
+          gl.addColorStop(0, 'rgba(255,165,80,0.42)'); gl.addColorStop(1, 'rgba(255,165,80,0)'); m.fillStyle = gl; m.fillRect(x - 2.2, 3, 4.4, 4); }
         m.strokeStyle = 'rgba(255,200,140,0.22)'; m.lineWidth = 0.03; m.beginPath();
         for (let k = 0; k < COLS * 4; k++) { const x = rnd() * COLS, y = 3.15 + rnd() * 3.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
         m.stroke();
@@ -5493,7 +5494,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       m.save(); m.beginPath();
       for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (walk(x, y)) m.rect(x, y, 1, 1);
       m.clip();
-      const glow = (x, y) => { const gr = m.createRadialGradient(x, y, 0, x, y, 1.1); gr.addColorStop(0, 'rgba(255,214,130,0.24)'); gr.addColorStop(1, 'rgba(255,214,130,0)'); m.fillStyle = gr; m.fillRect(x - 1.1, y - 1.1, 2.2, 2.2); };
+      const glow = (x, y) => { const gr = m.createRadialGradient(x, y, 0, x, y, 1.1); gr.addColorStop(0, 'rgba(255,205,120,0.32)'); gr.addColorStop(1, 'rgba(255,205,120,0)'); m.fillStyle = gr; m.fillRect(x - 1.1, y - 1.1, 2.2, 2.2); };
       for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) if (walk(x, y) && x % 8 === ((y / 4) % 2 ? 6 : 2)) glow(x + 0.5, y + 0.12);
       for (let x = 0; x < COLS; x += 4) for (let y = 0; y < ROWS; y++) if (walk(x, y) && y % 8 === ((x / 4) % 2 ? 2 : 6)) glow(x + 0.88, y + 0.5);
       m.restore();
