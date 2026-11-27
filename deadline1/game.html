@@ -5902,6 +5902,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // picked again in the new one. A replay builds each town from its seed
   const SWAP_WARN = 7, SWAP_FIRST = 480, SWAP_EVERY = 360;   // (8:00, 14:00, 20:00, 26:00, ...)
   let swaps = [];   // { at, seed, on }
+  // the moment it comes: the run stands still for 2 s, 1 s of the screen white, then 1 s of glass cracking (ピキピキ),
+  // and then it all bursts and the new town is there (the clock does not run meanwhile)
+  let swapFx = null;   // { q, k: seconds in, cr: cracked yet }
+  function glassCrack() {
+    for (let i = 0; i < 9; i++) setTimeout(() => { const f = 2400 + Math.random() * 2600; tone(f, 0.035, 'square', 0.03, f * 0.7); if (i % 3 === 2) tone(f * 1.6, 0.025, 'triangle', 0.025); }, i * 95 + Math.random() * 40);
+    setTimeout(() => noise(0.12, 0.05), 420);
+  }
   // and the town turns into another and back by turns: at 8:00 (20:00, 32:00, ...) 1-3 to 3-1 (by day), 2-3 to 黒鬼ラッシュ's
   // black neon city, 3-3 to the pale stone 影の街 by day (3-1's look of a while ago), 4-3 to 3-1 at dusk with 4-3's river
   // across the top (no tall blocks, no shade); at 14:00 (26:00, ...) back to the town the run began in (built anew)
@@ -5940,7 +5947,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     const inWall = o => !walk(Math.floor(o.x), Math.floor(o.y));
     for (const e of enemies) if (!e.dead) { const pal = oniPal(e); popAt(e.x, e.y, [pal[0], pal[1], pal[0]], 32, 1.5, 6.5); e.dead = true; }
     enemies = []; pending = [];
-    nextSpawn = t + 10;   // (and then 10 s of quiet: the next "!" not before)
+    nextSpawn = t + 7;   // (and then 7 s of quiet after the show: the next "!" not before)
     const out = o => { if (inWall(o)) { const n = nearOpen(o.x, o.y); o.x = n.x; o.y = n.y; } };
     out(P); for (const w of items) out(w); for (const w of mines) out(w); for (const w of decoys) out(w);
     P.ambT = null; P.trail = []; P.warpAway = null;   // (no time without being caught: every oni is gone anyway)
@@ -5948,14 +5955,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     { const r = randomRoad(4); items.push({ x: r.x, y: r.y, born: t, rk: true, ex: true }); setTimeout(dropChime, 300); }
     flow(Math.floor(P.x), Math.floor(P.y));
     flash = Math.max(flash, 0.9); shake = reduceMotion ? 0 : Math.max(shake, 0.7);
-    noise(0.8, 0.12); tone(70, 0.8, 'sawtooth', 0.1, 30); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
+    noise(0.8, 0.12); tone(70, 0.8, 'sawtooth', 0.1, 30); sfx.glass(); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
   }
   // the warning: every building glowing purple with a purple outline, pulsing (as a street about to shut or a building
   // about to be cut is shown, in purple)
   function drawSwap(now) {
     if (rp) return;
     const q = swaps.find(o => !o.on); if (!q) return;
-    const left = q.at - t; if (left > SWAP_WARN || left < 0) return;
+    const left = q.at - t; if (left > SWAP_WARN || (left < 0 && !swapFx)) return;   // (and through the 2 s show)
     const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
     ctx.save(); ctx.lineWidth = 0.06;
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) {
@@ -6263,7 +6270,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = stageN === 3 && special ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    shift = null; seals = []; carves = []; swaps = []; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; seals = []; carves = []; swaps = []; swapFx = null; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
@@ -6464,6 +6471,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
 
   function update(dt) {
+    if (swapFx) {   // (the 2 s before the burst: nothing moves, the clock stands)
+      swapFx.k += dt;
+      if (!swapFx.cr && swapFx.k >= 1) { swapFx.cr = true; glassCrack(); }
+      if (swapFx.k >= 2) { const q = swapFx.q; swapFx = null; doSwap(q); }
+      return;
+    }
     t += dt; total += dt;
     if (rec && t >= rec.next) recFrame();
     if (tut) tutTick(dt);
@@ -6530,7 +6543,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         if (t > at + 1) swaps.push({ at, seed: 0, on: true });
         else { swaps.push({ at, seed: (Math.random() * 4294967296) >>> 0, on: false }); klaxon(3, 0.04); }
       }
-      for (const q of swaps) if (!q.on && t >= q.at) doSwap(q);
+      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false }; flash = 0; }
     }
     if (sealRun()) {
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
@@ -9137,6 +9150,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ctx.fillStyle = state === 'play' ? `rgba(255,207,90,${flash * 0.35})` : `rgba(255,59,48,${flash * 0.45})`;
       ctx.fillRect(0, 0, cv.width, cv.height);
     }
+    if (swapFx && swapFx.k < 1) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height); }   // (the white before the town goes)
 
     if (input.stick && state === 'play' && !input.stick.pad) {
       const { x0, y0, dx, dy } = input.stick;
@@ -11245,7 +11259,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; special = null; testLate = 0; testSkin = null; town = null; townBase = null; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; special = null; testLate = 0; testSkin = null; swapFx = null; town = null; townBase = null; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -12106,7 +12120,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで10秒あく)。明けるとランチャーが1つ落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12217,7 +12231,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで10秒あく)。明けるとランチャーが1つ落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
