@@ -6156,6 +6156,38 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     mapPop(q.tiles, ['#5fe3ff', '#b6fdff', '#ffffff']);
   }
   // the warning: a red glow and outline on each tile of the stretch that is about to shut, pulsing (the carve's, in red)
+  // the boxes and launchers lying on the road (drawn again over a blackout's dark, so they can be seen in it)
+  function drawPickups(now) {
+    for (const it of items) {
+      // blink during the last 3 seconds before it disappears
+      if ((it.rk ? RK_LIFE : ITEM_LIFE) - (t - it.born) < 3 && Math.sin(now * 18) < 0) continue;
+      const bob = Math.sin(now * 4 + it.x) * 0.05;
+      if (it.rk) {
+        // a launcher in a ring, the size of the bomb box
+        const y = it.y + bob, gl = ctx.createRadialGradient(it.x, y, 0, it.x, y, 0.8);
+        gl.addColorStop(0, 'rgba(199,146,255,0.4)'); gl.addColorStop(1, 'rgba(199,146,255,0)');
+        ctx.fillStyle = gl; ctx.fillRect(it.x - 0.8, y - 0.8, 1.6, 1.6);
+        ctx.fillStyle = '#1b1430'; ctx.beginPath(); ctx.arc(it.x, y, 0.27, 0, Math.PI * 2); ctx.fill();
+        ctx.strokeStyle = '#c792ff'; ctx.lineWidth = 0.05; ctx.stroke();
+        ctx.save(); ctx.translate(it.x, y); ctx.rotate(-Math.PI / 4);
+        ctx.fillStyle = '#ffcf5a'; ctx.beginPath(); ctx.moveTo(-0.13, -0.035); ctx.lineTo(-0.2, 0); ctx.lineTo(-0.13, 0.035); ctx.fill();
+        ctx.fillStyle = '#d9dce3'; ctx.fillRect(-0.13, -0.045, 0.2, 0.09);
+        ctx.fillStyle = '#ff3b30'; ctx.beginPath(); ctx.moveTo(0.07, -0.045); ctx.lineTo(0.16, 0); ctx.lineTo(0.07, 0.045); ctx.fill();
+        ctx.fillStyle = '#7a808c'; ctx.fillRect(-0.14, -0.075, 0.05, 0.15);
+        ctx.restore();
+        continue;
+      }
+      const g = ctx.createRadialGradient(it.x, it.y, 0, it.x, it.y, 0.8);
+      g.addColorStop(0, 'rgba(255,207,90,0.35)'); g.addColorStop(1, 'rgba(255,207,90,0)');
+      ctx.fillStyle = g; ctx.fillRect(it.x - 0.8, it.y - 0.8, 1.6, 1.6);
+      ctx.fillStyle = '#ffcf5a';
+      ctx.fillRect(it.x - 0.24, it.y - 0.2 + bob, 0.48, 0.4);
+      ctx.fillStyle = '#1a1406';
+      ctx.fillRect(it.x - 0.24, it.y - 0.03 + bob, 0.48, 0.06);
+      ctx.fillStyle = '#ff3b30';
+      ctx.beginPath(); ctx.arc(it.x, it.y - 0.2 + bob, 0.06, 0, Math.PI * 2); ctx.fill();
+    }
+  }
   function drawSeals(now) {
     const T = rp ? rp.time : t;
     for (const q of carves) {   // (the building about to be cut away: a cyan glow and outline, pulsing)
@@ -6261,9 +6293,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // (never on the same spot as another warning: two oni out of one "!" would look like one that split)
   function queueSpawn(wave = waveSeq) {
     // (never on a warp point, where the "!" and the warp sat one over the other, and never in a pit's mouth)
-    const onThing = p => warps.some(w => Math.hypot(w.x - p.x, w.y - p.y) < 1) || holes.some(h => Math.hypot(h.x - p.x, h.y - p.y) < 0.8);
+    const onThing = p => warps.some(w => Math.hypot(w.x - p.x, w.y - p.y) < 1.2) || holes.some(h => Math.hypot(h.x - p.x, h.y - p.y) < 0.8);
     let p = randomRoad(10, true);
     for (let k = 0; k < 24 && (pending.some(q => Math.hypot(q.x - p.x, q.y - p.y) < 1.5) || onThing(p)); k++) p = randomRoad(10, true);
+    for (let k = 0; k < 200 && onThing(p); k++) p = randomRoad(k < 100 ? 4 : 0);   // (still on one: anywhere else, but never there)
     // 導火線: whether this one is a bomber is settled here, at the warning, so it can be warned where the runner is not
     const n = Math.min(3, stageN) - 1;
     const allBlack = stageN === 3 && special && special.key === 'sp1';   // (黒鬼ラッシュ: every "!" a black oni's from the start)
@@ -8833,35 +8866,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
 
     // pickups
-    for (const it of items) {
-      // blink during the last 3 seconds before it disappears
-      if ((it.rk ? RK_LIFE : ITEM_LIFE) - (t - it.born) < 3 && Math.sin(now * 18) < 0) continue;
-      const bob = Math.sin(now * 4 + it.x) * 0.05;
-      if (it.rk) {
-        // a launcher in a ring, the size of the bomb box
-        const y = it.y + bob, gl = ctx.createRadialGradient(it.x, y, 0, it.x, y, 0.8);
-        gl.addColorStop(0, 'rgba(199,146,255,0.4)'); gl.addColorStop(1, 'rgba(199,146,255,0)');
-        ctx.fillStyle = gl; ctx.fillRect(it.x - 0.8, y - 0.8, 1.6, 1.6);
-        ctx.fillStyle = '#1b1430'; ctx.beginPath(); ctx.arc(it.x, y, 0.27, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = '#c792ff'; ctx.lineWidth = 0.05; ctx.stroke();
-        ctx.save(); ctx.translate(it.x, y); ctx.rotate(-Math.PI / 4);
-        ctx.fillStyle = '#ffcf5a'; ctx.beginPath(); ctx.moveTo(-0.13, -0.035); ctx.lineTo(-0.2, 0); ctx.lineTo(-0.13, 0.035); ctx.fill();
-        ctx.fillStyle = '#d9dce3'; ctx.fillRect(-0.13, -0.045, 0.2, 0.09);
-        ctx.fillStyle = '#ff3b30'; ctx.beginPath(); ctx.moveTo(0.07, -0.045); ctx.lineTo(0.16, 0); ctx.lineTo(0.07, 0.045); ctx.fill();
-        ctx.fillStyle = '#7a808c'; ctx.fillRect(-0.14, -0.075, 0.05, 0.15);
-        ctx.restore();
-        continue;
-      }
-      const g = ctx.createRadialGradient(it.x, it.y, 0, it.x, it.y, 0.8);
-      g.addColorStop(0, 'rgba(255,207,90,0.35)'); g.addColorStop(1, 'rgba(255,207,90,0)');
-      ctx.fillStyle = g; ctx.fillRect(it.x - 0.8, it.y - 0.8, 1.6, 1.6);
-      ctx.fillStyle = '#ffcf5a';
-      ctx.fillRect(it.x - 0.24, it.y - 0.2 + bob, 0.48, 0.4);
-      ctx.fillStyle = '#1a1406';
-      ctx.fillRect(it.x - 0.24, it.y - 0.03 + bob, 0.48, 0.06);
-      ctx.fillStyle = '#ff3b30';
-      ctx.beginPath(); ctx.arc(it.x, it.y - 0.2 + bob, 0.06, 0, Math.PI * 2); ctx.fill();
-    }
+    drawPickups(now);
 
     // placed mines
     for (const m of mines) drawMine(m, now);
@@ -9045,7 +9050,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.inv > 0 && Math.sin(now * 30) > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 0.12, 0, Math.PI * 2); ctx.stroke(); }
     };
     const up = P.jumpT > 0;
-    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); for (const m of mines) drawMine(m, now); drawSwap(now); } }   // (the devices, the ! and the purple of a town about to go shine through the dark)
+    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); drawPickups(now); for (const m of mines) drawMine(m, now); drawSwap(now); } }   // (the devices, the ! and the purple of a town about to go shine through the dark)
     for (const e of enemies) if (!e.dead) lightPool(e.x, e.y, ONI_LIGHT, 0.26 * Math.min(1, (t - e.born) / 0.3));
     if (state !== 'caught' && state !== 'over') lightPool(P.x, P.y, runnerLook(now).glow, 0.24);
     if (!up) drawRunner();
