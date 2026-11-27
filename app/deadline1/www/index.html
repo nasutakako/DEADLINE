@@ -5900,7 +5900,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // built again: a new layout in the same look (a siren and every building lit purple for SWAP_WARN s first). Every
   // building bursts; every oni bursts and is gone; the runner is moved to the nearest street. The streets shut and cut so far go with the old town; those still to come are
   // picked again in the new one. A replay builds each town from its seed
-  try { document.fonts && document.fonts.load('900 40px Orbitron'); } catch (e) {}
   const SWAP_WARN = 7, SWAP_FIRST = 480, SWAP_EVERY = 360;   // (8:00, 14:00, 20:00, 26:00, ...)
   let swaps = [];   // { at, seed, on }
   // the moment it comes: the run stands still for the show (SWAP_SHOW s, see drawSwapWhite), and then it all bursts and the new town is there (the clock does not run meanwhile)
@@ -5938,7 +5937,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the show at a town swap (all standing still): 0-1.5 s the pane over the map cracking from the middle out (fast at
   // first, slowing at the edges; the crack sounding), 1.5-2 s held cracked and silent, 2-4 s a blinding light swelling
   // from the middle (slow at first, faster as it spreads) until all is white, 4 s the burst
-  const SWAP_SHOW = 4.5;   // (4-4.5 s: Congratulations on the white, with a ピッ)
+  const SWAP_SHOW = 4;
   function drawSwapWhite() {
     if (!swapFx.snap) {
       // (the frame as drawn so far, town and frozen oni and runner and all, cut to the map: the picture in the glass)
@@ -5959,42 +5958,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.72, 'rgba(255,255,255,1)'); g.addColorStop(0.84, 'rgba(255,250,235,0.85)'); g.addColorStop(1, 'rgba(255,245,225,0)');
       ctx.fillStyle = g; ctx.fillRect(0, 0, COLS, ROWS);
     }
-    if (k >= 4) {
-      // Congratulations as a dot-matrix sign in the middle of the white: cyan LED dots with a navy rim and a glow, coming
-      // on with a glitch (strips of it jumping sideways) for a moment, then steady with a faint flicker and scanlines
-      const img2 = congratsDots(), e = k - 4, W = COLS * 0.56, H = W * img2.height / img2.width;
-      ctx.save(); ctx.translate(COLS / 2 - W / 2, ROWS / 2 - H / 2); ctx.imageSmoothingEnabled = true;
-      ctx.globalAlpha = e < 0.16 ? 1 : 0.9 + 0.1 * Math.sin(k * 90);
-      const strips = 10;
-      for (let i = 0; i < strips; i++) {
-        const sy = img2.height * i / strips, sh = img2.height / strips, dy = H * i / strips, dh = H / strips;
-        const dx = e < 0.16 ? (Math.sin(i * 12.9 + Math.floor(e * 60) * 7.7) * W * 0.05 * (1 - e / 0.16)) : 0;
-        if (e < 0.08 && i / strips > e / 0.08) continue;   // (wiping on from the top)
-        ctx.drawImage(img2, 0, sy, img2.width, sh, dx, dy, W, dh);
-      }
-      ctx.globalAlpha = 1; ctx.fillStyle = 'rgba(10,24,48,0.08)';
-      for (let y = 0; y < H; y += H / 18) ctx.fillRect(-W * 0.04, y, W * 1.08, H / 54);   // (scanlines)
-      ctx.fillStyle = '#18d8ff'; ctx.fillRect(-W * 0.04, -H * 0.18, W * 1.08, H * 0.03); ctx.fillRect(-W * 0.04, H * 1.15, W * 1.08, H * 0.03);
-      ctx.restore();
-    }
     ctx.restore();
-  }
-  let congratsCv = null;
-  function congratsDots() {
-    if (congratsCv) return congratsCv;
-    // (the word set small in the cyber face, then each lit pixel drawn as a rounded LED: a navy rim, a cyan dot, a glow)
-    const tw = 150, th = 26, t2 = document.createElement('canvas'); t2.width = tw; t2.height = th;
-    const g = t2.getContext('2d'); g.font = '900 19px Orbitron, "Share Tech Mono", monospace'; g.textAlign = 'center'; g.textBaseline = 'middle';
-    const sc = Math.min(1, (tw - 6) / g.measureText('Congratulations').width); g.save(); g.translate(tw / 2, th / 2); g.scale(sc, 1); g.fillStyle = '#000'; g.fillText('Congratulations', 0, 1); g.restore();
-    const d = g.getImageData(0, 0, tw, th).data, C = 10, out = document.createElement('canvas'); out.width = tw * C; out.height = th * C;
-    const o = out.getContext('2d'), on = (x, y) => x >= 0 && y >= 0 && x < tw && y < th && d[(y * tw + x) * 4 + 3] > 110;
-    const dot = (x, y, r, col) => { o.fillStyle = col; o.beginPath(); o.roundRect ? o.roundRect(x * C + (C - r) / 2, y * C + (C - r) / 2, r, r, r * 0.25) : o.rect(x * C + (C - r) / 2, y * C + (C - r) / 2, r, r); o.fill(); };
-    for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (!on(x, y) && (on(x + 1, y) || on(x - 1, y) || on(x, y + 1) || on(x, y - 1))) dot(x, y, C * 0.9, '#0a1830');
-    o.shadowColor = 'rgba(0,210,255,0.95)'; o.shadowBlur = C * 1.2;
-    for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (on(x, y)) dot(x, y, C * 0.82, '#18d8ff');
-    o.shadowBlur = 0; o.fillStyle = 'rgba(255,255,255,0.55)';
-    for (let y = 0; y < th; y++) for (let x = 0; x < tw; x++) if (on(x, y)) o.fillRect(x * C + C * 0.2, y * C + C * 0.2, C * 0.22, C * 0.22);   // (a glint on each LED)
-    return (congratsCv = out);
   }
   // after the burst: the shards flying out from the middle, turning, shrinking as they fall away, fading (1.6 s)
   let glassFly = null;   // { at: performance time, img, shards }
@@ -6522,7 +6486,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (k === 'tough') return t >= 240 ? 2 : 0;
     if (k === 'bomber') return 0;   // (no bomber is ever made to be about: they come by chance)
     // (black: 1 from 4:00, 2 from 6:00 on; the rank race: 1 from 2:00, 2 from 4:00)
-    if (k === 'black') return rankRun ? (t >= 240 ? 2 : t >= 120 ? 1 : 0) : t >= 360 ? 2 : t >= 240 ? 1 : 0;
+    // (the rank race past a town swap: one more for each level past 25 — 3 at Lv26, 4 at Lv27, 5 at Lv28)
+    if (k === 'black') return rankRun ? (t >= 240 ? Math.max(2, (level || 1) - 23) : t >= 120 ? 1 : 0) : t >= 360 ? 2 : t >= 240 ? 1 : 0;
     return 0;   // (the yellow ones: by chance only, as there nearly always is one about anyway)
   }
   // how many of those are short (on the map and warned), for a wave that would otherwise not come
@@ -6606,7 +6571,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       swapFx.k += dt;
       if (!swapFx.cr) { swapFx.cr = true; glassCrack(); }
       if (!swapFx.lit && swapFx.k >= 2) { swapFx.lit = true; lightSwell(); }
-      if (!swapFx.ok && swapFx.k >= 4) { swapFx.ok = true; tone(1760, 0.09, 'square', 0.05); tone(3520, 0.05, 'sine', 0.03); }
       if (swapFx.k >= SWAP_SHOW) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); }
       return;
     }
@@ -12315,7 +12279,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が1つ上がる: 8分はLv26(速さ6.6)、14分はLv27(6.8)、20分からはLv28(7.0)。鬼が出るたびに1つずつ上がる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が1つ上がる: 8分はLv26(速さ6.6)、14分はLv27(6.8)、20分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼はLv26で3体、Lv27で4体、Lv28で5体いるように出てくる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
