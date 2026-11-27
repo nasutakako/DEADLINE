@@ -5938,6 +5938,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function drawSwapWhite() {
     if (swapFx.k < 1.5) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, COLS, ROWS); return; }
     // (the pane: the old town back, cracking from the middle out over 0.3 s)
+    if (!swapFx.snap) {
+      // (the frame as drawn so far, town and frozen oni and runner and all, cut to the map: the picture in the glass)
+      const m = ctx.getTransform(), w = Math.round(COLS * m.a), h = Math.round(ROWS * m.d), c = document.createElement('canvas');
+      c.width = Math.max(1, w); c.height = Math.max(1, h); c.getContext('2d').drawImage(cv, Math.round(m.e), Math.round(m.f), w, h, 0, 0, w, h);
+      swapFx.snap = c; swapFx.img = c;
+    }
     const u = Math.min(1, (swapFx.k - 1.5) / 0.3), img = swapFx.img;
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, COLS, ROWS); ctx.clip();
     ctx.fillStyle = '#05060a'; ctx.fillRect(0, 0, COLS, ROWS);
@@ -6014,7 +6020,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function drawSwap(now) {
     if (rp) return;
     const q = swaps.find(o => !o.on); if (!q) return;
-    const left = q.at - t; if (left > SWAP_WARN || (left < 0 && !swapFx)) return;   // (and through the 2 s show)
+    const left = q.at - t; if (left > SWAP_WARN || left < 0 || swapFx) return;
     const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
     ctx.save(); ctx.lineWidth = 0.06;
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) {
@@ -6527,7 +6533,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       swapFx.k += dt;
       if (!swapFx.cr && swapFx.k >= 1) { swapFx.cr = true; glassCrack(); }
       if (!swapFx.cr2 && swapFx.k >= 1.5) { swapFx.cr2 = true; for (let i = 0; i < 6; i++) setTimeout(() => { const f = 1800 + Math.random() * 2400; tone(f, 0.03, 'square', 0.025, f * 0.6); }, i * 45); }
-      if (swapFx.k >= 2) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); }
+      if (swapFx.k >= 2) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); startCount(); }
       return;
     }
     t += dt; total += dt;
@@ -6596,8 +6602,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         if (t > at + 1) swaps.push({ at, seed: 0, on: true });
         else { swaps.push({ at, seed: (Math.random() * 4294967296) >>> 0, on: false }); klaxon(3, 0.04); }
       }
-      // (from the moment it goes white the runner cannot be caught, right through till the new town is there)
-      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false, img: mapCache, shards: makeShards() }; flash = 0; P.inv = Math.max(P.inv, 0.3); bgmStop(); }
+      // (from the moment it goes white everything stands still, oni and runner where they are, till the burst)
+      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false, img: mapCache, shards: makeShards() }; flash = 0; bgmStop(); }
     }
     if (sealRun()) {
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
