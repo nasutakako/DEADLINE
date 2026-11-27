@@ -2636,7 +2636,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // end of a stage (caught or escaped): count it into the totals and hand out every title it earns; returns the new ones
   function awardTitles(time, kills, fell, caught) {
     if (!S3) return [];
-    const r = Object.assign({}, S3, { time, kills, fell, caught, stage: stageN, daily: stageN === 4 && daily ? daily.key : '', esc: !caught, rk: !!rankRun, skin: town ? town.from : mapSkin });
+    const r = Object.assign({}, S3, { time, kills, fell, caught, stage: stageN, daily: stageN === 4 && daily ? daily.key : '', esc: !caught, rk: !!rankRun, skin: townBase || mapSkin });
     S3 = null;
     const a = records.s3 = Object.assign({ plays: 0, time: 0, kills: 0 }, records.s3);
     a.plays++; a.time = +(a.time + time).toFixed(1); a.kills += kills;
@@ -5453,6 +5453,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         for (let k = 0; k < COLS * 4; k++) { const x = rnd() * COLS, y = 3.15 + rnd() * 3.7, w = 0.2 + rnd() * 0.5; m.moveTo(x, y); m.lineTo(x + w, y); }
         m.stroke();
         m.fillStyle = 'rgba(255,220,180,0.3)'; m.fillRect(0, 6.94, COLS, 0.06); m.fillRect(0, 3, COLS, 0.05);
+        // (the low sun from the top left: each bridge throws its shadow on the water down-right, slanting, as the blocks do;
+        // and the far bank's buildings theirs over the top of it)
+        m.save(); m.beginPath(); m.rect(0, 3, COLS, 4); m.clip();
+        m.fillStyle = 'rgba(30,18,48,0.42)'; m.beginPath();
+        for (const bx of bridges) { m.moveTo(bx + 1, 3); m.lineTo(bx + 1 + 0.9, 3); m.lineTo(bx + 1 + 0.9 + 0.6, 7); m.lineTo(bx + 1, 7); m.closePath(); }
+        for (let x = 0; x < COLS; x++) if (grid[idx(x, 2)] === 1 || grid[idx(x, 1)] === 1 && !walk(x, 1)) { const y0 = grid[idx(x, 2)] === 1 ? 3 : 2; if (y0 === 2) { m.moveTo(x, 3); m.lineTo(x + 1, 3); m.lineTo(x + 1.7, 3.7); m.lineTo(x + 0.7, 3.7); m.closePath(); } }
+        m.fill(); m.restore();
         for (const bx of bridges) {
           m.fillStyle = 'rgba(0,0,0,0.35)'; m.fillRect(bx + 0.12, 3.1, 1, 4);
           m.fillStyle = '#6a6470'; m.fillRect(bx, 3, 1, 4);
@@ -5868,18 +5875,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   let carves = [];   // { at, tiles: [tile index, ...], on }
   const carveTimes = () => [...new Set(sealTimes())];   // (one at each time a street shuts)
   const sealRun = () => stageN === 3 && !tut;
-  // 地形総入れ替え (the rank race and the specials): at 8:00, and from 15:00 every 5 min, the whole town is pulled down and
+  // 地形総入れ替え (the rank race and the specials): at 8:00 and every 6 min after, the whole town is pulled down and
   // built again: a new layout in the same look (a siren and every building lit purple for SWAP_WARN s first). Every
   // building bursts; oni caught inside the new buildings burst and are gone; the runner is moved to the nearest street
   // and gets 2 s without being caught. The streets shut and cut so far go with the old town; those still to come are
   // picked again in the new one. A replay builds each town from its seed
-  const SWAP_WARN = 5, SWAP_FIRST = 480, SWAP_FROM = 900, SWAP_EVERY = 300;
+  const SWAP_WARN = 5, SWAP_FIRST = 480, SWAP_EVERY = 360;   // (8:00, 14:00, 20:00, 26:00, ...)
   let swaps = [];   // { at, seed, on }
-  // and with the first one the town turns into another: 1-3 to 3-1 (by day), 2-3 to 黒鬼ラッシュ's black neon city, 3-3 to
-  // the pale stone 影の街 by day (3-1's look of a while ago), 4-3 to 3-1 at dusk with 4-3's river across the top (no tall
-  // blocks, no shade). It stays that town (built again each time) for the rest of the run
+  // and the town turns into another and back by turns: at 8:00 (20:00, 32:00, ...) 1-3 to 3-1 (by day), 2-3 to 黒鬼ラッシュ's
+  // black neon city, 3-3 to the pale stone 影の街 by day (3-1's look of a while ago), 4-3 to 3-1 at dusk with 4-3's river
+  // across the top (no tall blocks, no shade); at 14:00 (26:00, ...) back to the town the run began in (built anew)
   const TOWN_OF = { d1: { skin: 'd3', n: 1, look: 'day' }, d2: { skin: 'd2', n: 3, look: 'black' }, d3: { skin: 'd3', n: 1, look: 'stone' }, d4: { skin: 'd3', n: 1, look: 'dusk' } };
-  let town = null;   // { skin, n, look, from }
+  let town = null, townBase = null;   // { skin, n, look, from }; the map the run began in
   const townRiver = () => stageN === 3 && !!town && town.look === 'dusk';
   function buildTown(seed) {
     if (town) mapSkin = town.skin;
@@ -5887,8 +5894,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (town && town.look === 'dusk') shadeMap = null;   // (no tall blocks: no shade)
   }
   const swapRun = () => stageN === 3 && !tut && (rankRun || !!special);
-  const isSwapAt = m => m === SWAP_FIRST || (m >= SWAP_FROM && (m - SWAP_FROM) % SWAP_EVERY === 0);
-  const swapTimes = () => { const a = [SWAP_FIRST]; for (let m = SWAP_FROM; m <= t + SWAP_WARN; m += SWAP_EVERY) a.push(m); return a; };
+  const isSwapAt = m => m >= SWAP_FIRST && (m - SWAP_FIRST) % SWAP_EVERY === 0;
+  const swapTimes = () => { const a = []; for (let m = SWAP_FIRST; m <= t + SWAP_WARN; m += SWAP_EVERY) a.push(m); return a; };
   const oniPal = e => e.shade ? METAL.shade : e.bomber ? METAL.bomber : e.black ? METAL.black : e.amb ? METAL.amb : METAL.oni;
   function popAt(x, y, cols, n, v0, v1) { for (let k = 0; k < n; k++) { const a = Math.random() * Math.PI * 2, v = v0 + Math.random() * (v1 - v0); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.1 + Math.random() * 0.6, c: cols[k % cols.length], up: 1, fd: 0.9 }); } }
   function doSwap(q) {
@@ -5900,7 +5907,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // the streets shut and cut so far go with it; the ones warned and still to come are picked again in the new town
     for (const o of seals) if (o.on) o.tiles = [];
     for (const o of carves) if (o.on) o.tiles = [];
-    if (!town && TOWN_OF[mapSkin]) town = Object.assign({ from: mapSkin }, TOWN_OF[mapSkin]);
+    if (!townBase) townBase = mapSkin;
+    const turn = swaps.filter(o => o.on && o.seed).length % 2 === 1;   // (this one counted: the 1st, 3rd, ... turn it)
+    town = turn && TOWN_OF[townBase] ? Object.assign({ from: townBase }, TOWN_OF[townBase]) : null;
+    if (!town) mapSkin = townBase;
     recEv(['m', q.at, q.seed, town ? town.skin : '', town ? town.n : 0, town ? town.look : '']);
     buildTown(q.seed); flowKey = -1; shadeKey = ''; resize(); renderMapCache();
     for (const o of seals) if (!o.on) { o.tiles = planSeal(o.at).tiles; o.was = null; }
@@ -6197,7 +6207,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = stageN === 3 && special ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    shift = null; seals = []; carves = []; swaps = []; town = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; seals = []; carves = []; swaps = []; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
@@ -11198,7 +11208,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; special = null; testLate = 0; town = null; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; special = null; testLate = 0; town = null; townBase = null; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -12059,7 +12069,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分〜4分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: 黒い鬼が、マップに必ず1体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '8分と、15分からは5分ごと: 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前から全部の建物が紫に光って予告。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '8分の入れ替えで別の街になる: 1-3は昼の3-1、2-3は黒鬼ラッシュの黒い街、3-3は石畳の昼の影の街、4-3は夕方の3-1(河川敷つき)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '8分から6分ごと(8分・14分・20分…): 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前から全部の建物が紫に光って予告。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '8分・20分・32分…の入れ替えで別の街になり、14分・26分…で元の街に戻る: 1-3は昼の3-1、2-3は黒鬼ラッシュの黒い街、3-3は石畳の昼の影の街、4-3は夕方の3-1(河川敷つき)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12170,7 +12180,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '8分と、15分からは5分ごと: 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前から全部の建物が紫に光って予告。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '8分から6分ごと(8分・14分・20分…): 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前から全部の建物が紫に光って予告。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
