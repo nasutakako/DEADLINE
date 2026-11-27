@@ -6342,21 +6342,23 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ctx.beginPath(); ctx.arc(it.x, it.y - 0.2 + bob, 0.06, 0, Math.PI * 2); ctx.fill();
     }
   }
+  // (on 2-3's white town by day: the warnings deeper, so they stand out on the pale ground)
+  const whiteTown = () => stageN === 3 && !!town && town.look === 'white' && !(special && special.look === 'black');
   function drawSeals(now) {
-    const T = rp ? rp.time : t;
+    const T = rp ? rp.time : t, wt = whiteTown();
     for (const q of carves) {   // (the building about to be cut away: a cyan glow and outline, pulsing)
       if (q.on || T < q.at - SEAL_WARN) continue;
       const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
       for (const i of q.tiles) { const x = i % COLS, y = Math.floor(i / COLS);
-        ctx.fillStyle = `rgba(90,220,255,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = `rgba(170,240,255,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
+        ctx.fillStyle = wt ? `rgba(0,150,215,${a * 0.6})` : `rgba(90,220,255,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
+        ctx.strokeStyle = wt ? `rgba(0,105,175,${0.6 + a * 0.4})` : `rgba(170,240,255,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
     }
     for (const q of seals) {
       if (q.on || T < q.at - SEAL_WARN) continue;
       const a = 0.45 + 0.35 * Math.abs(Math.sin(now * 8));
       for (const i of q.tiles) { const x = i % COLS, y = Math.floor(i / COLS);
-        ctx.fillStyle = `rgba(255,59,48,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
-        ctx.strokeStyle = `rgba(255,140,130,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
+        ctx.fillStyle = wt ? `rgba(225,25,20,${a * 0.6})` : `rgba(255,59,48,${a * 0.45})`; ctx.fillRect(x, y, 1, 1);
+        ctx.strokeStyle = wt ? `rgba(185,0,0,${0.6 + a * 0.4})` : `rgba(255,140,130,${0.5 + a * 0.5})`; ctx.lineWidth = 0.06; ctx.strokeRect(x + 0.08, y + 0.08, 0.84, 0.84); }
     }
   }
   function drawShift(now) {
@@ -8996,12 +8998,14 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P && P.warpOn === w) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.09; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R + 0.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, P.warpT / WARP_HOLD)); ctx.stroke(); }
     }
     // 加速装置: a plate with chevrons along the street; lit and running when ready, dark with the wait as a ring after
+    // (on 2-3's white town by day the pads are pink: the cyan was lost on the pale ground)
+    const pk = whiteTown(), PC = pk ? '255,45,185' : '130,228,240', PS = pk ? '245,40,175' : '140,236,248';
     for (const d of pads) {
       const ready = !(d.cool > 0), fl = d.flash > 0 ? d.flash / PIT_FLASH : 0, s = 0.44;
       if (ready) {
         const a = Math.min(0.7, 0.13 + 0.06 * Math.sin(now * 4) + 0.45 * fl), rr = 0.75 + 0.5 * fl;
         const lg = ctx.createRadialGradient(d.x, d.y, 0.2, d.x, d.y, rr);
-        lg.addColorStop(0, `rgba(130,228,240,${a})`); lg.addColorStop(1, 'rgba(130,228,240,0)');
+        lg.addColorStop(0, `rgba(${PC},${a})`); lg.addColorStop(1, `rgba(${PC},0)`);
         ctx.fillStyle = lg; ctx.fillRect(d.x - rr, d.y - rr, rr * 2, rr * 2);
       }
       // (no plate drawn round it: only the chevrons on the street, so it sits in the road)
@@ -9010,11 +9014,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ctx.lineWidth = 0.07; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
       for (const dir of [1, -1]) for (let k = 0; k < 2; k++) {
         const ph = ready ? (now * 0.8 + k * 0.5) % 1 : 0.5, x0 = dir * (0.1 + 0.28 * (ready ? ph : k * 0.5 + 0.25));
-        ctx.strokeStyle = ready ? `rgba(140,236,248,${0.4 + 0.5 * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
+        ctx.strokeStyle = ready ? `rgba(${PS},${(pk ? 0.55 : 0.4) + (pk ? 0.45 : 0.5) * Math.sin(Math.PI * ph)})` : 'rgba(120,130,150,.35)';
         ctx.beginPath(); ctx.moveTo(x0 - dir * 0.08, -0.15); ctx.lineTo(x0 + dir * 0.04, 0); ctx.lineTo(x0 - dir * 0.08, 0.15); ctx.stroke();
       }
       ctx.restore();
-      if (!ready) { ctx.strokeStyle = 'rgba(100,200,215,.5)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(d.x, d.y, 0.52, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - d.cool / PAD_COOL)); ctx.stroke(); }
+      if (!ready) { ctx.strokeStyle = pk ? 'rgba(230,40,170,.55)' : 'rgba(100,200,215,.5)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(d.x, d.y, 0.52, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - d.cool / PAD_COOL)); ctx.stroke(); }
     }
     // pits
     for (const h of holes) {
