@@ -1785,7 +1785,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 4分55秒から</button><button class="ghost stepmap" id="spTest4Btn" type="button" hidden>テスト: 7分55秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 4分55秒から</button><button class="ghost stepmap" id="spTest4Btn" type="button" hidden>テスト: 7分52秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -5855,6 +5855,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     return u < OUTAGE_LEN ? u : -1;
   }
   function outageLevel(T) {
+    // (the SWAP_WARN s before the whole town goes: 2 s of the lights clicking, then pitch dark, only the purple of the
+    // buildings about to burst showing)
+    { const q = swaps.find(o => o.seed && T >= o.at - SWAP_WARN && T < o.at);
+      if (q) { const u = T - (q.at - SWAP_WARN); if (u >= 2) return 1; const seg = Math.floor(u * 9), h = Math.abs(Math.sin(seg * 12.9898 + q.at * 0.731) * 43758.5453) % 1; return seg % 2 === 0 ? (h < 0.75 ? 0 : 1) : (h < 0.25 ? 0 : 1); } }
     const u = outageAt(T); if (u < 0) return 0;
     // (three rounds of 2 s clicking (the lights stuttering on and off) then 3 s pitch dark)
     if (u % 5 >= 2) return 1;
@@ -5880,7 +5884,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // building bursts; oni caught inside the new buildings burst and are gone; the runner is moved to the nearest street
   // and gets 2 s without being caught. The streets shut and cut so far go with the old town; those still to come are
   // picked again in the new one. A replay builds each town from its seed
-  const SWAP_WARN = 5, SWAP_FIRST = 480, SWAP_EVERY = 360;   // (8:00, 14:00, 20:00, 26:00, ...)
+  const SWAP_WARN = 7, SWAP_FIRST = 480, SWAP_EVERY = 360;   // (8:00, 14:00, 20:00, 26:00, ...)
   let swaps = [];   // { at, seed, on }
   // and the town turns into another and back by turns: at 8:00 (20:00, 32:00, ...) 1-3 to 3-1 (by day), 2-3 to 黒鬼ラッシュ's
   // black neon city, 3-3 to the pale stone 影の街 by day (3-1's look of a while ago), 4-3 to 3-1 at dusk with 4-3's river
@@ -6215,7 +6219,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (testLate) { rec = null; t = testLate; nextSpawn = t; nextItem = t + 5; P.nextR = Math.ceil((t + 1) / 60) * 60; P.nextBlack = 1e9; P.stock = MINE_MAX; P.barrier = true;
       // (the 4:55 try-out, a rank race's or a story's stage 3: the 3:00 and 4:00 streets already shut (the rank race's oni already
       // at top speed); the 5:00 pair is warned as usual)
-      if (testLate === 295 || testLate === 475) { if (rankPace()) { waveLvN = 1e3; level = WAVE_MAXLV; for (const w of pending) w.lv = WAVE_MAXLV; }
+      if (testLate === 295 || testLate === 472) { if (rankPace()) { waveLvN = 1e3; level = WAVE_MAXLV; for (const w of pending) w.lv = WAVE_MAXLV; }
         sealTimes().forEach((at, k) => { if (at >= testLate + SEAL_WARN) return; const q = planSeal(at); q.k = k; seals.push(q); setSeal(q, true); });
         for (const at of carveTimes()) if (at < testLate + SEAL_WARN) { const q = planCarve(at); carves.push(q); setCarve(q, true); }
         flowKey = -1; shadeKey = ''; renderMapCache(); flow(Math.floor(P.x), Math.floor(P.y)); } }
@@ -7081,7 +7085,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // the try-out: only the time, nothing recorded
       bgmStop(); state = 'caught'; caughtTimer = 1.0; shake = reduceMotion ? 0 : 0.5; flash = 1; tone(220, 0.6, 'sawtooth', 0.09, 55); buzz('caught');
       document.querySelector('#overScreen h2').textContent = quiet === 'esc' ? '脱出' : '確保';
-      const from = testLate === 720 ? '12分' : testLate === 295 ? '4分55秒' : testLate === 475 ? '7分55秒' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
+      const from = testLate === 720 ? '12分' : testLate === 295 ? '4分55秒' : testLate === 472 ? '7分52秒' : '14分55秒'; $('rScoreLabel').textContent = `テスト(${from}から) 逃走時間`; $('rScore').textContent = fmtTime(t); $('rRank').textContent = `${from}からの${fmtTime(t - testLate)}。記録は残らない`;
       $('rStars').hidden = true; $('rShare').closest('.sharerow').hidden = true; $('rTime').textContent = (P && P.stompN || 0) + '回'; $('rKills').textContent = kills + '体'; $('retryBtn').textContent = 'もう一度テスト';
       return;
     }
@@ -9019,7 +9023,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (P.inv > 0 && Math.sin(now * 30) > 0) { ctx.strokeStyle = 'rgba(255,255,255,0.8)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(P.x, P.y, P.r + 0.12, 0, Math.PI * 2); ctx.stroke(); }
     };
     const up = P.jumpT > 0;
-    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); for (const m of mines) drawMine(m, now); } }   // (the devices and the ! shine through the dark)
+    { const lv = outageLevel(rp ? rp.time : t); if (lv > 0) { ctx.fillStyle = `rgba(4,5,12,${OUTAGE_DARK * lv})`; ctx.fillRect(-1, -1, COLS + 2, ROWS + 2); drawGimmicks(); drawWarn(); for (const m of mines) drawMine(m, now); drawSwap(now); } }   // (the devices, the ! and the purple of a town about to go shine through the dark)
     for (const e of enemies) if (!e.dead) lightPool(e.x, e.y, ONI_LIGHT, 0.26 * Math.min(1, (t - e.born) / 0.3));
     if (state !== 'caught' && state !== 'over') lightPool(P.x, P.y, runnerLook(now).glow, 0.24);
     if (!up) drawRunner();
@@ -12069,7 +12073,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分〜4分: 1分ごとに黒い鬼(逃走者より速い)が1体まざる', '4分から: 黒い鬼が、マップに必ず1体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '8分から6分ごと(8分・14分・20分…): 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前から全部の建物が紫に光って予告。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '8分・20分・32分…の入れ替えで別の街になり、14分・26分…で元の街に戻る: 1-3は昼の3-1、2-3は黒鬼ラッシュの黒い街、3-3は石畳の昼の影の街、4-3は夕方の3-1(河川敷つき)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。4-3は川の上の細長い建物も削れる。3秒前に水色の枠で予告)', '8分から6分ごと(8分・14分・20分…): 街がまるごと入れ替わり、建物と道の配置がすべて変わる(7秒前から全部の建物が紫に光って予告し、2秒ちらついたあと5秒真っ暗になる(紫の建物は見える)。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '8分・20分・32分…の入れ替えで別の街になり、14分・26分…で元の街に戻る: 1-3は昼の3-1、2-3は黒鬼ラッシュの黒い街、3-3は石畳の昼の影の街、4-3は夕方の3-1(河川敷つき)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12180,7 +12184,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。踏むともう一方へ飛ぶ(ダッシュで通り過ぎたときは飛ばない)。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '8分から6分ごと(8分・14分・20分…): 街がまるごと入れ替わり、建物と道の配置がすべて変わる(5秒前から全部の建物が紫に光って予告。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から1分ごとに1か所、通路や広場がふさがる(3秒前に赤い枠で予告。ワープや落とし穴のある広場はふさがらない)。そのあとはその街で逃げ続ける', '3分から1分ごとに、建物が1か所削れて新しい道になる(建物の真ん中や、路地のある建物の片側など。3秒前に水色の枠で予告)', '8分から6分ごと(8分・14分・20分…): 街がまるごと入れ替わり、建物と道の配置がすべて変わる(7秒前から全部の建物が紫に光って予告し、2秒ちらついたあと5秒真っ暗になる(紫の建物は見える)。新しい建物に埋まった鬼は弾けて消える。逃走者は近くの道に移り、2秒間捕まらない。その1分は停電なし・封鎖と削りもなし)', '6分から: 1分ごとに15秒の停電。明かりがちらつき、消えている間は建物が見えない(鬼と「!」は見える)。停電が終わるたびに、ランチャーが1つ道に落ちる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12234,7 +12238,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
   $('spGoBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStart(); });
-  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 295], ['spTest4Btn', 475]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || special || !(rankRun || (id === 'spTest3Btn' && pendingStart === 3))) return; tap(); testLate = at; testRk = rankRun; spStart(); misLive = false; misRender(); });
+  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 295], ['spTest4Btn', 472]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || special || !(rankRun || (id === 'spTest3Btn' && pendingStart === 3))) return; tap(); testLate = at; testRk = rankRun; spStart(); misLive = false; misRender(); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
   // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
   // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
