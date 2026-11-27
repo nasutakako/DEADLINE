@@ -1877,7 +1877,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const ACCEL = 30;              // how fast velocity follows input (higher = snappier)
   const ENEMY_BASE = 2.5;
   const ENEMY_STEP = 0.26;
-  const ENEMY_MAX = 6.5;   // (every stage's oni top out at 6.5 at most)
+  const ENEMY_MAX = 6.3;   // (every stage's oni top out at 6.3 at most)
   const LV_EVERY = 20;
   // a plain oni (red or yellow, and a shadow of one) tops out a little under the runner's speed, so it never runs one down
   // from behind; the weekly ranking and the survival nights climb more gently (top speed at about 8:00, not 4:00)
@@ -1892,7 +1892,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // next one as it did at 3.5 sec (1.13 then), so with 5 sec it is 1.09
   const BLACK_MULT = 1.09;
   const SPAWN_WARN = 2.3;
-  const MINE_MAX = 3, FUSE = 1, BLAST = 1.45;
+  const MINE_MAX = 3, FUSE = 0.8, BLAST = 1.45;   // (a bomb goes off 0.8 s after it is laid; it was 1)
   const ITEM_FIRST = 15, ITEM_EVERY = 25, ITEM_LIFE = 10; // pickup pacing (sec)
   const RK_TXT = () => `ランチャー: 1分〜2分に1回道に落ちる(${RK_LIFE}秒で消える)`;
   const RK_GAP = [60, 120], RK_LIFE = 10;   // a launcher lies in the street every 1 to 2 minutes (the first between 1:00 and 2:00; lying 10 s, as a bomb box); none on 1-1
@@ -3264,7 +3264,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // stage opens with one the runner can outrun and it reaches its top speed as the oni get fast
   const bomberSpeed = () => Math.min(runnerSpeed() * bomberMult(), enemySpeed() * 1.5);
   const bomberR = () => BLAST * 1.5;   // (1.5 times a bomb's, on every stage)
-  const BOMBER_NEAR = 1.7, BOMBER_FUSE = FUSE, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 1, 1];   // (never more than one on the map at a time)
+  const BOMBER_NEAR = 1.7, BOMBER_FUSE = 1, BOMBER_RATE = [0.15, 0.18, 0.22], BOMBER_MAX = [1, 1, 1];   // (never more than one on the map at a time)
   // once lit, a bomber slows to 0.9 of the runner's speed: running straight off gets clear on stages 1-2, hesitating or a
   // dead end doesn't; on 花火の夜 (its bigger blast) it takes a dash
   const BOMBER_LIT = 0.9;
@@ -6419,9 +6419,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // top it had before 11/13), 27 steps (the last one capped at 6.0), a step every 240/27 s: the top (Lv28) at 4:00
   const RANK_STEP = 21 * ENEMY_STEP_LONG / 24, RANK_STEPS = 27, RANK_MAX = 6.0, RANK_EVERY = 240 / RANK_STEPS;
   // the rank race and the specials now: a level a wave (Lv1, 2, 3 ...), every oni on the map taking the new wave's
-  // speed as it steps out; the top, 6.5, at Lv25 (the 25th wave, about 4:00). The runner keeps up; the black oni stay
+  // speed as it steps out; the top, 6.3, at Lv25 (the 25th wave, about 4:00). The runner keeps up; the black oni stay
   // faster than the runner
-  const WAVE_LV = 1, WAVE_MAXLV = 25, WAVE_TOP = 6.5, WAVE_STEP = (WAVE_TOP - 3.05) / (WAVE_MAXLV - 1);
+  const WAVE_LV = 1, WAVE_MAXLV = 25, WAVE_TOP = 6.3, WAVE_STEP = (WAVE_TOP - 3.05) / (WAVE_MAXLV - 1);
   const waveSpd = L => Math.min(WAVE_TOP, 3.05 + (L - 1) * WAVE_STEP);
   let waveLvN = 0;   // (waves queued so far this run)
   const nextWaveLv = () => special ? WAVE_MAXLV : Math.min(WAVE_MAXLV, 1 + WAVE_LV * waveLvN);
@@ -10472,7 +10472,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { btn: 'pad', say: '[スティック]を動かして走ってみよう', go: () => tut.run > 6 * TUT_U },
       { btn: 'dash', say: '[ダッシュ]を押すと、一瞬だけ速く走れる', go: () => S3.dashes > 0 },
       { say: '[黄色い箱]を拾うと爆弾が増える。|拾ってみよう', set: () => tutItem(tutSpot(3, 5)), go: () => P.stock > tut.s0 },
-      { btn: 'mine', say: '[爆弾]は1秒後に爆発し、円の中の鬼を倒す。|鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
+      { btn: 'mine', say: '[爆弾]は0.8秒後に爆発し、円の中の鬼を倒す。|鬼を引きつけて倒そう', set: () => { tut.refill = true; tutOni({}); }, go: tutDown },
       { say: '[黄色い鬼]は先回りして、|行く手に回り込んでくる', info: true },
       { say: 'このままだと角で挟まれる。|[光る脇道]に入って止まろう', set: tutFeint, go: tutFeintGo },
       { say: '黄色い鬼が脇道に釣られた。|挟まれそうなら[脇道で止まって]から戻ろう', info: true, set: () => { P.inv = 0; enemies.length = 0; tut.oni = []; tut.feint = null; } },
@@ -10682,7 +10682,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     all: [
       '「!」が出た場所を先に踏むと、その鬼は出てこない',
       'ダッシュは一度使うと5秒使えない',
-      '爆弾は置いて1秒後に爆発する。近くの爆弾にも連鎖する',
+      '爆弾は置いて0.8秒後に爆発する。近くの爆弾にも連鎖する',
       '黄色い鬼は先回りしてくる。急に向きを変えるとだませる',
       '黄色い鬼は、脇道に一瞬入ってすぐ戻ると、脇道の向こうへ回り込む',
       '黄色い鬼の前で立ち止まると、まっすぐ向かってくる。爆弾を置いて待とう',
