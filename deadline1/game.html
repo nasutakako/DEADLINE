@@ -6487,7 +6487,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (k === 'bomber') return 0;   // (no bomber is ever made to be about: they come by chance)
     // (black: 1 from 4:00, 2 from 6:00 on; the rank race: 1 from 2:00, 2 from 4:00)
     // (the rank race past a town swap: one more for each level past 25 — 3 at Lv26, 4 at Lv27, 5 at Lv28)
-    if (k === 'black') return rankRun ? (t >= 240 ? Math.max(2, (level || 1) - 23) : t >= 120 ? 1 : 0) : t >= 360 ? 2 : t >= 240 ? 1 : 0;
+    if (k === 'black') return rankRun ? (overSwaps ? Math.min(5, 2 + overSwaps) : t >= 240 ? 2 : t >= 120 ? 1 : 0) : t >= 360 ? 2 : t >= 240 ? 1 : 0;
     return 0;   // (the yellow ones: by chance only, as there nearly always is one about anyway)
   }
   // how many of those are short (on the map and warned), for a wave that would otherwise not come
@@ -12279,7 +12279,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が1つ上がる: 8分はLv26(速さ6.6)、14分はLv27(6.8)、20分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼はLv26で3体、Lv27で4体、Lv28で5体いるように出てくる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が1つ上がる: 8分はLv26(速さ6.6)、14分はLv27(6.8)、20分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼は8分の入れ替えのあとは3体、14分は4体、20分からは5体いるように出てくる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
