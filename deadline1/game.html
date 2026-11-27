@@ -5473,6 +5473,18 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
           for (let k = 0; k < 5; k++) { const gx = x + rnd(), gy = 7.15 + rnd() * 0.75; m.moveTo(gx, gy); m.lineTo(gx + (rnd() - 0.5) * 0.08, gy - 0.12); }
           m.stroke();
         }
+        // (and 4-3's paper lanterns, still strung down its streets, lit against the evening)
+        for (let y = 0; y < ROWS; y += 4) for (let x = 0; x < COLS; x++) {
+          if (!walk(x, y) || (x % 2)) continue;
+          const lx = x + 0.5, ly = y + 0.18;
+          const lg = m.createRadialGradient(lx, ly, 0, lx, ly, 0.7); lg.addColorStop(0, 'rgba(255,90,50,0.3)'); lg.addColorStop(1, 'rgba(255,90,50,0)');
+          m.fillStyle = lg; m.fillRect(lx - 0.7, ly - 0.7, 1.4, 1.4);
+          m.fillStyle = '#ff5a34'; m.beginPath(); m.ellipse(lx, ly, 0.09, 0.12, 0, 0, 7); m.fill();
+          m.fillStyle = 'rgba(255,230,180,0.8)'; m.fillRect(lx - 0.02, ly - 0.05, 0.04, 0.1);
+        }
+        m.strokeStyle = 'rgba(30,20,20,0.6)'; m.lineWidth = 0.015; m.beginPath();
+        for (let y = 0; y < ROWS; y += 4) if (!(y >= 3 && y <= 6)) { m.moveTo(0, y + 0.1); m.lineTo(COLS, y + 0.1); }
+        m.stroke();
       }
       if (!DUSK) return;
       // the first street lights, a small warm pool each
