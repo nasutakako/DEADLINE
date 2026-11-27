@@ -8992,7 +8992,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         ctx.strokeStyle = `rgba(63,224,255,${0.5 + 0.3 * Math.sin(now * 4)})`; ctx.lineWidth = 0.06; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R, 0, Math.PI * 2); ctx.stroke();
       } else {
         ctx.strokeStyle = 'rgba(120,130,160,0.35)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R, 0, Math.PI * 2); ctx.stroke();
-        ctx.strokeStyle = 'rgba(63,224,255,0.45)'; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R - 0.08, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - w.cool / WARP_COOL)); ctx.stroke();
+        // (on 2-3's white town: the ring in the carve warning's deep cyan, a touch thicker, so it reads on the pale ground)
+        if (whiteTown()) { ctx.strokeStyle = 'rgba(0,120,195,0.95)'; ctx.lineWidth = 0.07; } else ctx.strokeStyle = 'rgba(63,224,255,0.45)';
+        ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R - 0.08, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - w.cool / WARP_COOL)); ctx.stroke();
       }
       // the runner standing on it: the charge fills
       if (P && P.warpOn === w) { ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 0.09; ctx.beginPath(); ctx.arc(w.x, w.y, WARP_R + 0.06, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.min(1, P.warpT / WARP_HOLD)); ctx.stroke(); }
@@ -9039,7 +9041,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         ctx.strokeStyle = '#3a404b'; ctx.lineWidth = 0.05;
         for (const o of [-0.2, 0, 0.2]) { ctx.beginPath(); ctx.moveTo(h.x - 0.4, h.y + o); ctx.lineTo(h.x + 0.4, h.y + o); ctx.stroke(); }
         // resting: a ring filling round the lid until it can be used again, as on the pads and warps
-        if (!ready) { ctx.strokeStyle = 'rgba(143,233,255,.5)'; ctx.lineWidth = 0.05; ctx.beginPath(); ctx.arc(h.x, h.y, 0.56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - h.cool / PIT_COOL)); ctx.stroke(); }
+        if (!ready) { const wt = whiteTown(); ctx.strokeStyle = wt ? 'rgba(0,120,195,0.95)' : 'rgba(143,233,255,.5)'; ctx.lineWidth = wt ? 0.07 : 0.05; ctx.beginPath(); ctx.arc(h.x, h.y, 0.56, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (1 - h.cool / PIT_COOL)); ctx.stroke(); }
       }
     }
     };
