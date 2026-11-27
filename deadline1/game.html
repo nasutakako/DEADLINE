@@ -5997,6 +5997,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function popAt(x, y, cols, n, v0, v1, fd = 0.9) { for (let k = 0; k < n; k++) { const a = Math.random() * Math.PI * 2, v = v0 + Math.random() * (v1 - v0); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.1 + Math.random() * 0.6, c: cols[k % cols.length], up: 1, fd }); } }
   function doSwap(q) {
     q.on = true;
+    // the bombs, launchers and dashes held still in the glass go with it (they are in the shards now): the explosions, the
+    // bombs lying ticking, the launchers in flight and their beams, the dash's trail and every particle; a barrier stays on
+    booms = []; mines = []; rockets = []; beams = []; zaps = []; fxp = []; sparks = []; P.trail = []; P.ddAt = null;
     // the old town bursts: every building, in purple (as it was lit)
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
       if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) popAt(x + 0.5, y + 0.5, ['#b05cff', '#e0c0ff', '#ffffff'], 8, 2, 9, 0.55);
