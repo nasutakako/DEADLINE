@@ -6429,14 +6429,15 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const enemyStep = () => rankPace() ? RANK_STEP : storyPace() ? storyStep() : ENEMY_STEP_LONG;
   const enemyTop = () => rankPace() ? WAVE_TOP : storyPace() ? 3.05 + 24 * storyStep() : ENEMY_MAX;
   // the oni at the top speed this run can reach (shown as MAX rather than a level that only counts on)
-  const oniMaxed = () => !tut && !!P && enemySpeed() >= enemyTop() - 1e-9;
+  const oniMaxed = () => !tut && !!P && oniLvNow() >= WAVE_MAXLV;   // (red at Lv25, the top on every stage)
   // the level the top speed comes at on this stage (shown as Lv23/25)
   // the oni's level as shown: one scale for every stage, the rank race's (Lv1 = 3.05 .. Lv25 = 6.3, a level each WAVE_STEP);
   // slower than Lv1 (○-1's opening) counts as Lv1. Shown over the top this stage reaches (Lv13/13 on 1-3)
   const lvOfSpeed = v => Math.max(1, Math.min(WAVE_MAXLV, 1 + Math.round((v - 3.05) / WAVE_STEP + 1e-9)));
   const oniLvNow = () => lvOfSpeed(enemySpeed()), oniLvCap = () => lvOfSpeed(enemyTop());
   const oniMaxLv = () => rankPace() ? WAVE_MAXLV : 1 + Math.max(0, Math.ceil((enemyTop() - ENEMY_BASE - (Math.min(stageN, 2) - 1) * 0.55) / enemyStep() - 1e-9));
-  const enemySpeed = () => !tut && rankPace() ? waveSpd(level || 1) : tut ? ENEMY_BASE + 0.55 : Math.min(enemyTop(), ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
+  const exitPace = () => stageN <= 3 && exitOpen && !rankRun && !special && !tut && P && P.exitLv != null;
+  const enemySpeed = () => !tut && rankPace() ? waveSpd(level || 1) : exitPace() ? waveSpd(Math.min(WAVE_MAXLV, P.exitLv + (P.exitWaves || 0))) : tut ? ENEMY_BASE + 0.55 : Math.min(enemyTop(), ENEMY_BASE + enemyStep() * (level - 1) + (Math.min(stageN, 2) - 1) * 0.55);
   // the runner's base speed rises with the oni once they would otherwise be faster
   const runnerSpeed = () => Math.max(PLAYER_SPEED, enemySpeed());
 
@@ -6505,7 +6506,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // the exit opens on the right edge, on one of the streets that reach it
       const rows = []; for (let y = riverOn ? 8 : 4; y < ROWS - 1; y += 4) rows.push(y);   // (4-3: not across the river)
       exitY = rows[Math.floor(Math.random() * rows.length)];
-      exitOpen = true; alarmAt = t; klaxon(3, 0.03); shake = reduceMotion ? 0 : Math.max(shake, 0.2);
+      exitOpen = true; alarmAt = t; P.exitWaves = 0; P.exitLv = oniLvNow(); klaxon(3, 0.03); shake = reduceMotion ? 0 : Math.max(shake, 0.2);
       const kp = randomRoad(8); keyPos = { x: kp.x, y: kp.y };
       tone(523, 0.1, 'square', 0.05); setTimeout(() => tone(659, 0.1, 'square', 0.05), 110); setTimeout(() => tone(784, 0.2, 'square', 0.05), 220);
     }
@@ -6549,7 +6550,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // (the survival nights: at most 6 a wave and 25 on the map; the weekly ranking: at most 6 a wave, no cap on the map)
       if (stageN === 4) batch = Math.max(0, Math.min(batch, ONI_WAVE_MAX, ONI_MAP_MAX - enemies.length - pending.length));
       // a story stage with its exit open: the wave there was, one more at once and one more every 15 s after, no cap (no staying on)
-      else if (stageN <= 3 && exitOpen && !rankRun && !special && !tut) batch = [0, 3, 4, 6][stageN] + 1 + Math.floor((t - alarmAt) / 15);
+      // (a story stage with its exit open: each wave one oni more than the last and the oni a level faster (to Lv25), so as not to stay on)
+      else if (stageN <= 3 && exitOpen && !rankRun && !special && !tut) { P.exitWaves = (P.exitWaves || 0) + 1; batch = [0, 3, 4, 6][stageN] + P.exitWaves; }
       else batch = lateWave() || Math.min(batch, ONI_WAVE_MAX);   // (every stage: at most 6 a wave; stage 3 more from 7:00, one more each minute from 9:00)
       waveSeq++; for (let i = 0; i < batch; i++) queueSpawn(); if (rankPace()) waveLvN++;
       nextSpawn = t + spawnGap;
@@ -7192,7 +7194,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     bestCell($('rBest'), top);
     $('rBest').className = isNew ? 'new' : '';
     $('rMsg').textContent = isNew
-      ? `自己ベスト更新。最後は鬼の速さ Lv${oniMaxed() ? oniLvCap() : oniLvNow()}/${oniLvCap()} だった。`
+      ? `自己ベスト更新。最後は鬼の速さ Lv${oniLvNow()}/${WAVE_MAXLV} だった。`
       : top && top.escaped ? `${stageLabel(stageN)}で確保された。このステージは ${fmtTime(top.time)} で脱出済み。`
       : `${stageLabel(stageN)}で確保された。ベストまであと ${Math.max(0, (top ? top.time : 0) - t).toFixed(1)} 秒。`;
     tip('rMono', stageN);
@@ -9183,7 +9185,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ui.lv.textContent = 'Lv' + (level || 1);
     ui.kills.textContent = kills || 0;
     $('pKills').textContent = kills || 0; $('pCount').textContent = P && P.stompN || 0;
-    { const mx = oniMaxed(); $('pLv').textContent = `Lv${mx ? oniLvCap() : oniLvNow()}/${oniLvCap()}`; $('pSpd').classList.toggle('max', mx); }
+    { const mx = oniMaxed(); $('pLv').textContent = `Lv${oniLvNow()}/${WAVE_MAXLV}`; $('pSpd').classList.toggle('max', mx); }
     { const b = stageBest(recKey(sN)); ui.best.textContent = b ? fmtTime(b.time) : '--'; }
     if (playing) {
       ui.nextLabel.textContent = `次の鬼(${warnLeft != null ? pending.length : spawnBatch()}体)まで ${left.toFixed(1)}秒`;
@@ -12144,7 +12146,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec(head, goal)}
       ${sec('補給', [...supply, `爆弾は${MINE_MAX}個まで持てる`, n >= 2 ? '鬼を[100体]倒すごとに[ランチャー]が届く' : '', '「!」を5回踏むごとに、バリアが1個届く(バリアは1個まで持てて、持っていたら自動で装着される。どちらも埋まっていたら、かわりに爆弾が2個届く)', n >= 2 ? 'ステージが始まるときに、補給アイテムを1つ選べる' : ''])}
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT()])}
-      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは鬼がどんどん増える。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
+      <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは、鬼が出るたびに1体ずつ増えて1レベルずつ速くなる(Lv25まで)。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
       ${n === 3 ? sec('時間で変わること', ['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告。出口の近くはふさがらない)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告。出口の近くは削れない)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる']) : ''}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
