@@ -5902,8 +5902,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // picked again in the new one. A replay builds each town from its seed
   const SWAP_WARN = 7, SWAP_FIRST = 480, SWAP_EVERY = 360;   // (8:00, 14:00, 20:00, 26:00, ...)
   let swaps = [];   // { at, seed, on }
-  // the moment it comes: the run stands still for 2 s with the screen white, the glass cracking (ピキピキ) through the
-  // second of them, and then it all bursts and the new town is there (the clock does not run meanwhile)
+  // the moment it comes: the run stands still for the show (SWAP_SHOW s, see drawSwapWhite), and then it all bursts and the new town is there (the clock does not run meanwhile)
   let swapFx = null;   // { q, k: seconds in, cr: cracked yet }
   // the map white (the town and all in it lost to sight) for 1.5 s; then, half a second before it breaks, the old town back
   // under a pane of glass over the whole map, the pane cracking from the middle outwards into countless shards, the
@@ -5935,31 +5934,30 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 0.03; ctx.stroke();
     ctx.restore();
   }
+  // the show at a town swap (all standing still): 0-1 s the pane over the map cracking from the middle out (the crack
+  // sounding), 1-1.5 s held cracked and silent, 1.5-2.5 s a blinding light swelling from the middle until all is white,
+  // 2.5 s the burst
+  const SWAP_SHOW = 2.5;
   function drawSwapWhite() {
-    // (0-0.5 s: a blinding white light swelling out from the middle over the map; 0.5-1 s: all white, the glass cracking)
-    if (swapFx.k < 0.5) {
-      const cx = COLS / 2, cy = ROWS / 2, R = Math.hypot(COLS, ROWS) / 2, r = R * Math.pow(swapFx.k / 0.5, 0.8) * 1.15 + 0.3;
-      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, COLS, ROWS); ctx.clip();
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.25);
-      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.72, 'rgba(255,255,255,1)'); g.addColorStop(0.82, 'rgba(255,250,235,0.85)'); g.addColorStop(1, 'rgba(255,245,225,0)');
-      ctx.fillStyle = g; ctx.fillRect(0, 0, COLS, ROWS);
-      ctx.restore(); return;
-    }
-    if (swapFx.k < 1) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, COLS, ROWS); return; }
-    // (the pane: the old town back, cracking from the middle out over 0.3 s)
     if (!swapFx.snap) {
       // (the frame as drawn so far, town and frozen oni and runner and all, cut to the map: the picture in the glass)
       const m = ctx.getTransform(), w = Math.round(COLS * m.a), h = Math.round(ROWS * m.d), c = document.createElement('canvas');
       c.width = Math.max(1, w); c.height = Math.max(1, h); c.getContext('2d').drawImage(cv, Math.round(m.e), Math.round(m.f), w, h, 0, 0, w, h);
       swapFx.snap = c; swapFx.img = c;
     }
-    const u = Math.min(1, (swapFx.k - 1) / 0.5), img = swapFx.img;   // (1-1.5 s: cracking from the middle out; 1.5-2 s: held, silent)
+    const k = swapFx.k, u = Math.min(1, k / 1), img = swapFx.img;
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, COLS, ROWS); ctx.clip();
     ctx.fillStyle = '#05060a'; ctx.fillRect(0, 0, COLS, ROWS);
     if (img) ctx.drawImage(img, 0, 0, COLS, ROWS);
     for (const sh of swapFx.shards) { const g = Math.max(0, Math.min(1, u * (SHARD_M + 1) - sh.j)); if (g > 0) drawShard(img, sh, sh.ox * g, sh.oy * g, sh.rot * g, 1, 1); }
     const gl = ctx.createLinearGradient(0, 0, COLS, ROWS); gl.addColorStop(0, 'rgba(255,255,255,0.18)'); gl.addColorStop(0.5, 'rgba(255,255,255,0.03)'); gl.addColorStop(1, 'rgba(180,200,255,0.1)');
     ctx.fillStyle = gl; ctx.fillRect(0, 0, COLS, ROWS);
+    if (k >= 1.5) {
+      const cx = COLS / 2, cy = ROWS / 2, R = Math.hypot(COLS, ROWS) / 2, r = R * Math.pow(Math.min(1, (k - 1.5) / 1), 0.85) * 1.2 + 0.2;
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r * 1.25);
+      g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.72, 'rgba(255,255,255,1)'); g.addColorStop(0.84, 'rgba(255,250,235,0.85)'); g.addColorStop(1, 'rgba(255,245,225,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, COLS, ROWS);
+    }
     ctx.restore();
   }
   // after the burst: the shards flying out from the middle, turning, shrinking as they fall away, fading (1.6 s)
@@ -5968,15 +5966,17 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function drawGlassFly() {
     const e = (performance.now() - glassFly.at) / 1000; if (e > GLASS_FLY) { glassFly = null; return; }
     const f = e / GLASS_FLY;
+    if (e < 0.35) { ctx.fillStyle = `rgba(255,255,255,${1 - e / 0.35})`; ctx.fillRect(0, 0, COLS, ROWS); }   // (the white going off the new town)
     ctx.save(); ctx.beginPath(); ctx.rect(-2, -2, COLS + 4, ROWS + 4); ctx.clip();
     for (const sh of glassFly.shards) drawShard(glassFly.img, sh, sh.ox + sh.vx * e, sh.oy + sh.vy * e + 1.5 * e * e, sh.rot + sh.spin * e, Math.max(0.05, 1 - f * 0.85), Math.max(0, 1 - f * f));
     ctx.restore();
   }
-  function glassCrack() {
-    sw(78, 52, 0.55, 'sawtooth', 0.07, 0.5); tn(46, 0.5, 'sine', 0.12, 38); nzs(0.5, 0.07, 'bandpass', 600, 3800, 1.8);
-    for (let i = 0; i < 16; i++) { const at = Math.pow(i / 16, 0.75) * 0.46; nz(0.015 + Math.random() * 0.03, 0.2 + Math.random() * 0.2, 'bandpass', 1200 + Math.random() * 4200, 0.9, at); }
-    for (const at of [0.08, 0.27, 0.41]) { nz(0.09, 0.32, 'highpass', 700, 0.7, at); tn(180 + Math.random() * 90, 0.12, 'sawtooth', 0.06, 60, at); }
+  function glassCrack() {   // (a second of it, as the cracks run out)
+    sw(80, 50, 1.0, 'sawtooth', 0.07, 0.55); tn(46, 0.95, 'sine', 0.12, 36); nzs(0.95, 0.07, 'bandpass', 500, 3800, 1.8);
+    for (let i = 0; i < 26; i++) { const at = Math.pow(i / 26, 0.75) * 0.92; nz(0.015 + Math.random() * 0.03, 0.2 + Math.random() * 0.2, 'bandpass', 1200 + Math.random() * 4200, 0.9, at); }
+    for (const at of [0.12, 0.42, 0.66, 0.86]) { nz(0.09, 0.32, 'highpass', 700, 0.7, at); tn(170 + Math.random() * 100, 0.12, 'sawtooth', 0.06, 60, at); }
   }
+
 
   // and the town turns into another and back by turns: at 8:00 (20:00, 32:00, ...) 1-3 to 3-1 (by day), 2-3 to 黒鬼ラッシュ's
   // black neon city, 3-3 to the pale stone 影の街 by day (3-1's look of a while ago), 4-3 to 3-1 at dusk with 4-3's river
@@ -6023,7 +6023,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (the dark before it was a blackout too: as each blackout ends, one launcher drops in the street of the new town)
     { const r = randomRoad(4); items.push({ x: r.x, y: r.y, born: t, rk: true, ex: true }); setTimeout(dropChime, 300); }
     flow(Math.floor(P.x), Math.floor(P.y));
-    flash = Math.max(flash, 0.9); shake = reduceMotion ? 0 : Math.max(shake, 0.7);
+    shake = reduceMotion ? 0 : Math.max(shake, 0.7);   // (no yellow flash: the white is going off it already)
     noise(0.5, 0.06); tone(70, 0.8, 'sawtooth', 0.08, 30); sfx.shatter(); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
   }
   // the warning: every building glowing purple with a purple outline, pulsing (as a street about to shut or a building
@@ -6542,8 +6542,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function update(dt) {
     if (swapFx) {   // (the 2 s before the burst: nothing moves, the clock stands)
       swapFx.k += dt;
-      if (!swapFx.cr && swapFx.k >= 0.5) { swapFx.cr = true; glassCrack(); }
-      if (swapFx.k >= 2) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); }
+      if (!swapFx.cr) { swapFx.cr = true; glassCrack(); }
+      if (swapFx.k >= SWAP_SHOW) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); }
       return;
     }
     t += dt; total += dt;
