@@ -6089,7 +6089,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function popAt(x, y, cols, n, v0, v1, fd = 0.9) { for (let k = 0; k < n; k++) { const a = Math.random() * Math.PI * 2, v = v0 + Math.random() * (v1 - v0); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.1 + Math.random() * 0.6, c: cols[k % cols.length], up: 1, fd }); } }
   function doSwap(q) {
     q.on = true;
-    overSwaps++; overBase = waveLvN;   // (the top higher: Lv27 at 8:00, 28 at 14:00 and on)
+    overSwaps++; overBase = waveLvN; swapTough = rankRun;   // (the top higher: Lv27 at 8:00, 28 at 14:00 and on)
     // the bombs, launchers and dashes held still in the glass go with it (they are in the shards now): the explosions, the
     // bombs lying ticking, the launchers in flight and their beams, the dash's trail and every particle; a barrier stays on
     booms = []; mines = []; rockets = []; beams = []; zaps = []; fxp = []; sparks = []; P.trail = []; P.ddAt = null;
@@ -6438,7 +6438,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = stageN === 3 && special && !special.plain ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    shift = null; seals = []; carves = []; swaps = []; swapFx = null; glassFly = null; overBase = null; overSwaps = 0; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; seals = []; carves = []; swaps = []; swapFx = null; glassFly = null; overBase = null; overSwaps = 0; swapTough = false; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
@@ -6604,7 +6604,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the town swaps (the rank race, the specials) lift the top, 0.2 faster a level: Lv27 6.8 at 8:00, Lv28 7.0 at
   // 14:00 and on; after each, the oni climb to it a level a wave, from the top they were at
   const OVER_MAXLV = 28, OVER_STEP = 0.2, OVER_TOP = WAVE_TOP + (OVER_MAXLV - WAVE_MAXLV) * OVER_STEP;
-  let overBase = null, overSwaps = 0;   // (waves queued at the last town swap; town swaps so far)
+  let overBase = null, overSwaps = 0, swapTough = false;   // (swapTough: the first wave after a rank race's town swap brings a black barrier oni)
+    // (waves queued at the last town swap; town swaps so far)
   const overOn = () => rankPace() && overSwaps > 0;
   const capOf = n => n > 0 ? Math.min(OVER_MAXLV, WAVE_MAXLV + 1 + n) : WAVE_MAXLV;   // (the top after n town swaps)
   const lvCap = () => overOn() ? capOf(overSwaps) : WAVE_MAXLV;
@@ -6895,6 +6896,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const s of pending) if (!s.hold) s.t -= dt;
     // a wave steps out together, in one frame; an oni the 6:00 rule marked as barrier counts from the start
     let toughWave = pending.some(s => s.t <= 0 && s.tough);
+    // (the rank race: the first wave out after a town swap always has a black barrier oni in it)
+    let mustTough = false;
+    if (swapTough && rankRun) { const out = pending.filter(s => s.t <= 0 && !s.tut); if (out.length) { swapTough = false; mustTough = true; if (!out.some(s => s.black)) out[0].black = true; } }
     for (const s of pending.filter(s => s.t <= 0)) {
       // from stage 2 a few oni are tough: they survive one explosion
       const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
@@ -6912,7 +6916,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         // (from 4:00, now and then one of them black and armoured: a black barrier oni, one about at a time)
         tough = t >= special.toughAt && !enemies.some(o => o.tough && !o.dead) && Math.random() < special.toughRate; }
       // the rank race past its first town swap: now and then a black one comes armoured (a black barrier oni, one about at a time)
-      if (rankRun && overSwaps > 0 && black && !s.tut) tough = !enemies.some(o => o.black && o.tough && !o.dead) && Math.random() < RANK_TOUGH_BLACK;
+      if (rankRun && overSwaps > 0 && black && !s.tut) { tough = mustTough || (!enemies.some(o => o.black && o.tough && !o.dead) && Math.random() < RANK_TOUGH_BLACK); if (tough) mustTough = false; }
       // a practice oni is exactly the kind the tutorial asked for
       let bomber = !!s.bomber && !black && !daily;
       if (bomber) tough = amb = false;
@@ -12372,7 +12376,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼は新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、4分ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず3体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼は8分の入れ替えのあとは4体、14分からは5体いるように出てくる。8分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼は8分の入れ替えのあとは4体、14分からは5体いるように出てくる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が必ず1体まざる。そのあともまれにまざる(マップに1体まで)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
