@@ -5971,6 +5971,16 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const sh of glassFly.shards) drawShard(glassFly.img, sh, sh.ox + sh.vx * e, sh.oy + sh.vy * e + 1.5 * e * e, sh.rot + sh.spin * e, Math.max(0.05, 1 - f * 0.85), Math.max(0, 1 - f * f));
     ctx.restore();
   }
+  // プツッ: a machine breaking off — a hard click, a crackle of noise and a low buzz dropping dead
+  function glitchCut() {
+    nz(0.012, 0.5, 'highpass', 3000); nz(0.06, 0.18, 'bandpass', 2600, 6, 0.012);
+    tn(140, 0.09, 'sawtooth', 0.09, 28, 0.01); tn(1800, 0.025, 'square', 0.05, 300, 0.005);
+  }
+  // シュイーン: the light swelling — a rising whine and a rush of air climbing with it, over the 2 s
+  function lightSwell() {
+    sw(260, 2600, 2, 'sine', 0.05, 0.92); sw(130, 1300, 2, 'sawtooth', 0.018, 0.92); sw(520, 5200, 2, 'triangle', 0.02, 0.95);
+    nzs(2, 0.09, 'bandpass', 400, 7000, 2.5);
+  }
   function glassCrack() {   // (1.5 s of it: the fractures come thick at first and thin out, ピシ…ピシ, as the cracks slow)
     sw(80, 50, 1.4, 'sawtooth', 0.07, 0.4); tn(46, 1.3, 'sine', 0.12, 36); nzs(1.2, 0.07, 'bandpass', 600, 3800, 1.8);
     for (let i = 0; i < 28; i++) { const at = Math.pow(i / 28, 1.8) * 1.42; nz(0.015 + Math.random() * 0.03, 0.2 + Math.random() * 0.2, 'bandpass', 1200 + Math.random() * 4200, 0.9, at); }
@@ -6553,6 +6563,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (swapFx) {   // (the 2 s before the burst: nothing moves, the clock stands)
       swapFx.k += dt;
       if (!swapFx.cr) { swapFx.cr = true; glassCrack(); }
+      if (!swapFx.lit && swapFx.k >= 2) { swapFx.lit = true; lightSwell(); }
       if (swapFx.k >= SWAP_SHOW) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); }
       return;
     }
@@ -6623,7 +6634,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         else { swaps.push({ at, seed: (Math.random() * 4294967296) >>> 0, on: false }); klaxon(3, 0.04); }
       }
       // (from the moment it goes white everything stands still, oni and runner where they are, till the burst)
-      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false, img: mapCache, shards: makeShards() }; flash = 0; bgmStop(); }
+      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false, img: mapCache, shards: makeShards() }; flash = 0; bgmCut(); glitchCut(); }
     }
     if (sealRun()) {
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
@@ -9447,6 +9458,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     b.out.gain.cancelScheduledValues(now); b.out.gain.setValueAtTime(Math.max(0.0001, b.out.gain.value), now);
     b.out.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
     setTimeout(() => b.out.disconnect(), 600);
+  }
+  // (the music cut dead at once, no fade: the town swap)
+  function bgmCut() {
+    for (const b of [bgmLayer, bgm]) if (b) { clearInterval(b.timer); const now = ac.currentTime; b.out.gain.cancelScheduledValues(now); b.out.gain.setValueAtTime(0, now); setTimeout(() => b.out.disconnect(), 100); }
+    bgmLayer = null; bgm = null;
   }
   function bgmStop() {
     if (bgmLayer) { bgmFade(bgmLayer); bgmLayer = null; }
