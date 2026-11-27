@@ -1785,7 +1785,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         <button class="pick launcher" data-item="launcher" type="button"><em class="pic" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 19l3-1 8-8a4.2 4.2 0 0 0 1-5 4.2 4.2 0 0 0-5 1l-8 8-1 3z"/><path d="M13.5 7.5l3 3"/><path d="M6 14l4 4"/><path d="M4.5 21.5l2.5-2.5"/></svg></em><b>2 ・ ランチャー</b><span><i>前方の通路の</i><i>鬼を全部倒す</i></span></button>
       </div>
       <p class="stepitem" id="spItemMsg">補給アイテムを1つ選んで、スタート。<small class="spnote">バリアは手持ち1個まで(装着中の1個とは別)</small></p>
-      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 4分55秒から</button><button class="ghost stepmap" id="spTest4Btn" type="button" hidden>テスト: 7分52秒から</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
+      <div class="row sprow"><button class="go stepmap" id="spNextBtn" type="button">アイテム選択へ</button><button class="go stepitem" id="spGoBtn" type="button">スタート</button><button class="ghost stepmap" id="spInfoBtn" type="button">ステージ詳細</button><button class="ghost stepmap" id="spRankBtn" type="button" hidden>ランキング</button><button class="ghost stepmap" id="spTestBtn" type="button" hidden>テスト: 12分から</button><button class="ghost stepmap" id="spTest2Btn" type="button" hidden>テスト: 14分55秒から</button><button class="ghost stepmap" id="spTest3Btn" type="button" hidden>テスト: 4分55秒から</button><button class="ghost stepmap" id="spTest4Btn" type="button" hidden>テスト: 7分52秒から</button><button class="ghost stepmap sptry" id="spTry1" type="button" hidden>7:52〜 1-3</button><button class="ghost stepmap sptry" id="spTry2" type="button" hidden>7:52〜 2-3</button><button class="ghost stepmap sptry" id="spTry3" type="button" hidden>7:52〜 3-3</button><button class="ghost stepmap sptry" id="spTry4" type="button" hidden>7:52〜 4-3</button><button class="ghost stepitem" id="spPrevBtn" type="button">戻る</button><button class="ghost toright" id="spBackBtn" type="button">タイトルへ</button></div>
     </div>
   </div>
 
@@ -2005,7 +2005,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ---------- weekly ranking: stage 3 with no way out, on one map a week (Japan time, the week from Monday) ----------
   let rankRun = false;
   // (a try-out for the late game, not kept: a ranking run that starts at 12:00, nothing of it saved or sent)
-  let testLate = 0, testRk = false;
+  let testLate = 0, testRk = false, testSkin = null;   // (testSkin: a try-out of the rank race on a map of one's choosing)
   // replays (see the recorder further down): the ranking run's map seed, its notes, the one playing, what its runner wore
   let repSeed = 0, rec = null, rp = null, repEq = null;
   // whether the map's first pit was moved for the stage 3 tutorial (kept with a replay, so it builds the same pits)
@@ -9147,7 +9147,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     hudKey = key;
     ui.time.textContent = fmt(t || 0);
     ui.stageNo.textContent = sN;
-    const SN = sN === 4 && daily ? '生存課題 ' + daily.name : sN === 3 && special ? special.name :   /* (the HUD's corner: the special's name alone, so it keeps to two lines) */ sN === 3 && rankRun ? `ランクレース ${weekMapName()}` : `ステージ${sN} ${mapName(sN)}`;
+    const SN = sN === 4 && daily ? '生存課題 ' + daily.name : sN === 3 && special ? special.name :   /* (the HUD's corner: the special's name alone, so it keeps to two lines) */ sN === 3 && rankRun ? `ランクレース ${testLate && testSkin ? MAP_NAMES[testSkin][2] : weekMapName()}` : `ステージ${sN} ${mapName(sN)}`;
     { const k = itemCur(), n = bag.filter(x => x === k).length, kinds = ITEM_KINDS.filter(x => bag.includes(x)).length;
       $('itemLabel').textContent = bag.length ? ITEM_SHORT[k] : 'アイテム'; $('itemLabel').className = bag.length ? k : '';
       ui.itemName.textContent = bag.length ? `×${n}` : 'なし'; ui.itemName.className = bag.length ? k : '';
@@ -10870,7 +10870,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // ---------- flow control ----------
   function start(n = 1, item, skin) {
     if (!tutReplay && !lifeUse()) return;
-    misEnd(); mapSkin = skin || (n === 3 && special ? special.skin : n === 3 && rankRun ? weekSkin() : n <= 3 ? mapPick(n) : n === 4 && dailyLook ? dailyLook.skin : 'd1');
+    misEnd(); mapSkin = skin || (n === 3 && special ? special.skin : n === 3 && rankRun ? (testLate && testSkin ? testSkin : weekSkin()) : n <= 3 ? mapPick(n) : n === 4 && dailyLook ? dailyLook.skin : 'd1');
     initAudio(); bgmStop();  // the count is heard alone; the stage's stand-by music comes back on GO
     ui.title.hidden = true; ui.over.hidden = true; ui.pause.hidden = true; ui.clear.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true;
     document.body.classList.remove('picking');
@@ -11230,7 +11230,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
   pad.addEventListener('contextmenu', e => e.preventDefault());
 
-  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; special = null; testLate = 0; town = null; townBase = null; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
+  const toTitle = () => { misEnd(); tutQuit(); rankRun = false; special = null; testLate = 0; testSkin = null; town = null; townBase = null; if (mapSkin !== 'd1') { mapSkin = 'd1'; if (grid) { genMap(); resize(); } } state = 'title'; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true; $('startPickScreen').hidden = true; $('briefScreen').hidden = true; ui.title.hidden = false; previewMap(2); renderRecords(); bgmStart(); };
   // stage 2 and 3 start with an item pick, like arriving from the previous stage
   // stage 1 from the title: a short how-to first, then the start button
   // how-to rows: when only a few characters spill onto a row of their own, shrink that row's type a touch
@@ -12045,7 +12045,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   function begin(n) {
     tap(); daily = null; rankRun = false; special = null;
     if (n < 2) { start(n); return; }
-    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest4Btn').hidden = true; $('spTest3Btn').hidden = !(ART_ONLY && n === 3); spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
+    testLate = 0; pendingStart = n; state = 'startpick'; $('spRk').hidden = true; $('spRankBtn').hidden = true; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest4Btn').hidden = true; for (let k = 1; k <= 4; k++) $('spTry' + k).hidden = true; $('spTest3Btn').hidden = !(ART_ONLY && n === 3); spStep('map'); mapSkin = n <= 3 ? mapPick(n) : 'd1'; bgmStart(songFor(n)); previewMap(n, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     if (n === 4) {
       daily = DAILY[dailyToday()];
@@ -12187,7 +12187,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     specialN = S.ns ? S.ns[Math.floor(Math.random() * S.ns.length)] : 3;   // (a map of its series, drawn afresh each time)
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = S.skin; bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
-    $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = !S.ranked; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = $('spTest4Btn').hidden = true;
+    $('spMis').hidden = true; $('spMaps').hidden = true; $('spRk').hidden = true; $('spRankBtn').hidden = !S.ranked; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = $('spTest4Btn').hidden = true; for (let k = 1; k <= 4; k++) $('spTry' + k).hidden = true;
     $('spKicker').textContent = `スペシャル ${S.name} ・ ${MAP_NAMES[S.skin][specialN - 1]}`; bestLine('spBest', 3); rkStat(S);
     $('spMsg').textContent = `${S.tag}\n・出てくる鬼はすべて、自分より速い黒い鬼(4分からはまれに黒いバリア鬼)\n・出口は開かない。捕まるまで逃げ続ける\n・マップはシリーズ2の3つからランダム。仕掛けは落とし穴、ワープポイント、加速装置${S.pads}か所`;
     $('startPickScreen').hidden = false;
@@ -12212,7 +12212,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     pendingStart = 3; state = 'startpick'; spStep('map'); mapSkin = weekSkin(); bgmStart(songFor(3)); previewMap(3, true);
     ui.title.hidden = true; ui.over.hidden = true; ui.clear.hidden = true; ui.pause.hidden = true;
     $('spMis').hidden = true; $('spMaps').hidden = true;
-    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = $('spTest4Btn').hidden = !ART_ONLY; testLate = 0;
+    $('spKicker').textContent = `ランクレース ${weekMapName()}`; bestLine('spBest', 3); rkStat(); $('spRankBtn').hidden = false; $('spTestBtn').hidden = $('spTest2Btn').hidden = $('spTest3Btn').hidden = $('spTest4Btn').hidden = !ART_ONLY; for (let k = 1; k <= 4; k++) $('spTry' + k).hidden = false; testSkin = null; testLate = 0;
     $('spMsg').textContent = `ランクレース。今週のマップは${weekMapName()}。\n・出口は開かない。捕まるまでの逃走時間を世界と競う\n・報酬: 週の終わりの順位で★(1位★40〜100位以内★10、それ以外も1回遊べば★5)${MAP_CHOICE && ROUTE[mapSkin] === 'shadow' ? '\n・このマップでは影分身ダッシュが自動で使える(装備に関係なく)' : ''}\n補給アイテムを1つ選ぶと始まる。`;
     $('startPickScreen').hidden = false;
     mono('spMono', 3, 'standby');
@@ -12256,7 +12256,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   $('spNextBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('item'); });
   $('spPrevBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStep('map'); });
   $('spGoBtn').addEventListener('click', () => { if (state === 'startpick') tap(), spStart(); });
-  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 295], ['spTest4Btn', 472]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || special || !(rankRun || (id === 'spTest3Btn' && pendingStart === 3))) return; tap(); testLate = at; testRk = rankRun; spStart(); misLive = false; misRender(); });
+  for (const [id, at] of [['spTestBtn', 720], ['spTest2Btn', 895], ['spTest3Btn', 295], ['spTest4Btn', 472]]) $(id).addEventListener('click', () => { if (!ART_ONLY || state !== 'startpick' || special || !(rankRun || (id === 'spTest3Btn' && pendingStart === 3))) return; tap(); testLate = at; testRk = rankRun; testSkin = null; spStart(); misLive = false; misRender(); });
+  // (for now, on the site as well: the rank race from 7:52 on any of the four maps, as a try-out (nothing recorded))
+  for (let k = 1; k <= 4; k++) $('spTry' + k).addEventListener('click', () => { if (state !== 'startpick' || !rankRun || special) return; tap(); testLate = 472; testRk = true; testSkin = 'd' + k; spStart(); misLive = false; misRender(); });
   // the item button uses the chosen item; ◀ ▶ step through the ones in the bag
   // the play buttons answer the moment a finger lands: on the pointer event, and on the touch event too (iPhone
   // sometimes holds back a second finger's pointer event while the stick is held); whichever comes first, once
