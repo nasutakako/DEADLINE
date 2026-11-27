@@ -4500,7 +4500,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     m.scale(TX * dpr, TY * dpr);
     // (黒鬼ラッシュ: series 2's neon city in black and grey, on all three of its maps)
     if (mapSkin === 'd2' && stageN === 3 && special && special.look === 'black') { renderNeon(m, 'black'); return; }
-    if (stageN === 3 && town && town.look === 'black') { renderNeon(m, 'black'); return; }
+    if (stageN === 3 && town && (town.look === 'black' || town.look === 'white')) { renderNeon(m, town.look); return; }
     if (stageN === 3 && town && town.look === 'stone') { renderShadow(m); return; }   // (its stage-1 colours: pale stone in the sun)
     if (mapSkin === 'd2') { if (mapStage() === 1) renderVault(m); else renderNeon(m); return; }
     // (3-1: the pale stone 影の街 by day (renderShadow's stage-1 colours); the city by day is now only 1-3's turned town
@@ -4516,7 +4516,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // stages 2-3: a neon grid city. Dark asphalt with a faint tile grid, glowing lane dashes,
   // buildings as black slabs outlined in light, dot-matrix plazas, glows at the crossings.
   // look 'black' (黒鬼ラッシュ): near-black ground and blocks, the neon in greys only
+  // look 'white' (2-3's turned town in the rank race): the same city by day, all white — pale ground, white slabs
+  // with a soft shade under them, the neon edges in a deeper cyan and magenta so they still read
   function renderNeon(m, look) {
+    if (look === 'white') { renderNeonWhite(m); return; }
     const rnd = mapRnd(), blk = look === 'black';
     const A = blk ? [200, 200, 200] : mapStage() >= 3 ? [255, 43, 214] : [0, 229, 255], B = blk ? [110, 110, 110] : mapStage() >= 3 ? [255, 70, 70] : [255, 43, 214];
     const c = (k, a) => `rgba(${k[0]},${k[1]},${k[2]},${a})`;
@@ -4570,6 +4573,59 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const [wx, wy] of windows) { m.fillStyle = rnd() < (blk ? 0.3 : 0.5) ? c(A, 0.75) : c(B, 0.6); m.fillRect(wx, wy, 0.07, 0.07); }
     // a hard neon frame round the city
     m.strokeStyle = c(A, 0.6); m.lineWidth = 0.06; m.strokeRect(0.04, 0.04, COLS - 0.08, ROWS - 0.08);
+  }
+
+  function renderNeonWhite(m) {
+    const rnd = mapRnd(), A = [0, 170, 220], B = [225, 30, 170];
+    const c = (k, a) => `rgba(${k[0]},${k[1]},${k[2]},${a})`;
+    m.fillStyle = '#dfe6ef'; m.fillRect(0, 0, COLS, ROWS);
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      const v = grid[idx(x, y)];
+      if (v === 1) continue;
+      m.fillStyle = v === 2 ? '#e9eff7' : '#d6dee9'; m.fillRect(x, y, 1, 1);
+      m.strokeStyle = c(A, 0.12); m.lineWidth = 0.02; m.strokeRect(x, y, 1, 1);
+      if (v === 2) { m.fillStyle = c(A, 0.3); for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) m.fillRect(x + 0.11 + a * 0.25, y + 0.11 + b * 0.25, 0.04, 0.04); }
+    }
+    m.strokeStyle = c(B, 0.45); m.lineWidth = 0.04; m.setLineDash([0.3, 0.22]);
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (grid[idx(x, y)] !== 0) continue;
+      const h = walk(x - 1, y) && walk(x + 1, y) && !walk(x, y - 1) && !walk(x, y + 1);
+      const vv = walk(x, y - 1) && walk(x, y + 1) && !walk(x - 1, y) && !walk(x + 1, y);
+      m.beginPath();
+      if (h) { m.moveTo(x, y + 0.5); m.lineTo(x + 1, y + 0.5); }
+      if (vv) { m.moveTo(x + 0.5, y); m.lineTo(x + 0.5, y + 1); }
+      m.stroke();
+    }
+    m.setLineDash([]);
+    // light from the top left
+    const g = m.createLinearGradient(0, 0, COLS, ROWS); g.addColorStop(0, 'rgba(255,255,255,0.35)'); g.addColorStop(1, 'rgba(120,140,180,0.12)');
+    m.fillStyle = g; m.fillRect(0, 0, COLS, ROWS);
+    // a soft shade down-right of every slab
+    m.fillStyle = 'rgba(60,80,120,0.18)'; m.beginPath();
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) if (grid[idx(x, y)] === 1) m.rect(x + 0.12, y + 0.14, 1, 1);
+    m.fill();
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (grid[idx(x, y)] !== 1) continue;
+      const sh = blockShade[idx(x, y)], v = Math.round(242 + sh * 12);
+      m.fillStyle = `rgb(${v - 4},${v - 1},${Math.min(255, v + 2)})`; m.fillRect(x, y, 1.002, 1.002);
+      m.strokeStyle = 'rgba(120,140,170,0.12)'; m.lineWidth = 0.02;
+      m.beginPath(); m.moveTo(x, y + 0.5); m.lineTo(x + 1, y + 0.5); m.moveTo(x + 0.5, y); m.lineTo(x + 0.5, y + 1); m.stroke();
+    }
+    m.save(); m.shadowBlur = 4 * dpr;
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
+      if (grid[idx(x, y)] !== 1) continue;
+      const k = blockShade[idx(x, y)] > 0.5 ? A : B;
+      m.strokeStyle = c(k, 0.9); m.shadowColor = c(k, 0.6); m.lineWidth = 0.05;
+      m.beginPath();
+      if (walk(x, y - 1)) { m.moveTo(x, y + 0.03); m.lineTo(x + 1, y + 0.03); }
+      if (walk(x, y + 1)) { m.moveTo(x, y + 0.97); m.lineTo(x + 1, y + 0.97); }
+      if (walk(x - 1, y)) { m.moveTo(x + 0.03, y); m.lineTo(x + 0.03, y + 1); }
+      if (walk(x + 1, y)) { m.moveTo(x + 0.97, y); m.lineTo(x + 0.97, y + 1); }
+      m.stroke();
+    }
+    m.restore();
+    for (const [wx, wy] of windows) { m.fillStyle = rnd() < 0.5 ? c(A, 0.8) : c(B, 0.65); m.fillRect(wx, wy, 0.07, 0.07); }
+    m.strokeStyle = c(A, 0.7); m.lineWidth = 0.06; m.strokeRect(0.04, 0.04, COLS - 0.08, ROWS - 0.08);
   }
 
   // ---- 影踏み (影の街 / 黄昏通り / 月蝕の夜): a city whose shadows live. The light comes from the top-left (the
@@ -5992,7 +6048,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // and the town turns into another and back by turns: at 8:00 (20:00, 32:00, ...) 1-3 to 3-1 (by day), 2-3 to 黒鬼ラッシュ's
   // black neon city, 3-3 to the pale stone 影の街 by day (3-1's look of a while ago), 4-3 to 3-1 at dusk with 4-3's river
   // across the top (no tall blocks, no shade); at 14:00 (26:00, ...) back to the town the run began in (built anew)
-  const TOWN_OF = { d1: { skin: 'd3', n: 1, look: 'day' }, d2: { skin: 'd2', n: 3, look: 'black' }, d3: { skin: 'd3', n: 1, look: 'stone' }, d4: { skin: 'd3', n: 1, look: 'dusk' } };
+  const TOWN_OF = { d1: { skin: 'd3', n: 1, look: 'day' }, d2: { skin: 'd2', n: 3, look: 'white' }, d3: { skin: 'd3', n: 1, look: 'stone' }, d4: { skin: 'd3', n: 1, look: 'dusk' } };
   let town = null, townBase = null;   // { skin, n, look, from }; the map the run began in
   const townRiver = () => stageN === 3 && !!town && town.look === 'dusk';
   function buildTown(seed) {
@@ -10070,7 +10126,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // the shell: leaving the ground 20 steps before the downbeat after the build
     if (st === 12 && (bar === 12 || bar === 28)) bgmFirework(at + 20 * SPS, 20 * SPS, 1, bar);
   }
-  // 剣の舞台 (the battle after the town is torn down): heroic orchestral rock of its own, E minor, 140 BPM. A rock kit,
+  // 剣の舞台 (the battle after the town is torn down): heroic orchestral rock of its own, E minor, 124 BPM. A rock kit,
   // distorted power chords, a supersaw string pad, a bell arpeggio in the quieter half, a violin-like lead. 16 bars,
   // a chord a bar: Em C G D | Em C D B; it opens with the big half (the chords held, the lead an octave up)
   function distSetup(b, echo, fbk, verb) {
@@ -10089,7 +10145,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   ];
   function stepClash(s, at) {
     // (the big half first, then the quieter half: bars 8-15 of the piece, then 0-7)
-    const st = s % 16, bar = (Math.floor(s / 16) + 8) % 16, BEAT = 60 / 140, SPS = BEAT / 4, big = bar >= 8;
+    const st = s % 16, bar = (Math.floor(s / 16) + 8) % 16, BEAT = 60 / 124, SPS = BEAT / 4, big = bar >= 8;
     const [root, q] = CLASH_CH[bar % 8], tri = q === 'm' ? [0, 3, 7] : [0, 4, 7];
     // kit
     if ([0, 6, 8, 10].includes(st) && !(st === 6 && !big)) voice({ f: 95, f2: 42, at, dec: 0.32, v: 0.6, att: 0.002 });
@@ -10113,7 +10169,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       if (big) voice({ type: 'sawtooth', f: midi(n), at, dec: d, v: 0.018, att: 0.04, cut: 2600, det: 8, to: bgm.verb });
     }
   }
-  const SONG_CLASH = { bpm: 140, vol: 0.62, step: stepClash, setup: b => distSetup(b, 60 / 140 * 0.75, 0.22, 2.6) };
+  const SONG_CLASH = { bpm: 124, vol: 0.62, step: stepClash, setup: b => distSetup(b, 60 / 124 * 0.75, 0.22, 2.6) };
   const SONGS4 = {
     1: { bpm: 128, vol: 0.75, step: stepFair, setup: b => cyberFx(b, 60 / 128 * 0.75, 0.3, 1.8) },
     2: { bpm: 112, vol: 0.55, step: stepCrowd, setup: b => cyberFx(b, 60 / 112 * 0.75, 0.32, 2.4) },
