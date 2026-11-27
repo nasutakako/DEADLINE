@@ -5905,6 +5905,58 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // the moment it comes: the run stands still for 2 s with the screen white, the glass cracking (ピキピキ) through the
   // second of them, and then it all bursts and the new town is there (the clock does not run meanwhile)
   let swapFx = null;   // { q, k: seconds in, cr: cracked yet }
+  // the map white (the town and all in it lost to sight) for 1.5 s; then, half a second before it breaks, the old town back
+  // under a pane of glass over the whole map, the pane cracking from the middle outwards into countless shards, the
+  // town in each shard shifted and turned a little (a shadow and a light edge along every crack, so it stands up), and
+  // then it bursts: the shards fly out and fall away over the new town for a while
+  const SHARD_N = 14, SHARD_M = 6;
+  function makeShards() {
+    const cx = COLS / 2, cy = ROWS / 2, R = Math.hypot(COLS, ROWS) / 2 + 1.5;
+    const ang = []; for (let i = 0; i < SHARD_N; i++) ang.push((i + 0.2 + Math.random() * 0.6) / SHARD_N * Math.PI * 2);
+    const rad = [0]; for (let j = 1; j <= SHARD_M; j++) rad.push(R * Math.pow(j / SHARD_M, 1.35) * (j < SHARD_M ? 0.9 + Math.random() * 0.2 : 1.2));
+    const V = rad.map((r, j) => ang.map(a => { if (!j) return [cx, cy]; const aa = a + (Math.random() - 0.5) * 0.25, rr = r * (0.9 + Math.random() * 0.2); return [cx + Math.cos(aa) * rr, cy + Math.sin(aa) * rr]; }));
+    const out = [];
+    for (let j = 0; j < SHARD_M; j++) for (let i = 0; i < SHARD_N; i++) {
+      const i2 = (i + 1) % SHARD_N, pl = j ? [V[j][i], V[j][i2], V[j + 1][i2], V[j + 1][i]] : [V[0][0], V[1][i2], V[1][i]];
+      const mx = pl.reduce((a, p) => a + p[0], 0) / pl.length, my = pl.reduce((a, p) => a + p[1], 0) / pl.length, d = Math.hypot(mx - cx, my - cy) || 1;
+      const push = 0.08 + Math.random() * 0.18, sp = 3 + j * 1.6 + Math.random() * 2;
+      out.push({ pl, j, mx, my, ox: (mx - cx) / d * push + (Math.random() - 0.5) * 0.06, oy: (my - cy) / d * push + (Math.random() - 0.5) * 0.06, rot: (Math.random() - 0.5) * 0.14,
+        vx: (mx - cx) / d * sp, vy: (my - cy) / d * sp, spin: (Math.random() - 0.5) * 5 });
+    }
+    return out;
+  }
+  // one shard of the old town: clipped to its outline, shifted / turned / shrunk / faded as given; its edge with a shadow
+  // and a light line, so the pane reads as broken glass
+  function drawShard(img, sh, dx, dy, rot, sc, a) {
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(sh.mx + dx, sh.my + dy); ctx.rotate(rot); ctx.scale(sc, sc); ctx.translate(-sh.mx, -sh.my);
+    ctx.beginPath(); ctx.moveTo(sh.pl[0][0], sh.pl[0][1]); for (let k = 1; k < sh.pl.length; k++) ctx.lineTo(sh.pl[k][0], sh.pl[k][1]); ctx.closePath();
+    ctx.save(); ctx.clip(); if (img) ctx.drawImage(img, 0, 0, COLS, ROWS); ctx.fillStyle = 'rgba(220,235,255,0.1)'; ctx.fillRect(0, 0, COLS, ROWS); ctx.restore();
+    ctx.lineJoin = 'round'; ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 0.13; ctx.save(); ctx.translate(0.05, 0.06); ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 0.03; ctx.stroke();
+    ctx.restore();
+  }
+  function drawSwapWhite() {
+    if (swapFx.k < 1.5) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, COLS, ROWS); return; }
+    // (the pane: the old town back, cracking from the middle out over 0.3 s)
+    const u = Math.min(1, (swapFx.k - 1.5) / 0.3), img = swapFx.img;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, COLS, ROWS); ctx.clip();
+    ctx.fillStyle = '#05060a'; ctx.fillRect(0, 0, COLS, ROWS);
+    if (img) ctx.drawImage(img, 0, 0, COLS, ROWS);
+    for (const sh of swapFx.shards) { const g = Math.max(0, Math.min(1, u * (SHARD_M + 1) - sh.j)); if (g > 0) drawShard(img, sh, sh.ox * g, sh.oy * g, sh.rot * g, 1, 1); }
+    const gl = ctx.createLinearGradient(0, 0, COLS, ROWS); gl.addColorStop(0, 'rgba(255,255,255,0.18)'); gl.addColorStop(0.5, 'rgba(255,255,255,0.03)'); gl.addColorStop(1, 'rgba(180,200,255,0.1)');
+    ctx.fillStyle = gl; ctx.fillRect(0, 0, COLS, ROWS);
+    ctx.restore();
+  }
+  // after the burst: the shards flying out from the middle, turning, shrinking as they fall away, fading (1.6 s)
+  let glassFly = null;   // { at: performance time, img, shards }
+  const GLASS_FLY = 1.6;
+  function drawGlassFly() {
+    const e = (performance.now() - glassFly.at) / 1000; if (e > GLASS_FLY) { glassFly = null; return; }
+    const f = e / GLASS_FLY;
+    ctx.save(); ctx.beginPath(); ctx.rect(-2, -2, COLS + 4, ROWS + 4); ctx.clip();
+    for (const sh of glassFly.shards) drawShard(glassFly.img, sh, sh.ox + sh.vx * e, sh.oy + sh.vy * e + 1.5 * e * e, sh.rot + sh.spin * e, Math.max(0.05, 1 - f * 0.85), Math.max(0, 1 - f * f));
+    ctx.restore();
+  }
   function glassCrack() {
     for (let i = 0; i < 9; i++) setTimeout(() => { const f = 2400 + Math.random() * 2600; tone(f, 0.035, 'square', 0.03, f * 0.7); if (i % 3 === 2) tone(f * 1.6, 0.025, 'triangle', 0.025); }, i * 95 + Math.random() * 40);
     setTimeout(() => noise(0.12, 0.05), 420);
@@ -5924,12 +5976,12 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const isSwapAt = m => m >= SWAP_FIRST && (m - SWAP_FIRST) % SWAP_EVERY === 0;
   const swapTimes = () => { const a = []; for (let m = SWAP_FIRST; m <= t + SWAP_WARN; m += SWAP_EVERY) a.push(m); return a; };
   const oniPal = e => e.shade ? METAL.shade : e.bomber ? METAL.bomber : e.black ? METAL.black : e.amb ? METAL.amb : METAL.oni;
-  function popAt(x, y, cols, n, v0, v1) { for (let k = 0; k < n; k++) { const a = Math.random() * Math.PI * 2, v = v0 + Math.random() * (v1 - v0); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.1 + Math.random() * 0.6, c: cols[k % cols.length], up: 1, fd: 0.9 }); } }
+  function popAt(x, y, cols, n, v0, v1, fd = 0.9) { for (let k = 0; k < n; k++) { const a = Math.random() * Math.PI * 2, v = v0 + Math.random() * (v1 - v0); sparks.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, a: 1.1 + Math.random() * 0.6, c: cols[k % cols.length], up: 1, fd }); } }
   function doSwap(q) {
     q.on = true;
     // the old town bursts: every building, in purple (as it was lit)
     for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-      if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) popAt(x + 0.5, y + 0.5, ['#b05cff', '#e0c0ff', '#ffffff'], 8, 2, 9);
+      if (grid[idx(x, y)] === 1 && !(riverOn && y >= 3 && y <= 6)) popAt(x + 0.5, y + 0.5, ['#b05cff', '#e0c0ff', '#ffffff'], 8, 2, 9, 0.55);
     }
     // the streets shut and cut so far go with it; the ones warned and still to come are picked again in the new town
     for (const o of seals) if (o.on) o.tiles = [];
@@ -5955,7 +6007,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     { const r = randomRoad(4); items.push({ x: r.x, y: r.y, born: t, rk: true, ex: true }); setTimeout(dropChime, 300); }
     flow(Math.floor(P.x), Math.floor(P.y));
     flash = Math.max(flash, 0.9); shake = reduceMotion ? 0 : Math.max(shake, 0.7);
-    noise(0.8, 0.12); tone(70, 0.8, 'sawtooth', 0.1, 30); sfx.glass(); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
+    noise(0.5, 0.06); tone(70, 0.8, 'sawtooth', 0.08, 30); sfx.shatter(); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
   }
   // the warning: every building glowing purple with a purple outline, pulsing (as a street about to shut or a building
   // about to be cut is shown, in purple)
@@ -6270,7 +6322,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     t = 0; level = stageN === 3 && special ? WAVE_MAXLV : 1; waveLvN = 0; shake = 0; flash = 0; caughtTimer = 0; beatTimer = 0; contUsed = false; contPending = false; $('contScreen').hidden = true;
     spawnGap = 10; nextSpawn = spawnGap; nextItem = ITEM_FIRST;
     stageKillStart = kills; S3 = newRun();
-    shift = null; seals = []; carves = []; swaps = []; swapFx = null; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
+    shift = null; seals = []; carves = []; swaps = []; swapFx = null; glassFly = null; town = null; townBase = null; exitOpen = false; exitY = -1; keyPos = null; hasKey = false; beams = []; rockets = []; P.boostT = 0; P.jumpT = 0; P.saveT = 0; zaps = []; perim = null; decoys = []; elems = []; P.flT = 0; P.iceAt = null;
     flow(Math.floor(P.x), Math.floor(P.y));
     for (let i = 0; i < Math.min(3, stageN); i++) queueSpawn();  // stage 3 opens with 3 oni
     if (rankPace()) waveLvN++;   // (the rank race: those three are Lv1, so the first wave after them is already Lv2)
@@ -6474,7 +6526,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     if (swapFx) {   // (the 2 s before the burst: nothing moves, the clock stands)
       swapFx.k += dt;
       if (!swapFx.cr && swapFx.k >= 1) { swapFx.cr = true; glassCrack(); }
-      if (swapFx.k >= 2) { const q = swapFx.q; swapFx = null; doSwap(q); }
+      if (!swapFx.cr2 && swapFx.k >= 1.5) { swapFx.cr2 = true; for (let i = 0; i < 6; i++) setTimeout(() => { const f = 1800 + Math.random() * 2400; tone(f, 0.03, 'square', 0.025, f * 0.6); }, i * 45); }
+      if (swapFx.k >= 2) { const q = swapFx.q; glassFly = { at: performance.now(), img: swapFx.img, shards: swapFx.shards }; swapFx = null; doSwap(q); }
       return;
     }
     t += dt; total += dt;
@@ -6544,7 +6597,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         else { swaps.push({ at, seed: (Math.random() * 4294967296) >>> 0, on: false }); klaxon(3, 0.04); }
       }
       // (from the moment it goes white the runner cannot be caught, right through till the new town is there)
-      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false }; flash = 0; P.inv = Math.max(P.inv, 0.3); }
+      for (const q of swaps) if (!q.on && t >= q.at && !swapFx) { swapFx = { q, k: 0, cr: false, img: mapCache, shards: makeShards() }; flash = 0; P.inv = Math.max(P.inv, 0.3); bgmStop(); }
     }
     if (sealRun()) {
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
@@ -9138,6 +9191,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     for (const sp of sparks) { ctx.globalAlpha = Math.min(1, Math.max(0, sp.a)); ctx.fillStyle = sp.c; if (sp.st) sparkle(sp.x, sp.y, sp.st * (0.75 + 0.25 * Math.sin(now * 18 + sp.x * 7)), now * 2 + sp.y); else ctx.fillRect(sp.x - 0.05, sp.y - 0.05, 0.1, 0.1); }
     ctx.globalAlpha = 1;
+    if (swapFx) drawSwapWhite();
+    if (glassFly) drawGlassFly();
 
     // overlays in pixel space
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -9151,7 +9206,6 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ctx.fillStyle = state === 'play' ? `rgba(255,207,90,${flash * 0.35})` : `rgba(255,59,48,${flash * 0.45})`;
       ctx.fillRect(0, 0, cv.width, cv.height);
     }
-    if (swapFx) { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cv.width, cv.height); }   // (the white before the town goes, the glass cracking in it)
 
     if (input.stick && state === 'play' && !input.stick.pad) {
       const { x0, y0, dx, dy } = input.stick;
@@ -9312,6 +9366,13 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // 氷結砲: a frosty rush of air rising, with a glassy whistle that rings on (シュイーン…)
     iceFire() { nzs(0.7, 0.12, 'highpass', 1800, 8000, 1); sw(1500, 3600, 0.7, 'sine', 0.03, 0.45); tn(4186, 0.6, 'sine', 0.014, 0, 0.3); tn(5274, 0.5, 'sine', 0.008, 0, 0.42); nzs(1.0, 0.04, 'highpass', 7000, 3000, 1, 0.5); },
     // glass breaking: a crash and shards ringing
+    // a pane breaking: the sharp crack, the rush of it going, the thump, and a shower of shards ringing and falling a while
+    shatter() {
+      nz(0.05, 0.4, 'highpass', 1800); nz(0.4, 0.22, 'highpass', 4200, 0.7, 0.015); nz(1.1, 0.07, 'bandpass', 6800, 1.5, 0.06);
+      tn(120, 0.35, 'sine', 0.1, 45); tn(240, 0.12, 'triangle', 0.05, 90);
+      for (let i = 0; i < 34; i++) { const at = 0.02 + Math.pow(Math.random(), 1.6) * 1.2, f = 2600 + Math.random() * 7400; tn(f, 0.05 + Math.random() * 0.3, Math.random() < 0.55 ? 'sine' : 'triangle', 0.008 + Math.random() * 0.022, f * (0.985 + Math.random() * 0.02), at); }
+      for (let i = 0; i < 10; i++) nz(0.025, 0.05 + Math.random() * 0.05, 'highpass', 5000 + Math.random() * 3000, 1, 0.25 + Math.random() * 0.9);
+    },
     glass() { nz(0.18, 0.18, 'highpass', 2500); for (let i = 0; i < 7; i++) tn(2500 + Math.random() * 3500, 0.25 + Math.random() * 0.3, 'sine', 0.025, 0, Math.random() * 0.15); },
   };
   // the barrier breaking, as the worn barrier would sound
@@ -9956,6 +10017,50 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // the shell: leaving the ground 20 steps before the downbeat after the build
     if (st === 12 && (bar === 12 || bar === 28)) bgmFirework(at + 20 * SPS, 20 * SPS, 1, bar);
   }
+  // 剣戟 (the battle after the town is torn down): a driving heroic battle theme in D minor, 168 BPM. Gallop bass, a
+  // 16th string ostinato, brass stabs, a choir pad, taiko on the changes, and a soaring lead of its own. 16 bars:
+  // Dm Bb C A | Dm F Gm A, two bars each
+  const CLASH_CH = [[50, [0, 3, 7]], [46, [0, 4, 7]], [48, [0, 4, 7]], [45, [0, 4, 7]], [50, [0, 3, 7]], [53, [0, 4, 7]], [55, [0, 3, 7]], [45, [0, 4, 7]]];
+  const CLASH_LEAD = [
+    [[0, 74, 6], [6, 76, 2], [8, 77, 4], [12, 76, 2], [14, 74, 2], [16, 72, 4], [20, 74, 4], [24, 69, 8]],
+    [[0, 70, 6], [6, 72, 2], [8, 74, 4], [12, 77, 4], [16, 79, 6], [22, 77, 2], [24, 74, 8]],
+    [[0, 72, 4], [4, 76, 4], [8, 79, 6], [14, 77, 2], [16, 76, 4], [20, 74, 4], [24, 72, 8]],
+    [[0, 73, 6], [6, 76, 2], [8, 81, 8], [16, 79, 4], [20, 77, 4], [24, 76, 8]],
+    [[0, 74, 4], [4, 77, 4], [8, 81, 6], [14, 79, 2], [16, 77, 4], [20, 76, 4], [24, 74, 8]],
+    [[0, 77, 6], [6, 79, 2], [8, 81, 4], [12, 84, 4], [16, 82, 6], [22, 81, 2], [24, 77, 8]],
+    [[0, 79, 4], [4, 77, 4], [8, 74, 4], [12, 70, 4], [16, 72, 4], [20, 74, 4], [24, 77, 8]],
+    [[0, 76, 6], [6, 77, 2], [8, 79, 4], [12, 81, 4], [16, 85, 8], [24, 81, 8]],
+  ];
+  function stepClash(s, at) {
+    const st = s % 16, bar = Math.floor(s / 16) % 16, seg = bar >> 1, half = bar & 1, BEAT = 60 / 168, SPS = BEAT / 4;
+    const [root, tri] = CLASH_CH[seg], fill = bar % 4 === 3 && st >= 12;
+    // drums: kick on 1 and 3 with a push before 3, snare on 2 and 4 (a roll into every fourth bar), 8th hats
+    if ([0, 7, 8].includes(st) || (half && st === 14)) voice({ f: 110, f2: 42, at, dec: 0.26, v: 0.6, att: 0.002 });
+    if ((st === 4 || st === 12) && !fill) { hiss({ at, dec: 0.13, v: 0.2, type: 'bandpass', f: 1700, q: 0.9 }); voice({ type: 'triangle', f: 200, f2: 120, at, dec: 0.09, v: 0.1 }); }
+    if (fill) { hiss({ at, dec: 0.07, v: 0.08 + (st - 12) * 0.04, type: 'bandpass', f: 1500 + (st - 12) * 300, q: 1 }); voice({ f: 160 - (st - 12) * 25, f2: 70, at, dec: 0.18, v: 0.22, att: 0.002 }); }
+    if (st % 2 === 0) hiss({ at, dec: st % 4 === 2 ? 0.06 : 0.025, v: st % 4 === 2 ? 0.035 : 0.022, f: 9000 });
+    // the change: taiko and a crash, the choir pad for the two bars
+    if (st === 0 && !half) {
+      voice({ f: 88, f2: 40, at, dec: 0.7, v: 0.5, att: 0.003, to: bgm.verb });
+      hiss({ at, dec: 1.3, v: 0.06, f: 6000, to: bgm.verb });
+      for (const c of tri) for (const d of [-6, 6]) voice({ type: 'triangle', f: midi(root + 12 + c), at, dec: BEAT * 7.6, v: 0.012, att: 0.35, vib: 2, det: d, to: bgm.verb });
+    }
+    // gallop bass in 8ths, up an octave on the off-beat of 2 and 4
+    if (st % 2 === 0) voice({ type: 'sawtooth', f: midi(root - 24 + (st === 6 || st === 14 ? 12 : 0)), at, dec: SPS * 1.7, v: 0.12, cut: 520, q: 3 });
+    // the 16th string ostinato: root, fifth, octave, fifth, third, fifth, octave, tenth
+    const arp = [0, 7, 12, 7, tri[1], 7, 12, 12 + tri[1]][st % 8];
+    voice({ type: 'sawtooth', f: midi(root + arp), at, dec: SPS * 0.9, v: 0.011, cut: 2600, q: 1.2, det: st % 2 ? 5 : -5 });
+    // brass stabs on the accents
+    if ([0, 3, 6, 10].includes(st)) for (const c of tri) voice({ type: 'sawtooth', f: midi(root - 12 + c), at, dec: st === 10 ? SPS * 5 : SPS * 2.2, v: 0.02, att: 0.01, cut: 1700, q: 1.4, det: c ? 4 : -4, to: bgm.verb });
+    // the lead: two layers, a touch of vibrato, into the hall
+    for (const [o, n, len] of CLASH_LEAD[seg]) if (o === half * 16 + st) {
+      const d = SPS * len * 0.95;
+      voice({ type: 'sawtooth', f: midi(n), at, dec: d, v: 0.028, att: 0.015, cut: 3600, q: 1, vib: len >= 6 ? 4 : 0, to: bgm.verb });
+      voice({ type: 'square', f: midi(n - 12), at, dec: d, v: 0.012, att: 0.015, cut: 2200, det: 6 });
+      voice({ type: 'sine', f: midi(n), at, dec: d, v: 0.02, att: 0.02, to: bgm.echo });
+    }
+  }
+  const SONG_CLASH = { bpm: 168, vol: 0.6, step: stepClash, setup: b => cyberFx(b, 60 / 168 * 0.75, 0.22, 2.6) };
   const SONGS4 = {
     1: { bpm: 128, vol: 0.75, step: stepFair, setup: b => cyberFx(b, 60 / 128 * 0.75, 0.3, 1.8) },
     2: { bpm: 112, vol: 0.55, step: stepCrowd, setup: b => cyberFx(b, 60 / 112 * 0.75, 0.32, 2.4) },
@@ -9964,7 +10069,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // (生存課題 plays the music of the map it drew)
   const songFor = n => (mapSkin === 'd2' ? SONGS2 : mapSkin === 'd3' ? SONGS3 : mapSkin === 'd4' ? SONGS4 : SONGS)[Math.min(3, Math.max(1, n === 4 && daily && dailyLook ? dailyLook.n : n))];
   const titleSong = () => mapSkin === 'd2' ? SONGS2.title : SONGS.title;
-  const playSong = () => t >= (stageN >= 3 ? 360 : stageN === 2 ? 240 : 120) ? titleSong() : songFor(stageN === 3 ? 1 + Math.floor(t / 120) : stageN);
+  // after the first town swap (the rank race, the specials): the battle theme
+  const playSong = () => stageN === 3 && (rankRun || special) && !tut && swaps.some(q => q.on && q.seed) ? SONG_CLASH : t >= (stageN >= 3 ? 360 : stageN === 2 ? 240 : 120) ? titleSong() : songFor(stageN === 3 ? 1 + Math.floor(t / 120) : stageN);
 
   // tutorial: "practice run" (112 BPM, D dorian). Bright but still electro: a tight kick on 1 and 3,
   // a rim on 2 and 4, a 16th shaker, a plucked bass and a bouncing arpeggio with a dotted echo;
