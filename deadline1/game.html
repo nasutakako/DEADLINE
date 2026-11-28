@@ -5972,7 +5972,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // down its middle, or on 4-3 one of the flat blocks along the top, above the river (a cyan glow on it for SEAL_WARN s
   // first). Picked at random among those; there is always one
   let carves = [];   // { at, tiles: [tile index, ...], on }
-  const carveTimes = () => [...new Set(sealTimes())];   // (one at each time a street shuts)
+  const carveTimes = () => sealTimes();   // (one for each street that shuts: two a minute on stage 3, one on stage 2)
   const sealRun = () => (stageN === 2 || stageN === 3) && !tut && !plainRun();   // (stage 2 too, from the same 3:00)
   // 地形総入れ替え (the rank race and the specials): at 8:00 and every 6 min after, the whole town is pulled down and
   // built again: a new layout in the same look (a siren and every building lit purple for SWAP_WARN s first). Every
@@ -6138,7 +6138,8 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   }
 
   // (none at a minute the whole town is built again (the rank race, the specials): that is change enough)
-  const sealTimes = () => { const a = []; for (let m = SEAL_EVERY_FROM; m <= t + SEAL_WARN; m += 60) if (!(swapRun() && isSwapAt(m))) a.push(m); return a; };
+  const sealPer = () => stageN === 3 ? 2 : 1;   // (streets shut, and blocks cut, a minute: two each on stage 3 (the rank race, the specials), one on stage 2)
+  const sealTimes = () => { const a = [], n = sealPer(); for (let m = SEAL_EVERY_FROM; m <= t + SEAL_WARN; m += 60) if (!(swapRun() && isSwapAt(m))) for (let k = 0; k < n; k++) a.push(m); return a; };
   // every open tile reachable from every other (the streets must stay one piece)
   function allJoined() {
     let start = -1, total = 0; for (let i = 0; i < COLS * ROWS; i++) if (grid[i] !== 1) { total++; if (start < 0) start = i; }
@@ -6448,7 +6449,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       // at top speed); the 5:00 pair is warned as usual)
       if (testLate === 295 || testLate === 472) { if (rankPace()) { waveLvN = 1e3; level = WAVE_MAXLV; for (const w of pending) w.lv = WAVE_MAXLV; }
         sealTimes().forEach((at, k) => { if (at >= testLate + SEAL_WARN) return; const q = planSeal(at); q.k = k; seals.push(q); setSeal(q, true); });
-        for (const at of carveTimes()) if (at < testLate + SEAL_WARN) { const q = planCarve(at); carves.push(q); setCarve(q, true); }
+        carveTimes().forEach((at, k) => { if (at < testLate + SEAL_WARN) { const q = planCarve(at); q.k = k; carves.push(q); setCarve(q, true); } });
         flowKey = -1; shadeKey = ''; renderMapCache(); flow(Math.floor(P.x), Math.floor(P.y)); } }
   }
 
@@ -6734,7 +6735,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       sealTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !seals.some(q => q.k === k)) { const q = planSeal(at); q.k = k; seals.push(q);
         if (!seals.some(o => o !== q && o.at === at)) { tone(988, 0.08, 'square', 0.04); setTimeout(() => tone(988, 0.08, 'square', 0.04), 160); } } });
       for (const q of seals) if (!q.on && t >= q.at) fireSeal(q);
-      for (const at of carveTimes()) if (t >= at - SEAL_WARN && !carves.some(q => q.at === at)) carves.push(planCarve(at));
+      carveTimes().forEach((at, k) => { if (t >= at - SEAL_WARN && !carves.some(q => q.k === k)) { const q = planCarve(at); q.k = k; carves.push(q); } });
       for (const q of carves) if (!q.on && t >= q.at) fireCarve(q);
     }
     if (SHIFT_ON && stageN === 3 && !tut) {
@@ -12399,7 +12400,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼はLv10から始まり、新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、2分30秒ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず3体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '街が入れ替わるたびに、鬼が速くなって黒い鬼も増え、どんどんしんどくなる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が2体まざる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が2か所ふさがり、建物が2か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '街が入れ替わるたびに、鬼が速くなって黒い鬼も増え、どんどんしんどくなる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が2体まざる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12441,7 +12442,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT()])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは、鬼が出るたびに1体ずつ増えて1レベルずつ速くなる(Lv25まで)。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
-      ${n === 2 || n === 3 ? sec('時間で変わること', ['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告。出口の近くはふさがらない)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告。出口の近くは削れない)', n === 3 ? '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる' : '']) : ''}
+      ${n === 2 || n === 3 ? sec('時間で変わること', [`3分から毎分: 通路か広場が${n === 3 ? 2 : 1}か所ふさがる(赤く光って予告。出口の近くはふさがらない)`, `3分から毎分: 建物が${n === 3 ? 2 : 1}か所削れて道になる(水色に光って予告。出口の近くは削れない)`, n === 3 ? '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる' : '']) : ''}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12521,7 +12522,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。触れるともう一方へ飛ぶ(ダッシュで通っても飛ぶ)。広場かL字の建物のくぼみにある。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '街が入れ替わるたびに鬼が速くなり、どんどんしんどくなる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が2か所ふさがる(赤く光って予告)', '3分から毎分: 建物が2か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '街が入れ替わるたびに鬼が速くなり、どんどんしんどくなる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
