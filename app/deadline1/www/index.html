@@ -6068,9 +6068,21 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     tn(140, 0.09, 'sawtooth', 0.09, 28, 0.01); tn(1800, 0.025, 'square', 0.05, 300, 0.005);
   }
   // シュイーン: the light swelling — a rising whine and a rush of air climbing with it, over the 2 s
+  // (no high whine at its end: the tones climb only an octave and the rush of air only to a middling pitch, all of it
+  // growing louder right up to the burst at 2 s, where it stops dead under the shatter)
   function lightSwell() {
-    sw(260, 2600, 2, 'sine', 0.05, 0.92); sw(130, 1300, 2, 'sawtooth', 0.018, 0.92); sw(520, 5200, 2, 'triangle', 0.02, 0.95);
-    nzs(2, 0.09, 'bandpass', 400, 7000, 2.5);
+    if (!ac || muted) return;
+    const D = 2, t0 = ac.currentTime, out = ac.createGain(); out.gain.value = 1; out.connect(ac.destination);
+    const grow = (g, v) => { g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(v * 0.25, t0 + D * 0.3); g.gain.exponentialRampToValueAtTime(v, t0 + D - 0.01); g.gain.linearRampToValueAtTime(0, t0 + D); };
+    for (const [f0, f1, type, v] of [[220, 440, 'sine', 0.05], [110, 220, 'sawtooth', 0.016], [330, 660, 'triangle', 0.018]]) {
+      const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.setValueAtTime(f0, t0); o.frequency.exponentialRampToValueAtTime(f1, t0 + D);
+      grow(g, v); o.connect(g).connect(out); o.start(t0); o.stop(t0 + D + 0.02);
+    }
+    const len = Math.floor(ac.sampleRate * D), buf = ac.createBuffer(1, len, ac.sampleRate), ch = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) ch[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource(), fl = ac.createBiquadFilter(), g = ac.createGain();
+    fl.type = 'bandpass'; fl.Q.value = 1.6; fl.frequency.setValueAtTime(300, t0); fl.frequency.exponentialRampToValueAtTime(1800, t0 + D);
+    src.buffer = buf; grow(g, 0.14); src.connect(fl).connect(g).connect(out); src.start(t0);
   }
   function glassCrack() {   // (1.5 s of it: the fractures come thick at first and thin out, ピシ…ピシ, as the cracks slow)
     sw(80, 50, 1.4, 'sawtooth', 0.07, 0.4); tn(46, 1.3, 'sine', 0.12, 36); nzs(1.2, 0.07, 'bandpass', 600, 3800, 1.8);
@@ -6134,7 +6146,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     { const r = randomRoad(4); items.push({ x: r.x, y: r.y, born: t, rk: true, ex: true }); setTimeout(dropChime, 300); }
     flow(Math.floor(P.x), Math.floor(P.y));
     shake = reduceMotion ? 0 : Math.max(shake, 0.7);   // (no yellow flash: the white is going off it already)
-    noise(0.5, 0.06); tone(70, 0.8, 'sawtooth', 0.08, 30); sfx.shatter(); setTimeout(() => { tone(523, 0.12, 'triangle', 0.05, 1046); }, 250);
+    noise(0.5, 0.06); tone(70, 0.8, 'sawtooth', 0.08, 30); sfx.shatter();   // (no rising chirp after it: the light's sound runs to the burst and the glass is all)
   }
   // the warning: every building glowing purple with a purple outline, pulsing (as a street about to shut or a building
   // about to be cut is shown, in purple)
