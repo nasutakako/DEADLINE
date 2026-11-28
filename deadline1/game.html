@@ -6569,7 +6569,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     // (black: 1 from 4:00, 2 from 6:00 on; the rank race: 1 from 2:00, 2 from 4:00)
     // (the rank race (ノーギミック too): 1 from 2:00, 2 from 4:00, 3 from 6:00; past a town swap one for each level
     // past 23 — 4 at Lv27 (8:00), 5 at Lv28 (14:00 on))
-    if (k === 'black') return rankLike() ? (overSwaps ? Math.min(5, lvCap() - 23) : t >= 360 ? 3 : t >= 240 ? 2 : t >= 120 ? 1 : 0) : t >= 360 ? 2 : t >= 240 ? 1 : 0;
+    if (k === 'black') return rankLike() ? (overSwaps ? lvCap() - 23 : t >= 360 ? 3 : t >= 240 ? 2 : t >= 120 ? 1 : 0) : t >= 360 ? 2 : t >= 240 ? 1 : 0;
     return 0;   // (the yellow ones: by chance only, as there nearly always is one about anyway)
   }
   // how many of those are short (on the map and warned), for a wave that would otherwise not come
@@ -6603,10 +6603,11 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // past the first town swap (the rank race, the specials) the oni go on climbing: Lv26-28, up to 6.8 at Lv28
   // the town swaps (the rank race, the specials) lift the top, 0.2 faster a level: Lv27 6.8 at 8:00, Lv28 7.0 at
   // 14:00 and on; after each, the oni climb to it a level a wave, from the top they were at
-  const OVER_MAXLV = 28, OVER_STEP = 0.2, OVER_TOP = WAVE_TOP + (OVER_MAXLV - WAVE_MAXLV) * OVER_STEP;
+  const OVER_MAXLV = 99, OVER_STEP = 0.2, OVER_TOP = WAVE_TOP + (OVER_MAXLV - WAVE_MAXLV) * OVER_STEP;
   let overBase = null, overSwaps = 0, swapTough = false;   // (swapTough: the first wave after a rank race's town swap brings a black barrier oni)
     // (waves queued at the last town swap; town swaps so far)
   const overOn = () => rankPace() && overSwaps > 0;
+  // (no top any more: each swap a level higher, on and on — Lv27 at 8:00, 28 at 14:00, 29 at 20:00, 30 at 26:00 ...)
   const capOf = n => n > 0 ? Math.min(OVER_MAXLV, WAVE_MAXLV + 1 + n) : WAVE_MAXLV;   // (the top after n town swaps)
   const lvCap = () => overOn() ? capOf(overSwaps) : WAVE_MAXLV;
   const waveSpd = L => L <= WAVE_MAXLV ? Math.min(WAVE_TOP, 3.05 + (L - 1) * WAVE_STEP) : Math.min(OVER_TOP, WAVE_TOP + (L - WAVE_MAXLV) * OVER_STEP);
@@ -12377,7 +12378,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼はLv10から始まり、新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、2分30秒ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず3体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼は8分の入れ替えのあとは4体、14分からは5体いるように出てくる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が2体まざる(それ以外の黒い鬼にバリアはない)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '街が入れ替わるたびに、鬼が速くなって黒い鬼も増え、どんどんしんどくなる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が2体まざる', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
@@ -12499,7 +12500,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼</h3>${li(['出てくる鬼はすべて黒い鬼(逃走者より速い)', '鬼の出方はランクレースと同じ', '鬼の速さは最初からランクレースの最高速', '4分からは、まれに爆発に1回耐える黒いバリア鬼がまざる(マップに1体まで)', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない'])}
         <table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table></section>
       <section><h3>このマップ</h3>${li(['マップはシリーズ2の3つ(2-1・2-2・2-3)から毎回ランダム', 'ワープポイントが2つ。触れるともう一方へ飛ぶ(ダッシュで通っても飛ぶ)。広場かL字の建物のくぼみにある。一度使うと1分30秒使えない', `加速装置が${S.pads}か所${S.lane ? `(必ず1本の横の通路に${S.lane}つ並ぶ)` : ''}。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない`, '落とし穴が2か所。ふたに乗って離れると開き、通った鬼をまとめて落とす(自分が落ちても確保)。一度使うと40秒使えない'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる'])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '街が入れ替わるたびに鬼が速くなり、どんどんしんどくなる'])}</section>
       <section><h3>補給</h3>${li(['2分から毎分届く', '偶数分(2分・4分・6分…): バリア + 爆弾2個', '奇数分(3分・5分・7分…): 爆弾2個', `爆弾は${MINE_MAX}個まで持てる`])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
