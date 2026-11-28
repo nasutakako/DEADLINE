@@ -2046,10 +2046,10 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   const DAILY_LABELS = DAILY.map(d => [d.key, '生存課題 ' + d.name]);
   // stage 2 opens once stage 1 is escaped, stage 3 once stage 2 is; the daily nights (生存課題) once stage 1 is
   const unlocked = n => n <= 1 || (ART_ONLY && n === 3) || isCleared(n === 4 ? 1 : Math.min(n, 3) - 1);
-  // ランクレース: open once 1-1 is escaped (whatever this week's map)
+  // ランクレース: open once 1-3 is escaped (whatever this week's map)
   // (the artifact only: the ranking open from the start, and the 12:00 try-out; the site and the app build set this false)
   const ART_ONLY = false;
-  function rankOpen() { if (ART_ONLY) return true; try { return isCleared(1); } catch (e) { return false; } }
+  function rankOpen() { if (ART_ONLY) return true; try { return storyDone('d1'); } catch (e) { return false; } }   // (once 1-3 is escaped, as the specials)
   function updateLocks() {
     const locked = [];
     { const b = $('rankPlayBtn'); if (b) b.dataset.label = 'ランクレース'; }
@@ -2065,7 +2065,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         b.classList.toggle('locked', !ok); b.setAttribute('aria-disabled', ok ? 'false' : 'true');
         b.textContent = ok ? b.dataset.label : '🔒 ' + b.dataset.label;
         // small underneath: this week's map, or (locked) what opens it (the map's name kept off the big line, which it crowded)
-        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${weekMapName()}` : '1-1クリアで解放'; b.append(sm); }
+        { const sm = document.createElement('small'); sm.className = 'locknote'; sm.textContent = ok ? `今週のマップ: ${weekMapName()}` : '1-3クリアで解放'; b.append(sm); }
         continue;
       }
       if (n === 4 && b.classList.contains('mrow')) {
