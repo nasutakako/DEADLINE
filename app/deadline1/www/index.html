@@ -5483,6 +5483,19 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         drawCourt(m, c);
       }
     }
+    // a plaza with a line shut across it: the plaza drawn whole as above, then the shut tiles on top as a block (its
+    // roof and light edges where it meets the open ground, in the night's dark as the other blocks), nothing else moved
+    for (const c of courts) for (let y = c.y; y < c.y + c.h; y++) for (let x = c.x; x < c.x + c.w; x++) {
+      if (grid[idx(x, y)] !== 1) continue;
+      const l = DAY ? 30 : MOON ? 17 : 15;
+      m.fillStyle = `hsl(${hue}, ${DAY ? 12 : 16}%, ${l}%)`; m.fillRect(x, y, 1.002, 1.002);
+      m.fillStyle = `hsl(${hue}, 14%, ${l + (DAY ? 16 : 9)}%)`;
+      if (walk(x, y - 1)) m.fillRect(x, y, 1, 0.07);
+      if (walk(x - 1, y)) m.fillRect(x, y, 0.07, 1);
+      if (walk(x + 1, y)) m.fillRect(x + 0.93, y, 0.07, 1);
+      if (walk(x, y + 1)) m.fillRect(x, y + 0.93, 1, 0.07);
+      if (!DAY) { m.fillStyle = MOON ? 'rgba(2,4,14,0.1)' : 'rgba(2,4,14,0.56)'; m.fillRect(x, y, 1.002, 1.002); }
+    }
     // the goals: solid frames with a net, drawn exactly where they block
     for (const [a, b, c, d] of posts) {
       m.fillStyle = 'rgba(0,0,0,0.4)'; m.fillRect(a + 0.05, c + 0.06, b - a, d - c);
