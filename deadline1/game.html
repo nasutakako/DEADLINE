@@ -6561,7 +6561,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     ctx.drawImage(c, x - c.tw / 2, y - c.th / 2, c.tw, c.th);
     ctx.globalAlpha = ga;
   }
-  const RANK_TOUGH_BLACK = 0.2;   // (the chance a black oni of the rank race comes armoured, from 8:00)
+  const SWAP_TOUGH_N = 2;   // (the rank race: black barrier oni in the first wave after each town swap)
   const ONI_LIGHT = a => `rgba(255,59,48,${a})`;
   function kindNeed(k) {
     if (k === 'tough') return t >= 240 ? 2 : 0;
@@ -6897,9 +6897,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     for (const s of pending) if (!s.hold) s.t -= dt;
     // a wave steps out together, in one frame; an oni the 6:00 rule marked as barrier counts from the start
     let toughWave = pending.some(s => s.t <= 0 && s.tough);
-    // (the rank race: the first wave out after a town swap always has a black barrier oni in it)
-    let mustTough = false;
-    if (swapTough && rankRun) { const out = pending.filter(s => s.t <= 0 && !s.tut); if (out.length) { swapTough = false; mustTough = true; if (!out.some(s => s.black)) out[0].black = true; } }
+    // (the rank race: the first wave out after a town swap brings two black barrier oni; no others ever)
+    let mustTough = 0;
+    if (swapTough && rankRun) { const out = pending.filter(s => s.t <= 0 && !s.tut); if (out.length) { swapTough = false; mustTough = Math.min(SWAP_TOUGH_N, out.length); for (const s of out) if (out.filter(o => o.black).length < mustTough && !s.black) s.black = true; } }
     for (const s of pending.filter(s => s.t <= 0)) {
       // from stage 2 a few oni are tough: they survive one explosion
       const baseRate = Math.min(0.35, 0.12 + (Math.max(2, stageN) - 2) * 0.06);
@@ -6917,7 +6917,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
         // (from 4:00, now and then one of them black and armoured: a black barrier oni, one about at a time)
         tough = t >= special.toughAt && !enemies.some(o => o.tough && !o.dead) && Math.random() < special.toughRate; }
       // the rank race past its first town swap: now and then a black one comes armoured (a black barrier oni, one about at a time)
-      if (rankRun && overSwaps > 0 && black && !s.tut) { tough = mustTough || (!enemies.some(o => o.black && o.tough && !o.dead) && Math.random() < RANK_TOUGH_BLACK); if (tough) mustTough = false; }
+      if (rankRun && black && !s.tut) { tough = mustTough > 0; if (tough) mustTough--; }
       // a practice oni is exactly the kind the tutorial asked for
       let bomber = !!s.bomber && !black && !daily;
       if (bomber) tough = amb = false;
@@ -12377,7 +12377,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       <section><h3>鬼の出方</h3><table><tr><th>経過時間</th><th>一度に出る鬼</th></tr>${waves.map(([a, n]) => `<tr><td>${a}〜</td><td>${n}</td></tr>`).join('')}</table>
         ${li(['鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(true, route === 'fuse'), '鬼はLv10から始まり、新しく出るたびに1レベルずつ速くなり(マップにいる鬼もみんなその速さになる)、2分30秒ごろに最高速。逃走者も鬼に合わせて速くなる'])}</section>
       <section><h3>鬼の種類</h3>${li([route === 'shadow' ? '赤い鬼と黄色い鬼(と分身)は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い' : '赤い鬼と黄色い鬼は、逃走者よりわずかに遅い。黒い鬼は逃走者より速い', '2分から: 黒い鬼(逃走者より速い)が、マップに必ず1体はいるように出てくる', '4分から: 黒い鬼が、マップに必ず2体はいるように出てくる', '6分から: 黒い鬼が、マップに必ず3体はいるように出てくる', '4分から: バリア鬼(爆発に1回耐える)が、マップに必ず2体はいるように出てくる', '足りない種類は次に出る鬼で補充される(「!」を踏んで消しても、その次でまた補充)'])}</section>
-      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼は8分の入れ替えのあとは4体、14分からは5体いるように出てくる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が必ず1体まざる。そのあともまれにまざる(マップに1体まで)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
+      <section><h3>時間で変わること</h3>${li(['3分から毎分: 通路か広場が1か所ふさがり、建物が1か所削れて道になる(赤と水色に光って予告)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる', '8分から6分ごと: 街がまるごと入れ替わる。紫に光って予告し、直前は真っ暗に。鬼は全部弾けて消え(次の鬼まで7秒あく)。明けるとランチャーが1つ落ちる', '入れ替えのたびに鬼の上限が上がる: 8分はLv27(速さ6.8)、14分からはLv28(7.0)。鬼が出るたびに1つずつ上がる。黒い鬼は8分の入れ替えのあとは4体、14分からは5体いるように出てくる。入れ替えのあと最初に出る鬼には、爆発に1回耐える黒いバリア鬼が2体まざる(それ以外の黒い鬼にバリアはない)', ...(SHIFT_ON ? ['15分: 地形が変わる。道がふさがったり、建物に抜け道ができたりする(5秒前に予告)'] : [])])}</section>
       <section><h3>このマップ</h3>${li([...own, '加速装置が3か所。踏むとダッシュと同じだけ加速する(ダッシュの待ち時間は減らない)。一度使うと25秒使えない'])}</section>
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
