@@ -10767,9 +10767,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { btn: 'mine', say: '割れた鬼はしばらく怯み、触れても平気。|[もう一度爆弾]で倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
       { btn: 'mine', say: '[黒い鬼]は自分より速い。|[爆弾]を先に置いて待ち伏せしよう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を[100体]倒すごとに[ランチャー]が届く', info: true },
-      // the streets changing (from stage 2): a stretch near by warned in red and shut, a block warned in cyan and cut
-      { say: '[3分から]毎分、[赤く光った]道がふさがり、|[水色に光った]建物が削れて道になる', set: tutSealDemo, go: tutSealGo },
-      { say: 'ふさがった道は通れなくなる。|削れた建物は[新しい道]になる', info: true },
+      // the streets changing (from stage 2; own: on 1-2's practice only, not brought into 2-2's, 3-2's or 4-2's): a stretch near by warned in red and shut, a block warned in cyan and cut
+      { own: true, say: '[3分から]毎分、[赤く光った]道がふさがり、|[水色に光った]建物が削れて道になる', set: tutSealDemo, go: tutSealGo },
+      { own: true, say: 'ふさがった道は通れなくなる。|削れた建物は[新しい道]になる', info: true },
       { tail: true, say: '2分からバリアや爆弾が支給される', info: true },
       { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
@@ -10846,7 +10846,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     let preDone = false;
     if (pre) {
       const want = tutReplay === tk ? tk === '3h' : !tutSeen()[pre];
-      const add = want ? TUT[pre].filter(x => pre === 3 ? x.pit : !x.end && !x.tail) : [];
+      const add = want ? TUT[pre].filter(x => pre === 3 ? x.pit : !x.end && !x.tail && !x.own) : [];
       preDone = add.length > 0;
       steps = pre === 3 ? [...steps.filter(x => !x.tail && !x.end), ...add, ...last] : [...add, ...steps];
     }
