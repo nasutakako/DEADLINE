@@ -5973,7 +5973,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
   // first). Picked at random among those; there is always one
   let carves = [];   // { at, tiles: [tile index, ...], on }
   const carveTimes = () => [...new Set(sealTimes())];   // (one at each time a street shuts)
-  const sealRun = () => stageN === 3 && !tut && !plainRun();
+  const sealRun = () => (stageN === 2 || stageN === 3) && !tut && !plainRun();   // (stage 2 too, from the same 3:00)
   // 地形総入れ替え (the rank race and the specials): at 8:00 and every 6 min after, the whole town is pulled down and
   // built again: a new layout in the same look (a siren and every building lit purple for SWAP_WARN s first). Every
   // building bursts; every oni bursts and is gone; the runner is moved to the nearest street. The streets shut and cut so far go with the old town; those still to come are
@@ -10767,6 +10767,9 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       { btn: 'mine', say: '割れた鬼はしばらく怯み、触れても平気。|[もう一度爆弾]で倒そう', set: () => { tut.refill = true; for (const e of tut.oni) if (!e.dead) e.stun = 1e9; }, go: tutDown },
       { btn: 'mine', say: '[黒い鬼]は自分より速い。|[爆弾]を先に置いて待ち伏せしよう', set: () => { tut.refill = true; tutOni({ black: true }); }, go: tutDown },
       { say: '鬼を[100体]倒すごとに[ランチャー]が届く', info: true },
+      // the streets changing (from stage 2): a stretch near by warned in red and shut, a block warned in cyan and cut
+      { say: '[3分から]毎分、[赤く光った]道がふさがり、|[水色に光った]建物が削れて道になる', set: tutSealDemo, go: tutSealGo },
+      { say: 'ふさがった道は通れなくなる。|削れた建物は[新しい道]になる', info: true },
       { tail: true, say: '2分からバリアや爆弾が支給される', info: true },
       { say: '[4分30秒]で出口が開く。|開くと[黒い鬼]も現れる', end: true },
     ],
@@ -11035,6 +11038,24 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
     }
     P.x = at.x; P.y = at.y; P.vx = P.vy = 0; P.hist = []; h.open = false; h.armed = false; h.cool = 0; tut.lx = P.x; tut.ly = P.y; }
   // the 加速装置 practice: one plate set two or three tiles off the runner on a straight street it can see, ready
+  // the practice of the streets changing: the nearest stretch that may shut and the nearest block that may be cut (a
+  // few tiles off, in sight), warned now and changed SEAL_WARN s on; the step done a moment after
+  function tutSealDemo() {
+    enemies.length = 0; tut.oni = [];
+    const at = t + SEAL_WARN, d = q => { if (!q.tiles.length) return 1e9; const x = q.tiles.reduce((a, i) => a + i % COLS, 0) / q.tiles.length + 0.5, y = q.tiles.reduce((a, i) => a + Math.floor(i / COLS), 0) / q.tiles.length + 0.5, v = Math.hypot(x - P.x, y - P.y); return v < 2.5 ? 50 + v : v; };
+    let sq = null, cq = null;
+    for (let k = 0; k < 40; k++) { const q = planSeal(at); if (!sq || d(q) < d(sq)) sq = q; }
+    seals.push(sq);
+    for (let k = 0; k < 40; k++) { const q = planCarve(at); if (!cq || d(q) < d(cq)) cq = q; }
+    carves.push(cq);
+    tut.seal = { at, sq, cq };
+    tone(988, 0.08, 'square', 0.04); setTimeout(() => tone(988, 0.08, 'square', 0.04), 160);
+  }
+  function tutSealGo() {
+    const q = tut.seal; if (!q) return true;
+    if (t >= q.at) { fireSeal(q.sq); fireCarve(q.cq); }
+    return t >= q.at + 1.2;
+  }
   function tutPadPlace() {
     const d = pads[0]; if (!d) { tut.padUsed = true; return; }
     flow(Math.floor(P.x), Math.floor(P.y));
@@ -12420,7 +12441,7 @@ body.cyberui:not(.ontitle):not(.picking) .controls .itemrow::before { content: '
       ${sec('拾えるもの', [`爆弾の箱: ${ITEM_FIRST}秒から${ITEM_EVERY}秒ごとに道に落ちる(${ITEM_LIFE}秒で消える)`, RK_TXT()])}
       <section><h3>鬼の出方</h3>${tbl(waves)}${li([n === 4 ? `一度に出る鬼は${ONI_WAVE_MAX}体まで。マップにいる鬼は最大${ONI_MAP_MAX}体` : `一度に出る鬼は${ONI_WAVE_MAX}体まで`, n <= 3 ? ('出口が開いたあとは、鬼が出るたびに1体ずつ増えて1レベルずつ速くなる(Lv25まで)。早めに脱出しよう') : '', '鬼は10秒ごとにまとめて出る。出る2.3秒前に赤い「!」が出て、先に踏むとその鬼は出ない', ringLine(n === 4 ? !!(daily && daily.key === 'd1') : n >= 2, n <= 3 && route === 'fuse'), '鬼は20秒ごとに速くなる。逃走者も鬼に合わせて速くなる'])}</section>
       ${sec('鬼の種類', kinds)}
-      ${n === 3 ? sec('時間で変わること', ['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告。出口の近くはふさがらない)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告。出口の近くは削れない)', '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる']) : ''}
+      ${n === 2 || n === 3 ? sec('時間で変わること', ['3分から毎分: 通路か広場が1か所ふさがる(赤く光って予告。出口の近くはふさがらない)', '3分から毎分: 建物が1か所削れて道になる(水色に光って予告。出口の近くは削れない)', n === 3 ? '6分から毎分: 10秒の停電。建物が見えなくなる(鬼と「!」は見える)。明けるとランチャーが1つ落ちる' : '']) : ''}
       ${own.filter(Boolean).length ? sec('このマップ', own) : ''}
       <p class="note">ダッシュは一度使うと${DASH_CD}秒使えない。爆弾は置いて1秒後に爆発する。</p>`;
     $('rankInfoTitle').textContent = 'ステージ詳細'; $('rankInfoScreen').hidden = false;
